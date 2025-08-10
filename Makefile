@@ -1,83 +1,97 @@
-# --- C++ Unit Tests ---
-GTEST_DIR ?= /opt/homebrew
-GTEST_LIB = $(GTEST_DIR)/lib/libgtest.a
-GTEST_MAIN_LIB = $(GTEST_DIR)/lib/libgtest_main.a
-GTEST_INCLUDE = -I$(GTEST_DIR)/include
+# Makefile for the Aetherion Trading Engine (gRPC Microservices)
 
-test-cpp: $(CPP_LIB) cpp/tests/test_orderbook.cpp
-	g++ -std=c++17 -o cpp/tests/test_orderbook cpp/tests/test_orderbook.cpp \
-		-Icpp -Ibin $(GTEST_INCLUDE) -L$(GTEST_DIR)/lib -lgtest -lgtest_main -lpthread -Lbin -lcpp -lgo -lrust_lib -Wl,-rpath,bin
-	DYLD_LIBRARY_PATH=bin ./cpp/tests/test_orderbook
+.PHONY: all generate generate-go generate-python run-go-service run-rust-service run-python-client setup clean
 
-.PHONY: test-cpp
-# Define directories and variables
-GO_SRC_DIR = go
-RUST_SRC_DIR = rust
-CPP_SRC_DIR = cpp
-PYTHON_SRC_DIR = python
-BIN_DIR = bin
+# --- Variables ---
+PROTOC = protoc
+PROTO_DIR = protos
+PROTO_FILE = $(PROTO_DIR)/trading_api.proto
 
-GO_LIB = $(BIN_DIR)/libgo.dylib
-GO_HEADER = $(BIN_DIR)/go_lib.h
-RUST_LIB = $(BIN_DIR)/librust_lib.dylib
-CPP_LIB = $(BIN_DIR)/libcpp.dylib
+# Go variables
+GO_DIR = go
+GO_MODULE = github.com/xeratooth/aetherion-trading-service
 
-# --- Build Targets ---
+# Python variables
+PYTHON_DIR = python
+VENV_DIR = venv
 
+# Rust variables
+RUST_SERVICE_DIR = rust/risk_service
 
-# Strict sequential build order: Go → Rust → C++
-all: go rust cpp
+# --- Main Targets ---
 
-go: $(GO_LIB) $(GO_HEADER)
+# Default target
+all: generate
 
-$(GO_LIB) $(GO_HEADER): $(GO_SRC_DIR)/*.go | $(BIN_DIR)
-	@echo "Building Go shared library..."
-	cd $(GO_SRC_DIR) && \
-	go build -buildmode=c-shared -o libgo.dylib . && \
-	cp libgo.dylib ../$(GO_LIB) && \
-	cp libgo.h ../$(GO_HEADER)
+# Generate all gRPC code (Rust generation is handled by cargo)
+generate: generate-go generate-python 
+	@echo "All gRPC code generated."
 
-rust: $(RUST_LIB)
+# Run all services and the client (requires separate terminals)
+run:
+	@echo "To run the system, please open three separate terminals."
+	@echo "Terminal 1: make run-go-service"
+	@echo "Terminal 2: make run-rust-service"
+	@echo "Terminal 3: make run-python-client"
 
-$(RUST_LIB): $(RUST_SRC_DIR)/src/lib.rs $(RUST_SRC_DIR)/Cargo.toml | $(BIN_DIR)
-	@echo "Building Rust shared library..."
-	cd $(RUST_SRC_DIR) && cargo build --release
-	cp $(RUST_SRC_DIR)/target/release/librust_lib.dylib $(RUST_LIB)
+# --- Code Generation ---
 
-cpp: $(CPP_LIB)
+# Generate Go gRPC code
+generate-go: $(PROTO_FILE)
+	@echo "Generating Go gRPC code..."
+	$(PROTOC) --go_out=$(GO_DIR) --go_opt=module=$(GO_MODULE) \
+	          --go-grpc_out=$(GO_DIR) --go-grpc_opt=module=$(GO_MODULE) \
+	          $(PROTO_FILE)
 
-$(CPP_LIB): $(GO_LIB) $(GO_HEADER) $(RUST_LIB) $(CPP_SRC_DIR)/cpp_lib.cpp go/orderbook_api.h | $(BIN_DIR)
-	cp go/orderbook_api.h $(BIN_DIR)/orderbook_api.h
-	@echo "Building C++ shared library..."
-	g++ -shared -fPIC -o $(CPP_LIB) $(CPP_SRC_DIR)/*.cpp \
-		-I$(BIN_DIR) -L$(BIN_DIR) -lgo -lrust_lib -Wl,-rpath,.
+# Generate Python gRPC code
+generate-python: $(PROTO_FILE)
+	@echo "Generating Python gRPC code..."
+	@mkdir -p $(PYTHON_DIR)/protos
+	python3 -m grpc_tools.protoc -I$(PROTO_DIR) \
+	          --python_out=$(PYTHON_DIR)/protos \
+	          --pyi_out=$(PYTHON_DIR)/protos \
+	          --grpc_python_out=$(PYTHON_DIR)/protos \
+	          $(PROTO_FILE)
+	@touch $(PYTHON_DIR)/protos/__init__.py
 
-$(BIN_DIR):
-	mkdir -p $(BIN_DIR)
+# --- Service & Client Runners ---
 
-# The `run` target first builds all dependencies, then runs the Python script.
+# Run the Go trading service
+run-go-service:
+	cd $(GO_DIR) && go mod tidy
+	@echo "Starting Go Trading Service on port 50051..."
+	cd $(GO_DIR) && go run .
 
-# The `run` target builds all dependencies, ensures venv/requests, then runs the Python script.
-run: all
-	@if [ ! -d "venv" ]; then \
-		echo "Python venv not found. Creating one and installing dependencies..."; \
-		python3 -m venv venv; \
+# Run the Rust risk service
+run-rust-service:
+	@echo "Starting Rust Risk Service on port 50052..."
+	cd $(RUST_SERVICE_DIR) && cargo run
+
+# Run the Python orchestrator client
+run-python-client: setup
+	@echo "Starting Python Orchestrator Client..."
+	@. $(VENV_DIR)/bin/activate; python3 $(PYTHON_DIR)/orchestrator.py
+
+# --- Setup & Cleanup ---
+
+# Set up the Python virtual environment and install dependencies
+setup:
+	@if [ ! -d "$(VENV_DIR)" ]; then \
+		echo "Python venv not found. Creating one..."; \
+		python3 -m venv $(VENV_DIR); \
 	fi
-	venv/bin/pip install --no-cache-dir --upgrade pip
-	venv/bin/pip install --no-cache-dir -r requirements.txt
-	@echo "Running Python script..."
-	. venv/bin/activate; \
-	ABS_BIN_DIR=$(shell cd $(BIN_DIR) && pwd); \
-	DYLD_LIBRARY_PATH=$(shell cd $(BIN_DIR) && pwd) ; \
-	python3 $(PYTHON_SRC_DIR)/main.py
+	@echo "Installing/updating Python dependencies..."
+	@. $(VENV_DIR)/bin/activate; \
+	pip install -q --upgrade pip; \
+	pip install -q -r $(PYTHON_DIR)/requirements.txt
 
-# The `clean` target removes all generated files
-clean: 
-
+# Clean up generated files
+clean:
 	@echo "Cleaning up..."
-	rm -rf $(BIN_DIR)
-	rm -f $(RUST_SRC_DIR)/target/release/librust_lib.dylib
-	rm -f $(GO_SRC_DIR)/go_lib.h $(GO_SRC_DIR)/libgo.dylib
-	@echo "All generated files have been removed."
+	rm -rf $(GO_DIR)/gen
+	rm -rf $(PYTHON_DIR)/protos
+	# Rust's cargo clean will handle its build artifacts
+	cd $(RUST_SERVICE_DIR) && cargo clean
+	@echo "Cleanup complete."
 
-.PHONY: all run clean
+# --- EOF ---
