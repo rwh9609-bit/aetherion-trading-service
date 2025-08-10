@@ -1,4 +1,4 @@
-module github.com/xeratooth/aetherion-trading-service
+module aetherion-trading-service
 
 go 1.21
 
@@ -7,6 +7,9 @@ require (
 	google.golang.org/protobuf v1.34.1
 )
 
-replace github.com/xeratooth/aetherion-trading-service => ./
-
-replace github.com/xeratooth/aetherion-trading-service => ./
+require (
+	golang.org/x/net v0.22.0 // indirect
+	golang.org/x/sys v0.18.0 // indirect
+	golang.org/x/text v0.14.0 // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20240318140521-94a12d6c2237 // indirect
+)

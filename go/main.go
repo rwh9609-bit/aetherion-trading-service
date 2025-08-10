@@ -7,7 +7,8 @@ import (
 	"net"
 	"time"
 
-	pb "github.com/xeratooth/aetherion-trading-service/gen/protos" // Import the generated protobuf package
+	pb "aetherion-trading-service/gen/protos" // Import the generated protobuf package
+
 	"google.golang.org/grpc"
 )
 

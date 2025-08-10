@@ -9,7 +9,7 @@ PROTO_FILE = $(PROTO_DIR)/trading_api.proto
 
 # Go variables
 GO_DIR = go
-GO_MODULE = github.com/xeratooth/aetherion-trading-service
+GO_MODULE = aetherion-trading-service
 
 # Python variables
 PYTHON_DIR = python
@@ -39,8 +39,7 @@ run:
 # Generate Go gRPC code
 generate-go: $(PROTO_FILE)
 	@echo "Generating Go gRPC code..."
-	$(PROTOC) --go_out=$(GO_DIR) --go_opt=module=$(GO_MODULE) \
-	          --go-grpc_out=$(GO_DIR) --go-grpc_opt=module=$(GO_MODULE) \
+	$(PROTOC) --go_out=. --go-grpc_out=. \
 	          $(PROTO_FILE)
 
 # Generate Python gRPC code
@@ -57,10 +56,10 @@ generate-python: $(PROTO_FILE)
 # --- Service & Client Runners ---
 
 # Run the Go trading service
-run-go-service:
-	cd $(GO_DIR) && go mod tidy
+run-go-service: generate-go
+	go mod tidy
 	@echo "Starting Go Trading Service on port 50051..."
-	cd $(GO_DIR) && go run .
+	go run ./$(GO_DIR)
 
 # Run the Rust risk service
 run-rust-service:
