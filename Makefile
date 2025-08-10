@@ -43,7 +43,8 @@ $(CPP_LIB): $(GO_LIB) $(GO_HEADER) $(RUST_LIB) $(CPP_SRC_DIR)/cpp_lib.cpp | $(BI
 # The `run` target first builds all dependencies, then runs the Python script.
 run: $(CPP_LIB)
 	@echo "Running Python script..."
-	DYLD_LIBRARY_PATH=$(BIN_DIR) python3 $(PYTHON_SRC_DIR)/main.py
+	ABS_BIN_DIR=$(shell cd $(BIN_DIR) && pwd)
+	DYLD_LIBRARY_PATH=$(shell cd $(BIN_DIR) && pwd) python3 $(PYTHON_SRC_DIR)/main.py
 
 # The `clean` target removes all generated files
 clean:

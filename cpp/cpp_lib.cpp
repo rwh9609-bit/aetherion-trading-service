@@ -51,29 +51,32 @@ public:
 
 static OrderBook g_orderbook;
 
-extern "C" {
-    // Declare the external function from Rust.
-    void greet_from_rust();
+// Declare the external function from Rust.
+extern "C" void greet_from_rust();
 
-    // Order book C API
-    int ob_add_order(double price, int qty, int is_buy) {
-        return g_orderbook.add_order(price, qty, is_buy);
-    }
-    int ob_cancel_order(int id) {
-        return g_orderbook.cancel_order(id) ? 1 : 0;
-    }
-    // Returns price, qty, id as output params
-    void ob_get_top_of_book(int is_buy, double* price, int* qty, int* id) {
-        Order o = g_orderbook.get_top_of_book(is_buy);
-        *price = o.price;
-        *qty = o.qty;
-        *id = o.id;
-    }
+// Order book C API (must be top-level, extern "C", and visible)
+extern "C" __attribute__((visibility("default")))
+int ob_add_order(double price, int qty, int is_buy) {
+    return g_orderbook.add_order(price, qty, is_buy);
+}
 
-    // Existing demo function
-    void master_greet() {
-        std::cout << "\n";
-        std::string cat_art = R"(
+extern "C" __attribute__((visibility("default")))
+int ob_cancel_order(int id) {
+    return g_orderbook.cancel_order(id) ? 1 : 0;
+}
+
+extern "C" __attribute__((visibility("default")))
+void ob_get_top_of_book(int is_buy, double* price, int* qty, int* id) {
+    Order o = g_orderbook.get_top_of_book(is_buy);
+    *price = o.price;
+    *qty = o.qty;
+    *id = o.id;
+}
+
+// Existing demo function
+extern "C" void master_greet() {
+    std::cout << "\n";
+    std::string cat_art = R"(
       /\_/\
      ( o.o )  ♡
       > ^ <
@@ -84,11 +87,10 @@ extern "C" {
    \_|_|_|_/_/
       )"
       "\n";
-        std::cout << cat_art;
-        std::cout << "Starting multi-language greeting..." << std::endl;
-        greet_from_cpp();
-        greet_from_go();
-        greet_from_rust();
-        std::cout << "All languages have greeted successfully!" << std::endl;
-    }
+    std::cout << cat_art;
+    std::cout << "Starting multi-language greeting..." << std::endl;
+    greet_from_cpp();
+    greet_from_go();
+    greet_from_rust();
+    std::cout << "All languages have greeted successfully!" << std::endl;
 }

@@ -1,14 +1,22 @@
 import ctypes
+import sys
 import os
+
 
 # Get the directory of the current script
 script_dir = os.path.dirname(os.path.abspath(__file__))
-lib_path = os.path.join(script_dir, "..", "bin", "libcpp.dylib")
+bin_dir = os.path.abspath(os.path.join(script_dir, "..", "bin"))
+libcpp_path = os.path.join(bin_dir, "libcpp.dylib")
+libgo_path = os.path.join(bin_dir, "libgo.dylib")
+librust_path = os.path.join(bin_dir, "librust_lib.dylib")
 
 
-# Load the shared library
 try:
-	lib = ctypes.CDLL(lib_path)
+	# Load provider first (libcpp), then consumers (librust, libgo)
+	mode = ctypes.RTLD_GLOBAL if hasattr(ctypes, 'RTLD_GLOBAL') else None
+	lib = ctypes.CDLL(libcpp_path, mode=mode) if mode else ctypes.CDLL(libcpp_path)
+	ctypes.CDLL(librust_path, mode=mode) if mode else ctypes.CDLL(librust_path)
+	ctypes.CDLL(libgo_path, mode=mode) if mode else ctypes.CDLL(libgo_path)
 	print("Shared library loaded successfully.")
 
 	# Set argument and return types for order book functions

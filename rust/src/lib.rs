@@ -1,4 +1,6 @@
+mod orderbook_ffi;
+
 #[no_mangle]
 pub extern "C" fn greet_from_rust() {
-	println!("Hello from Rust!");
+	orderbook_ffi::rust_strategy_demo();
 }
