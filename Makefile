@@ -1,6 +1,6 @@
 # Makefile for the Aetherion Trading Engine (gRPC Microservices)
 
-.PHONY: all generate generate-go generate-python run-go-service run-rust-service run-python-client setup clean
+.PHONY: all generate generate-go generate-python run-go-service stop-go-service run-rust-service stop-rust-service run-python-client setup clean
 
 # --- Variables ---
 PROTOC = protoc
@@ -9,7 +9,8 @@ PROTO_FILE = $(PROTO_DIR)/trading_api.proto
 
 # Go variables
 GO_DIR = go
-GO_MODULE = github.com/xeratooth/aetherion-trading-service
+GO_MODULE = aetherion-trading-service
+GO_BIN = /Users/xeratooth/go/bin
 
 # Python variables
 PYTHON_DIR = python
@@ -39,38 +40,54 @@ run:
 # Generate Go gRPC code
 generate-go: $(PROTO_FILE)
 	@echo "Generating Go gRPC code..."
-	$(PROTOC) --go_out=$(GO_DIR) --go_opt=module=$(GO_MODULE) \
+	$(PROTOC) --plugin=protoc-gen-go=$(GO_BIN)/protoc-gen-go \
+	          --plugin=protoc-gen-go-grpc=$(GO_BIN)/protoc-gen-go-grpc \
+	          --go_out=$(GO_DIR) --go_opt=module=$(GO_MODULE) \
 	          --go-grpc_out=$(GO_DIR) --go-grpc_opt=module=$(GO_MODULE) \
 	          $(PROTO_FILE)
 
+
 # Generate Python gRPC code
-generate-python: $(PROTO_FILE)
+generate-python: setup $(PROTO_FILE)
 	@echo "Generating Python gRPC code..."
 	@mkdir -p $(PYTHON_DIR)/protos
-	python3 -m grpc_tools.protoc -I$(PROTO_DIR) \
+	@. $(VENV_DIR)/bin/activate; python3 -m grpc_tools.protoc -I$(PROTO_DIR) \
 	          --python_out=$(PYTHON_DIR)/protos \
 	          --pyi_out=$(PYTHON_DIR)/protos \
 	          --grpc_python_out=$(PYTHON_DIR)/protos \
 	          $(PROTO_FILE)
+	@ls -l $(PYTHON_DIR)/protos
 	@touch $(PYTHON_DIR)/protos/__init__.py
+
+
 
 # --- Service & Client Runners ---
 
 # Run the Go trading service
-run-go-service:
+run-go-service: generate-go
 	cd $(GO_DIR) && go mod tidy
 	@echo "Starting Go Trading Service on port 50051..."
-	cd $(GO_DIR) && go run .
+	cd $(GO_DIR) && go run . &
+
+# Stop the Go trading service
+stop-go-service:
+	@echo "Stopping Go Trading Service..."
+	@kill `lsof -t -i:50051` || true
 
 # Run the Rust risk service
 run-rust-service:
 	@echo "Starting Rust Risk Service on port 50052..."
 	cd $(RUST_SERVICE_DIR) && cargo run
 
+# Stop the Rust risk service
+stop-rust-service:
+	@echo "Stopping Rust Risk Service..."
+	@kill `lsof -t -i:50052` || true
+
 # Run the Python orchestrator client
-run-python-client: setup
+run-python-client: setup generate-python
 	@echo "Starting Python Orchestrator Client..."
-	@. $(VENV_DIR)/bin/activate; python3 $(PYTHON_DIR)/orchestrator.py
+	@cd $(PYTHON_DIR) && . ../$(VENV_DIR)/bin/activate && python3 orchestrator.py
 
 # --- Setup & Cleanup ---
 

@@ -15,12 +15,10 @@ pub struct MyRiskService {}
 
 #[tonic::async_trait]
 impl RiskService for MyRiskService {
-    async fn calculate_var(
+    async fn calculate_va_r(
         &self,
-        request: Request<VaRRequest>,
+        _request: Request<VaRRequest>,
     ) -> Result<Response<VaRResponse>, Status> {
-        println!("[Rust Server] Received VaR Request");
-
         // --- HEAVY CPU-BOUND COMPUTATION HAPPENS HERE ---
         // In a real application, this would involve complex simulations.
         // For now, we'll just return a dummy value.

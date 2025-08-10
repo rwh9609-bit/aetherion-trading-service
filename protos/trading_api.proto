@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package trading;
 
-option go_package = "github.com/xeratooth/aetherion-trading-service/gen/protos";
+option go_package = "aetherion-trading-service/gen/protos";
 
 // Represents a single market data tick
 message Tick {

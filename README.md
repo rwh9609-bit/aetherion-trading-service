@@ -42,7 +42,7 @@ Make sure your Go bin directory is in your `PATH` (e.g., `export PATH="$PATH:$(g
     make setup
     ```
 
-2.  **Generate gRPC Code**: This command uses `protoc` to generate client and server code from `protos/trading_api.proto` for all languages.
+2.  **Generate gRPC Code**: This command uses `protoc` to generate client and server code from `protos/trading_api.proto` for all languages. The Python gRPC code generation now correctly activates the virtual environment to ensure `grpc_tools` is found.
     ```sh
     make generate
     ```
