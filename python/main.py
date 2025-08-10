@@ -1,3 +1,11 @@
+import requests
+import time
+def fetch_binance_price(symbol="BTCUSDT"):
+	# Fetch BTC-USD spot price from Coinbase public API
+	url = "https://api.coinbase.com/v2/prices/BTC-USD/spot"
+	resp = requests.get(url)
+	resp.raise_for_status()
+	return float(resp.json()["data"]["amount"])
 import ctypes
 import sys
 import os
@@ -53,6 +61,18 @@ try:
 	lib.ob_get_top_of_book(1, ctypes.byref(price), ctypes.byref(qty), ctypes.byref(oid))
 	print(f"Top of book (bid) after cancel: id={oid.value}, price={price.value}, qty={qty.value}")
 
+	# --- Live Coinbase Integration Demo ---
+	print("\n--- Live Coinbase Price Feed Demo ---")
+	price = ctypes.c_double()
+	qty = ctypes.c_int()
+	oid = ctypes.c_int()
+	for i in range(10):
+		live_price = fetch_binance_price()
+		order_id = lib.ob_add_order(live_price, 1, 1)  # Simulate a buy order at market price
+		print(f"[{i+1}] Added buy order at Coinbase BTC-USD price {live_price} (order id={order_id})")
+		lib.ob_get_top_of_book(1, ctypes.byref(price), ctypes.byref(qty), ctypes.byref(oid))
+		print(f"Top of book (bid): id={oid.value}, price={price.value}, qty={qty.value}")
+		time.sleep(2)
 	# Call the original demo
 	lib.master_greet()
 except OSError as e:

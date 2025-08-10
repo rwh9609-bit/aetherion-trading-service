@@ -22,6 +22,12 @@ A high-performance, cross-language trading engine demo integrating C++, Python, 
 ```sh
 # Clone the repo
 # cd multilanguage
+# (Recommended) Set up a Python virtual environment:
+python3 -m venv venv
+source venv/bin/activate
+pip install requests
+
+# Then run the demo:
 make run
 ```
 This will:
@@ -29,25 +35,63 @@ This will:
 - Run the Python demo script, which:
   - Loads the C++ order book
   - Calls Go and Rust strategies
+  - Fetches live BTC-USD prices from Coinbase
   - Prints all cross-language output
 
 ### Example Output
 ```
+Shared library loaded successfully.
 Added buy order id=1, sell order id=2
 Top of book (bid): id=1, price=101.5, qty=10
 Top of book (ask): id=2, price=102.0, qty=5
 Cancel buy order result: 1
 Top of book (bid) after cancel: id=0, price=0.0, qty=0
-[Go] Added buy order id=3, sell order id=4
-[Go] Top of book (bid): id=3, price=103.5, qty=20
-[Go] Top of book (ask): id=4, price=104.0, qty=15
+
+--- Live Coinbase Price Feed Demo ---
+[1] Added buy order at Coinbase BTC-USD price 116647.305 (order id=3)
+Top of book (bid): id=3, price=116647.305, qty=1
+[2] Added buy order at Coinbase BTC-USD price 116647.305 (order id=4)
+Top of book (bid): id=3, price=116647.305, qty=1
+[3] Added buy order at Coinbase BTC-USD price 116647.305 (order id=5)
+Top of book (bid): id=3, price=116647.305, qty=1
+[4] Added buy order at Coinbase BTC-USD price 116647.305 (order id=6)
+Top of book (bid): id=3, price=116647.305, qty=1
+[5] Added buy order at Coinbase BTC-USD price 116647.305 (order id=7)
+Top of book (bid): id=3, price=116647.305, qty=1
+[6] Added buy order at Coinbase BTC-USD price 116648.67 (order id=8)
+Top of book (bid): id=8, price=116648.67, qty=1
+[7] Added buy order at Coinbase BTC-USD price 116648.67 (order id=9)
+Top of book (bid): id=8, price=116648.67, qty=1
+[8] Added buy order at Coinbase BTC-USD price 116648.67 (order id=10)
+Top of book (bid): id=8, price=116648.67, qty=1
+[9] Added buy order at Coinbase BTC-USD price 116647.535 (order id=11)
+Top of book (bid): id=8, price=116648.67, qty=1
+[10] Added buy order at Coinbase BTC-USD price 116648.67 (order id=12)
+Top of book (bid): id=8, price=116648.67, qty=1
+
+  /\_/\
+     ( o.o )  ♡
+  > ^ <
+     /  -  \
+    / | | | \
+   /  | | |  \
+   |  | | |  |
+   \_|_|_|_/_/
+      
+Starting multi-language greeting...
+Hello from C++!
+Hello from Go!
+[Go] Added buy order id=13, sell order id=14
+[Go] Top of book (bid): id=8, price=116648.67, qty=1
+[Go] Top of book (ask): id=2, price=102.00, qty=5
 [Go] Cancel buy order result: 1
-[Go] Top of book (bid) after cancel: id=0, price=0.0, qty=0
-[Rust] Added buy order id=5, sell order id=6
-[Rust] Top of book (bid): id=5, price=101.5, qty=10
-[Rust] Top of book (ask): id=6, price=102.0, qty=5
+[Go] Top of book (bid) after cancel: id=8, price=116648.67, qty=1
+[Rust] Added buy order id=15, sell order id=16
+[Rust] Top of book (bid): id=8, price=116648.67, qty=1
+[Rust] Top of book (ask): id=2, price=102, qty=5
 [Rust] Cancel buy order result: 1
-[Rust] Top of book (bid) after cancel: id=0, price=0.0, qty=0
+[Rust] Top of book (bid) after cancel: id=8, price=116648.67, qty=1
+All languages have greeted successfully!
 ```
 
 ## Project Structure
@@ -71,6 +115,7 @@ Top of book (bid) after cancel: id=0, price=0.0, qty=0
 ## Troubleshooting
 - On macOS, DYLD_LIBRARY_PATH must include the `bin/` directory (the Makefile handles this)
 - If you see symbol errors, ensure all libraries are rebuilt (`make clean && make run`)
+- If you see `ModuleNotFoundError: No module named 'requests'`, ensure you have activated your virtual environment and run `pip install requests`.
 
 ## License
 MIT
