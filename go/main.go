@@ -7,7 +7,7 @@ import (
 	"net"
 	"time"
 
-	pb "github.com/xeratooth/multilanguage/proto/trading_api.proto" // Assuming your proto definitions are here
+	pb "github.com/xeratooth/multilanguage/trading_api.proto" // Assuming your proto definitions are here
 	"google.golang.org/grpc"
 )
 
