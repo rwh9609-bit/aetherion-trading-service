@@ -1,3 +1,15 @@
+# --- C++ Unit Tests ---
+GTEST_DIR ?= /opt/homebrew
+GTEST_LIB = $(GTEST_DIR)/lib/libgtest.a
+GTEST_MAIN_LIB = $(GTEST_DIR)/lib/libgtest_main.a
+GTEST_INCLUDE = -I$(GTEST_DIR)/include
+
+test-cpp: $(CPP_LIB) cpp/tests/test_orderbook.cpp
+	g++ -std=c++17 -o cpp/tests/test_orderbook cpp/tests/test_orderbook.cpp \
+		-Icpp -Ibin $(GTEST_INCLUDE) -L$(GTEST_DIR)/lib -lgtest -lgtest_main -lpthread -Lbin -lcpp -lgo -lrust_lib -Wl,-rpath,bin
+	DYLD_LIBRARY_PATH=bin ./cpp/tests/test_orderbook
+
+.PHONY: test-cpp
 # Define directories and variables
 GO_SRC_DIR = go
 RUST_SRC_DIR = rust
