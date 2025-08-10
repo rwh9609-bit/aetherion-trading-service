@@ -1,13 +1,13 @@
-// This is a conceptual example of what the Go server would look like.
 package main
 
 import (
 	"context"
 	"fmt"
+	"log"
 	"net"
 	"time"
 
-	pb "github.com/xeratooth/multilanguage/trading_api.proto" // Assuming your proto definitions are here
+	pb "github.com/xeratooth/aetherion-trading-service/gen/protos" // Import the generated protobuf package
 	"google.golang.org/grpc"
 )
 
@@ -44,12 +44,12 @@ func (s *tradingServer) SubscribeTicks(req *pb.StrategyRequest, stream pb.Tradin
 func main() {
 	lis, err := net.Listen("tcp", ":50051")
 	if err != nil {
-		// ... handle error ...
+		log.Fatalf("failed to start listener: %v", err)
 	}
 	s := grpc.NewServer()
 	pb.RegisterTradingServiceServer(s, &tradingServer{})
-	fmt.Println("Go gRPC server listening at", lis.Addr())
-	s.Serve(lis)
+	log.Printf("Go gRPC server listening at %v", lis.Addr())
+	if err := s.Serve(lis); err != nil {
+		log.Fatalf("failed to start server: %v", err)
+	}
 }
-
-// This file contains the Go implementation of the order book FFI.

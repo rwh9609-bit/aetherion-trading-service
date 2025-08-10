@@ -1,11 +1,20 @@
 # This is a conceptual example of what the Python client would look like.
+import os
 import grpc
-import protos.trading_api_pb2 as pb
-import protos.trading_api_pb2_grpc as rpc
+
+# It's good practice to handle the case where the generated code doesn't exist yet.
+try:
+    import protos.trading_api_pb2 as pb
+    import protos.trading_api_pb2_grpc as rpc
+except ImportError:
+    print("Error: gRPC modules not found. Please run 'make generate' first.")
+    exit(1)
 
 def run_orchestrator():
+    go_service_addr = os.environ.get('GO_SERVICE_ADDR', 'localhost:50051')
+
     # Establish a connection to the Go gRPC server
-    channel = grpc.insecure_channel('localhost:50051')
+    channel = grpc.insecure_channel(go_service_addr)
     stub = rpc.TradingServiceStub(channel)
 
     # --- Control Plane Example: Start a strategy ---

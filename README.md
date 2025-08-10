@@ -1,121 +1,83 @@
-# Multilanguage Fintech Engine
+# Aetherion Trading Engine: A Polyglot Microservice Architecture
 
-A high-performance, cross-language trading engine demo integrating C++, Python, Rust, and Go.
+A high-performance trading engine demonstrating a modern, gRPC-based microservice architecture using Go, Rust, and Python. This project has evolved from its FFI-based origins to a more robust, scalable, and production-ready design.
 
-## Features
-- **Ultra-fast C++ order book** with C API (add, cancel, query orders)
-- **Python orchestration**: A modern, `pyproject.toml`-based Python package for running strategies, backtests, and analytics.
-- **Rust & Go strategy modules**: plug in compiled strategies for speed and safety
-- **Full FFI integration**: all languages can call the C++ core and each other
-- **Automated build**: Makefile builds all shared libraries and runs the demo
+## Architecture
+
+The system is composed of several independent services communicating via gRPC:
+
+-   **Go Trading Service**: The primary gateway. It's designed for high-concurrency I/O, perfect for handling market data streams, managing client connections, and routing order requests.
+-   **Rust Risk Service**: A specialized service for CPU-intensive, safety-critical computations. It exposes endpoints for complex calculations like Value at Risk (VaR), ensuring maximum performance and correctness.
+-   **Python Orchestrator**: The "brains" of the operation. A flexible client that consumes data from the Go service, calls the Rust service for risk analysis, and implements high-level trading strategies and analytics.
+-   **Protocol Buffers (`.proto`)**: The single source of truth for the API. It defines all services, messages, and RPCs, enabling type-safe code generation for all languages.
 
 ## Quick Start
 
 ### Prerequisites
-- macOS (tested), Linux may work with minor changes
-- Python 3
+- macOS or Linux
+- Python 3.8+
 - Go 1.21+
-- Rust (stable)
-- C++ compiler (g++/clang++)
+- Rust (stable toolchain)
+- C++ compiler (for gRPC Python tools)
+
+### One-Time Setup: gRPC & Protobuf Tools
+You must install the Protocol Buffer compiler (`protoc`) and the language-specific gRPC plugins.
+
+- **protoc**: `brew install protobuf` (on macOS)
+- **Go plugins**:
+  ```sh
+  go install google.golang.org/protobuf/cmd/protoc-gen-go@latest
+  go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest
+  ```
+- **Python tools**:
+  ```sh
+  pip install grpcio grpcio-tools
+  ```
+Make sure your Go bin directory is in your `PATH` (e.g., `export PATH="$PATH:$(go env GOPATH)/bin"`).
 
 ### Build & Run
+
+1.  **Set up Python Environment**: This creates a virtual environment and installs required packages.
+    ```sh
+    make setup
+    ```
+
+2.  **Generate gRPC Code**: This command uses `protoc` to generate client and server code from `protos/trading_api.proto` for all languages.
+    ```sh
+    make generate
+    ```
+
+3.  **Run the Services**: Open three separate terminals and run one command in each to start the services and the client.
+    -   **Terminal 1 (Go Service):** `make run-go-service`
+    -   **Terminal 2 (Rust Service):** `make run-rust-service`
+    -   **Terminal 3 (Python Client):** `make run-python-client`
+
+## Configuration
+
+For local development, you can manage configuration and secrets using a `.env` file in the project root.
+
+1.  Copy the example file:
+    ```sh
+    cp .env.example .env
+    ```
+2.  Edit `.env` to add your API keys or change service addresses.
+
+The `.env` file is excluded from version control by `.gitignore`. For production, you should use your cloud provider's secret management service (e.g., AWS Secrets Manager, HashiCorp Vault).
+
+## Development
+
+### Regenerating gRPC Code
+If you modify `protos/trading_api.proto`, you must regenerate the client and server code for all languages.
+
 ```sh
-# Clone the repo
-# cd multilanguage
-# (Recommended) Set up a Python virtual environment:
-python3 -m venv venv
-source venv/bin/activate
-# Install the Python package and its dependencies in editable mode
-pip install -e .
-# Then run the demo:
-make run
-```
-This will:
-- Build Go, Rust, and C++ shared libraries
-- Run the Python demo script, which:
-  - Loads the C++ order book
-  - Calls Go and Rust strategies
-  - Fetches live BTC-USD prices from Coinbase
-  - Prints all cross-language output
-
-### Example Output
-```
-Shared library loaded successfully.
-Added buy order id=1, sell order id=2
-Top of book (bid): id=1, price=101.5, qty=10
-Top of book (ask): id=2, price=102.0, qty=5
-Cancel buy order result: 1
-Top of book (bid) after cancel: id=0, price=0.0, qty=0
-
---- Live Coinbase Price Feed Demo ---
-[1] Added buy order at Coinbase BTC-USD price 116647.305 (order id=3)
-Top of book (bid): id=3, price=116647.305, qty=1
-[2] Added buy order at Coinbase BTC-USD price 116647.305 (order id=4)
-Top of book (bid): id=3, price=116647.305, qty=1
-[3] Added buy order at Coinbase BTC-USD price 116647.305 (order id=5)
-Top of book (bid): id=3, price=116647.305, qty=1
-[4] Added buy order at Coinbase BTC-USD price 116647.305 (order id=6)
-Top of book (bid): id=3, price=116647.305, qty=1
-[5] Added buy order at Coinbase BTC-USD price 116647.305 (order id=7)
-Top of book (bid): id=3, price=116647.305, qty=1
-[6] Added buy order at Coinbase BTC-USD price 116648.67 (order id=8)
-Top of book (bid): id=8, price=116648.67, qty=1
-[7] Added buy order at Coinbase BTC-USD price 116648.67 (order id=9)
-Top of book (bid): id=8, price=116648.67, qty=1
-[8] Added buy order at Coinbase BTC-USD price 116648.67 (order id=10)
-Top of book (bid): id=8, price=116648.67, qty=1
-[9] Added buy order at Coinbase BTC-USD price 116647.535 (order id=11)
-Top of book (bid): id=8, price=116648.67, qty=1
-[10] Added buy order at Coinbase BTC-USD price 116648.67 (order id=12)
-Top of book (bid): id=8, price=116648.67, qty=1
-
-  /\_/\
-     ( o.o )  ♡
-  > ^ <
-     /  -  \
-    / | | | \
-   /  | | |  \
-   |  | | |  |
-   \_|_|_|_/_/
-      
-Starting multi-language greeting...
-Hello from C++!
-Hello from Go!
-[Go] Added buy order id=13, sell order id=14
-[Go] Top of book (bid): id=8, price=116648.67, qty=1
-[Go] Top of book (ask): id=2, price=102.00, qty=5
-[Go] Cancel buy order result: 1
-[Go] Top of book (bid) after cancel: id=8, price=116648.67, qty=1
-[Rust] Added buy order id=15, sell order id=16
-[Rust] Top of book (bid): id=8, price=116648.67, qty=1
-[Rust] Top of book (ask): id=2, price=102, qty=5
-[Rust] Cancel buy order result: 1
-[Rust] Top of book (bid) after cancel: id=8, price=116648.67, qty=1
-All languages have greeted successfully!
+make generate
 ```
 
-## Project Structure
-- `cpp/` — C++ order book core
-- `go/` — Go FFI and strategy
-- `rust/` — Rust FFI and strategy
-- `python/` — Python orchestrator/demo
-- `bin/` — Compiled shared libraries
-- `Makefile` — Automated build/run
-
-## How to Add Your Own Strategy
-- **Go**: Implement a new function in `go/orderbook_ffi.go` and export it with `//export`.
-- **Rust**: Add a new function in `rust/src/orderbook_ffi.rs` and export with `#[no_mangle]`.
-- **Python**: Call the C++ API directly or use ctypes to call Go/Rust.
-
-## Advanced Usage
-- Plug in real market data or backtest with historical data
-- Extend the order book with more features (matching, persistence)
-- Add analytics, risk checks, or logging in any language
-
-## Troubleshooting
-- On macOS, DYLD_LIBRARY_PATH must include the `bin/` directory (the Makefile handles this)
-- If you see symbol errors, ensure all libraries are rebuilt (`make clean && make run`)
-- If you see `ModuleNotFoundError: No module named 'requests'`, ensure you have activated your virtual environment and run `pip install requests`.
+### Cleaning Up
+To remove all generated code and build artifacts, run:
+```sh
+make clean
+```
 
 ## License
 MIT
