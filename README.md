@@ -4,7 +4,7 @@ A high-performance, cross-language trading engine demo integrating C++, Python, 
 
 ## Features
 - **Ultra-fast C++ order book** with C API (add, cancel, query orders)
-- **Python orchestration**: run strategies, backtests, and analytics
+- **Python orchestration**: A modern, `pyproject.toml`-based Python package for running strategies, backtests, and analytics.
 - **Rust & Go strategy modules**: plug in compiled strategies for speed and safety
 - **Full FFI integration**: all languages can call the C++ core and each other
 - **Automated build**: Makefile builds all shared libraries and runs the demo
@@ -25,8 +25,8 @@ A high-performance, cross-language trading engine demo integrating C++, Python, 
 # (Recommended) Set up a Python virtual environment:
 python3 -m venv venv
 source venv/bin/activate
-pip install requests
-
+# Install the Python package and its dependencies in editable mode
+pip install -e .
 # Then run the demo:
 make run
 ```
