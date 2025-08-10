@@ -39,13 +39,15 @@ public:
     int next_id = 1;
 
     int add_order(double price, int qty, bool is_buy) {
-        Order new_order = {next_id, price, qty, is_buy};
-        match_order(new_order);
-		if (!check_position_limit(qty, is_buy)) {
+        // 1. Perform risk check first on the original order quantity.
+        if (!check_position_limit(qty, is_buy)) {
             std::cout << "Position limit exceeded. Order rejected." << std::endl;
             return 0; // Indicate order rejection
         }
-		
+
+        // 2. If risk check passes, proceed with matching.
+        Order new_order = {next_id, price, qty, is_buy};
+        match_order(new_order);
         return next_id++;
     }
     bool cancel_order(int id) {
@@ -56,14 +58,20 @@ public:
         }
         return false;
     }
-    
+
+    // Match incoming order with existing orders. 
     bool match_order(Order& new_order) {
         std::vector<Trade> trades;
         bool order_filled = false;
 
         for (auto it = orders.begin(); it != orders.end(); ) {
             Order& existing_order = *it;
-            if (new_order.is_buy != existing_order.is_buy && new_order.price >= existing_order.price) {
+            // Corrected matching logic:
+            // - A buy order's price must be >= an existing sell order's price.
+            // - A sell order's price must be <= an existing buy order's price.
+            bool prices_cross = (new_order.is_buy && new_order.price >= existing_order.price) ||
+                                (!new_order.is_buy && new_order.price <= existing_order.price);
+            if (new_order.is_buy != existing_order.is_buy && prices_cross) {
                  //Match!
                 int trade_qty = std::min(new_order.qty, existing_order.qty);
                 trades.push_back({new_order.id, existing_order.id, existing_order.price, trade_qty});
