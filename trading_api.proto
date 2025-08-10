@@ -1,0 +1,48 @@
+syntax = "proto3";
+
+package trading;
+
+option go_package = "github.com/xeratooth/multilanguage/protos";
+
+// Represents a single market data tick
+message Tick {
+    string symbol = 1;
+    double price = 2;
+    int64 timestamp_ns = 3; // Nanosecond precision timestamp
+}
+
+// Request to start or stop a strategy
+message StrategyRequest {
+    string strategy_id = 1;
+    string symbol = 2;
+    map<string, string> parameters = 3; // e.g., {"order_size": "10", "threshold": "0.5"}
+}
+
+// Generic response for operations
+message StatusResponse {
+    bool success = 1;
+    string message = 2;
+}
+
+// Request to get portfolio status
+message PortfolioRequest {
+    string account_id = 1;
+}
+
+// Response with portfolio details
+message PortfolioResponse {
+    map<string, double> positions = 1; // e.g., {"BTC": 1.5, "USD": 50000.0}
+    double total_value_usd = 2;
+}
+
+// Service for managing trading strategies and accounts
+service TradingService {
+    // Starts a trading strategy
+    rpc StartStrategy(StrategyRequest) returns (StatusResponse);
+    // Stops a trading strategy
+    rpc StopStrategy(StrategyRequest) returns (StatusResponse);
+    // Gets the current portfolio status
+    rpc GetPortfolio(PortfolioRequest) returns (PortfolioResponse);
+    // Subscribes to a real-time feed of market data
+    rpc SubscribeTicks(StrategyRequest) returns (stream Tick);
+}
