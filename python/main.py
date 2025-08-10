@@ -1,12 +1,13 @@
 import requests
 import time
-def fetch_binance_price(symbol="BTCUSDT"):
+
+def fetch_coinbase_price():
 	# Fetch BTC-USD spot price from Coinbase public API
 	url = "https://api.coinbase.com/v2/prices/BTC-USD/spot"
 	resp = requests.get(url)
 	resp.raise_for_status()
 	return float(resp.json()["data"]["amount"])
-import ctypes
+
 import sys
 import os
 
@@ -67,7 +68,7 @@ try:
 	qty = ctypes.c_int()
 	oid = ctypes.c_int()
 	for i in range(10):
-		live_price = fetch_binance_price()
+		live_price = fetch_coinbase_price()
 		order_id = lib.ob_add_order(live_price, 1, 1)  # Simulate a buy order at market price
 		print(f"[{i+1}] Added buy order at Coinbase BTC-USD price {live_price} (order id={order_id})")
 		lib.ob_get_top_of_book(1, ctypes.byref(price), ctypes.byref(qty), ctypes.byref(oid))
