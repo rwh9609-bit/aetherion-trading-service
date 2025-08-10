@@ -67,7 +67,7 @@ try:
 	price = ctypes.c_double()
 	qty = ctypes.c_int()
 	oid = ctypes.c_int()
-	for i in range(10):
+	for i in range(1):
 		live_price = fetch_coinbase_price()
 		order_id = lib.ob_add_order(live_price, 1, 1)  # Simulate a buy order at market price
 		print(f"[{i+1}] Added buy order at Coinbase BTC-USD price {live_price} (order id={order_id})")
