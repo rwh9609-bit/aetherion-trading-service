@@ -3,9 +3,11 @@ package main
 import "C"
 import "fmt"
 
+
 //export greet_from_go
 func greet_from_go() {
 	fmt.Println("Hello from Go!")
+	go_strategy_demo()
 }
 
 func main() {

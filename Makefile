@@ -21,10 +21,10 @@ $(BIN_DIR):
 # This is the most reliable way to build the Go shared library.
 # We build inside the source directory, which is where the header file is guaranteed to be created,
 # and then copy both the library and the header to the bin directory.
-$(GO_LIB) $(GO_HEADER): $(GO_SRC_DIR)/go_lib.go | $(BIN_DIR)
+$(GO_LIB) $(GO_HEADER): $(CPP_LIB) $(GO_SRC_DIR)/*.go | $(BIN_DIR)
 	@echo "Building Go shared library..."
 	cd $(GO_SRC_DIR) && \
-	go build -buildmode=c-shared -o libgo.dylib go_lib.go && \
+	go build -buildmode=c-shared -o libgo.dylib . && \
 	cp libgo.dylib ../$(GO_LIB) && \
 	cp libgo.h ../$(GO_HEADER)
 
@@ -37,7 +37,7 @@ $(RUST_LIB): $(RUST_SRC_DIR)/src/lib.rs $(RUST_SRC_DIR)/Cargo.toml | $(BIN_DIR)
 # Build the C++ shared library, linking against the Go and Rust libraries
 $(CPP_LIB): $(GO_LIB) $(GO_HEADER) $(RUST_LIB) $(CPP_SRC_DIR)/cpp_lib.cpp | $(BIN_DIR)
 	@echo "Building C++ shared library..."
-	g++ -shared -fPIC -o $(CPP_LIB) $(CPP_SRC_DIR)/cpp_lib.cpp \
+	g++ -shared -fPIC -o $(CPP_LIB) $(CPP_SRC_DIR)/*.cpp \
 		-I$(BIN_DIR) -L$(BIN_DIR) -lgo -lrust_lib -Wl,-rpath,.
 
 # The `run` target first builds all dependencies, then runs the Python script.
