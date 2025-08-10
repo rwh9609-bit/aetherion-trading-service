@@ -65,12 +65,20 @@ def run_orchestrator():
 
         # --- 3. Subscribe to Market Data Stream from Go Service ---
         print("\n--- 3. Subscribing to Market Data from Go Service ---")
+        last_btc_price = None # Initialize variable to track last BTC price
         try:
             # This call is non-blocking and returns an iterator
-            for tick in trading_stub.SubscribeTicks(strategy_req):\
+            for tick in trading_stub.SubscribeTicks(strategy_req):
                 print(f"Received Tick: {tick.symbol} Price={tick.price:.2f} (Timestamp: {tick.timestamp_ns})")
-                # Here, you would feed the tick into your Python-based
-                # models, risk checks, or analytics dashboards.
+                
+                # Simple logic: Detect price change for BTC-USD
+                if tick.symbol == "BTC-USD":
+                    if last_btc_price is None:
+                        last_btc_price = tick.price
+                        print(f"[ORCHESTRATOR] Initial BTC-USD price set to: {last_btc_price:.2f}")
+                    elif tick.price != last_btc_price:
+                        print(f"[ORCHESTRATOR] BTC-USD price changed from {last_btc_price:.2f} to {tick.price:.2f}")
+                        last_btc_price = tick.price
 
         except KeyboardInterrupt:
             print("\nUnsubscribing from market data.")
