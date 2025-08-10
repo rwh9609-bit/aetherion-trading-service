@@ -5,14 +5,48 @@ import os
 script_dir = os.path.dirname(os.path.abspath(__file__))
 lib_path = os.path.join(script_dir, "..", "bin", "libcpp.dylib")
 
+
 # Load the shared library
-# On macOS, shared libraries have the .dylib extension
 try:
 	lib = ctypes.CDLL(lib_path)
 	print("Shared library loaded successfully.")
 
-	# Call the C++ function
+	# Set argument and return types for order book functions
+	lib.ob_add_order.argtypes = [ctypes.c_double, ctypes.c_int, ctypes.c_int]
+	lib.ob_add_order.restype = ctypes.c_int
+
+	lib.ob_cancel_order.argtypes = [ctypes.c_int]
+	lib.ob_cancel_order.restype = ctypes.c_int
+
+	lib.ob_get_top_of_book.argtypes = [ctypes.c_int, ctypes.POINTER(ctypes.c_double), ctypes.POINTER(ctypes.c_int), ctypes.POINTER(ctypes.c_int)]
+	lib.ob_get_top_of_book.restype = None
+
+	# Demo: Add a buy and a sell order
+	buy_id = lib.ob_add_order(101.5, 10, 1)
+	sell_id = lib.ob_add_order(102.0, 5, 0)
+	print(f"Added buy order id={buy_id}, sell order id={sell_id}")
+
+	# Query top of book for buy (bid)
+	price = ctypes.c_double()
+	qty = ctypes.c_int()
+	oid = ctypes.c_int()
+	lib.ob_get_top_of_book(1, ctypes.byref(price), ctypes.byref(qty), ctypes.byref(oid))
+	print(f"Top of book (bid): id={oid.value}, price={price.value}, qty={qty.value}")
+
+	# Query top of book for sell (ask)
+	lib.ob_get_top_of_book(0, ctypes.byref(price), ctypes.byref(qty), ctypes.byref(oid))
+	print(f"Top of book (ask): id={oid.value}, price={price.value}, qty={qty.value}")
+
+	# Cancel the buy order
+	result = lib.ob_cancel_order(buy_id)
+	print(f"Cancel buy order result: {result}")
+
+	# Query top of book for buy again
+	lib.ob_get_top_of_book(1, ctypes.byref(price), ctypes.byref(qty), ctypes.byref(oid))
+	print(f"Top of book (bid) after cancel: id={oid.value}, price={price.value}, qty={qty.value}")
+
+	# Call the original demo
 	lib.master_greet()
 except OSError as e:
-	print(f"Error loading shared librar: {e}")
+	print(f"Error loading shared library: {e}")
 	print("Ensure the C++ code has been compiled and the library exists.")
