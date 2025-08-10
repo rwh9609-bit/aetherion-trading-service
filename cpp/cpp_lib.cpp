@@ -7,6 +7,13 @@ void greet_from_cpp() {
     std::cout << "Hello from C++!" << std::endl;
 }
 
+// --- Risk Management ---
+
+const int MAX_POSITION = 100; // Maximum position size
+
+
+
+
 // --- Order Book Implementation ---
 #include <vector>
 #include <algorithm>
@@ -18,19 +25,104 @@ struct Order {
     bool is_buy;
 };
 
+struct Trade {
+    int buy_order_id;
+    int sell_order_id;
+    double price;
+    int qty;
+};
 class OrderBook {
 public:
+
+    // Make orders public for testing purposes
     std::vector<Order> orders;
     int next_id = 1;
 
     int add_order(double price, int qty, bool is_buy) {
-        orders.push_back({next_id, price, qty, is_buy});
+        Order new_order = {next_id, price, qty, is_buy};
+        match_order(new_order);
+		if (!check_position_limit(qty, is_buy)) {
+            std::cout << "Position limit exceeded. Order rejected." << std::endl;
+            return 0; // Indicate order rejection
+        }
+		
         return next_id++;
     }
     bool cancel_order(int id) {
         auto it = std::remove_if(orders.begin(), orders.end(), [id](const Order& o){ return o.id == id; });
         if (it != orders.end()) {
             orders.erase(it, orders.end());
+            return true;
+        }
+        return false;
+    }
+    
+    bool match_order(Order& new_order) {
+        std::vector<Trade> trades;
+        bool order_filled = false;
+
+        for (auto it = orders.begin(); it != orders.end(); ) {
+            Order& existing_order = *it;
+            if (new_order.is_buy != existing_order.is_buy && new_order.price >= existing_order.price) {
+                 //Match!
+                int trade_qty = std::min(new_order.qty, existing_order.qty);
+                trades.push_back({new_order.id, existing_order.id, existing_order.price, trade_qty});
+
+                new_order.qty -= trade_qty;
+                existing_order.qty -= trade_qty;
+
+                if (existing_order.qty == 0) {
+                    it = orders.erase(it);
+                } else {
+                    ++it;
+                }
+
+                if (new_order.qty == 0) {
+                    order_filled = true;
+                    break;
+                }
+            } else {
+                 ++it;
+            }
+        }
+
+        if (!order_filled) {
+            orders.push_back(new_order);
+        }
+        
+        for (const auto& trade : trades) {
+            std::cout << "Trade executed: buy_order_id=" << trade.buy_order_id
+                      << ", sell_order_id=" << trade.sell_order_id
+                      << ", price=" << trade.price << ", qty=" << trade.qty << std::endl;
+        }
+        return true;
+    }
+
+	bool check_position_limit(int qty, bool is_buy) {
+        int current_position = 0;
+        for (const auto& o : orders) {
+            if (o.is_buy) {
+                current_position += o.qty;
+            } else {
+                current_position -= o.qty;
+            }
+        }
+
+        int new_position = current_position + (is_buy ? qty : -qty);
+        return std::abs(new_position) <= MAX_POSITION;
+    }
+
+    bool reduce_order(int id, int qty_to_reduce) {
+        auto it = std::find_if(orders.begin(), orders.end(), [id](const Order& o){ return o.id == id; });
+        if (it != orders.end()) {
+            if(qty_to_reduce > it->qty){
+                return false;
+            }
+            it->qty -= qty_to_reduce;
+            if (it->qty == 0) {
+                orders.erase(it);
+            }
+
             return true;
         }
         return false;
