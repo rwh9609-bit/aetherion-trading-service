@@ -1,12 +1,13 @@
 import requests
 import time
-def fetch_binance_price(symbol="BTCUSDT"):
+
+def fetch_coinbase_price():
 	# Fetch BTC-USD spot price from Coinbase public API
 	url = "https://api.coinbase.com/v2/prices/BTC-USD/spot"
 	resp = requests.get(url)
 	resp.raise_for_status()
 	return float(resp.json()["data"]["amount"])
-import ctypes
+
 import sys
 import os
 
