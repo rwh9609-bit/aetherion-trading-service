@@ -36,43 +36,46 @@ setup:
 	cd $(GO_DIR) && go mod tidy
 
 # Generate all gRPC code
-generate: 
-	@echo "Generating Protocol Buffers..."
-	PATH="$(GO_BIN):$(VENV_DIR)/bin:$$PATH" $(PROTOC) \
+generate: generate-python
+	@echo "Generating Protocol Buffers for Go, Rust, and Web..."
+	PATH="$(GO_BIN):$$PATH" $(PROTOC) \
 		--go_out=$(GO_DIR)/gen --go_opt=paths=source_relative \
 		--go-grpc_out=$(GO_DIR)/gen --go-grpc_opt=paths=source_relative \
 		--grpc-web_out=import_style=commonjs,mode=grpcwebtext:$(FRONTEND_DIR)/src/proto \
 		--js_out=import_style=commonjs:$(FRONTEND_DIR)/src/proto \
-		--python_out=$(PYTHON_DIR)/protos \
-		--grpc_python_out=$(PYTHON_DIR)/protos \
 		$(PROTO_FILE)
+	# Generate Rust code
+	cd $(RUST_SERVICE_DIR) && cargo build --release
 
 # Build all services
-build:
+build: generate
 	@echo "Building all services..."
 	cd $(RUST_SERVICE_DIR) && cargo build --release
-	cd $(GO_DIR) && go build -o bin/trading_service
+	cd $(GO_DIR) && go mod tidy && go build -o bin/trading_service
 	cd $(FRONTEND_DIR) && npm run build
 
 # Run all services (in background)
 run:
 	@echo "Starting all services..."
-	@echo "Starting Envoy proxy..."
+	@echo "Starting Envoy proxy on port 8080..."
 	envoy -c envoy.yaml & echo $$! > /tmp/envoy.pid
+	@echo "Starting Rust Risk Service on port 50052..."
 	cd $(RUST_SERVICE_DIR) && cargo run --release & echo $$! > /tmp/risk_service.pid
+	@echo "Starting Go Trading Service on port 50051..."
 	cd $(GO_DIR) && ./bin/trading_service & echo $$! > /tmp/trading_service.pid
+	@echo "Starting Python Strategy Service on port 50053..."
 	cd $(PYTHON_DIR) && ../venv/bin/python main.py & echo $$! > /tmp/python_service.pid
+	@echo "Starting Frontend on port 3000..."
 	cd $(FRONTEND_DIR) && npm start &
 	@echo "All services started. Visit http://localhost:3000 for the UI"
 
 # Stop all services
 stop:
 	@echo "Stopping all services..."
-	-kill `cat /tmp/envoy.pid 2>/dev/null` 2>/dev/null || true
-	-kill `cat /tmp/risk_service.pid 2>/dev/null` 2>/dev/null || true
-	-kill `cat /tmp/trading_service.pid 2>/dev/null` 2>/dev/null || true
-	-kill `cat /tmp/python_service.pid 2>/dev/null` 2>/dev/null || true
-	@echo "Stopping frontend service on port 3000..."
+	-kill -9 `lsof -t -i:8080` 2>/dev/null || true
+	-kill -9 `lsof -t -i:50051` 2>/dev/null || true
+	-kill -9 `lsof -t -i:50052` 2>/dev/null || true
+	-kill -9 `lsof -t -i:50053` 2>/dev/null || true
 	-kill -9 `lsof -t -i:3000` 2>/dev/null || true
 	-rm -f /tmp/envoy.pid /tmp/risk_service.pid /tmp/trading_service.pid /tmp/python_service.pid
 	@echo "All services stopped."
