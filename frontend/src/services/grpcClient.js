@@ -1,30 +1,23 @@
 import { grpc } from '@improbable-eng/grpc-web';
 import { TradingServiceClient, RiskServiceClient } from '../proto/protos/trading_api_grpc_web_pb';
 import { 
-  Tick,
-  PortfolioRequest,
-  PortfolioResponse,
-  StrategyRequest,
   OrderBookRequest,
-  VaRRequest,
-  VaRResponse,
-} from '../proto/protos/trading_api_pb';
+  StrategyRequest,
+  Tick,
+  Portfolio,
+  VaRRequest
+} from '../proto/protos/trading_api_pb.js';
 
 const host = 'http://localhost:8080'; // Route all requests through envoy proxy
 const options = {
   transport: grpc.CrossBrowserHttpTransport({
     withCredentials: false,
-    allowedRequestMedia: ['application/grpc-web+proto'],
   }),
-  debug: true,
-  keepalive: {
-    time: 15000,     // Send keepalive ping every 15 seconds
-    timeout: 10000,  // Consider connection dead after 10 seconds of no response
-  }
+  debug: true
 };
 
-const tradingClient = new TradingServiceClient(host, null, options);
-const riskClient = new RiskServiceClient(host, null, options);
+const tradingClient = new TradingServiceClient(host, null, {...options, format: 'text'});
+const riskClient = new RiskServiceClient(host, null, {...options, format: 'text'});
 
 const MAX_RETRIES = 5;
 const RETRY_DELAY = 2000; // 2 seconds
@@ -32,10 +25,7 @@ const TIMEOUT = 60000; // 60 seconds
 const BACKOFF_FACTOR = 1.5; // Exponential backoff factor
 
 const createMetadata = () => ({
-  'Content-Type': 'application/grpc-web+proto',
-  'Accept': 'application/grpc-web+proto',
   'X-Grpc-Web': '1',
-  'X-User-Agent': 'grpc-web-javascript/0.1'
 });
 
 const withRetry = async (operation, operationName = 'Operation', retries = MAX_RETRIES) => {
@@ -151,8 +141,8 @@ export const fetchRiskMetrics = async () => {
   return withRetry(async () => {
     const request = new VaRRequest();
     
-    // Create a portfolio response for the current portfolio
-    const portfolio = new PortfolioResponse();
+    // Create a portfolio for the current portfolio
+    const portfolio = new Portfolio();
     const positionsMap = portfolio.getPositionsMap();
     positionsMap.set('BTC-USD', 0.5);
     portfolio.setTotalValueUsd(100000);
