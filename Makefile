@@ -1,6 +1,6 @@
 # Makefile for the Aetherion Trading Engine (gRPC Microservices)
 
-.PHONY: all generate generate-go generate-python run-go-service stop-go-service run-rust-service stop-rust-service run-python-client setup clean
+.PHONY: all setup generate build run stop clean
 
 # --- Variables ---
 PROTOC = protoc
@@ -19,32 +19,60 @@ VENV_DIR = venv
 # Rust variables
 RUST_SERVICE_DIR = rust/risk_service
 
+# Frontend variables
+FRONTEND_DIR = frontend
+
 # --- Main Targets ---
 
 # Default target
-all: generate
+all: setup generate build
 
-# Generate all gRPC code (Rust generation is handled by cargo)
-generate: generate-go generate-python 
-	@echo "All gRPC code generated."
+# Setup development environment
+setup:
+	@echo "Setting up development environment..."
+	cd $(FRONTEND_DIR) && npm install
+	cd $(PYTHON_DIR) && pip install -r requirements.txt
+	cd $(RUST_SERVICE_DIR) && cargo build
+	cd $(GO_DIR) && go mod tidy
 
-# Run all services and the client (requires separate terminals)
+# Generate all gRPC code
+generate: 
+	@echo "Generating Protocol Buffers..."
+	$(PROTOC) \
+		--go_out=$(GO_DIR)/gen --go_opt=paths=source_relative \
+		--go-grpc_out=$(GO_DIR)/gen --go-grpc_opt=paths=source_relative \
+		--rust_out=$(RUST_SERVICE_DIR)/src \
+		--grpc-web_out=import_style=commonjs:$(FRONTEND_DIR)/src/proto \
+		--js_out=import_style=commonjs:$(FRONTEND_DIR)/src/proto \
+		--python_out=$(PYTHON_DIR)/protos \
+		--grpc_python_out=$(PYTHON_DIR)/protos \
+		$(PROTO_FILE)
+
+# Build all services
+build:
+	@echo "Building all services..."
+	cd $(RUST_SERVICE_DIR) && cargo build --release
+	cd $(GO_DIR) && go build -o bin/trading_service
+	cd $(FRONTEND_DIR) && npm run build
+
+# Run all services (in background)
 run:
-	@echo "To run the system, please open three separate terminals."
-	@echo "Terminal 1: make run-go-service"
-	@echo "Terminal 2: make run-rust-service"
-	@echo "Terminal 3: make run-python-client"
+	@echo "Starting all services..."
+	cd $(RUST_SERVICE_DIR) && cargo run --release & echo $$! > /tmp/risk_service.pid
+	cd $(GO_DIR) && ./bin/trading_service & echo $$! > /tmp/trading_service.pid
+	cd $(FRONTEND_DIR) && npm start & echo $$! > /tmp/frontend.pid
+	cd $(PYTHON_DIR) && python main.py & echo $$! > /tmp/python_service.pid
+	@echo "All services started. Visit http://localhost:3000 for the UI"
 
-# --- Code Generation ---
-
-# Generate Go gRPC code
-generate-go: $(PROTO_FILE)
-	@echo "Generating Go gRPC code..."
-	$(PROTOC) --plugin=protoc-gen-go=$(GO_BIN)/protoc-gen-go \
-	          --plugin=protoc-gen-go-grpc=$(GO_BIN)/protoc-gen-go-grpc \
-	          --go_out=$(GO_DIR) --go_opt=module=$(GO_MODULE) \
-	          --go-grpc_out=$(GO_DIR) --go-grpc_opt=module=$(GO_MODULE) \
-	          $(PROTO_FILE)
+# Stop all services
+stop:
+	@echo "Stopping all services..."
+	-kill `cat /tmp/risk_service.pid 2>/dev/null` 2>/dev/null || true
+	-kill `cat /tmp/trading_service.pid 2>/dev/null` 2>/dev/null || true
+	-kill `cat /tmp/frontend.pid 2>/dev/null` 2>/dev/null || true
+	-kill `cat /tmp/python_service.pid 2>/dev/null` 2>/dev/null || true
+	-rm -f /tmp/*.pid
+	@echo "All services stopped."
 
 
 # Generate Python gRPC code
