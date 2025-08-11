@@ -1,12 +1,12 @@
 import { grpc } from '@improbable-eng/grpc-web';
-import { TradingServiceClient, RiskServiceClient } from '../proto/protos/trading_api_grpc_web_pb';
+import { TradingServiceClient, RiskServiceClient } from '../proto/trading_api_grpc_web_pb';
 import { 
   OrderBookRequest,
   StrategyRequest,
   Tick,
   Portfolio,
   VaRRequest
-} from '../proto/protos/trading_api_pb.js';
+} from '../proto/trading_api_pb.js';
 
 const host = 'http://localhost:8080'; // Route all requests through envoy proxy
 const options = {
@@ -26,6 +26,7 @@ const BACKOFF_FACTOR = 1.5; // Exponential backoff factor
 
 const createMetadata = () => ({
   'X-Grpc-Web': '1',
+  'Content-Type': 'application/grpc-web+proto',
 });
 
 const withRetry = async (operation, operationName = 'Operation', retries = MAX_RETRIES) => {

@@ -38,11 +38,10 @@ setup:
 # Generate all gRPC code
 generate: 
 	@echo "Generating Protocol Buffers..."
-	$(PROTOC) \
+	PATH="$(GO_BIN):$(VENV_DIR)/bin:$$PATH" $(PROTOC) \
 		--go_out=$(GO_DIR)/gen --go_opt=paths=source_relative \
 		--go-grpc_out=$(GO_DIR)/gen --go-grpc_opt=paths=source_relative \
-		--rust_out=$(RUST_SERVICE_DIR)/src \
-		--grpc-web_out=import_style=commonjs:$(FRONTEND_DIR)/src/proto \
+		--grpc-web_out=import_style=commonjs,mode=grpcwebtext:$(FRONTEND_DIR)/src/proto \
 		--js_out=import_style=commonjs:$(FRONTEND_DIR)/src/proto \
 		--python_out=$(PYTHON_DIR)/protos \
 		--grpc_python_out=$(PYTHON_DIR)/protos \
@@ -58,21 +57,29 @@ build:
 # Run all services (in background)
 run:
 	@echo "Starting all services..."
+	@echo "Starting Envoy proxy..."
+	envoy -c envoy.yaml & echo $$! > /tmp/envoy.pid
 	cd $(RUST_SERVICE_DIR) && cargo run --release & echo $$! > /tmp/risk_service.pid
 	cd $(GO_DIR) && ./bin/trading_service & echo $$! > /tmp/trading_service.pid
-	cd $(FRONTEND_DIR) && npm start & echo $$! > /tmp/frontend.pid
-	cd $(PYTHON_DIR) && python main.py & echo $$! > /tmp/python_service.pid
+	cd $(PYTHON_DIR) && ../venv/bin/python main.py & echo $$! > /tmp/python_service.pid
+	cd $(FRONTEND_DIR) && npm start &
 	@echo "All services started. Visit http://localhost:3000 for the UI"
 
 # Stop all services
 stop:
 	@echo "Stopping all services..."
+	-kill `cat /tmp/envoy.pid 2>/dev/null` 2>/dev/null || true
 	-kill `cat /tmp/risk_service.pid 2>/dev/null` 2>/dev/null || true
 	-kill `cat /tmp/trading_service.pid 2>/dev/null` 2>/dev/null || true
-	-kill `cat /tmp/frontend.pid 2>/dev/null` 2>/dev/null || true
 	-kill `cat /tmp/python_service.pid 2>/dev/null` 2>/dev/null || true
-	-rm -f /tmp/*.pid
+	@echo "Stopping frontend service on port 3000..."
+	-kill -9 `lsof -t -i:3000` 2>/dev/null || true
+	-rm -f /tmp/envoy.pid /tmp/risk_service.pid /tmp/trading_service.pid /tmp/python_service.pid
 	@echo "All services stopped."
+
+# Restart all services
+restart: stop build run
+
 
 
 # Generate Python gRPC code

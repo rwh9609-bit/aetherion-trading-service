@@ -15,6 +15,14 @@ static_resources:
             virtual_hosts:
             - name: local_services
               domains: ["*"]
+              cors:
+                allow_origin_string_match:
+                  - safe_regex:
+                      google_re2: {}
+                      regex: ".*"
+                allow_methods: GET, PUT, DELETE, POST, OPTIONS
+                allow_headers: keep-alive,user-agent,cache-control,content-type,content-transfer-encoding,x-grpc-web,grpc-accept-encoding,x-user-agent,custom-header-1,x-grpc-timeout
+                expose_headers: grpc-status,grpc-message
               routes:
               - match:
                   prefix: "/trading.TradingService/"
@@ -30,14 +38,6 @@ static_resources:
                   timeout: 0s
                   max_stream_duration:
                     grpc_timeout_header_max: 0s
-              cors:
-                allow_origin_string_match:
-                  - safe_regex:
-                      google_re2: {}
-                      regex: ".*"
-                allow_methods: GET, PUT, DELETE, POST, OPTIONS
-                allow_headers: keep-alive,user-agent,cache-control,content-type,content-transfer-encoding,x-grpc-web,grpc-accept-encoding,x-user-agent,custom-header-1,x-grpc-timeout
-                expose_headers: grpc-status,grpc-message
           http_filters:
           - name: envoy.filters.http.cors
             typed_config:

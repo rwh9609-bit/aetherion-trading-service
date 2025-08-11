@@ -1,2 +1,0 @@
-cargo:rerun-if-changed=../../protos/trading_api.proto
-cargo:rerun-if-changed=../../protos
