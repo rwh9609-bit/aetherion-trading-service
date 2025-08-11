@@ -10,24 +10,20 @@ import (
 	"strconv"
 	"sync"
 	"time"
-	
+
 	"google.golang.org/grpc/keepalive"
+
+	pb "aetherion-trading-service/gen/protos"
+	"container/heap"
 
 	"github.com/google/uuid"
 	"github.com/improbable-eng/grpc-web/go/grpcweb"
-	pb "aetherion-trading-service/gen/protos"
 	"google.golang.org/grpc"
-	"container/heap"
 )
 
-// PriceLevel represents a price level in the order book
-type PriceLevel struct {
-	Price float64
-	Size  float64
-}
+// PriceLevel is defined in orderbook.go
 
-// OrderBookSide is a min/max heap of price levels
-type OrderBookSide []PriceLevel
+// OrderBookSide is defined in orderbook.go
 
 func (h OrderBookSide) Len() int           { return len(h) }
 func (h OrderBookSide) Less(i, j int) bool { return h[i].Price < h[j].Price }
@@ -45,23 +41,7 @@ func (h *OrderBookSide) Pop() interface{} {
 	return x
 }
 
-// OrderBookManager manages the order book for a symbol
-type OrderBookManager struct {
-	mu   sync.RWMutex
-	bids *OrderBookSide
-	asks *OrderBookSide
-}
-
-func NewOrderBookManager() *OrderBookManager {
-	bids := &OrderBookSide{}
-	asks := &OrderBookSide{}
-	heap.Init(bids)
-	heap.Init(asks)
-	return &OrderBookManager{
-		bids: bids,
-		asks: asks,
-	}
-}
+// OrderBookManager is defined in orderbook.go
 
 func (ob *OrderBookManager) AddBid(price, size float64) {
 	ob.mu.Lock()
@@ -158,13 +138,13 @@ type OrderBookEntry struct {
 
 // Strategy represents an active trading strategy
 type Strategy struct {
-	ID          string
-	Symbol      string
+	ID           string
+	Symbol       string
 	StrategyType string
-	Parameters  map[string]string
-	IsActive    bool
-	CreatedAt   time.Time
-	mu          sync.Mutex
+	Parameters   map[string]string
+	IsActive     bool
+	CreatedAt    time.Time
+	mu           sync.Mutex
 }
 
 func (s *Strategy) Run(ctx context.Context, server *tradingServer) {
@@ -217,16 +197,16 @@ func (s *Strategy) Run(ctx context.Context, server *tradingServer) {
 type tradingServer struct {
 	pb.UnimplementedTradingServiceServer
 	orderBooks    map[string]*OrderBookManager // symbol -> order book
-	portfolios    map[string]*pb.PortfolioResponse // account -> portfolio
+	portfolios    map[string]*pb.Portfolio     // account -> portfolio
 	activeSymbols map[string]bool              // currently tracked symbols
 	strategies    map[string]*Strategy         // active strategies
-	mu           sync.RWMutex                  // protects concurrent access
+	mu            sync.RWMutex                 // protects concurrent access
 }
 
 func newTradingServer() *tradingServer {
 	return &tradingServer{
 		orderBooks:    make(map[string]*OrderBookManager),
-		portfolios:    make(map[string]*pb.PortfolioResponse),
+		portfolios:    make(map[string]*pb.Portfolio),
 		activeSymbols: make(map[string]bool),
 		strategies:    make(map[string]*Strategy),
 	}
@@ -250,8 +230,8 @@ func (s *tradingServer) GetPrice(ctx context.Context, req *pb.Tick) (*pb.Tick, e
 func (s *tradingServer) StartStrategy(ctx context.Context, req *pb.StrategyRequest) (*pb.StatusResponse, error) {
 	// Create a new strategy instance
 	strategy := &Strategy{
-		ID:            uuid.New().String(),
-		Symbol:        req.Symbol,
+		ID:           uuid.New().String(),
+		Symbol:       req.Symbol,
 		StrategyType: req.Parameters["type"],
 		Parameters:   req.Parameters,
 		IsActive:     true,
@@ -277,7 +257,7 @@ func (s *tradingServer) StartStrategy(ctx context.Context, req *pb.StrategyReque
 // StopStrategy stops a running strategy
 func (s *tradingServer) StopStrategy(ctx context.Context, req *pb.StrategyRequest) (*pb.StatusResponse, error) {
 	fmt.Printf("[Go Server] Stopping strategy %s for %s\n", req.StrategyId, req.Symbol)
-	
+
 	s.mu.Lock()
 	delete(s.activeSymbols, req.Symbol)
 	s.mu.Unlock()
@@ -286,14 +266,14 @@ func (s *tradingServer) StopStrategy(ctx context.Context, req *pb.StrategyReques
 }
 
 // GetPortfolio returns the current portfolio status
-func (s *tradingServer) GetPortfolio(ctx context.Context, req *pb.PortfolioRequest) (*pb.PortfolioResponse, error) {
+func (s *tradingServer) GetPortfolio(ctx context.Context, req *pb.PortfolioRequest) (*pb.Portfolio, error) {
 	s.mu.RLock()
 	portfolio, exists := s.portfolios[req.AccountId]
 	s.mu.RUnlock()
 
 	if !exists {
 		// Create a new portfolio with some mock data
-		portfolio = &pb.PortfolioResponse{
+		portfolio = &pb.Portfolio{
 			Positions: map[string]float64{
 				"BTC": 1.5,
 				"USD": 50000.0,
@@ -311,7 +291,7 @@ func (s *tradingServer) GetPortfolio(ctx context.Context, req *pb.PortfolioReque
 // StreamOrderBook streams order book updates
 func (s *tradingServer) StreamOrderBook(req *pb.OrderBookRequest, stream pb.TradingService_StreamOrderBookServer) error {
 	symbol := req.Symbol
-	
+
 	s.mu.Lock()
 	if _, exists := s.orderBooks[symbol]; !exists {
 		s.orderBooks[symbol] = NewOrderBookManager()
@@ -343,7 +323,7 @@ func (s *tradingServer) StreamOrderBook(req *pb.OrderBookRequest, stream pb.Trad
 			manager.AddAsk(price+30, 1.5)
 
 			bids, asks := manager.GetTopLevels(10)
-			
+
 			// Convert to protobuf message
 			orderBook := &pb.OrderBook{
 				Symbol: symbol,
@@ -408,8 +388,8 @@ func main() {
 	grpcServer := grpc.NewServer(
 		grpc.KeepaliveParams(keepalive.ServerParameters{
 			MaxConnectionIdle: 5 * time.Minute,
-			Time:             20 * time.Second,
-			Timeout:          1 * time.Second,
+			Time:              20 * time.Second,
+			Timeout:           1 * time.Second,
 		}),
 	)
 
@@ -450,7 +430,7 @@ func main() {
 		w.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS")
 		w.Header().Set("Access-Control-Allow-Headers", "Accept, Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization, X-User-Agent, X-Grpc-Web")
 		w.Header().Set("Access-Control-Expose-Headers", "grpc-status, grpc-message, grpc-encoding, grpc-accept-encoding")
-		
+
 		if r.Method == "OPTIONS" {
 			w.WriteHeader(http.StatusOK)
 			return
