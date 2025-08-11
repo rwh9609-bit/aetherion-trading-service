@@ -10,23 +10,47 @@ pub mod trading_api {
     tonic::include_proto!("trading");
 }
 
-#[derive(Default)]
-pub struct MyRiskService {}
+mod risk_calculator;
+use risk_calculator::RiskCalculator;
+use std::sync::Mutex;
+
+pub struct MyRiskService {
+    calculator: Mutex<RiskCalculator>,
+}
+
+impl Default for MyRiskService {
+    fn default() -> Self {
+        Self {
+            calculator: Mutex::new(RiskCalculator::default()),
+        }
+    }
+}
 
 #[tonic::async_trait]
 impl RiskService for MyRiskService {
     async fn calculate_va_r(
         &self,
-        _request: Request<VaRRequest>,
+        request: Request<VaRRequest>,
     ) -> Result<Response<VaRResponse>, Status> {
-        // --- HEAVY CPU-BOUND COMPUTATION HAPPENS HERE ---
-        // In a real application, this would involve complex simulations.
-        // For now, we'll just return a dummy value.
-        let calculated_var = 1234.56;
-        // ------------------------------------------------
+        let req = request.into_inner();
+        let portfolio = req.current_portfolio.ok_or_else(|| {
+            Status::invalid_argument("Portfolio is required")
+        })?;
+
+        // Convert positions to HashMap
+        let positions = portfolio.positions.clone();
+        let total_value = portfolio.total_value_usd;
+
+        // Calculate VaR with 95% confidence level
+        let var = {
+            let mut calc = self.calculator.lock().map_err(|_| {
+                Status::internal("Failed to acquire calculator lock")
+            })?;
+            calc.calculate_var(&positions, total_value, 0.95)
+        };
 
         let response = VaRResponse {
-            value_at_risk: calculated_var,
+            value_at_risk: var,
         };
 
         Ok(Response::new(response))

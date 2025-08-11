@@ -47,21 +47,45 @@ message VaRResponse {
     double value_at_risk = 1;
 }
 
+// OrderBook related messages
+message OrderBookEntry {
+    double price = 1;
+    double size = 2;
+}
 
-// Service for managing trading strategies and accounts
+message OrderBook {
+    repeated OrderBookEntry bids = 1;
+    repeated OrderBookEntry asks = 2;
+    string symbol = 3;
+}
+
+message OrderBookRequest {
+    string symbol = 1;
+}
+
+// Service definition
 service TradingService {
-    // Starts a trading strategy
-    rpc StartStrategy(StrategyRequest) returns (StatusResponse);
-    // Stops a trading strategy
-    rpc StopStrategy(StrategyRequest) returns (StatusResponse);
+    // Stream order book updates
+    rpc StreamOrderBook(OrderBookRequest) returns (stream OrderBook) {}
+    
+    // Get current price for a symbol
+    rpc GetPrice(Tick) returns (Tick) {}
+    
+    // Start a trading strategy
+    rpc StartStrategy(StrategyRequest) returns (StatusResponse) {}
+    
+    // Stop a trading strategy
+    rpc StopStrategy(StrategyRequest) returns (StatusResponse) {}
+    
     // Gets the current portfolio status
-    rpc GetPortfolio(PortfolioRequest) returns (PortfolioResponse);
+    rpc GetPortfolio(PortfolioRequest) returns (PortfolioResponse) {}
+    
     // Subscribes to a real-time feed of market data
-    rpc SubscribeTicks(StrategyRequest) returns (stream Tick);
+    rpc SubscribeTicks(StrategyRequest) returns (stream Tick) {}
 }
 
 // Service for performing risk calculations
 service RiskService {
     // Calculates the Value at Risk for a given portfolio
-    rpc CalculateVaR(VaRRequest) returns (VaRResponse);
+    rpc CalculateVaR(VaRRequest) returns (VaRResponse) {}
 }
