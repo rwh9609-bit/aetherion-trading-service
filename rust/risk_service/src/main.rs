@@ -65,7 +65,7 @@ impl RiskService for MyRiskService {
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let addr = "[::1]:50052".parse()?;
+    let addr = "0.0.0.0:50052".parse()?;
     let risk_service = MyRiskService::default();
 
     println!("Rust RiskService listening on {}", addr);

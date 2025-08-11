@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"log"
+	"net"
 	"net/http"
 	"strconv"
 	"sync"
@@ -17,7 +18,6 @@ import (
 	"container/heap"
 
 	"github.com/google/uuid"
-	"github.com/improbable-eng/grpc-web/go/grpcweb"
 	"google.golang.org/grpc"
 )
 
@@ -397,63 +397,13 @@ func main() {
 	tradingService := newTradingServer()
 	pb.RegisterTradingServiceServer(grpcServer, tradingService)
 
-	// Create a gRPC-Web wrapper around the gRPC server
-	wrappedGrpc := grpcweb.WrapServer(grpcServer,
-		grpcweb.WithOriginFunc(func(origin string) bool {
-			// Allow requests from the React frontend
-			return origin == "http://localhost:3000" || origin == "http://localhost:3001"
-		}),
-		grpcweb.WithAllowedRequestHeaders([]string{
-			"X-User-Agent",
-			"X-Grpc-Web",
-			"Content-Type",
-			"Content-Length",
-			"Accept",
-			"Accept-Encoding",
-			"X-CSRF-Token",
-			"Authorization",
-		}),
-		grpcweb.WithWebsockets(true),
-		grpcweb.WithWebsocketOriginFunc(func(r *http.Request) bool {
-			return true
-		}),
-		grpcweb.WithCorsForRegisteredEndpointsOnly(false),
-	)
-
-	// Create an HTTP mux for handling both gRPC and gRPC-Web
-	mux := http.NewServeMux()
-
-	// Handle gRPC and gRPC-Web requests
-	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		// Enable CORS for all requests
-		w.Header().Set("Access-Control-Allow-Origin", "*")
-		w.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS")
-		w.Header().Set("Access-Control-Allow-Headers", "Accept, Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization, X-User-Agent, X-Grpc-Web")
-		w.Header().Set("Access-Control-Expose-Headers", "grpc-status, grpc-message, grpc-encoding, grpc-accept-encoding")
-
-		if r.Method == "OPTIONS" {
-			w.WriteHeader(http.StatusOK)
-			return
-		}
-
-		if wrappedGrpc.IsGrpcWebRequest(r) || wrappedGrpc.IsAcceptableGrpcCorsRequest(r) {
-			wrappedGrpc.ServeHTTP(w, r)
-			return
-		}
-
-		// Handle health check
-		if r.URL.Path == "/health" {
-			w.WriteHeader(http.StatusOK)
-			w.Write([]byte("healthy"))
-			return
-		}
-
-		http.NotFound(w, r)
-	})
-
-	// Start HTTP server with gRPC-Web support
-	log.Printf("Starting server on :8080...")
-	if err := http.ListenAndServe(":8080", mux); err != nil {
-		log.Fatalf("Failed to start server: %v", err)
+	// Start pure gRPC server on :50051; Envoy on :8080 will proxy gRPC-Web to this
+	lis, err := net.Listen("tcp", "0.0.0.0:50051")
+	if err != nil {
+		log.Fatalf("Failed to listen on :50051: %v", err)
+	}
+	log.Printf("Starting gRPC server on :50051...")
+	if err := grpcServer.Serve(lis); err != nil {
+		log.Fatalf("Failed to start gRPC server: %v", err)
 	}
 }
