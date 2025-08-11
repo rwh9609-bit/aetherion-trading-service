@@ -1,4 +1,3 @@
-use rand::prelude::*;
 use rand::rngs::StdRng;
 use rand::SeedableRng;
 use rand_distr::{Distribution, Normal};
@@ -19,7 +18,7 @@ impl Default for RiskCalculator {
 }
 
 impl RiskCalculator {
-    pub fn calculate_var(&mut self, positions: &HashMap<String, f64>, total_value: f64, confidence_level: f64) -> f64 {
+    pub fn calculate_var(&mut self, _positions: &HashMap<String, f64>, total_value: f64, confidence_level: f64) -> f64 {
         // Calculate historical volatility
         let volatility = if self.price_changes.is_empty() {
             0.02 // Default 2% daily volatility if no historical data

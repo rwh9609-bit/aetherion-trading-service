@@ -46,6 +46,12 @@ impl RiskService for MyRiskService {
             let mut calc = self.calculator.lock().map_err(|_| {
                 Status::internal("Failed to acquire calculator lock")
             })?;
+            
+            // Add latest price change if available
+            if let Some(price_change) = portfolio.last_price_change {
+                calc.add_price_change(price_change);
+            }
+            
             calc.calculate_var(&positions, total_value, 0.95)
         };
 
