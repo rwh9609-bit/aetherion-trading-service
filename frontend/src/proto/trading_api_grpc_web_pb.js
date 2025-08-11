@@ -8,7 +8,7 @@
 // versions:
 // 	protoc-gen-grpc-web v1.5.0
 // 	protoc              v5.29.3
-// source: protos/trading_api.proto
+// source: trading_api.proto
 
 
 /* eslint-disable */

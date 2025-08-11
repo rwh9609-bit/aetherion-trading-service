@@ -1,4 +1,4 @@
-// source: protos/trading_api.proto
+// source: trading_api.proto
 /**
  * @fileoverview
  * @enhanceable
