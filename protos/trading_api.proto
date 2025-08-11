@@ -30,15 +30,17 @@ message PortfolioRequest {
 }
 
 // Response with portfolio details
-message PortfolioResponse {
-    map<string, double> positions = 1; // e.g., {"BTC": 1.5, "USD": 50000.0}
+// Portfolio snapshot at a point in time
+message Portfolio {
+    map<string, double> positions = 1;  // Map of symbol to quantity
     double total_value_usd = 2;
+    optional double last_price_change = 3;  // Last observed price change percentage
 }
 
 
 // Request to calculate Value at Risk (VaR)
 message VaRRequest {
-    PortfolioResponse current_portfolio = 1;
+    Portfolio current_portfolio = 1;
     string risk_model = 2; // e.g., "monte_carlo"
 }
 
@@ -78,7 +80,7 @@ service TradingService {
     rpc StopStrategy(StrategyRequest) returns (StatusResponse) {}
     
     // Gets the current portfolio status
-    rpc GetPortfolio(PortfolioRequest) returns (PortfolioResponse) {}
+    rpc GetPortfolio(PortfolioRequest) returns (Portfolio) {}
     
     // Subscribes to a real-time feed of market data
     rpc SubscribeTicks(StrategyRequest) returns (stream Tick) {}
