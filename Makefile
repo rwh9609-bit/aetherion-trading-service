@@ -38,6 +38,7 @@ setup:
 # Generate all gRPC code
 generate: generate-python
 	@echo "Generating Protocol Buffers for Go, Rust, and Web..."
+	@mkdir -p $(GO_DIR)/gen
 	PATH="$(GO_BIN):$$PATH" $(PROTOC) \
 		--go_out=$(GO_DIR)/gen --go_opt=paths=source_relative \
 		--go-grpc_out=$(GO_DIR)/gen --go-grpc_opt=paths=source_relative \
@@ -83,7 +84,17 @@ stop:
 # Restart all services
 restart: stop build run
 
-
+# Clean up generated files and build artifacts
+clean:
+	@echo "Cleaning up project..."
+	-rm -rf $(GO_DIR)/bin/trading_service
+	-rm -rf $(GO_DIR)/gen
+	-rm -rf $(PYTHON_DIR)/protos
+	-find $(PYTHON_DIR) -type d -name "__pycache__" -exec rm -r {} +
+	-rm -rf $(RUST_SERVICE_DIR)/target
+	-rm -rf $(FRONTEND_DIR)/build
+	-rm -f cpp/*.o cpp/*.out cpp/test_load cpp/test_orderbook
+	@echo "Clean up complete."
 
 # Generate Python gRPC code
 generate-python: setup $(PROTO_FILE)
