@@ -8,7 +8,8 @@ import {
   VaRRequest,
   RegisterRequest,
   AuthRequest,
-  TickStreamRequest
+  TickStreamRequest,
+  SymbolRequest
 } from '../proto/trading_api_pb.js';
 
 const host = 'http://localhost:8080'; // Route all requests through envoy proxy
@@ -261,6 +262,39 @@ export const fetchPrice = async (symbol) => {
       });
     });
   }, 'Fetch Price');
+};
+
+export const addSymbol = async (symbol) => {
+  return new Promise((resolve, reject) => {
+    const req = new SymbolRequest();
+    req.setSymbol(symbol);
+    tradingClient.addSymbol(req, createMetadata(), (err, resp) => {
+      if (err) return reject(err);
+      resolve(resp.toObject());
+    });
+  });
+};
+
+export const removeSymbol = async (symbol) => {
+  return new Promise((resolve, reject) => {
+    const req = new SymbolRequest();
+    req.setSymbol(symbol);
+    tradingClient.removeSymbol(req, createMetadata(), (err, resp) => {
+      if (err) return reject(err);
+      resolve(resp.toObject());
+    });
+  });
+};
+
+export const listSymbols = async () => {
+  const { Empty } = await import('../proto/trading_api_pb.js');
+  const req = new Empty();
+  return new Promise((resolve, reject) => {
+    tradingClient.listSymbols(req, createMetadata(), (err, resp) => {
+      if (err) return reject(err);
+      resolve(resp.toObject());
+    });
+  });
 };
 
 // Stream live price ticks (server-streaming gRPC). Returns a cleanup function to cancel.

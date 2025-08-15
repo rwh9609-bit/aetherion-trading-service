@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package trading;
 
-option go_package = "aetherion-trading-service/gen/protos";
+option go_package = "aetherion-trading-service/gen";
 
 // Represents a single market data tick
 message Tick {
@@ -14,6 +14,19 @@ message Tick {
 // Request to stream live price ticks (optional symbol filter; empty = all subscribed symbols server supports)
 message TickStreamRequest {
     string symbol = 1;
+}
+
+// Generic symbol request for add/remove symbol operations
+message SymbolRequest {
+    string symbol = 1;
+}
+
+// Empty request placeholder
+message Empty {}
+
+// Response listing active market data symbols
+message SymbolList {
+    repeated string symbols = 1;
 }
 
 // Request to start or stop a strategy
@@ -113,6 +126,13 @@ service TradingService {
 
     // Streams live ticks from internal event bus (websocket sourced)
     rpc StreamPrice(TickStreamRequest) returns (stream Tick) {}
+
+    // Dynamically add a symbol to market data feed
+    rpc AddSymbol(SymbolRequest) returns (StatusResponse) {}
+    // Dynamically remove a symbol from market data feed
+    rpc RemoveSymbol(SymbolRequest) returns (StatusResponse) {}
+    // List currently subscribed symbols in market data feed
+    rpc ListSymbols(Empty) returns (SymbolList) {}
 }
 
 // Service for performing risk calculations

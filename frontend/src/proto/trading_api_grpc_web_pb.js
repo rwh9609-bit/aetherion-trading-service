@@ -487,6 +487,189 @@ proto.trading.TradingServicePromiseClient.prototype.streamPrice =
 
 
 /**
+ * @const
+ * @type {!grpc.web.MethodDescriptor<
+ *   !proto.trading.SymbolRequest,
+ *   !proto.trading.StatusResponse>}
+ */
+const methodDescriptor_TradingService_AddSymbol = new grpc.web.MethodDescriptor(
+  '/trading.TradingService/AddSymbol',
+  grpc.web.MethodType.UNARY,
+  proto.trading.SymbolRequest,
+  proto.trading.StatusResponse,
+  /**
+   * @param {!proto.trading.SymbolRequest} request
+   * @return {!Uint8Array}
+   */
+  function(request) {
+    return request.serializeBinary();
+  },
+  proto.trading.StatusResponse.deserializeBinary
+);
+
+
+/**
+ * @param {!proto.trading.SymbolRequest} request The
+ *     request proto
+ * @param {?Object<string, string>} metadata User defined
+ *     call metadata
+ * @param {function(?grpc.web.RpcError, ?proto.trading.StatusResponse)}
+ *     callback The callback function(error, response)
+ * @return {!grpc.web.ClientReadableStream<!proto.trading.StatusResponse>|undefined}
+ *     The XHR Node Readable Stream
+ */
+proto.trading.TradingServiceClient.prototype.addSymbol =
+    function(request, metadata, callback) {
+  return this.client_.rpcCall(this.hostname_ +
+      '/trading.TradingService/AddSymbol',
+      request,
+      metadata || {},
+      methodDescriptor_TradingService_AddSymbol,
+      callback);
+};
+
+
+/**
+ * @param {!proto.trading.SymbolRequest} request The
+ *     request proto
+ * @param {?Object<string, string>=} metadata User defined
+ *     call metadata
+ * @return {!Promise<!proto.trading.StatusResponse>}
+ *     Promise that resolves to the response
+ */
+proto.trading.TradingServicePromiseClient.prototype.addSymbol =
+    function(request, metadata) {
+  return this.client_.unaryCall(this.hostname_ +
+      '/trading.TradingService/AddSymbol',
+      request,
+      metadata || {},
+      methodDescriptor_TradingService_AddSymbol);
+};
+
+
+/**
+ * @const
+ * @type {!grpc.web.MethodDescriptor<
+ *   !proto.trading.SymbolRequest,
+ *   !proto.trading.StatusResponse>}
+ */
+const methodDescriptor_TradingService_RemoveSymbol = new grpc.web.MethodDescriptor(
+  '/trading.TradingService/RemoveSymbol',
+  grpc.web.MethodType.UNARY,
+  proto.trading.SymbolRequest,
+  proto.trading.StatusResponse,
+  /**
+   * @param {!proto.trading.SymbolRequest} request
+   * @return {!Uint8Array}
+   */
+  function(request) {
+    return request.serializeBinary();
+  },
+  proto.trading.StatusResponse.deserializeBinary
+);
+
+
+/**
+ * @param {!proto.trading.SymbolRequest} request The
+ *     request proto
+ * @param {?Object<string, string>} metadata User defined
+ *     call metadata
+ * @param {function(?grpc.web.RpcError, ?proto.trading.StatusResponse)}
+ *     callback The callback function(error, response)
+ * @return {!grpc.web.ClientReadableStream<!proto.trading.StatusResponse>|undefined}
+ *     The XHR Node Readable Stream
+ */
+proto.trading.TradingServiceClient.prototype.removeSymbol =
+    function(request, metadata, callback) {
+  return this.client_.rpcCall(this.hostname_ +
+      '/trading.TradingService/RemoveSymbol',
+      request,
+      metadata || {},
+      methodDescriptor_TradingService_RemoveSymbol,
+      callback);
+};
+
+
+/**
+ * @param {!proto.trading.SymbolRequest} request The
+ *     request proto
+ * @param {?Object<string, string>=} metadata User defined
+ *     call metadata
+ * @return {!Promise<!proto.trading.StatusResponse>}
+ *     Promise that resolves to the response
+ */
+proto.trading.TradingServicePromiseClient.prototype.removeSymbol =
+    function(request, metadata) {
+  return this.client_.unaryCall(this.hostname_ +
+      '/trading.TradingService/RemoveSymbol',
+      request,
+      metadata || {},
+      methodDescriptor_TradingService_RemoveSymbol);
+};
+
+
+/**
+ * @const
+ * @type {!grpc.web.MethodDescriptor<
+ *   !proto.trading.Empty,
+ *   !proto.trading.SymbolList>}
+ */
+const methodDescriptor_TradingService_ListSymbols = new grpc.web.MethodDescriptor(
+  '/trading.TradingService/ListSymbols',
+  grpc.web.MethodType.UNARY,
+  proto.trading.Empty,
+  proto.trading.SymbolList,
+  /**
+   * @param {!proto.trading.Empty} request
+   * @return {!Uint8Array}
+   */
+  function(request) {
+    return request.serializeBinary();
+  },
+  proto.trading.SymbolList.deserializeBinary
+);
+
+
+/**
+ * @param {!proto.trading.Empty} request The
+ *     request proto
+ * @param {?Object<string, string>} metadata User defined
+ *     call metadata
+ * @param {function(?grpc.web.RpcError, ?proto.trading.SymbolList)}
+ *     callback The callback function(error, response)
+ * @return {!grpc.web.ClientReadableStream<!proto.trading.SymbolList>|undefined}
+ *     The XHR Node Readable Stream
+ */
+proto.trading.TradingServiceClient.prototype.listSymbols =
+    function(request, metadata, callback) {
+  return this.client_.rpcCall(this.hostname_ +
+      '/trading.TradingService/ListSymbols',
+      request,
+      metadata || {},
+      methodDescriptor_TradingService_ListSymbols,
+      callback);
+};
+
+
+/**
+ * @param {!proto.trading.Empty} request The
+ *     request proto
+ * @param {?Object<string, string>=} metadata User defined
+ *     call metadata
+ * @return {!Promise<!proto.trading.SymbolList>}
+ *     Promise that resolves to the response
+ */
+proto.trading.TradingServicePromiseClient.prototype.listSymbols =
+    function(request, metadata) {
+  return this.client_.unaryCall(this.hostname_ +
+      '/trading.TradingService/ListSymbols',
+      request,
+      metadata || {},
+      methodDescriptor_TradingService_ListSymbols);
+};
+
+
+/**
  * @param {string} hostname
  * @param {?Object} credentials
  * @param {?grpc.web.ClientOptions} options
