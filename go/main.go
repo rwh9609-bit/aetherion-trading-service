@@ -14,8 +14,9 @@ import (
 
 	"google.golang.org/grpc/keepalive"
 
-	pb "aetherion-trading-service/gen/protos"
 	"container/heap"
+
+	pb "aetherion-trading-service/gen/protos"
 
 	"github.com/google/uuid"
 	"google.golang.org/grpc"
