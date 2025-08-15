@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Card, CardContent, TextField, Button, Typography, Alert, Box, Tabs, Tab } from '@mui/material';
 import { loginUser, registerUser } from '../services/grpcClient';
 
-const Login = ({ onAuth }) => {
+const Login = ({ onAuth, onBack }) => {
   const [mode, setMode] = useState('login');
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
@@ -40,6 +40,11 @@ const Login = ({ onAuth }) => {
   return (
     <Card sx={{ maxWidth: 420, margin: '48px auto' }}>
       <CardContent>
+        {onBack && (
+          <Button onClick={onBack} sx={{ mb: 2 }}>
+            ← Back to Home
+          </Button>
+        )}
         <Typography variant="h5" gutterBottom align="center">
           {mode === 'login' ? 'Sign In' : 'Create Account'}
         </Typography>
