@@ -1,6 +1,8 @@
-import React from 'react';
-import { ThemeProvider, createTheme, CssBaseline, AppBar, Toolbar, Typography } from '@mui/material';
+import React, { useState } from 'react';
+import { ThemeProvider, createTheme, CssBaseline, AppBar, Toolbar, Typography, Button, Box } from '@mui/material';
 import TradingDashboard from './components/TradingDashboard';
+import Login from './components/Login';
+import AccountPage from './components/AccountPage';
 import ErrorBoundary from './components/ErrorBoundary';
 import './App.css';
 
@@ -21,6 +23,8 @@ const darkTheme = createTheme({
 });
 
 function App() {
+  const [user, setUser] = useState(null);
+  const [view, setView] = useState('dashboard');
   return (
     <ErrorBoundary>
       <ThemeProvider theme={darkTheme}>
@@ -28,13 +32,21 @@ function App() {
         <div className="App">
           <AppBar position="static">
             <Toolbar>
-              <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
+              <Typography variant="h6" component="div" sx={{ flexGrow: 1, cursor:'pointer' }} onClick={()=>setView('dashboard')}>
                 Aetherion Trading Engine
               </Typography>
+              {user && (
+                <Box>
+                  <Button color="inherit" onClick={()=>setView('account')} sx={{ mr:1 }}>Account</Button>
+                  <Button color="inherit" onClick={()=>setView('dashboard')}>Dashboard</Button>
+                </Box>
+              )}
             </Toolbar>
           </AppBar>
           <div style={{ padding: '24px' }}>
-            <TradingDashboard />
+            {!user && <Login onAuth={(u)=> { setUser(u); setView('dashboard'); }} />}
+            {user && view === 'dashboard' && <TradingDashboard />}
+            {user && view === 'account' && <AccountPage user={user} onLogout={() => { setUser(null); setView('dashboard'); }} />}
           </div>
         </div>
       </ThemeProvider>

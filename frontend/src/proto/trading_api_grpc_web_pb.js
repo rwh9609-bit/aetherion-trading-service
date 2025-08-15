@@ -543,5 +543,179 @@ proto.trading.RiskServicePromiseClient.prototype.calculateVaR =
 };
 
 
+/**
+ * @param {string} hostname
+ * @param {?Object} credentials
+ * @param {?grpc.web.ClientOptions} options
+ * @constructor
+ * @struct
+ * @final
+ */
+proto.trading.AuthServiceClient =
+    function(hostname, credentials, options) {
+  if (!options) options = {};
+  options.format = 'text';
+
+  /**
+   * @private @const {!grpc.web.GrpcWebClientBase} The client
+   */
+  this.client_ = new grpc.web.GrpcWebClientBase(options);
+
+  /**
+   * @private @const {string} The hostname
+   */
+  this.hostname_ = hostname.replace(/\/+$/, '');
+
+};
+
+
+/**
+ * @param {string} hostname
+ * @param {?Object} credentials
+ * @param {?grpc.web.ClientOptions} options
+ * @constructor
+ * @struct
+ * @final
+ */
+proto.trading.AuthServicePromiseClient =
+    function(hostname, credentials, options) {
+  if (!options) options = {};
+  options.format = 'text';
+
+  /**
+   * @private @const {!grpc.web.GrpcWebClientBase} The client
+   */
+  this.client_ = new grpc.web.GrpcWebClientBase(options);
+
+  /**
+   * @private @const {string} The hostname
+   */
+  this.hostname_ = hostname.replace(/\/+$/, '');
+
+};
+
+
+/**
+ * @const
+ * @type {!grpc.web.MethodDescriptor<
+ *   !proto.trading.RegisterRequest,
+ *   !proto.trading.AuthResponse>}
+ */
+const methodDescriptor_AuthService_Register = new grpc.web.MethodDescriptor(
+  '/trading.AuthService/Register',
+  grpc.web.MethodType.UNARY,
+  proto.trading.RegisterRequest,
+  proto.trading.AuthResponse,
+  /**
+   * @param {!proto.trading.RegisterRequest} request
+   * @return {!Uint8Array}
+   */
+  function(request) {
+    return request.serializeBinary();
+  },
+  proto.trading.AuthResponse.deserializeBinary
+);
+
+
+/**
+ * @param {!proto.trading.RegisterRequest} request The
+ *     request proto
+ * @param {?Object<string, string>} metadata User defined
+ *     call metadata
+ * @param {function(?grpc.web.RpcError, ?proto.trading.AuthResponse)}
+ *     callback The callback function(error, response)
+ * @return {!grpc.web.ClientReadableStream<!proto.trading.AuthResponse>|undefined}
+ *     The XHR Node Readable Stream
+ */
+proto.trading.AuthServiceClient.prototype.register =
+    function(request, metadata, callback) {
+  return this.client_.rpcCall(this.hostname_ +
+      '/trading.AuthService/Register',
+      request,
+      metadata || {},
+      methodDescriptor_AuthService_Register,
+      callback);
+};
+
+
+/**
+ * @param {!proto.trading.RegisterRequest} request The
+ *     request proto
+ * @param {?Object<string, string>=} metadata User defined
+ *     call metadata
+ * @return {!Promise<!proto.trading.AuthResponse>}
+ *     Promise that resolves to the response
+ */
+proto.trading.AuthServicePromiseClient.prototype.register =
+    function(request, metadata) {
+  return this.client_.unaryCall(this.hostname_ +
+      '/trading.AuthService/Register',
+      request,
+      metadata || {},
+      methodDescriptor_AuthService_Register);
+};
+
+
+/**
+ * @const
+ * @type {!grpc.web.MethodDescriptor<
+ *   !proto.trading.AuthRequest,
+ *   !proto.trading.AuthResponse>}
+ */
+const methodDescriptor_AuthService_Login = new grpc.web.MethodDescriptor(
+  '/trading.AuthService/Login',
+  grpc.web.MethodType.UNARY,
+  proto.trading.AuthRequest,
+  proto.trading.AuthResponse,
+  /**
+   * @param {!proto.trading.AuthRequest} request
+   * @return {!Uint8Array}
+   */
+  function(request) {
+    return request.serializeBinary();
+  },
+  proto.trading.AuthResponse.deserializeBinary
+);
+
+
+/**
+ * @param {!proto.trading.AuthRequest} request The
+ *     request proto
+ * @param {?Object<string, string>} metadata User defined
+ *     call metadata
+ * @param {function(?grpc.web.RpcError, ?proto.trading.AuthResponse)}
+ *     callback The callback function(error, response)
+ * @return {!grpc.web.ClientReadableStream<!proto.trading.AuthResponse>|undefined}
+ *     The XHR Node Readable Stream
+ */
+proto.trading.AuthServiceClient.prototype.login =
+    function(request, metadata, callback) {
+  return this.client_.rpcCall(this.hostname_ +
+      '/trading.AuthService/Login',
+      request,
+      metadata || {},
+      methodDescriptor_AuthService_Login,
+      callback);
+};
+
+
+/**
+ * @param {!proto.trading.AuthRequest} request The
+ *     request proto
+ * @param {?Object<string, string>=} metadata User defined
+ *     call metadata
+ * @return {!Promise<!proto.trading.AuthResponse>}
+ *     Promise that resolves to the response
+ */
+proto.trading.AuthServicePromiseClient.prototype.login =
+    function(request, metadata) {
+  return this.client_.unaryCall(this.hostname_ +
+      '/trading.AuthService/Login',
+      request,
+      metadata || {},
+      methodDescriptor_AuthService_Login);
+};
+
+
 module.exports = proto.trading;
 

@@ -1,11 +1,13 @@
 import { grpc } from '@improbable-eng/grpc-web';
-import { TradingServiceClient, RiskServiceClient } from '../proto/trading_api_grpc_web_pb';
+import { TradingServiceClient, RiskServiceClient, AuthServiceClient } from '../proto/trading_api_grpc_web_pb';
 import { 
   OrderBookRequest,
   StrategyRequest,
   Tick,
   Portfolio,
-  VaRRequest
+  VaRRequest,
+  RegisterRequest,
+  AuthRequest
 } from '../proto/trading_api_pb.js';
 
 const host = 'http://localhost:8080'; // Route all requests through envoy proxy
@@ -18,16 +20,58 @@ const options = {
 
 const tradingClient = new TradingServiceClient(host, null, {...options, format: 'text'});
 const riskClient = new RiskServiceClient(host, null, {...options, format: 'text'});
+const authClient = new AuthServiceClient(host, null, {...options, format: 'text'});
 
 const MAX_RETRIES = 5;
 const RETRY_DELAY = 2000; // 2 seconds
 const TIMEOUT = 60000; // 60 seconds
 const BACKOFF_FACTOR = 1.5; // Exponential backoff factor
 
-const createMetadata = () => ({
-  'X-Grpc-Web': '1',
-  'Content-Type': 'application/grpc-web+proto',
-});
+let authToken = localStorage.getItem('authToken'); // Persisted JWT
+
+export const setAuthToken = (token) => { 
+  authToken = token; 
+  if (token) localStorage.setItem('authToken', token); else localStorage.removeItem('authToken');
+};
+
+const createMetadata = () => {
+  const meta = {
+    'X-Grpc-Web': '1',
+    'Content-Type': 'application/grpc-web+proto',
+  };
+  if (authToken) {
+    meta['authorization'] = `Bearer ${authToken}`;
+  }
+  return meta;
+};
+
+// Auth helper calls
+export const registerUser = async (username, password) => {
+  return new Promise((resolve, reject) => {
+    const req = new RegisterRequest();
+    req.setUsername(username);
+    req.setPassword(password);
+    authClient.register(req, createMetadata(), (err, resp) => {
+      if (err) return resolve({ success:false, message: err.message });
+      const obj = resp.toObject();
+      return resolve(obj);
+    });
+  });
+};
+
+export const loginUser = async (username, password) => {
+  return new Promise((resolve, reject) => {
+    const req = new AuthRequest();
+    req.setUsername(username);
+    req.setPassword(password);
+    authClient.login(req, createMetadata(), (err, resp) => {
+      if (err) return resolve({ success:false, message: err.message });
+      const obj = resp.toObject();
+      if (obj.success && obj.token) setAuthToken(obj.token);
+      resolve(obj);
+    });
+  });
+};
 
 const withRetry = async (operation, operationName = 'Operation', retries = MAX_RETRIES) => {
   let currentDelay = RETRY_DELAY;
@@ -62,7 +106,8 @@ const withRetry = async (operation, operationName = 'Operation', retries = MAX_R
       }
       
       console.log(`${operationName}: Retrying in ${currentDelay}ms...`);
-      await new Promise(resolve => setTimeout(resolve, currentDelay));
+  const delaySnapshot = currentDelay; // capture to avoid closure on mutated var
+  await new Promise(resolve => setTimeout(resolve, delaySnapshot));
       currentDelay = Math.min(currentDelay * BACKOFF_FACTOR, TIMEOUT); // Exponential backoff
     }
   }

@@ -11,6 +11,7 @@ import (
 	"strconv"
 	"sync"
 	"time"
+	"os"
 
 	"google.golang.org/grpc/keepalive"
 
@@ -92,10 +93,13 @@ type CoinbasePriceResponse struct {
 }
 
 // Function to fetch price from Coinbase REST API
+// httpGet is a package-level variable to allow test overrides
+var httpGet = http.Get
+
 func getCoinbasePrice(symbol string) (float64, error) {
 	// Coinbase uses symbol format like BTC-USD
 	url := fmt.Sprintf("https://api.coinbase.com/v2/prices/%s/spot", symbol)
-	resp, err := http.Get(url)
+	resp, err := httpGet(url)
 	if err != nil {
 		return 0, fmt.Errorf("failed to fetch price from Coinbase: %w", err)
 	}
@@ -212,6 +216,7 @@ func newTradingServer() *tradingServer {
 		strategies:    make(map[string]*Strategy),
 	}
 }
+
 
 // GetPrice returns the current price for a symbol
 func (s *tradingServer) GetPrice(ctx context.Context, req *pb.Tick) (*pb.Tick, error) {
@@ -385,6 +390,12 @@ func main() {
 	// Enable debug logging
 	log.SetFlags(log.LstdFlags | log.Lshortfile)
 
+	// Load auth secret from environment (export AUTH_SECRET=your-secret)
+	secret := os.Getenv("AUTH_SECRET")
+	if secret == "" {
+		secret = "dev-insecure-default"
+		log.Println("WARNING: AUTH_SECRET not set; using insecure default secret. Do NOT use in production.")
+	}
 	// Create a gRPC server with custom options
 	grpcServer := grpc.NewServer(
 		grpc.KeepaliveParams(keepalive.ServerParameters{
@@ -392,11 +403,16 @@ func main() {
 			Time:              20 * time.Second,
 			Timeout:           1 * time.Second,
 		}),
+		grpc.UnaryInterceptor(authUnaryInterceptor([]byte(secret))),
 	)
 
 	// Create and register our trading service
 	tradingService := newTradingServer()
 	pb.RegisterTradingServiceServer(grpcServer, tradingService)
+
+	// Auth service
+	authSvc := newAuthServer(secret)
+	pb.RegisterAuthServiceServer(grpcServer, authSvc)
 
 	// Start pure gRPC server on :50051; Envoy on :8080 will proxy gRPC-Web to this
 	lis, err := net.Listen("tcp", "0.0.0.0:50051")
