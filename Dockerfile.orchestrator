@@ -1,0 +1,11 @@
+FROM python:3.12-slim
+WORKDIR /app
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1
+COPY python/requirements.txt ./requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt
+COPY python/ ./
+ENV GO_SERVICE_ADDR=trading:50051 \
+    RUST_SERVICE_ADDR=risk:50052 \
+    INITIAL_ACCOUNT_VALUE=10000.0
+CMD ["python","orchestrator.py"]
