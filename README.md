@@ -2,8 +2,6 @@
 
 **A next-generation, cloud-native trading platform designed for ambitious quants and developers.**
 
-![Aetherion Trading Platform](docs/architecture.png)
-
 ## What is Aetherion?
 
 Aetherion is a modern quantitative trading platform that combines real-time market data, advanced risk management, and automated trading strategies in one powerful system. Whether you're a quantitative analyst, algorithmic trader, or fintech developer, Aetherion provides the tools you need to create, test, and deploy sophisticated trading strategies.
