@@ -53,6 +53,11 @@ impl RiskCalculator {
         var
     }
 
+    #[cfg(test)]
+    pub fn inject_sample_changes(&mut self, samples: &[f64]) {
+        for &c in samples { self.add_price_change(c); }
+    }
+
     pub fn add_price_change(&mut self, change: f64) {
         self.price_changes.push(change);
         if self.price_changes.len() > 252 { // Keep about 1 year of daily changes
