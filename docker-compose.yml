@@ -5,6 +5,10 @@ services:
       context: .
       dockerfile: Dockerfile.risk
     restart: unless-stopped
+    environment:
+      - RUST_LOG=info
+    expose:
+      - "50052"
   trading:
     build:
       context: .
@@ -13,6 +17,9 @@ services:
       - AUTH_SECRET=${AUTH_SECRET} # must be set (>=32 chars) or service exits
       - CORS_ALLOWED_ORIGINS=${CORS_ALLOWED_ORIGINS:-http://localhost:3000,https://app.aetherion.cloud}
       - AUTH_PREVIOUS_SECRET=${AUTH_PREVIOUS_SECRET:-}
+      - DEFAULT_SYMBOLS=${DEFAULT_SYMBOLS}
+      - LOG_LEVEL=${LOG_LEVEL}
+      - REQUEST_TIMEOUT=${REQUEST_TIMEOUT}
     depends_on:
       - risk
     healthcheck:
@@ -21,6 +28,8 @@ services:
       timeout: 3s
       retries: 3
     restart: unless-stopped
+    expose:
+      - "50051"
   envoy:
     build:
       context: .
@@ -30,6 +39,8 @@ services:
     ports:
       - "8080:8080"
     restart: unless-stopped
+    environment:
+      - ENVOY_UID=1337
   frontend:
     build:
       context: .
@@ -41,6 +52,22 @@ services:
     depends_on:
       - envoy
     restart: unless-stopped
+  orchestrator:
+    build:
+      context: .
+      dockerfile: Dockerfile.orchestrator
+    depends_on:
+      - trading
+      - risk
+    environment:
+      - GO_SERVICE_ADDR=trading:50051
+      - RUST_SERVICE_ADDR=risk:50052
+      - INITIAL_ACCOUNT_VALUE=10000.0
+    restart: unless-stopped
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
 
 networks:
   default:
