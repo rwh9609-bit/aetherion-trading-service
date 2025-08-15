@@ -124,4 +124,4 @@ Aetherion is open source software licensed under the MIT License. See [LICENSE](
 
 ---
 
-**Ready to start trading?** Visit `http://localhost:3000` to access your Aetherion platform, or check out the [Developer Guide](DEVELOPER.md) to set up your own instance.
+**Ready to start trading?** Visit `http://app.aetherion.trade` to access your Aetherion platform, or check out the [Developer Guide](DEVELOPER.md) to set up your own instance.
