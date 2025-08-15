@@ -9,3 +9,33 @@ __pycache__/
 # IDE files
 .idea/
 .vscode/
+
+# General
+.DS_Store
+*.log
+
+# Go
+go/bin/
+go/gen/
+
+# Rust
+target/
+Cargo.lock
+rust/risk_service/target/
+
+# Node.js
+frontend/node_modules/
+frontend/build/
+.pnp
+.pnp.js
+
+# C++
+*.o
+*.out
+test_load
+test_orderbook
+
+# Protobuf generated files
+frontend/src/proto/
+python/protos/
+go/protos/
