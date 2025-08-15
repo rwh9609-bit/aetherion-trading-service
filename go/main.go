@@ -510,7 +510,7 @@ func (s *tradingServer) GetMomentum(ctx context.Context, req *pb.MomentumRequest
 		varVar := 0.0; for _, v := range logRets { d := v - mean; varVar += d * d }; varVar /= float64(len(logRets))
 		vol := math.Sqrt(varVar) * math.Sqrt( (60*60*24) / (5*60) )
 		score := pct1m * 0.7 + pct5m * 0.3 - (vol*100)*0.5
-	result.Metrics = append(result.Metrics, &pb.MomentumMetric{Symbol: sym, LastPrice: last, PctChange_1M: pct1m, PctChange_5M: pct5m, Volatility: vol, MomentumScore: score})
+		result.Metrics = append(result.Metrics, &pb.MomentumMetric{Symbol: sym, LastPrice: last, PctChange_1M: pct1m, PctChange_5M: pct5m, Volatility: vol, MomentumScore: score})
 	}
 	// simple sort descending by score
 	if len(result.Metrics) > 1 {
@@ -547,6 +547,67 @@ func (s *tradingServer) ListSymbols(ctx context.Context, _ *pb.Empty) (*pb.Symbo
 	if s.feed == nil { return &pb.SymbolList{Symbols: []string{}}, nil }
 	s.feed.mu.Lock(); symbols := make([]string,0,len(s.feed.subscribed)); for sym := range s.feed.subscribed { symbols = append(symbols, sym) }; s.feed.mu.Unlock()
 	return &pb.SymbolList{Symbols: symbols}, nil
+}
+
+// Add to tradingServer methods
+func (s *tradingServer) ExecuteTrade(ctx context.Context, req *pb.TradeRequest) (*pb.TradeResponse, error) {
+    // Basic validation
+    if req.Symbol == "" || req.Size <= 0 {
+        return &pb.TradeResponse{Accepted: false, Message: "invalid trade parameters"}, nil
+    }
+    side := req.Side
+    if side != "BUY" && side != "SELL" {
+        return &pb.TradeResponse{Accepted: false, Message: "side must be BUY or SELL"}, nil
+    }
+    // Get reference price (use provided price if >0 else fetch current)
+    execPrice := req.Price
+    if execPrice <= 0 {
+        tick, err := s.GetPrice(ctx, &pb.Tick{Symbol: req.Symbol})
+        if err != nil {
+            return &pb.TradeResponse{Accepted: false, Message: "price unavailable"}, nil
+        }
+        execPrice = tick.Price
+    }
+
+    accountID := "default"
+    s.mu.Lock()
+    portfolio, exists := s.portfolios[accountID]
+    if !exists {
+        portfolio = &pb.Portfolio{Positions: map[string]float64{"USD": 100000}}
+        s.portfolios[accountID] = portfolio
+    }
+    // Initialize symbol position if absent
+    if _, ok := portfolio.Positions[req.Symbol]; !ok {
+        portfolio.Positions[req.Symbol] = 0
+    }
+    // Simple cash/position update (no fees, slippage)
+    qty := req.Size
+    notional := qty * execPrice
+    if side == "BUY" {
+        // Ensure sufficient USD
+        if portfolio.Positions["USD"] < notional {
+            s.mu.Unlock()
+            return &pb.TradeResponse{Accepted: false, Message: "insufficient USD balance"}, nil
+        }
+        portfolio.Positions[req.Symbol] += qty
+        portfolio.Positions["USD"] -= notional
+    } else { // SELL
+        if portfolio.Positions[req.Symbol] < qty {
+            s.mu.Unlock()
+            return &pb.TradeResponse{Accepted: false, Message: "insufficient position"}, nil
+        }
+        portfolio.Positions[req.Symbol] -= qty
+        portfolio.Positions["USD"] += notional
+    }
+    s.mu.Unlock()
+
+    // PnL simplified: positive for SELL, negative for BUY relative to notional (placeholder)
+    pnl := 0.0
+    if side == "SELL" {
+        pnl = notional * 0.0 // placeholder for realized PnL tracking
+    }
+
+    return &pb.TradeResponse{Accepted: true, Message: "executed", ExecutedPrice: execPrice, Pnl: pnl}, nil
 }
 
 func main() {

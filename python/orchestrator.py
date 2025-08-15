@@ -75,48 +75,42 @@ class TradingOrchestrator:
                     
                     # 3. If we have a trade signal, check risk and execute
                     if signal['action'] != 'hold' and signal['size'] > 0:
-                        # Check risk with VaR calculation
+                        # Build simplified portfolio (positions map only)
+                        positions_map = {"BTC-USD": signal['size'] if signal['action']=='buy' else -signal['size']}
+                        portfolio = pb.Portfolio(positions=positions_map, total_value_usd=self.account_value)
                         var_request = pb.VaRRequest(
-                            position_size=signal['size'],
-                            price=price,
-                            confidence_level=0.95
+                            current_portfolio=portfolio,
+                            risk_model="monte_carlo",
+                            confidence_level=0.95,
+                            horizon_days=1
                         )
-                        
                         try:
                             var_response = risk_stub.CalculateVaR(var_request)
                             risk_ok = var_response.value_at_risk <= (self.account_value * 0.02)
-                            
                             if risk_ok:
-                                # Execute trade
                                 trade_request = pb.TradeRequest(
                                     symbol="BTC-USD",
                                     side=signal['action'].upper(),
-                                    size=str(signal['size']),
-                                    price=str(price)
+                                    size=float(signal['size']),
+                                    price=float(price)
                                 )
-                                
                                 try:
                                     trade_response = trading_stub.ExecuteTrade(trade_request)
-                                    print(f"Trade executed: {trade_response.message}")
-                                    print(f"Signal details: {json.dumps(signal, indent=2)}")
-                                    print(f"VaR: {var_response.value_at_risk:.2f}")
-                                    # Update account value based on trade
+                                    print(f"Trade executed @ {trade_response.executed_price:.2f}: {trade_response.message}")
+                                    print(f"Signal: {json.dumps(signal)}  VaR: {var_response.value_at_risk:.2f}")
                                     if hasattr(trade_response, 'pnl'):
                                         self.account_value += float(trade_response.pnl)
-                                        print(f"Current account value: ${self.account_value:,.2f}")
+                                        print(f"Account value: ${self.account_value:,.2f}")
                                 except grpc.RpcError as e:
                                     print(f"Error executing trade: {e.details()}")
                             else:
-                                print(f"Trade rejected: VaR {var_response.value_at_risk:.2f} exceeds risk limits")
+                                print(f"Trade blocked: VaR {var_response.value_at_risk:.2f} over limit")
                         except grpc.RpcError as e:
                             print(f"Error calculating VaR: {e.details()}")
-                    
-                    # Wait 1 minute before next iteration
                     time.sleep(60)
-                    
                 except Exception as e:
-                    print(f"Error in strategy execution: {str(e)}")
-                    time.sleep(60)  # Wait before retrying
+                    print(f"Error in loop: {str(e)}")
+                    time.sleep(60)
 
 if __name__ == "__main__":
     print("Starting Trading Orchestrator...")
@@ -124,4 +118,4 @@ if __name__ == "__main__":
     try:
         orchestrator.run()
     except KeyboardInterrupt:
-        print("\nShutting down trading orchestrator...")
+        print("\nOrchestrator shutdown.")

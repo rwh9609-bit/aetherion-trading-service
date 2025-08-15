@@ -731,6 +731,67 @@ proto.trading.TradingServicePromiseClient.prototype.getMomentum =
 
 
 /**
+ * @const
+ * @type {!grpc.web.MethodDescriptor<
+ *   !proto.trading.TradeRequest,
+ *   !proto.trading.TradeResponse>}
+ */
+const methodDescriptor_TradingService_ExecuteTrade = new grpc.web.MethodDescriptor(
+  '/trading.TradingService/ExecuteTrade',
+  grpc.web.MethodType.UNARY,
+  proto.trading.TradeRequest,
+  proto.trading.TradeResponse,
+  /**
+   * @param {!proto.trading.TradeRequest} request
+   * @return {!Uint8Array}
+   */
+  function(request) {
+    return request.serializeBinary();
+  },
+  proto.trading.TradeResponse.deserializeBinary
+);
+
+
+/**
+ * @param {!proto.trading.TradeRequest} request The
+ *     request proto
+ * @param {?Object<string, string>} metadata User defined
+ *     call metadata
+ * @param {function(?grpc.web.RpcError, ?proto.trading.TradeResponse)}
+ *     callback The callback function(error, response)
+ * @return {!grpc.web.ClientReadableStream<!proto.trading.TradeResponse>|undefined}
+ *     The XHR Node Readable Stream
+ */
+proto.trading.TradingServiceClient.prototype.executeTrade =
+    function(request, metadata, callback) {
+  return this.client_.rpcCall(this.hostname_ +
+      '/trading.TradingService/ExecuteTrade',
+      request,
+      metadata || {},
+      methodDescriptor_TradingService_ExecuteTrade,
+      callback);
+};
+
+
+/**
+ * @param {!proto.trading.TradeRequest} request The
+ *     request proto
+ * @param {?Object<string, string>=} metadata User defined
+ *     call metadata
+ * @return {!Promise<!proto.trading.TradeResponse>}
+ *     Promise that resolves to the response
+ */
+proto.trading.TradingServicePromiseClient.prototype.executeTrade =
+    function(request, metadata) {
+  return this.client_.unaryCall(this.hostname_ +
+      '/trading.TradingService/ExecuteTrade',
+      request,
+      metadata || {},
+      methodDescriptor_TradingService_ExecuteTrade);
+};
+
+
+/**
  * @param {string} hostname
  * @param {?Object} credentials
  * @param {?grpc.web.ClientOptions} options

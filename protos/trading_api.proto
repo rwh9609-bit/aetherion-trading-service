@@ -61,11 +61,28 @@ message Portfolio {
 message VaRRequest {
     Portfolio current_portfolio = 1;
     string risk_model = 2; // e.g., "monte_carlo"
+    double confidence_level = 3; // e.g., 0.95
+    double horizon_days = 4; // time horizon in days (e.g., 1)
 }
 
 // Response with the calculated VaR
 message VaRResponse {
     double value_at_risk = 1;
+}
+
+// Trade execution messages
+message TradeRequest {
+    string symbol = 1;
+    string side = 2; // BUY or SELL
+    double size = 3; // quantity in base asset
+    double price = 4; // intended execution price
+}
+
+message TradeResponse {
+    bool accepted = 1;
+    string message = 2;
+    double executed_price = 3;
+    double pnl = 4; // realized PnL for closing trades (simplified)
 }
 
 // OrderBook related messages
@@ -160,6 +177,9 @@ service TradingService {
     rpc ListSymbols(Empty) returns (SymbolList) {}
     // Aggregate short-term momentum metrics for symbols (server-side analog of client scanner)
     rpc GetMomentum(MomentumRequest) returns (MomentumResponse) {}
+
+    // Execute a trade (simplified demo endpoint)
+    rpc ExecuteTrade(TradeRequest) returns (TradeResponse) {}
 
 }
 
