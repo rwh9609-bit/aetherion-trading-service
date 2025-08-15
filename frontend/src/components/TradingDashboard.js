@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Container, Grid } from '@mui/material';
+import { Container, Box } from '@mui/material';
 import PriceChart from './PriceChart';
+import CryptoScanner from './CryptoScanner';
 import StrategyControl from './StrategyControl';
 import RiskMetrics from './RiskMetrics';
 import OrderBook from './OrderBook';
@@ -53,9 +54,9 @@ const TradingDashboard = () => {
     }
   };
   return (
-    <Container maxWidth="xl" sx={{ mt: 4, mb: 4 }}>
-      <Grid container spacing={3}>
-        <Grid xs={12}>
+    <Container maxWidth="xl" sx={{ mt:4, mb:4 }}>
+  <Box sx={{ display:'grid', gap:3, gridTemplateColumns: { xs:'1fr', lg:'1.2fr 1fr' }, alignItems:'start' }}>
+        <Box sx={{ gridColumn:'1 / -1' }}>
           <SymbolManager
             symbols={symbols}
             onAdd={handleAdd}
@@ -65,20 +66,19 @@ const TradingDashboard = () => {
             disabled={loading}
             loadError={loadError}
           />
-        </Grid>
-        <Grid xs={12}>
+        </Box>
+  <Box sx={{ display:'grid', gap:3, order:{ xs:2, lg:1 }, gridTemplateColumns:{ xs:'1fr', sm:'repeat(auto-fit,minmax(280px,1fr))' }, minWidth:0 }}>
           <RiskMetrics />
-        </Grid>
-        <Grid xs={12}>
+          <CryptoScanner symbols={symbols} onSelect={(sym)=> setSelected(sym)} />
+        </Box>
+  <Box sx={{ order:{ xs:1, lg:2 }, minWidth:0 }}>
           <PriceChart symbol={selected} />
-        </Grid>
-        <Grid xs={12} sm={6}>
+        </Box>
+  <Box sx={{ display:'grid', gap:3, gridTemplateColumns:{ xs:'1fr', md:'1fr 1fr' }, gridColumn:'1 / -1', minWidth:0 }}>
           <StrategyControl />
-        </Grid>
-        <Grid item xs={12} md={6}>
           <OrderBook />
-        </Grid>
-      </Grid>
+        </Box>
+      </Box>
     </Container>
   );
 };

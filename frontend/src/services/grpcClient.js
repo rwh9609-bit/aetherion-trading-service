@@ -12,7 +12,23 @@ import {
   SymbolRequest
 } from '../proto/trading_api_pb.js';
 
-const host = 'http://localhost:8080'; // Route all requests through envoy proxy
+// Determine gRPC-web host.
+// Priority: explicit env var -> same-origin (production) -> localhost dev fallback.
+// Set REACT_APP_GRPC_HOST in production (e.g. https://app.aetherion.trade or https://api.aetherion.trade).
+let resolvedHost = process.env.REACT_APP_GRPC_HOST;
+if (!resolvedHost && typeof window !== 'undefined') {
+  // If we're on the marketing / app domain (e.g. https://app.aetherion.trade), assume envoy exposed on same origin
+  // or on :8080 for local dev.
+  const loc = window.location;
+  if (loc.hostname === 'localhost' || /127\.0\.0\.1/.test(loc.hostname)) {
+    resolvedHost = `http://localhost:8080`;
+  } else {
+    // Prefer same origin; allow custom subdomain via meta tag in future if needed.
+    resolvedHost = `${loc.protocol}//${loc.host}`;
+  }
+}
+const host = resolvedHost || 'http://localhost:8080'; // final fallback
+console.log('gRPC host resolved to:', host);
 const options = {
   transport: grpc.CrossBrowserHttpTransport({
     withCredentials: false,
@@ -291,6 +307,19 @@ export const listSymbols = async () => {
   const req = new Empty();
   return new Promise((resolve, reject) => {
     tradingClient.listSymbols(req, createMetadata(), (err, resp) => {
+      if (err) return reject(err);
+      resolve(resp.toObject());
+    });
+  });
+};
+
+// Fetch server-side momentum metrics (optional symbol filter array)
+export const getMomentum = async (symbols=[]) => {
+  const { MomentumRequest } = await import('../proto/trading_api_pb.js');
+  const req = new MomentumRequest();
+  req.setSymbolsList(symbols);
+  return new Promise((resolve, reject) => {
+    tradingClient.getMomentum(req, createMetadata(), (err, resp) => {
       if (err) return reject(err);
       resolve(resp.toObject());
     });
