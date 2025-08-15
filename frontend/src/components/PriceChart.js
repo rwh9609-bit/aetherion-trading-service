@@ -1,10 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Box, Card, CardContent, Typography, CircularProgress, Chip, Stack, Tooltip, FormControl, InputLabel, Select, MenuItem } from '@mui/material';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, Legend } from 'recharts';
+import { Box, Card, CardContent, Typography, CircularProgress, Chip, Stack, Tooltip } from '@mui/material';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, Legend, ResponsiveContainer } from 'recharts';
 import { fetchPrice, streamPrice } from '../services/grpcClient';
 
-const PriceChart = ({ symbol: initialSymbol = 'BTC-USD' }) => {
-  const [symbol, setSymbol] = useState(initialSymbol);
+const PriceChart = ({ symbol = 'BTC-USD' }) => {
   const [priceData, setPriceData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -12,6 +11,11 @@ const PriceChart = ({ symbol: initialSymbol = 'BTC-USD' }) => {
 
   const receivedFirstTickRef = useRef(false);
   useEffect(() => {
+    // reset when symbol changes
+    setPriceData([]);
+    setStreamState('connecting');
+    setLoading(true);
+    setError(null);
     let cleanup;
     receivedFirstTickRef.current = false;
     cleanup = streamPrice(symbol, (tick) => {
@@ -97,48 +101,25 @@ const PriceChart = ({ symbol: initialSymbol = 'BTC-USD' }) => {
   };
 
   return (
-    <Card>
+  <Card sx={{ minWidth:0 }}>
       <CardContent>
         <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: 1, gap:2 }}>
-          <Stack direction="row" spacing={2} alignItems="center">
-            <Typography variant="h6" gutterBottom sx={{ mb: 0 }}>
-              {symbol} Price Chart
-            </Typography>
-            <FormControl size="small" sx={{ minWidth: 140 }}>
-              <InputLabel id="symbol-select-label">Symbol</InputLabel>
-              <Select
-                labelId="symbol-select-label"
-                value={symbol}
-                label="Symbol"
-                onChange={(e) => { setPriceData([]); setStreamState('connecting'); setSymbol(e.target.value); }}
-              >
-                <MenuItem value="BTC-USD">BTC-USD</MenuItem>
-                <MenuItem value="ETH-USD">ETH-USD</MenuItem>
-                <MenuItem value="SOL-USD">SOL-USD</MenuItem>
-              </Select>
-            </FormControl>
-          </Stack>
+          <Typography variant="h6" gutterBottom sx={{ mb: 0 }}>
+            {symbol} Price Chart
+          </Typography>
           {renderStatusChip()}
         </Stack>
-        <Box sx={{ width: '100%', height: 300 }}>
-          <LineChart
-            width={600}
-            height={300}
-            data={priceData}
-            margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
-          >
-            <CartesianGrid strokeDasharray="3 3" />
-            <XAxis dataKey="time" />
-            <YAxis />
-            <RechartsTooltip />
-            <Legend />
-            <Line 
-              type="monotone" 
-              dataKey="price" 
-              stroke="#8884d8" 
-              isAnimationActive={false}
-            />
-          </LineChart>
+        <Box sx={{ width: '100%', height: 320 }}>
+          <ResponsiveContainer width="100%" height="100%">
+            <LineChart data={priceData} margin={{ top: 5, right: 20, left: 0, bottom: 5 }}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey="time" minTickGap={20} />
+              <YAxis domain={['auto','auto']} />
+              <RechartsTooltip />
+              <Legend />
+              <Line type="monotone" dataKey="price" stroke="#8884d8" isAnimationActive={false} dot={false} strokeWidth={2} />
+            </LineChart>
+          </ResponsiveContainer>
         </Box>
       </CardContent>
     </Card>

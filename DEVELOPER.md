@@ -213,6 +213,7 @@ rpc Login(AuthRequest) returns (AuthResponse) {}
 rpc GetPrice(Tick) returns (Tick) {}
 rpc StreamOrderBook(OrderBookRequest) returns (stream OrderBook) {}
 rpc StreamPrice(TickStreamRequest) returns (stream Tick) {}
+rpc GetMomentum(MomentumRequest) returns (MomentumResponse) {}
 ```
 
 #### Symbol Management
@@ -260,6 +261,18 @@ message Portfolio {
     double total_value_usd = 2;
     optional double last_price_change = 3;
 }
+
+// Momentum (server-side scanner)
+message MomentumRequest { repeated string symbols = 1; }
+message MomentumMetric {
+   string symbol = 1;
+   double last_price = 2;
+   double pct_change_1m = 3;
+   double pct_change_5m = 4;
+   double volatility = 5;
+   double momentum_score = 6;
+}
+message MomentumResponse { repeated MomentumMetric metrics = 1; int64 generated_at_unix_ms = 2; }
 ```
 
 ## Testing
@@ -315,6 +328,52 @@ export GO_SERVICE_ADDR=localhost:50051
 export RUST_SERVICE_ADDR=localhost:50052
 export ENVOY_PROXY_ADDR=localhost:8080
 export FRONTEND_PORT=3000
+export REACT_APP_GRPC_HOST=https://app.aetherion.trade   # optional: production build host override
+export CORS_ALLOWED_ORIGINS=https://app.aetherion.trade   # comma-separated list
+export AUTH_PREVIOUS_SECRET=old-secret   # optional; enables graceful JWT key rotation
+
+## Containerization
+
+### Local (Docker Compose)
+
+```bash
+docker compose build
+AUTH_SECRET=mysecret docker compose up -d
+```
+
+Services
+- frontend (port 3000)
+- envoy (port 8080, gRPC-web proxy)
+- trading (Go gRPC, internal)
+- risk (Rust service, internal)
+
+Update a single service:
+```bash
+docker compose build trading && docker compose up -d trading
+```
+
+Logs:
+```bash
+docker compose logs -f envoy
+```
+
+Tear down:
+```bash
+docker compose down -v
+```
+
+### Production Images
+
+Frontend with baked host:
+```bash
+docker build -f Dockerfile.frontend --build-arg REACT_APP_GRPC_HOST=https://api.example.com -t aetherion-frontend:prod .
+```
+
+Push example:
+```bash
+docker tag aetherion-frontend:prod ghcr.io/yourorg/aetherion-frontend:prod
+docker push ghcr.io/yourorg/aetherion-frontend:prod
+```
 
 # Authentication
 export AUTH_SECRET=your-secret-key-here
@@ -346,6 +405,10 @@ type Config struct {
     MaxConnections int
     Keepalive      time.Duration
 }
+
+Health endpoint: HTTP `/healthz` on port 8090 (used by Docker healthcheck).
+
+Key Rotation: set `AUTH_PREVIOUS_SECRET` alongside new `AUTH_SECRET` to accept tokens signed with previous key until they expire.
 ```
 
 #### Rust Service (`rust/risk_service/src/main.rs`)

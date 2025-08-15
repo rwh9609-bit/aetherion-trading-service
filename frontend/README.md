@@ -9,7 +9,13 @@ In the project directory, you can run:
 ### `npm start`
 
 Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+Open [http://localhost:3000](http://localhost:3000) to view it in your browser (development mode).
+
+Production deployment typically lives at https://app.aetherion.trade. When building for production you can set an explicit gRPC endpoint by exporting:
+
+REACT_APP_GRPC_HOST=https://app.aetherion.trade
+
+If unset, the app will attempt to use the current window origin, falling back to localhost:8080 for development.
 
 The page will reload when you make changes.\
 You may also see any lint errors in the console.

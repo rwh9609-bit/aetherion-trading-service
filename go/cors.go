@@ -2,13 +2,30 @@ package main
 
 import (
 	"net/http"
+	"os"
+	"strings"
 
 	"github.com/rs/cors"
 )
 
 func corsMiddleware() *cors.Cors {
+	// Allow override via CORS_ALLOWED_ORIGINS (comma-separated). Fallback to defaults.
+	originsEnv := os.Getenv("CORS_ALLOWED_ORIGINS")
+	var origins []string
+	if originsEnv != "" {
+		for _, o := range strings.Split(originsEnv, ",") {
+			o = strings.TrimSpace(o)
+			if o != "" { origins = append(origins, o) }
+		}
+	}
+	if len(origins) == 0 {
+		origins = []string{
+			"http://localhost:3000",
+			"https://app.aetherion.trade",
+		}
+	}
 	return cors.New(cors.Options{
-		AllowedOrigins: []string{"http://localhost:3000"},
+		AllowedOrigins: origins,
 		AllowedMethods: []string{
 			http.MethodPost,
 			http.MethodGet,

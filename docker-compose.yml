@@ -1,0 +1,47 @@
+version: "3.9"
+services:
+  risk:
+    build:
+      context: .
+      dockerfile: Dockerfile.risk
+    restart: unless-stopped
+  trading:
+    build:
+      context: .
+      dockerfile: Dockerfile.trading
+    environment:
+      - AUTH_SECRET=${AUTH_SECRET:-dev-insecure-default}
+      - CORS_ALLOWED_ORIGINS=${CORS_ALLOWED_ORIGINS:-http://localhost:3000,https://app.aetherion.trade}
+      - AUTH_PREVIOUS_SECRET=${AUTH_PREVIOUS_SECRET:-}
+    depends_on:
+      - risk
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:8090/healthz"]
+      interval: 15s
+      timeout: 3s
+      retries: 3
+    restart: unless-stopped
+  envoy:
+    build:
+      context: .
+      dockerfile: Dockerfile.envoy
+    depends_on:
+      - trading
+    ports:
+      - "8080:8080"
+    restart: unless-stopped
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile.frontend
+      args:
+        REACT_APP_GRPC_HOST: http://localhost:8080
+    ports:
+      - "3000:80"
+    depends_on:
+      - envoy
+    restart: unless-stopped
+
+networks:
+  default:
+    name: aetherion-net

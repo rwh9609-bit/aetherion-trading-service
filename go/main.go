@@ -14,6 +14,7 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
+	"math"
 
 	"google.golang.org/grpc/keepalive"
 
@@ -212,6 +213,14 @@ type tradingServer struct {
 	lastPrices   map[string]float64
 	priceMu      sync.RWMutex
 	feed         *CoinbaseFeed // market data feed controller (injected)
+	// in-memory price history for momentum metrics: symbol -> slice of (ts, price)
+	histMu       sync.RWMutex
+	priceHist    map[string][]histPoint
+}
+
+type histPoint struct {
+	ts time.Time
+	price float64
 }
 
 func newTradingServer() *tradingServer {
@@ -222,6 +231,7 @@ func newTradingServer() *tradingServer {
 		strategies:    make(map[string]*Strategy),
 		eventBus:     NewEventBus(),
 		lastPrices:   make(map[string]float64),
+	priceHist:    make(map[string][]histPoint),
 	}
 }
 
@@ -419,8 +429,66 @@ func (s *tradingServer) StreamPrice(req *pb.TickStreamRequest, stream pb.Trading
 			if err := stream.Send(&pb.Tick{Symbol: tick.Symbol, Price: tick.Price, TimestampNs: tick.Ts.UnixNano()}); err != nil {
 				return err
 			}
+			// record into history for momentum metrics
+			s.histMu.Lock()
+			hp := histPoint{ts: tick.Ts, price: tick.Price}
+			arr := append(s.priceHist[tick.Symbol], hp)
+			// drop entries older than 6 minutes to bound memory
+			cutoff := time.Now().Add(-6 * time.Minute)
+			idx := 0
+			for i:=len(arr)-1; i>=0; i-- { if arr[i].ts.Before(cutoff) { idx = i+1; break } }
+			if idx > 0 { arr = arr[idx:] }
+			s.priceHist[tick.Symbol] = arr
+			s.histMu.Unlock()
 		}
 	}
+}
+
+// GetMomentum aggregates short-term momentum metrics server-side similar to frontend scanner
+func (s *tradingServer) GetMomentum(ctx context.Context, req *pb.MomentumRequest) (*pb.MomentumResponse, error) {
+	// determine symbol set
+	symbols := req.GetSymbols()
+	if len(symbols) == 0 {
+		s.priceMu.RLock(); for sym := range s.lastPrices { symbols = append(symbols, sym) }; s.priceMu.RUnlock()
+	}
+	now := time.Now()
+	oneMin := now.Add(-1 * time.Minute)
+	fiveMin := now.Add(-5 * time.Minute)
+	result := &pb.MomentumResponse{GeneratedAtUnixMs: now.UnixMilli()}
+	s.histMu.RLock(); defer s.histMu.RUnlock()
+	for _, sym := range symbols {
+		hist := s.priceHist[sym]
+		if len(hist) < 2 { continue }
+		var price5mSet bool
+		var price5m, price1m, last float64
+		var have1m bool
+		var logRets []float64
+		prev := hist[0].price
+		for _, pt := range hist {
+			if !price5mSet && !pt.ts.Before(fiveMin) { price5m = pt.price; price5mSet = true }
+			if !have1m && !pt.ts.Before(oneMin) { price1m = pt.price; have1m = true }
+			if pt.price > 0 && prev > 0 { logRets = append(logRets, math.Log(pt.price/prev)) }
+			prev = pt.price
+			last = pt.price
+		}
+		if !price5mSet { price5m = hist[0].price }
+		if !have1m { price1m = price5m }
+		if price5m == 0 || price1m == 0 { continue }
+		pct1m := ((last - price1m)/price1m) * 100
+		pct5m := ((last - price5m)/price5m) * 100
+		if len(logRets) < 2 { continue }
+		mean := 0.0; for _, v := range logRets { mean += v }; mean /= float64(len(logRets))
+		varVar := 0.0; for _, v := range logRets { d := v - mean; varVar += d * d }; varVar /= float64(len(logRets))
+		vol := math.Sqrt(varVar) * math.Sqrt( (60*60*24) / (5*60) )
+		score := pct1m * 0.7 + pct5m * 0.3 - (vol*100)*0.5
+	result.Metrics = append(result.Metrics, &pb.MomentumMetric{Symbol: sym, LastPrice: last, PctChange_1M: pct1m, PctChange_5M: pct5m, Volatility: vol, MomentumScore: score})
+	}
+	// simple sort descending by score
+	if len(result.Metrics) > 1 {
+		// insertion sort (few symbols typical)
+		for i:=1;i<len(result.Metrics);i++ { j:=i; for j>0 && result.Metrics[j-1].MomentumScore < result.Metrics[j].MomentumScore { result.Metrics[j-1], result.Metrics[j] = result.Metrics[j], result.Metrics[j-1]; j-- } }
+	}
+	return result, nil
 }
 
 // AddSymbol adds a symbol to the dynamic websocket feed
@@ -458,10 +526,9 @@ func main() {
 
 	// Load auth secret from environment (export AUTH_SECRET=your-secret)
 	secret := os.Getenv("AUTH_SECRET")
-	if secret == "" {
-		secret = "dev-insecure-default"
-		log.Println("WARNING: AUTH_SECRET not set; using insecure default secret. Do NOT use in production.")
-	}
+	if secret == "" { secret = "dev-insecure-default"; log.Println("WARNING: AUTH_SECRET not set; using insecure default.") }
+	// Optional secondary secret for rotation: AUTH_PREVIOUS_SECRET allows old tokens until expiry
+	prevSecret := os.Getenv("AUTH_PREVIOUS_SECRET")
 	// Create a gRPC server with custom options
 	grpcServer := grpc.NewServer(
 		grpc.KeepaliveParams(keepalive.ServerParameters{
@@ -469,7 +536,7 @@ func main() {
 			Time:              20 * time.Second,
 			Timeout:           1 * time.Second,
 		}),
-		grpc.UnaryInterceptor(authUnaryInterceptor([]byte(secret))),
+		grpc.UnaryInterceptor(authUnaryInterceptorWithFallback([]byte(secret), []byte(prevSecret))),
 	)
 
 	// Create and register our trading service
@@ -480,6 +547,15 @@ func main() {
 	feedSymbols := []string{"BTC-USD", "ETH-USD", "SOL-USD"}
 	feed := NewCoinbaseFeed(tradingService.eventBus, func(sym string, price float64) {
 		tradingService.priceMu.Lock(); tradingService.lastPrices[sym] = price; tradingService.priceMu.Unlock()
+		// record history for momentum metrics (store recent <=6m)
+		tradingService.histMu.Lock()
+		arr := append(tradingService.priceHist[sym], histPoint{ts: time.Now(), price: price})
+		cutoff := time.Now().Add(-6 * time.Minute)
+		idx := 0
+		for i:=len(arr)-1; i>=0; i-- { if arr[i].ts.Before(cutoff) { idx = i+1; break } }
+		if idx > 0 { arr = arr[idx:] }
+		tradingService.priceHist[sym] = arr
+		tradingService.histMu.Unlock()
 	})
 	feed.Start(feedSymbols)
 	log.Printf("Market data feed controller started for symbols: %v", feedSymbols)
@@ -488,6 +564,19 @@ func main() {
 	// Auth service
 	authSvc := newAuthServer(secret)
 	pb.RegisterAuthServiceServer(grpcServer, authSvc)
+
+	// Lightweight HTTP health endpoint (separate listener) for container health checks
+	go func() {
+		mux := http.NewServeMux()
+		mux.HandleFunc("/healthz", func(w http.ResponseWriter, r *http.Request) {
+			w.WriteHeader(http.StatusOK)
+			_, _ = w.Write([]byte("ok"))
+		})
+		srv := &http.Server{Addr: ":8090", Handler: mux}
+		if err := srv.ListenAndServe(); err != nil {
+			log.Printf("health server exited: %v", err)
+		}
+	}()
 
 	// Start gRPC server with graceful shutdown
 	lis, err := net.Listen("tcp", "0.0.0.0:50051")

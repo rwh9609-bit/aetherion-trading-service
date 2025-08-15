@@ -1,7 +1,8 @@
 import { render, screen } from '@testing-library/react';
 import App from './App';
 
-test('renders app title', () => {
+test('renders landing page hero heading', () => {
   render(<App />);
-  expect(screen.getByText(/Aetherion Trading Engine/i)).toBeInTheDocument();
+  expect(screen.getByText(/Modern/i)).toBeInTheDocument();
+  expect(screen.getByText(/Trading Architecture/i)).toBeInTheDocument();
 });
