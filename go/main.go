@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
-	"log"
 	"net"
 	"net/http"
 	"strconv"
@@ -18,12 +17,41 @@ import (
 	"crypto/rand"
 	"encoding/hex"
 	"container/heap"
-
+	"github.com/rs/zerolog"
+	"github.com/rs/zerolog/log"
+	"google.golang.org/grpc"
 	"google.golang.org/grpc/keepalive"
 	"github.com/google/uuid"
-	"google.golang.org/grpc"
-    pb "aetherion-trading-service/gen"
+	pb "aetherion-trading-service/gen"
 )
+
+// timeoutUnary enforces a per-request timeout if parent has none.
+func timeoutUnary(d time.Duration) grpc.UnaryServerInterceptor {
+	return func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
+		if _, hasDeadline := ctx.Deadline(); !hasDeadline && d > 0 {
+			var cancel context.CancelFunc
+			ctx, cancel = context.WithTimeout(ctx, d)
+			defer cancel()
+		}
+		return handler(ctx, req)
+	}
+}
+
+// chainUnary composes multiple unary interceptors into a single interceptor.
+func chainUnary(interceptors ...grpc.UnaryServerInterceptor) grpc.UnaryServerInterceptor {
+	return func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
+		// Build the chain in reverse
+		wrapped := handler
+		for i := len(interceptors) - 1; i >= 0; i-- {
+			current := interceptors[i]
+			next := wrapped
+			wrapped = func(c context.Context, r interface{}) (interface{}, error) {
+				return current(c, r, info, next)
+			}
+		}
+		return wrapped(ctx, req)
+	}
+}
 
 // PriceLevel & OrderBookSide definitions are in orderbook.go, but we reassert interface methods here
 func (h OrderBookSide) Len() int           { return len(h) }
@@ -522,29 +550,23 @@ func (s *tradingServer) ListSymbols(ctx context.Context, _ *pb.Empty) (*pb.Symbo
 }
 
 func main() {
-	// Enable debug logging
-	log.SetFlags(log.LstdFlags | log.Lshortfile)
+	cfg, err := loadConfig()
+	if err != nil { panic(err) }
+	// Structured logger setup
+	zerolog.TimeFieldFormat = time.RFC3339Nano
+	level, err := zerolog.ParseLevel(cfg.LogLevel)
+	if err != nil { level = zerolog.InfoLevel }
+	zerolog.SetGlobalLevel(level)
+	log.Info().Str("env", cfg.Env).Str("log_level", level.String()).Msg("starting service")
 
-	// Load auth secret from environment (export AUTH_SECRET=your-secret)
-	secret := os.Getenv("AUTH_SECRET")
-	if secret == "" {
-		// Allow ephemeral secret in non-production for developer convenience
-		if os.Getenv("GO_ENV") != "production" {
-			b := make([]byte, 32)
-			if _, err := rand.Read(b); err == nil {
-				secret = hex.EncodeToString(b)
-				log.Println("INFO: Generated ephemeral dev AUTH_SECRET (not persisted). Set AUTH_SECRET to a stable value to preserve sessions.")
-			} else {
-				log.Fatalf("Failed to generate dev AUTH_SECRET: %v", err)
-			}
-		} else {
-			log.Fatalf("AUTH_SECRET must be set in production and >=32 chars")
-		}
+	secret := cfg.AuthSecret
+	if secret == "" && cfg.Env != "production" {
+		b := make([]byte, 32)
+		if _, err := rand.Read(b); err == nil { secret = hex.EncodeToString(b); log.Warn().Msg("generated ephemeral dev AUTH_SECRET") } else { log.Fatal().Err(err).Msg("generate dev secret") }
 	}
-	if len(secret) < 32 { log.Fatalf("AUTH_SECRET must be >=32 chars (got %d)", len(secret)) }
-	// Optional secondary secret for rotation: AUTH_PREVIOUS_SECRET allows old tokens until expiry
-	prevSecret := os.Getenv("AUTH_PREVIOUS_SECRET")
-	if prevSecret != "" && len(prevSecret) < 32 { log.Println("WARNING: AUTH_PREVIOUS_SECRET length <32; rotation secret should be strong") }
+	if len(secret) < 32 { log.Fatal().Msg("AUTH_SECRET must be >=32 chars") }
+	prevSecret := cfg.AuthPreviousSecret
+	if prevSecret != "" && len(prevSecret) < 32 { log.Warn().Msg("AUTH_PREVIOUS_SECRET length <32") }
 	// Create a gRPC server with custom options
 	grpcServer := grpc.NewServer(
 		grpc.KeepaliveParams(keepalive.ServerParameters{
@@ -552,7 +574,10 @@ func main() {
 			Time:              20 * time.Second,
 			Timeout:           1 * time.Second,
 		}),
-		grpc.UnaryInterceptor(authUnaryInterceptorWithFallback([]byte(secret), []byte(prevSecret))),
+		grpc.UnaryInterceptor(chainUnary(
+			authUnaryInterceptorWithFallback([]byte(secret), []byte(prevSecret)),
+			timeoutUnary(cfg.RequestTimeout),
+		)),
 	)
 
 	// Create and register our trading service
@@ -565,7 +590,7 @@ func main() {
 	pb.RegisterBotServiceServer(grpcServer, botSvc)
 
 	// Market data feed (dynamic)
-	feedSymbols := []string{"BTC-USD", "ETH-USD", "SOL-USD"}
+	feedSymbols := append([]string{}, cfg.DefaultSymbols...)
 	feed := NewCoinbaseFeed(tradingService.eventBus, func(sym string, price float64) {
 		tradingService.priceMu.Lock(); tradingService.lastPrices[sym] = price; tradingService.priceMu.Unlock()
 		// record history for momentum metrics (store recent <=6m)
@@ -579,7 +604,7 @@ func main() {
 		tradingService.histMu.Unlock()
 	})
 	feed.Start(feedSymbols)
-	log.Printf("Market data feed controller started for symbols: %v", feedSymbols)
+	log.Info().Strs("symbols", feedSymbols).Msg("market data feed started")
 	tradingService.feed = feed
 
 	// Auth service
@@ -587,41 +612,36 @@ func main() {
 	pb.RegisterAuthServiceServer(grpcServer, authSvc)
 
 	// Lightweight HTTP health endpoint (separate listener) for container health checks
-	go func() {
+	go func(addr string) {
 		mux := http.NewServeMux()
-		mux.HandleFunc("/healthz", func(w http.ResponseWriter, r *http.Request) {
-			w.WriteHeader(http.StatusOK)
-			_, _ = w.Write([]byte("ok"))
-		})
-		srv := &http.Server{Addr: ":8090", Handler: mux}
-		if err := srv.ListenAndServe(); err != nil {
-			log.Printf("health server exited: %v", err)
-		}
-	}()
+		mux.HandleFunc("/healthz", func(w http.ResponseWriter, r *http.Request) { w.WriteHeader(http.StatusOK); _, _ = w.Write([]byte("ok")) })
+		srv := &http.Server{Addr: addr, Handler: mux}
+		if err := srv.ListenAndServe(); err != nil { log.Warn().Err(err).Msg("health server exited") }
+	}(cfg.HTTPHealthAddr)
 
 	// Start gRPC server with graceful shutdown
-	lis, err := net.Listen("tcp", "0.0.0.0:50051")
-	if err != nil { log.Fatalf("Failed to listen on :50051: %v", err) }
+	lis, err := net.Listen("tcp", cfg.GRPCListenAddr)
+	if err != nil { log.Fatal().Err(err).Str("addr", cfg.GRPCListenAddr).Msg("listen failed") }
 
 	stopCh := make(chan os.Signal, 1)
 	signal.Notify(stopCh, syscall.SIGINT, syscall.SIGTERM)
 
 	serverErrCh := make(chan error, 1)
 	go func() {
-		log.Printf("Starting gRPC server on :50051...")
+		log.Info().Str("addr", cfg.GRPCListenAddr).Msg("gRPC server starting")
 		serverErrCh <- grpcServer.Serve(lis)
 	}()
 
 	select {
 	case sig := <-stopCh:
-		log.Printf("Received signal %v: initiating graceful shutdown", sig)
+		log.Info().Str("signal", sig.String()).Msg("shutdown signal received")
 	case err := <-serverErrCh:
-		if err != nil { log.Printf("gRPC server error: %v", err) }
+		if err != nil { log.Error().Err(err).Msg("gRPC server error") }
 	}
 
 	// Graceful stop
 	feed.Stop()
-	log.Println("Market data feed stopped")
+	log.Info().Msg("market data feed stopped")
 	grpcServer.GracefulStop()
-	log.Println("gRPC server stopped")
+	log.Info().Msg("gRPC server stopped")
 }

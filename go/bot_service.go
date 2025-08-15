@@ -10,24 +10,56 @@ import (
     "os"
     "path/filepath"
     "log"
+    "strings"
+    "github.com/jackc/pgx/v5"
 )
 
 type botRegistry struct {
     mu sync.RWMutex
     bots map[string]*pb.BotConfig
     path string
+    pg  *pgx.Conn
 }
 
 func newBotRegistry() *botRegistry {
-    dir := "data"
-    _ = os.MkdirAll(dir, 0o755)
-    path := filepath.Join(dir, "bots.json")
-    r := &botRegistry{bots: make(map[string]*pb.BotConfig), path: path}
-    r.load()
-    return r
+    r := &botRegistry{bots: make(map[string]*pb.BotConfig)}
+    dsn := os.Getenv("POSTGRES_DSN")
+    if dsn != "" {
+        ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second); defer cancel()
+        conn, err := pgx.Connect(ctx, dsn)
+        if err == nil {
+            _, err2 := conn.Exec(ctx, `CREATE TABLE IF NOT EXISTS bots (
+                id TEXT PRIMARY KEY,
+                name TEXT NOT NULL,
+                symbol TEXT NOT NULL,
+                strategy TEXT NOT NULL,
+                parameters JSONB DEFAULT '{}'::jsonb,
+                active BOOLEAN NOT NULL DEFAULT false,
+                created_at TIMESTAMPTZ DEFAULT now()
+            )`)
+            if err2 == nil { r.pg = conn; r.loadFromPg(ctx); return r } else { log.Printf("bot pg table err: %v", err2) }
+        } else { log.Printf("bot registry postgres connect failed: %v", err) }
+    }
+    dir := "data"; _ = os.MkdirAll(dir, 0o755); r.path = filepath.Join(dir, "bots.json"); r.loadFromFile(); return r
 }
 
-func (r *botRegistry) load() {
+func (r *botRegistry) loadFromPg(ctx context.Context) {
+    rows, err := r.pg.Query(ctx, `SELECT id,name,symbol,strategy,parameters,active,extract(epoch from created_at)::bigint FROM bots`)
+    if err != nil { log.Printf("bot load pg err: %v", err); return }
+    defer rows.Close()
+    for rows.Next() {
+        var id,name,symbol,strategy string
+        var paramsBytes []byte
+        var active bool
+        var created int64
+        if err := rows.Scan(&id,&name,&symbol,&strategy,&paramsBytes,&active,&created); err != nil { continue }
+        m := map[string]string{}
+        _ = json.Unmarshal(paramsBytes, &m)
+        r.bots[id] = &pb.BotConfig{Id:id, Name:name, Symbol:symbol, Strategy:strategy, Parameters:m, Active:active, CreatedAtUnix: created}
+    }
+}
+
+func (r *botRegistry) loadFromFile() {
     b, err := os.ReadFile(r.path)
     if err != nil { return }
     var arr []*pb.BotConfig
@@ -37,6 +69,18 @@ func (r *botRegistry) load() {
 }
 
 func (r *botRegistry) persist() {
+    if r.pg != nil {
+        ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second); defer cancel()
+        for _, b := range r.bots {
+            paramsJSON, _ := json.Marshal(b.Parameters)
+            _, err := r.pg.Exec(ctx, `INSERT INTO bots (id,name,symbol,strategy,parameters,active,created_at)
+                VALUES ($1,$2,$3,$4,$5,$6,to_timestamp($7))
+                ON CONFLICT (id) DO UPDATE SET name=EXCLUDED.name,symbol=EXCLUDED.symbol,strategy=EXCLUDED.strategy,parameters=EXCLUDED.parameters,active=EXCLUDED.active`,
+                b.Id,b.Name,b.Symbol,b.Strategy,string(paramsJSON),b.Active,b.CreatedAtUnix)
+            if err != nil && !strings.Contains(err.Error(), "duplicate") { log.Printf("bot upsert err: %v", err) }
+        }
+        return
+    }
     r.mu.RLock(); defer r.mu.RUnlock()
     arr := make([]*pb.BotConfig, 0, len(r.bots))
     for _, b := range r.bots { arr = append(arr, b) }

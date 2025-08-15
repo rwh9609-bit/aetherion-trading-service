@@ -1,6 +1,6 @@
 # Aetherion Trading Engine
 
-**A next-generation, cloud-native trading platform designed for ambitious quants and developers.**
+**A next-generation, cloud-native trading & automation platform for ambitious quants and builders.**
 
 ## What is Aetherion?
 
@@ -8,36 +8,39 @@ Aetherion is a modern quantitative trading platform that combines real-time mark
 
 ## 🌟 Key Features
 
-### Advanced Risk Management
-- **Real-time Value at Risk (VaR)** calculations using Monte Carlo methods
-- **Position-level risk monitoring** with automatic limit enforcement
-- **Portfolio exposure controls** to manage overall risk
-- **Pre-trade risk checks** to prevent dangerous positions
+### Advanced Risk Management (in progress)
+
+- **Pluggable risk engine (Rust)** foundation prepared for Monte Carlo VaR & limit checks (initial scaffolding)
+- **Real-time position tracking** (portfolio simulation) with future hooks for limits
+- **JWT‑secured control plane** with optional auth bypass for local iteration
 
 ### Reliable Market Data
-- **Multi-exchange support** with automatic failover between Coinbase and Binance
-- **Real-time price feeds** with microsecond precision
-- **WebSocket streaming** for low-latency data delivery
-- **HTTP monitoring endpoints** for system health checks
 
-### Smart Trading Strategies
-- **Mean reversion strategy** with Z-score based signals
-- **Dynamic position sizing** based on volatility and risk appetite
-- **Automated stop losses** to protect against large losses
-- **Risk-adjusted position management**
+- **Coinbase WebSocket feed** with dynamic symbol subscription (defaults configurable via `DEFAULT_SYMBOLS` env var; default: BTC-USD, ETH-USD, SOL-USD, ILV-USD)
+- **Event bus fanout** -> low-latency internal tick distribution (`StreamPrice`)
+- **Server-side momentum aggregation** (1m/5m changes + volatility score)
+- **Health endpoint** (`:8090/healthz`) & status badge in UI
+
+### Strategy & Bot Automation
+
+- **Mean reversion prototype strategy** (Go-based orchestration placeholder) with safe period guard
+- **Bot Service** (create/list/start/stop/status) persisting to `data/bots.json`
+- **Strategy linkage**: Bot start launches strategy and stores `strategy_id`
+- **Momentum & OHLC visualizations** for rapid exploratory strategy tuning
 
 ### Modern Architecture
-- **Polyglot microservices** - Each component uses the best language for its purpose
-- **Real-time streaming** - Live order books and price data
-- **Web-based interface** - Access your trading platform from anywhere
-- **Production-ready** - Built with enterprise-grade reliability
+
+- **Polyglot services** (Go trading + Rust risk + Python strategy playground + React frontend)
+- **gRPC + Envoy (gRPC-Web)** boundary for browser clients
+- **Streaming-first design** (ticks, order books, future risk events)
+- **Persistence-light** (JSON bot registry) – easy to swap for DB later
 
 ## 🚀 Getting Started
 
 ### For Traders and Analysts
 
 1. **Access the Platform**
-   - Visit the web interface at `https://app.aetherion.cloud`
+   - Visit the web interface at `https://app.aetherion.cloud` (planned production domain)
    - Create your account or sign in
    - Start monitoring real-time market data
 
@@ -53,11 +56,11 @@ Aetherion is a modern quantitative trading platform that combines real-time mark
 
 ### For Developers
 
-Want to extend Aetherion or run your own instance? Check out our [Developer Documentation](DEVELOPER.md) for detailed setup instructions, API documentation, and architecture guides.
+Want to extend Aetherion or run your own instance? See [Developer Documentation](DEVELOPER.md) for setup, protos, and contribution workflow.
 
 ## 🏗️ Architecture Highlights
 
-Aetherion uses a modern microservices architecture with each component optimized for its specific role:
+Aetherion uses a polyglot microservices architecture with each component optimized for its role:
 
 ```text
 ┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
@@ -80,37 +83,35 @@ Aetherion uses a modern microservices architecture with each component optimized
                     └───────────────────┘
 ```
 
-- **Frontend (React)** - Beautiful, responsive web interface
-- **Trading Service (Go)** - High-throughput order processing and market data
-- **Risk Service (Rust)** - Ultra-fast risk calculations and position monitoring  
-- **Strategy Engine (Python)** - Flexible strategy development and backtesting
+- **Frontend (React)** - Navigation: Landing, Bots, Develop Bot, Momentum, About/News/Contact
+- **Trading Service (Go)** - Market data feed, strategies, momentum metrics, auth
+- **Bot Service (Go)** - Lifecycle management & persistence (same process for now)
+- **Risk Service (Rust)** - Planned: VaR, limits engine
+- **Strategy Engine (Python)** - Experimental algorithm prototyping
 
 All components communicate via gRPC for optimal performance and reliability.
 
 ## 📊 Supported Markets
 
-Currently supported exchanges and markets:
+Current data source:
 
-- **Coinbase Pro** - BTC-USD, ETH-USD, SOL-USD, and more
-- **Binance** - Major cryptocurrency pairs (fallback)
-- **Custom feeds** - Easy integration with additional data sources
+- **Coinbase** websocket (spot crypto) – dynamic symbols (override startup set: `DEFAULT_SYMBOLS="BTC-USD,ETH-USD,SOL-USD,ILV-USD"`)
+- (Planned) Binance + others as fallback extensions
 
 ## 🛡️ Risk Management
 
-Safety is our top priority. Aetherion includes comprehensive risk controls:
+Early-stage risk roadmap:
 
-- **Position limits** prevent over-concentration in any single asset
-- **Portfolio VaR** monitors overall portfolio risk in real-time
-- **Stop losses** automatically close positions to limit losses
-- **Circuit breakers** halt trading during extreme market conditions
+- Position & exposure tracking (baseline implemented)
+- VaR & stress testing (Rust engine scaffolding)
+- Pre-trade checks & circuit breakers (future)
 
 ## 📚 Documentation
 
-- [User Guide](docs/USER_GUIDE.md) - Complete guide to using the platform
-- [Strategy Development](docs/STRATEGIES.md) - How to create and deploy strategies
-- [Risk Management](docs/RISK.md) - Understanding and configuring risk controls
-- [API Reference](docs/API.md) - Complete API documentation
-- [Developer Guide](DEVELOPER.md) - Technical setup and development
+- [User Guide](docs/USER_GUIDE.md) - How to use the UI & features
+- [API Reference](docs/API.md) - gRPC service + message overview
+- [Developer Guide](DEVELOPER.md) - Setup, architecture, protos
+- (Planned) Strategy & Risk deep-dive docs
 
 ## 🤝 Support
 
@@ -124,4 +125,4 @@ Aetherion is open source software licensed under the MIT License. See [LICENSE](
 
 ---
 
-**Ready to start trading?** Visit `https://app.aetherion.cloud` to access your Aetherion platform, or check out the [Developer Guide](DEVELOPER.md) to set up your own instance.
+**Ready to explore?** Visit `https://app.aetherion.cloud` (when live) or run locally via `make run`. See [Developer Guide](DEVELOPER.md) to hack on services.

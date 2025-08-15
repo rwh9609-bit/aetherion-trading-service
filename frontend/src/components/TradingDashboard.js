@@ -34,7 +34,7 @@ const TradingDashboard = () => {
           console.error('Failed to load symbols:', e);
           setLoadError(e.message || 'Failed to load symbols');
           // Fallback defaults if backend call fails
-          const fallback = ['BTC-USD','ETH-USD','SOL-USD'];
+          const fallback = ['BTC-USD','ETH-USD','SOL-USD','ILV-USD'];
           setSymbols(fallback);
           setSelected(fallback[0]);
         }

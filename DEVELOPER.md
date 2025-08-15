@@ -87,43 +87,68 @@ make run-python-client   # Terminal 3
 - **Location**: `frontend/`
 - **Technology**: React 18, Material-UI, gRPC-Web
 - **Features**:
-  - Real-time order book visualization
-  - Risk metrics dashboard
-  - Strategy control panel
-  - User authentication
-   - Dual momentum views (client-side live stream scanner + server aggregated momentum panel)
-   - Health status badge (polls `/healthz`)
+      - Real-time order book visualization
+      - Risk metrics dashboard
+      - Strategy control panel
+      - User authentication
+      - Dual momentum views (client-side tick stream + server aggregated momentum panel)
+      - Health status badge (polls Go service `:8090/healthz`)
 
-\n#### 2. Envoy Proxy (Port 8080)
+#### 2. Envoy Proxy (Port 8080)
 - **Configuration**: `envoy.yaml`
 - **Purpose**: gRPC-Web to gRPC translation
 - **Routes**:
-  - `/trading.TradingService/*` → Go Service (50051)
-  - `/trading.RiskService/*` → Rust Service (50052)
-  - `/trading.AuthService/*` → Go Service (50051)
-   - `/trading.BotService/*` → Go Service (50051)
+      - `/trading.TradingService/*` → Go Service (50051)
+      - `/trading.RiskService/*` → Rust Service (50052)
+      - `/trading.AuthService/*` → Go Service (50051)
+      - `/trading.BotService/*` → Go Service (50051)
 
-\n#### 3. Go Trading Service (Port 50051)
+#### 3. Go Trading Service (Port 50051)
 - **Location**: `go/`
 - **Features**:
-  - Order book management
-  - Price feed aggregation (Coinbase WebSocket)
-  - Authentication & JWT handling
-  - gRPC streaming endpoints
+      - Order book management
+      - Price feed aggregation (Coinbase WebSocket)
+      - Configurable default symbols via `DEFAULT_SYMBOLS` (comma-separated; falls back to BTC-USD,ETH-USD,SOL-USD,ILV-USD)
+      - Authentication & JWT handling
+      - gRPC streaming endpoints
 
-\n#### 4. Rust Risk Service (Port 50052)
+## Configuration Reference
+
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `GRPC_LISTEN_ADDR` | gRPC listen address | `:50051` |
+| `HTTP_HEALTH_ADDR` | Health HTTP server address | `:8090` |
+| `AUTH_SECRET` | Primary JWT signing secret (>=32 chars in prod) | (auto-generated in non-prod if empty) |
+| `AUTH_PREVIOUS_SECRET` | Previous JWT secret for rotation window | (empty) |
+| `POSTGRES_DSN` | Postgres connection string for users/bots | (empty -> in-memory/JSON) |
+| `DEFAULT_SYMBOLS` | Comma-separated startup symbol subscriptions | `BTC-USD,ETH-USD,SOL-USD,ILV-USD` |
+| `LOG_LEVEL` | Zerolog level (trace/debug/info/warn/error) | `info` |
+| `REQUEST_TIMEOUT_MS` | Per-RPC timeout if client omits deadline | `5000` |
+| `SHUTDOWN_GRACE_SECONDS` | Grace period on SIGTERM before force stop | `15` |
+| `AUTH_DISABLED` | If `1`, bypasses auth (dev only) | (unset) |
+
+Example:
+
+```bash
+DEFAULT_SYMBOLS="BTC-USD,ETH-USD,ILV-USD,SOL-USD" GRPC_LISTEN_ADDR=":6000" LOG_LEVEL=debug make run
+```
+
+#### 4. Rust Risk Service (Port 50052)
 - **Location**: `rust/risk_service/`
 - **Features**:
-  - Monte Carlo VaR calculations
-  - Real-time risk assessment
-  - High-performance computations
+   - Monte Carlo VaR calculations
+   - Real-time risk assessment
+   - High-performance computations
 
-\n#### 5. Python Strategy Service
-- **Location**: `python/`
+#### 5. Python Strategy Service
+
+#### 6. Bot Service (logical, currently in Go process)
+
+- **Location**: `go/bot_service.go`
 - **Features**:
-  - Mean reversion strategy
-  - Multiple data source handling
-  - Trading signal generation
+   - Bot registry persisted to `data/bots.json`
+   - RPCs: CreateBot, ListBots, StartBot, StopBot, GetBotStatus
+   - Integrates with TradingService StartStrategy; stores `strategy_id` in bot parameters
 
 ### Data Flow
 
@@ -169,7 +194,7 @@ Strategy Decisions ← Python Service
 
 ### Protocol Buffer Changes
 
-When modifying `protos/trading_api.proto`:
+When modifying `protos/trading_api.proto` or `protos/bot.proto`:
 
 1. **Update the proto file**
 2. **Regenerate code**: `make generate`
@@ -203,7 +228,7 @@ When modifying `protos/trading_api.proto`:
 
 ## API Documentation
 
-### Trading Service APIs
+### Trading Service APIs (subset)
 
 #### Authentication
 ```protobuf
@@ -226,7 +251,7 @@ rpc RemoveSymbol(SymbolRequest) returns (StatusResponse) {}
 rpc ListSymbols(Empty) returns (SymbolList) {}
 ```
 
-#### Strategy Control
+#### Strategy & Bot Control
 ```protobuf
 rpc StartStrategy(StrategyRequest) returns (StatusResponse) {}
 rpc StopStrategy(StrategyRequest) returns (StatusResponse) {}
@@ -237,13 +262,13 @@ rpc StopStrategy(StrategyRequest) returns (StatusResponse) {}
 rpc GetPortfolio(PortfolioRequest) returns (Portfolio) {}
 ```
 
-### Risk Service APIs
+### Risk Service APIs (planned expansion)
 
 ```protobuf
 rpc CalculateVaR(VaRRequest) returns (VaRResponse) {}
 ```
 
-### Message Types
+### Message Types (excerpt)
 
 #### Core Messages
 ```protobuf
@@ -330,8 +355,9 @@ ghz --insecure --proto protos/trading_api.proto \
 export GO_SERVICE_ADDR=localhost:50051
 export RUST_SERVICE_ADDR=localhost:50052
 export ENVOY_PROXY_ADDR=localhost:8080
+export HEALTH_PORT=8090
 export FRONTEND_PORT=3000
-export REACT_APP_GRPC_HOST=https://app.aetherion.cloud   # optional: production build host override
+export REACT_APP_GRPC_HOST=https://app.aetherion.cloud   # production deployment planned domain
 export CORS_ALLOWED_ORIGINS=https://app.aetherion.cloud   # comma-separated list
 export AUTH_PREVIOUS_SECRET=old-secret   # optional; enables graceful JWT key rotation
 
@@ -380,6 +406,8 @@ docker push ghcr.io/yourorg/aetherion-frontend:prod
 
 # Authentication
 export AUTH_SECRET=your-secret-key-here
+export AUTH_PREVIOUS_SECRET=old-secret-if-rotating
+export AUTH_DISABLED=0             # set to 1 to bypass auth in dev ONLY
 export JWT_EXPIRY_HOURS=24
 
 # Trading Parameters
@@ -478,9 +506,9 @@ To disable the auto `api.` mapping, set an explicit `REACT_APP_GRPC_HOST` to the
 
 ```rust
 pub struct RiskConfig {
-    pub port: u16,
-    pub var_confidence: f64,
-    pub simulation_count: usize,
+   pub port: u16,
+   pub var_confidence: f64,
+   pub simulation_count: usize,
 }
 ```
 
