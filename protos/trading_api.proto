@@ -65,6 +65,27 @@ message OrderBookRequest {
     string symbol = 1;
 }
 
+// --- Authentication & User Management ---
+// Request to register a new user
+message RegisterRequest {
+    string username = 1;
+    string password = 2; // Plaintext over TLS; will be hashed server-side
+}
+
+// Request to login
+message AuthRequest {
+    string username = 1;
+    string password = 2;
+}
+
+// Response containing JWT token
+message AuthResponse {
+    bool success = 1;
+    string message = 2;
+    string token = 3;           // JWT bearer token
+    int64 expires_at_unix = 4;   // Expiration timestamp (seconds since epoch)
+}
+
 // Service definition
 service TradingService {
     // Stream order book updates
@@ -90,4 +111,10 @@ service TradingService {
 service RiskService {
     // Calculates the Value at Risk for a given portfolio
     rpc CalculateVaR(VaRRequest) returns (VaRResponse) {}
+}
+
+// Service for authentication
+service AuthService {
+    rpc Register(RegisterRequest) returns (AuthResponse) {}
+    rpc Login(AuthRequest) returns (AuthResponse) {}
 }

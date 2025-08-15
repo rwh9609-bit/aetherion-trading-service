@@ -21,7 +21,8 @@ static_resources:
                       google_re2: {}
                       regex: ".*"
                 allow_methods: GET, PUT, DELETE, POST, OPTIONS
-                allow_headers: keep-alive,user-agent,cache-control,content-type,content-transfer-encoding,x-grpc-web,grpc-accept-encoding,x-user-agent,custom-header-1,x-grpc-timeout
+                # Added 'authorization' so browser can send JWT to backend
+                allow_headers: keep-alive,user-agent,cache-control,content-type,content-transfer-encoding,x-grpc-web,grpc-accept-encoding,x-user-agent,custom-header-1,x-grpc-timeout,authorization
                 expose_headers: grpc-status,grpc-message
               routes:
               - match: { prefix: "/trading.TradingService/" }
@@ -33,6 +34,12 @@ static_resources:
               - match: { prefix: "/trading.RiskService/" }
                 route:
                   cluster: risk_service
+                  timeout: 0s
+                  max_stream_duration:
+                    grpc_timeout_header_max: 0s
+              - match: { prefix: "/trading.AuthService/" }
+                route:
+                  cluster: trading_service
                   timeout: 0s
                   max_stream_duration:
                     grpc_timeout_header_max: 0s

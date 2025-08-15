@@ -1,11 +1,11 @@
 # Makefile for the Aetherion Trading Engine (gRPC Microservices)
 
-.PHONY: all setup generate build run stop clean
+.PHONY: all setup generate build run stop clean test_go
 
 # --- Variables ---
 PROTOC = protoc
 PROTO_DIR = protos
-PROTO_FILE = $(PROTO_DIR)/trading_api.proto
+PROTO_FILE = trading_api.proto
 
 # Go variables
 GO_DIR = go
@@ -39,12 +39,7 @@ setup:
 generate: generate-python
 	@echo "Generating Protocol Buffers for Go, Rust, and Web..."
 	@mkdir -p $(GO_DIR)/gen
-	PATH="$(GO_BIN):$$PATH" $(PROTOC) \
-		--go_out=$(GO_DIR)/gen --go_opt=paths=source_relative \
-		--go-grpc_out=$(GO_DIR)/gen --go-grpc_opt=paths=source_relative \
-		--grpc-web_out=import_style=commonjs,mode=grpcwebtext:$(FRONTEND_DIR)/src/proto \
-		--js_out=import_style=commonjs:$(FRONTEND_DIR)/src/proto \
-		$(PROTO_FILE)
+	PATH="$(GO_BIN):$$PATH" $(PROTOC) -I$(PROTO_DIR) --go_out=$(GO_DIR)/gen --go_opt=paths=source_relative --go-grpc_out=$(GO_DIR)/gen --go-grpc_opt=paths=source_relative --grpc-web_out=import_style=commonjs,mode=grpcwebtext:$(FRONTEND_DIR)/src/proto --js_out=import_style=commonjs:$(FRONTEND_DIR)/src/proto $(PROTO_FILE)
 	# Generate Rust code
 	cd $(RUST_SERVICE_DIR) && cargo build --release
 
@@ -159,5 +154,10 @@ clean:
 	# Rust's cargo clean will handle its build artifacts
 	cd $(RUST_SERVICE_DIR) && cargo clean
 	@echo "Cleanup complete."
+
+# Run Go unit tests
+test_go:
+	@echo "Running Go tests"
+	cd $(GO_DIR) && go test ./... -count=1 -v
 
 # --- EOF ---
