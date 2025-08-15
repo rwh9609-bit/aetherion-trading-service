@@ -63,7 +63,7 @@ run:
 	cd $(PYTHON_DIR) && ../venv/bin/python main.py & echo $$! > /tmp/python_service.pid
 	@echo "Starting Frontend on port 3000..."
 	cd $(FRONTEND_DIR) && npm start &
-	@echo "All services started. Dev UI: http://localhost:3000  | Prod: https://app.aetherion.trade"
+	@echo "All services started. Dev UI: http://localhost:3000  | Prod: https://app.aetherion.cloud"
 
 # Stop all services
 stop:

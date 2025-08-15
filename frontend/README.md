@@ -11,9 +11,9 @@ In the project directory, you can run:
 Runs the app in the development mode.\
 Open [http://localhost:3000](http://localhost:3000) to view it in your browser (development mode).
 
-Production deployment typically lives at https://app.aetherion.trade. When building for production you can set an explicit gRPC endpoint by exporting:
+Production deployment typically lives at https://app.aetherion.cloud. When building for production you can set an explicit gRPC endpoint by exporting:
 
-REACT_APP_GRPC_HOST=https://app.aetherion.trade
+REACT_APP_GRPC_HOST=https://app.aetherion.cloud
 
 If unset, the app will attempt to use the current window origin, falling back to localhost:8080 for development.
 
