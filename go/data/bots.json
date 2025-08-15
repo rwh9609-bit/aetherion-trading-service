@@ -1,13 +1,13 @@
 [
   {
-    "id": "f142d767-9704-4e4c-8342-ce8e150f7e72",
+    "id": "c25bee7a-0341-4d4b-9433-2361b7bbc237",
     "name": "bot1",
     "symbol": "BTC-USD",
     "strategy": "MEAN_REVERSION",
     "parameters": {
-      "strategy_id": "e53ca759-6940-457a-9228-5d50cafa11e5",
+      "strategy_id": "09578d00-5898-49bc-9200-06849bead625",
       "threshold": "1.0"
     },
-    "created_at_unix": 1755291295
+    "created_at_unix": 1755293559
   }
 ]

@@ -5,10 +5,13 @@ import (
     "fmt"
     "time"
     "os"
+    "log"
+    "strings"
 
     pb "aetherion-trading-service/gen"
 
     "github.com/golang-jwt/jwt/v5"
+    "github.com/jackc/pgx/v5"
     "golang.org/x/crypto/bcrypt"
     "google.golang.org/grpc"
     "google.golang.org/grpc/codes"
@@ -18,14 +21,64 @@ import (
 
 // authServer implements the AuthService defined in protobufs.
 // NOTE: In-memory user store & unsalted SHA-256 hashing for demo purposes only.
+type userStore interface {
+    CreateUser(ctx context.Context, username, pwHash string) error
+    GetUserHash(ctx context.Context, username string) (string, error)
+}
+
+// memUserStore implements userStore in-memory
+type memUserStore struct { users map[string]string }
+func newMemUserStore() *memUserStore { return &memUserStore{users: make(map[string]string)} }
+func (m *memUserStore) CreateUser(_ context.Context, u, h string) error {
+    if _, ok := m.users[u]; ok { return fmt.Errorf("exists") }
+    m.users[u] = h; return nil
+}
+func (m *memUserStore) GetUserHash(_ context.Context, u string) (string, error) {
+    v, ok := m.users[u]; if !ok { return "", fmt.Errorf("notfound") }; return v, nil
+}
+
+// pgUserStore implements userStore with Postgres
+type pgUserStore struct { db *pgx.Conn }
+func newPgUserStore(ctx context.Context, dsn string) (*pgUserStore, error) {
+    conn, err := pgx.Connect(ctx, dsn)
+    if err != nil { return nil, err }
+    // ensure table
+    _, err = conn.Exec(ctx, `CREATE TABLE IF NOT EXISTS users (
+        username TEXT PRIMARY KEY,
+        pw_hash TEXT NOT NULL,
+        created_at TIMESTAMPTZ DEFAULT now()
+    )`)
+    if err != nil { conn.Close(ctx); return nil, err }
+    return &pgUserStore{db: conn}, nil
+}
+func (p *pgUserStore) CreateUser(ctx context.Context, u, h string) error {
+    _, err := p.db.Exec(ctx, `INSERT INTO users (username, pw_hash) VALUES ($1,$2)`, u, h)
+    if err != nil { if strings.Contains(err.Error(), "duplicate") { return fmt.Errorf("exists") }; return err }
+    return nil
+}
+func (p *pgUserStore) GetUserHash(ctx context.Context, u string) (string, error) {
+    var h string
+    err := p.db.QueryRow(ctx, `SELECT pw_hash FROM users WHERE username=$1`, u).Scan(&h)
+    if err != nil { return "", fmt.Errorf("notfound") }
+    return h, nil
+}
+
 type authServer struct {
     pb.UnimplementedAuthServiceServer
-    users  map[string]string // username -> password hash
+    store  userStore
     secret []byte
 }
 
 func newAuthServer(secret string) *authServer {
-    return &authServer{users: make(map[string]string), secret: []byte(secret)}
+    // Attempt Postgres init if DSN provided
+    dsn := os.Getenv("POSTGRES_DSN")
+    var store userStore
+    if dsn != "" {
+        ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second); defer cancel()
+        pgStore, err := newPgUserStore(ctx, dsn)
+        if err != nil { log.Printf("postgres user store init failed, falling back to memory: %v", err); store = newMemUserStore() } else { store = pgStore }
+    } else { store = newMemUserStore() }
+    return &authServer{store: store, secret: []byte(secret)}
 }
 
 func hashPassword(pw string) string {
@@ -45,16 +98,16 @@ func (a *authServer) Register(ctx context.Context, req *pb.RegisterRequest) (*pb
     if req.GetUsername() == "" || req.GetPassword() == "" {
         return &pb.AuthResponse{Success: false, Message: "username and password required"}, nil
     }
-    if _, exists := a.users[req.Username]; exists {
-        return &pb.AuthResponse{Success: false, Message: "user exists"}, nil
+    if err := a.store.CreateUser(ctx, req.Username, hashPassword(req.Password)); err != nil {
+        if err.Error() == "exists" { return &pb.AuthResponse{Success:false, Message:"user exists"}, nil }
+        return &pb.AuthResponse{Success:false, Message: err.Error()}, nil
     }
-    a.users[req.Username] = hashPassword(req.Password)
     return &pb.AuthResponse{Success: true, Message: "registered"}, nil
 }
 
 func (a *authServer) Login(ctx context.Context, req *pb.AuthRequest) (*pb.AuthResponse, error) {
-    stored, ok := a.users[req.Username]
-    if !ok || !verifyPassword(stored, req.Password) {
+    stored, err := a.store.GetUserHash(ctx, req.Username)
+    if err != nil || !verifyPassword(stored, req.Password) {
         return &pb.AuthResponse{Success: false, Message: "invalid credentials"}, nil
     }
     exp := time.Now().Add(1 * time.Hour)
