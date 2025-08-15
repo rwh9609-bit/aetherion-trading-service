@@ -40,6 +40,7 @@ message StrategyRequest {
 message StatusResponse {
     bool success = 1;
     string message = 2;
+    string id = 3; // optional identifier (e.g., strategy/bot id)
 }
 
 // Request to get portfolio status
@@ -104,6 +105,9 @@ message MomentumResponse {
     int64 generated_at_unix_ms = 2;
 }
 
+// --- Bot / Strategy Management ---
+// Canonical bot configuration & runtime status
+
 // --- Authentication & User Management ---
 // Request to register a new user
 message RegisterRequest {
@@ -156,6 +160,7 @@ service TradingService {
     rpc ListSymbols(Empty) returns (SymbolList) {}
     // Aggregate short-term momentum metrics for symbols (server-side analog of client scanner)
     rpc GetMomentum(MomentumRequest) returns (MomentumResponse) {}
+
 }
 
 // Service for performing risk calculations

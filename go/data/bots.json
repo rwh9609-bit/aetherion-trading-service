@@ -1,0 +1,17 @@
+[
+  {
+    "id": "8c92c24d-a46e-4597-a96c-92163b1f0980",
+    "name": "randy",
+    "symbol": "BTC-USD",
+    "strategy": "MEAN_REVERSION",
+    "parameters": {
+      "entryStd": "2",
+      "exitStd": "0.5",
+      "lookback": "20",
+      "maxPos": "0.1",
+      "riskPerTradePct": "0.01",
+      "stopLossPct": "0.02"
+    },
+    "created_at_unix": 1755290054
+  }
+]

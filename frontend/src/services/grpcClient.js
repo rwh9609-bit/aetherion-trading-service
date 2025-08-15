@@ -1,5 +1,6 @@
 import { grpc } from '@improbable-eng/grpc-web';
 import { TradingServiceClient, RiskServiceClient, AuthServiceClient } from '../proto/trading_api_grpc_web_pb';
+import { BotServiceClient } from '../proto/bot_grpc_web_pb';
 import { 
   OrderBookRequest,
   StrategyRequest,
@@ -17,13 +18,17 @@ import {
 // Set REACT_APP_GRPC_HOST in production (e.g. https://app.aetherion.cloud or https://api.aetherion.cloud).
 let resolvedHost = process.env.REACT_APP_GRPC_HOST;
 if (!resolvedHost && typeof window !== 'undefined') {
-  // If we're on the marketing / app domain (e.g. https://app.aetherion.cloud), assume envoy exposed on same origin
-  // or on :8080 for local dev.
   const loc = window.location;
+  // Dev localhost
   if (loc.hostname === 'localhost' || /127\.0\.0\.1/.test(loc.hostname)) {
-    resolvedHost = `http://localhost:8080`;
+    resolvedHost = 'http://localhost:8080';
+  } else if (/^app\./.test(loc.hostname)) {
+    // Split-domain mode: auto-map app.<root> -> api.<root> when no explicit REACT_APP_GRPC_HOST provided.
+    const rootDomain = loc.hostname.replace(/^app\./, '');
+    resolvedHost = `${loc.protocol}//api.${rootDomain}`;
+    console.log('Auto-detected split-domain API host:', resolvedHost);
   } else {
-    // Prefer same origin; allow custom subdomain via meta tag in future if needed.
+    // Same-origin fallback (single domain deployment)
     resolvedHost = `${loc.protocol}//${loc.host}`;
   }
 }
@@ -38,6 +43,7 @@ const options = {
 
 const tradingClient = new TradingServiceClient(host, null, {...options, format: 'text'});
 const riskClient = new RiskServiceClient(host, null, {...options, format: 'text'});
+const botClient = new BotServiceClient(host, null, {...options, format: 'text'});
 const authClient = new AuthServiceClient(host, null, {...options, format: 'text'});
 
 const MAX_RETRIES = 5;
@@ -363,4 +369,63 @@ export const streamPrice = (symbol, onData, onError) => {
       stream = null;
     }
   };
+};
+
+// --- Bot Service Helpers ---
+export const createBot = async ({ name, symbol, strategy, parameters }) => {
+  const { CreateBotRequest } = await import('../proto/bot_pb.js');
+  return new Promise((resolve, reject) => {
+    const req = new CreateBotRequest();
+    req.setName(name); req.setSymbol(symbol); req.setStrategy(strategy);
+    const map = req.getParametersMap();
+    Object.entries(parameters || {}).forEach(([k,v]) => map.set(k, String(v)));
+    botClient.createBot(req, createMetadata(), (err, resp) => {
+      if (err) return reject(err);
+      resolve(resp.toObject());
+    });
+  });
+};
+
+export const listBots = async () => {
+  const { Empty } = await import('../proto/trading_api_pb.js');
+  const req = new Empty();
+  return new Promise((resolve, reject) => {
+    botClient.listBots(req, createMetadata(), (err, resp) => {
+      if (err) return reject(err);
+      resolve(resp.toObject());
+    });
+  });
+};
+
+export const startBot = async (id) => {
+  const { BotIdRequest } = await import('../proto/bot_pb.js');
+  const req = new BotIdRequest(); req.setId(id);
+  return new Promise((resolve, reject) => {
+    botClient.startBot(req, createMetadata(), (err, resp) => {
+      if (err) return reject(err);
+      resolve(resp.toObject());
+    });
+  });
+};
+
+export const stopBot = async (id) => {
+  const { BotIdRequest } = await import('../proto/bot_pb.js');
+  const req = new BotIdRequest(); req.setId(id);
+  return new Promise((resolve, reject) => {
+    botClient.stopBot(req, createMetadata(), (err, resp) => {
+      if (err) return reject(err);
+      resolve(resp.toObject());
+    });
+  });
+};
+
+export const getBotStatus = async (id) => {
+  const { BotIdRequest } = await import('../proto/bot_pb.js');
+  const req = new BotIdRequest(); req.setId(id);
+  return new Promise((resolve, reject) => {
+    botClient.getBotStatus(req, createMetadata(), (err, resp) => {
+      if (err) return reject(err);
+      resolve(resp.toObject());
+    });
+  });
 };

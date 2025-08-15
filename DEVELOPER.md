@@ -91,16 +91,19 @@ make run-python-client   # Terminal 3
   - Risk metrics dashboard
   - Strategy control panel
   - User authentication
+   - Dual momentum views (client-side live stream scanner + server aggregated momentum panel)
+   - Health status badge (polls `/healthz`)
 
-#### 2. Envoy Proxy (Port 8080)
+\n#### 2. Envoy Proxy (Port 8080)
 - **Configuration**: `envoy.yaml`
 - **Purpose**: gRPC-Web to gRPC translation
 - **Routes**:
   - `/trading.TradingService/*` → Go Service (50051)
   - `/trading.RiskService/*` → Rust Service (50052)
   - `/trading.AuthService/*` → Go Service (50051)
+   - `/trading.BotService/*` → Go Service (50051)
 
-#### 3. Go Trading Service (Port 50051)
+\n#### 3. Go Trading Service (Port 50051)
 - **Location**: `go/`
 - **Features**:
   - Order book management
@@ -108,14 +111,14 @@ make run-python-client   # Terminal 3
   - Authentication & JWT handling
   - gRPC streaming endpoints
 
-#### 4. Rust Risk Service (Port 50052)  
+\n#### 4. Rust Risk Service (Port 50052)
 - **Location**: `rust/risk_service/`
 - **Features**:
   - Monte Carlo VaR calculations
   - Real-time risk assessment
   - High-performance computations
 
-#### 5. Python Strategy Service
+\n#### 5. Python Strategy Service
 - **Location**: `python/`
 - **Features**:
   - Mean reversion strategy
@@ -395,9 +398,51 @@ export COINBASE_WS_URL=wss://ws-feed.exchange.coinbase.com
 export BINANCE_API_URL=https://api.binance.com
 ```
 
-### Service-Specific Configuration
+### Authentication & Secrets
 
-#### Go Service (`go/main.go`)
+The Go trading service enforces a strong JWT signing secret in **production** and provides a convenience fallback **only for local development**.
+
+Key points:
+
+- Production requirement: `AUTH_SECRET` MUST be set and be at least 32 bytes (characters). The process exits if this is not satisfied.
+- Key rotation: To rotate, first deploy with both `AUTH_SECRET=<new>` and `AUTH_PREVIOUS_SECRET=<old>` set. After the longest possible token lifetime has passed (e.g. `JWT_EXPIRY_HOURS`), remove `AUTH_PREVIOUS_SECRET`.
+- Dev fallback: If `GO_ENV` is NOT `production` and `AUTH_SECRET` is unset, the server will generate a random ephemeral secret at startup (logged with a warning). This means all previously issued tokens become invalid every restart.
+
+Recommended local workflow for stable sessions:
+
+```bash
+# In your shell profile or a local .env file (NOT committed)
+export AUTH_SECRET="$(openssl rand -hex 32)"  # 64 hex chars = 32 bytes
+```
+
+Then restart the service (`make restart` or `make run`). This avoids surprise logouts after restarts.
+
+Operational guidance:
+
+- Minimum length: Use 32+ random bytes (NOT simple words concatenated).
+- Storage: In production, store secrets in a secret manager (AWS Secrets Manager, GCP Secret Manager, Vault, or Kubernetes Secret) and inject via environment variables.
+- Auditing: Log only the presence of a secret and its length, never the secret contents (the code already avoids printing the secret value).
+- Rotation cadence: Rotate on a regular schedule (e.g. quarterly) and immediately if compromise is suspected.
+
+Example rotation (shell):
+
+```bash
+OLD_SECRET="$AUTH_SECRET"
+NEW_SECRET="$(openssl rand -hex 32)"
+export AUTH_PREVIOUS_SECRET="$OLD_SECRET"
+export AUTH_SECRET="$NEW_SECRET"
+# Deploy new release / restart services
+# After JWT_EXPIRY_HOURS passes:
+unset AUTH_PREVIOUS_SECRET
+```
+
+If you see login failures after a restart during dev, confirm whether an ephemeral secret was generated (look for a log message mentioning an auto-generated dev secret). Set a persistent `AUTH_SECRET` to eliminate this.
+
+
+## Service-Specific Configuration
+
+### Go Service (`go/main.go`)
+
 ```go
 type Config struct {
     Port           string
@@ -409,9 +454,28 @@ type Config struct {
 Health endpoint: HTTP `/healthz` on port 8090 (used by Docker healthcheck).
 
 Key Rotation: set `AUTH_PREVIOUS_SECRET` alongside new `AUTH_SECRET` to accept tokens signed with previous key until they expire.
+
+Security Enforcement: Process aborts if `AUTH_SECRET` length < 32 characters (see startup logic). Use a strong random secret.
+
+### Frontend gRPC Host Resolution
+
+Priority order:
+1. `REACT_APP_GRPC_HOST` environment variable (explicit override during build)
+2. If running on `app.<root-domain>` and no explicit host, auto-switch to `api.<root-domain>` (split-domain deployment)
+3. Same-origin (for single-domain deployments)
+4. `http://localhost:8080` fallback (dev)
+
+To disable the auto `api.` mapping, set an explicit `REACT_APP_GRPC_HOST` to the desired origin.
+
+### Momentum Panels
+
+- `CryptoScanner`: Client-side, streaming computations using live tick stream. Updates continuously; ideal for immediate responsiveness.
+- `ServerMomentum`: Calls `GetMomentum` every 30s; aggregates on the server (consistent, lower client CPU). Click any row to focus symbol.
+
 ```
 
-#### Rust Service (`rust/risk_service/src/main.rs`)
+### Rust Service (`rust/risk_service/src/main.rs`)
+
 ```rust
 pub struct RiskConfig {
     pub port: u16,
@@ -420,7 +484,8 @@ pub struct RiskConfig {
 }
 ```
 
-#### Python Service (`python/config.py`)
+### Python Service (`python/config.py`)
+
 ```python
 @dataclass
 class StrategyConfig:
@@ -436,12 +501,14 @@ class StrategyConfig:
 ### Common Issues
 
 1. **Port Already in Use**
+
    ```bash
    # Find and kill process
    lsof -ti:50051 | xargs kill -9
    ```
 
 2. **Protocol Buffer Issues**
+
    ```bash
    # Clean and regenerate
    make clean
@@ -449,6 +516,7 @@ class StrategyConfig:
    ```
 
 3. **Go Module Issues**
+
    ```bash
    cd go/
    go mod tidy
@@ -456,6 +524,7 @@ class StrategyConfig:
    ```
 
 4. **Python Virtual Environment**
+
    ```bash
    # Recreate venv
    rm -rf venv/

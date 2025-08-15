@@ -1,10 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Container, Box } from '@mui/material';
-import PriceChart from './PriceChart';
+import { Container, Box, ToggleButtonGroup, ToggleButton, Typography } from '@mui/material';
+import OhlcPriceChart from './OhlcPriceChart';
 import CryptoScanner from './CryptoScanner';
-import StrategyControl from './StrategyControl';
-import RiskMetrics from './RiskMetrics';
-import OrderBook from './OrderBook';
+import ServerMomentum from './ServerMomentum';
 import SymbolManager from './SymbolManager';
 import { listSymbols } from '../services/grpcClient';
 
@@ -16,6 +14,7 @@ const TradingDashboard = () => {
   const [selected, setSelected] = useState('');
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState(null);
+  const [momentumMode, setMomentumMode] = useState('client'); // 'client' | 'server'
 
   useEffect(() => {
     let cancelled = false;
@@ -56,27 +55,34 @@ const TradingDashboard = () => {
   return (
     <Container maxWidth="xl" sx={{ mt:4, mb:4 }}>
   <Box sx={{ display:'grid', gap:3, gridTemplateColumns: { xs:'1fr', lg:'1.2fr 1fr' }, alignItems:'start' }}>
-        <Box sx={{ gridColumn:'1 / -1' }}>
-          <SymbolManager
-            symbols={symbols}
-            onAdd={handleAdd}
-            onRemove={handleRemove}
-            selected={selected}
-            onSelect={setSelected}
-            disabled={loading}
-            loadError={loadError}
-          />
+        <Box sx={{ gridColumn:'1 / -1', display:'flex', flexDirection:'column', gap:1 }}>
+          <Box sx={{ display:'flex', alignItems:{ xs:'stretch', sm:'center' }, flexWrap:'wrap', gap:2, justifyContent:'space-between' }}>
+            <Box sx={{ flex:1, minWidth:260 }}>
+              <SymbolManager
+                symbols={symbols}
+                onAdd={handleAdd}
+                onRemove={handleRemove}
+                selected={selected}
+                onSelect={setSelected}
+                disabled={loading}
+                loadError={loadError}
+              />
+            </Box>
+            <Box sx={{ display:'flex', alignItems:'center', gap:1 }}>
+              <Typography variant="subtitle2" sx={{ fontWeight:600 }}>Momentum:</Typography>
+              <ToggleButtonGroup size="small" exclusive value={momentumMode} onChange={(e,v)=> v && setMomentumMode(v)}>
+                <ToggleButton value="client">Live</ToggleButton>
+                <ToggleButton value="server">Server</ToggleButton>
+              </ToggleButtonGroup>
+            </Box>
+          </Box>
         </Box>
-  <Box sx={{ display:'grid', gap:3, order:{ xs:2, lg:1 }, gridTemplateColumns:{ xs:'1fr', sm:'repeat(auto-fit,minmax(280px,1fr))' }, minWidth:0 }}>
-          <RiskMetrics />
-          <CryptoScanner symbols={symbols} onSelect={(sym)=> setSelected(sym)} />
+  <Box sx={{ display:'grid', gap:3, order:{ xs:2, lg:1 }, gridTemplateColumns:{ xs:'1fr', md:'repeat(auto-fit,minmax(320px,1fr))' }, minWidth:0 }}>
+          {momentumMode === 'client' && <CryptoScanner symbols={symbols} onSelect={(sym)=> setSelected(sym)} />}
+          {momentumMode === 'server' && <ServerMomentum onSelect={(sym)=> setSelected(sym)} />}
         </Box>
   <Box sx={{ order:{ xs:1, lg:2 }, minWidth:0 }}>
-          <PriceChart symbol={selected} />
-        </Box>
-  <Box sx={{ display:'grid', gap:3, gridTemplateColumns:{ xs:'1fr', md:'1fr 1fr' }, gridColumn:'1 / -1', minWidth:0 }}>
-          <StrategyControl />
-          <OrderBook />
+          <OhlcPriceChart symbol={selected} />
         </Box>
       </Box>
     </Container>

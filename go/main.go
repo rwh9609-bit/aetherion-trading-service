@@ -15,25 +15,20 @@ import (
 	"os/signal"
 	"syscall"
 	"math"
-
-	"google.golang.org/grpc/keepalive"
-
+	"crypto/rand"
+	"encoding/hex"
 	"container/heap"
 
-	pb "aetherion-trading-service/gen"
-
+	"google.golang.org/grpc/keepalive"
 	"github.com/google/uuid"
 	"google.golang.org/grpc"
+    pb "aetherion-trading-service/gen"
 )
 
-// PriceLevel is defined in orderbook.go
-
-// OrderBookSide is defined in orderbook.go
-
+// PriceLevel & OrderBookSide definitions are in orderbook.go, but we reassert interface methods here
 func (h OrderBookSide) Len() int           { return len(h) }
 func (h OrderBookSide) Less(i, j int) bool { return h[i].Price < h[j].Price }
 func (h OrderBookSide) Swap(i, j int)      { h[i], h[j] = h[j], h[i] }
-
 func (h *OrderBookSide) Push(x interface{}) {
 	*h = append(*h, x.(PriceLevel))
 }
@@ -278,6 +273,7 @@ func (s *tradingServer) StartStrategy(ctx context.Context, req *pb.StrategyReque
 	return &pb.StatusResponse{
 		Success: true,
 		Message: fmt.Sprintf("Strategy started with ID: %s", strategy.ID),
+		Id: strategy.ID,
 	}, nil
 }
 
@@ -291,6 +287,8 @@ func (s *tradingServer) StopStrategy(ctx context.Context, req *pb.StrategyReques
 
 	return &pb.StatusResponse{Success: true, Message: "Strategy stopped"}, nil
 }
+
+// --- Bot Management RPCs ---
 
 // GetPortfolio returns the current portfolio status
 func (s *tradingServer) GetPortfolio(ctx context.Context, req *pb.PortfolioRequest) (*pb.Portfolio, error) {
@@ -526,9 +524,24 @@ func main() {
 
 	// Load auth secret from environment (export AUTH_SECRET=your-secret)
 	secret := os.Getenv("AUTH_SECRET")
-	if secret == "" { secret = "dev-insecure-default"; log.Println("WARNING: AUTH_SECRET not set; using insecure default.") }
+	if secret == "" {
+		// Allow ephemeral secret in non-production for developer convenience
+		if os.Getenv("GO_ENV") != "production" {
+			b := make([]byte, 32)
+			if _, err := rand.Read(b); err == nil {
+				secret = hex.EncodeToString(b)
+				log.Println("INFO: Generated ephemeral dev AUTH_SECRET (not persisted). Set AUTH_SECRET to a stable value to preserve sessions.")
+			} else {
+				log.Fatalf("Failed to generate dev AUTH_SECRET: %v", err)
+			}
+		} else {
+			log.Fatalf("AUTH_SECRET must be set in production and >=32 chars")
+		}
+	}
+	if len(secret) < 32 { log.Fatalf("AUTH_SECRET must be >=32 chars (got %d)", len(secret)) }
 	// Optional secondary secret for rotation: AUTH_PREVIOUS_SECRET allows old tokens until expiry
 	prevSecret := os.Getenv("AUTH_PREVIOUS_SECRET")
+	if prevSecret != "" && len(prevSecret) < 32 { log.Println("WARNING: AUTH_PREVIOUS_SECRET length <32; rotation secret should be strong") }
 	// Create a gRPC server with custom options
 	grpcServer := grpc.NewServer(
 		grpc.KeepaliveParams(keepalive.ServerParameters{
@@ -542,6 +555,11 @@ func main() {
 	// Create and register our trading service
 	tradingService := newTradingServer()
 	pb.RegisterTradingServiceServer(grpcServer, tradingService)
+
+	// Bot service (in-memory)
+	reg := newBotRegistry()
+	botSvc := newBotServiceServer(reg, tradingService)
+	pb.RegisterBotServiceServer(grpcServer, botSvc)
 
 	// Market data feed (dynamic)
 	feedSymbols := []string{"BTC-USD", "ETH-USD", "SOL-USD"}
