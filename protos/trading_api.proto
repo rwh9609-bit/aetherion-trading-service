@@ -11,6 +11,11 @@ message Tick {
     int64 timestamp_ns = 3; // Nanosecond precision timestamp
 }
 
+// Request to stream live price ticks (optional symbol filter; empty = all subscribed symbols server supports)
+message TickStreamRequest {
+    string symbol = 1;
+}
+
 // Request to start or stop a strategy
 message StrategyRequest {
     string strategy_id = 1;
@@ -105,6 +110,9 @@ service TradingService {
     
     // Subscribes to a real-time feed of market data
     rpc SubscribeTicks(StrategyRequest) returns (stream Tick) {}
+
+    // Streams live ticks from internal event bus (websocket sourced)
+    rpc StreamPrice(TickStreamRequest) returns (stream Tick) {}
 }
 
 // Service for performing risk calculations

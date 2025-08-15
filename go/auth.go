@@ -6,7 +6,7 @@ import (
     "time"
     "os"
 
-    pb "aetherion-trading-service/gen/protos"
+    pb "aetherion-trading-service/gen"
 
     "github.com/golang-jwt/jwt/v5"
     "golang.org/x/crypto/bcrypt"

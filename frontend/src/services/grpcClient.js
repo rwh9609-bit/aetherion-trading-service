@@ -7,7 +7,8 @@ import {
   Portfolio,
   VaRRequest,
   RegisterRequest,
-  AuthRequest
+  AuthRequest,
+  TickStreamRequest
 } from '../proto/trading_api_pb.js';
 
 const host = 'http://localhost:8080'; // Route all requests through envoy proxy
@@ -260,4 +261,43 @@ export const fetchPrice = async (symbol) => {
       });
     });
   }, 'Fetch Price');
+};
+
+// Stream live price ticks (server-streaming gRPC). Returns a cleanup function to cancel.
+export const streamPrice = (symbol, onData, onError) => {
+  console.log('Starting Price stream for symbol:', symbol);
+  let stream;
+  try {
+    const request = new TickStreamRequest();
+    request.setSymbol(symbol);
+    stream = tradingClient.streamPrice(request, createMetadata());
+
+    stream.on('data', (resp) => {
+      try {
+        const tick = resp.toObject();
+        // tick: { symbol, price, timestamp }
+        onData(tick);
+      } catch (e) {
+        console.error('Error handling price tick:', e);
+        onError && onError(e.message || 'Tick parse error');
+      }
+    });
+    stream.on('error', (err) => {
+      console.error('Price stream error:', err);
+      onError && onError(err.message || 'Stream error');
+    });
+    stream.on('end', () => {
+      console.log('Price stream ended');
+    });
+  } catch (e) {
+    console.error('Failed to start price stream:', e);
+    onError && onError(e.message || 'Stream start failure');
+  }
+  return () => {
+    if (stream) {
+      console.log('Cancelling price stream for symbol:', symbol);
+      stream.cancel();
+      stream = null;
+    }
+  };
 };

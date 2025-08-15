@@ -431,6 +431,62 @@ proto.trading.TradingServicePromiseClient.prototype.subscribeTicks =
 
 
 /**
+ * @const
+ * @type {!grpc.web.MethodDescriptor<
+ *   !proto.trading.TickStreamRequest,
+ *   !proto.trading.Tick>}
+ */
+const methodDescriptor_TradingService_StreamPrice = new grpc.web.MethodDescriptor(
+  '/trading.TradingService/StreamPrice',
+  grpc.web.MethodType.SERVER_STREAMING,
+  proto.trading.TickStreamRequest,
+  proto.trading.Tick,
+  /**
+   * @param {!proto.trading.TickStreamRequest} request
+   * @return {!Uint8Array}
+   */
+  function(request) {
+    return request.serializeBinary();
+  },
+  proto.trading.Tick.deserializeBinary
+);
+
+
+/**
+ * @param {!proto.trading.TickStreamRequest} request The request proto
+ * @param {?Object<string, string>=} metadata User defined
+ *     call metadata
+ * @return {!grpc.web.ClientReadableStream<!proto.trading.Tick>}
+ *     The XHR Node Readable Stream
+ */
+proto.trading.TradingServiceClient.prototype.streamPrice =
+    function(request, metadata) {
+  return this.client_.serverStreaming(this.hostname_ +
+      '/trading.TradingService/StreamPrice',
+      request,
+      metadata || {},
+      methodDescriptor_TradingService_StreamPrice);
+};
+
+
+/**
+ * @param {!proto.trading.TickStreamRequest} request The request proto
+ * @param {?Object<string, string>=} metadata User defined
+ *     call metadata
+ * @return {!grpc.web.ClientReadableStream<!proto.trading.Tick>}
+ *     The XHR Node Readable Stream
+ */
+proto.trading.TradingServicePromiseClient.prototype.streamPrice =
+    function(request, metadata) {
+  return this.client_.serverStreaming(this.hostname_ +
+      '/trading.TradingService/StreamPrice',
+      request,
+      metadata || {},
+      methodDescriptor_TradingService_StreamPrice);
+};
+
+
+/**
  * @param {string} hostname
  * @param {?Object} credentials
  * @param {?grpc.web.ClientOptions} options
