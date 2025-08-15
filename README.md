@@ -59,6 +59,27 @@ Want to extend Aetherion or run your own instance? Check out our [Developer Docu
 
 Aetherion uses a modern microservices architecture with each component optimized for its specific role:
 
+```text
+┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
+│   Web Browser   │────│  Envoy Proxy    │────│   Backend       │
+│   (React App)   │    │   (Port 8080)   │    │   Services      │
+└─────────────────┘    └─────────────────┘    └─────────────────┘
+                                                       │
+                              ┌────────────────────────┼────────────────────────┐
+                              │                        │                        │
+                    ┌─────────▼─────────┐    ┌─────────▼─────────┐    ┌─────────▼─────────┐
+                    │   Trading Service │    │   Risk Service    │    │ Strategy Service  │
+                    │      (Go)         │    │     (Rust)        │    │    (Python)       │
+                    │   Port 50051      │    │   Port 50052      │    │   Orchestrator    │
+                    └───────────────────┘    └───────────────────┘    └───────────────────┘
+                              │
+                    ┌─────────▼─────────┐
+                    │   Market Data     │
+                    │   (WebSocket)     │
+                    │ Coinbase/Binance  │
+                    └───────────────────┘
+```
+
 - **Frontend (React)** - Beautiful, responsive web interface
 - **Trading Service (Go)** - High-throughput order processing and market data
 - **Risk Service (Rust)** - Ultra-fast risk calculations and position monitoring  
