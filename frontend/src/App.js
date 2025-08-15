@@ -4,6 +4,9 @@ import TradingDashboard from './components/TradingDashboard';
 import TradingOperations from './components/TradingOperations';
 import BotsPage from './components/BotsPage';
 import DevelopBotPage from './components/DevelopBotPage';
+import AboutPage from './components/AboutPage';
+import ContactPage from './components/ContactPage';
+import NewsPage from './components/NewsPage';
 import Login from './components/Login';
 import AccountPage from './components/AccountPage';
 import LandingPage from './components/LandingPage';
@@ -69,16 +72,23 @@ function App() {
                 <Typography variant="h6" component="div" sx={{ flexGrow: 1, cursor:'pointer' }} onClick={()=>setView(user ? 'dashboard' : 'landing')}>
                   Aetherion Trading Engine
                 </Typography>
-                {user && (
-                  <Box>
-                    <Button color="inherit" onClick={()=>setView('account')} sx={{ mr:1 }}>Account</Button>
-                    <Button color="inherit" onClick={()=>setView('dashboard')} sx={{ mr:1 }}>Dashboard</Button>
-                    <Button color="inherit" onClick={()=>setView('operations')} sx={{ mr:1 }}>Simulator</Button>
-                    <Button color="inherit" onClick={()=>setView('bots')} sx={{ mr:1 }}>Bots</Button>
-                    <Button color="inherit" onClick={()=>setView('developBot')} sx={{ mr:1 }}>Develop Bot</Button>
-                    <Button color="inherit" onClick={()=> { setUser(null); setView('landing'); }}>Logout</Button>
-                  </Box>
-                )}
+                <Box>
+                  <Button color="inherit" onClick={()=>setView('about')} sx={{ mr:1 }}>About</Button>
+                  <Button color="inherit" onClick={()=>setView('news')} sx={{ mr:1 }}>News</Button>
+                  <Button color="inherit" onClick={()=>setView('contact')} sx={{ mr:2 }}>Contact</Button>
+                  {user ? (
+                    <>
+                      <Button color="inherit" onClick={()=>setView('account')} sx={{ mr:1 }}>Account</Button>
+                      <Button color="inherit" onClick={()=>setView('dashboard')} sx={{ mr:1 }}>Dashboard</Button>
+                      <Button color="inherit" onClick={()=>setView('operations')} sx={{ mr:1 }}>Simulator</Button>
+                      <Button color="inherit" onClick={()=>setView('bots')} sx={{ mr:1 }}>Bots</Button>
+                      <Button color="inherit" onClick={()=>setView('developBot')} sx={{ mr:1 }}>Develop Bot</Button>
+                      <Button color="inherit" onClick={()=> { setUser(null); setView('landing'); }}>Logout</Button>
+                    </>
+                  ) : (
+                    <Button color="inherit" onClick={()=>setView('login')}>Login</Button>
+                  )}
+                </Box>
                 <Box sx={{ ml:2 }}>
                   <Tooltip title={health.status==='ok' ? 'Backend healthy' : health.status==='error' ? 'Backend unreachable' : 'Checking backend health'}>
                     <Box sx={{ width:14, height:14, borderRadius:'50%', bgcolor: health.status==='ok' ? '#4caf50' : health.status==='error' ? '#f44336' : 'warning.main', display:'flex', alignItems:'center', justifyContent:'center' }}>
@@ -86,10 +96,8 @@ function App() {
                     </Box>
                   </Tooltip>
                 </Box>
-                {!user && (
-                  <Button color="inherit" onClick={()=>setView('landing')}>
-                    Home
-                  </Button>
+                {!user && view !== 'landing' && (
+                  <Button color="inherit" onClick={()=>setView('landing')}>Home</Button>
                 )}
               </Toolbar>
             </AppBar>
@@ -133,6 +141,9 @@ function App() {
               <AccountPage user={user} onLogout={() => { setUser(null); setView('landing'); }} />
             </div>
           )}
+          {view === 'about' && <AboutPage />}
+          {view === 'contact' && <ContactPage />}
+          {view === 'news' && <NewsPage />}
         </div>
         <Snackbar open={showHealthWarn} autoHideDuration={6000} onClose={()=>setShowHealthWarn(false)} anchorOrigin={{ vertical:'bottom', horizontal:'right' }}>
           <Alert severity="warning" variant="filled" onClose={()=>setShowHealthWarn(false)}>

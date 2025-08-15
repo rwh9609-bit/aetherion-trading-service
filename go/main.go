@@ -157,8 +157,11 @@ func (s *Strategy) Run(ctx context.Context, server *tradingServer) {
 	// Initialize strategy-specific parameters
 	threshold, _ := strconv.ParseFloat(s.Parameters["threshold"], 64)
 	period, _ := strconv.Atoi(s.Parameters["period"])
+	if period <= 0 {
+		period = 5 // sane fallback to avoid zero/negative panic
+	}
 
-	// Create a ticker for the specified period
+	// Create a ticker for the specified period (validated >0)
 	ticker := time.NewTicker(time.Duration(period) * time.Second)
 	defer ticker.Stop()
 

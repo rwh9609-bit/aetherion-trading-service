@@ -55,17 +55,28 @@ build: generate
 # Run all services (in background)
 run:
 	@echo "Starting all services..."
-	@echo "Starting Envoy proxy on port 8080..."
-	envoy -c envoy.yaml & echo $$! > /tmp/envoy.pid
-	@echo "Starting Rust Risk Service on port 50052..."
-	cd $(RUST_SERVICE_DIR) && cargo run --release & echo $$! > /tmp/risk_service.pid
-	@echo "Starting Go Trading Service on port 50051..."
-	cd $(GO_DIR) && ./bin/trading_service & echo $$! > /tmp/trading_service.pid
-	@echo "Starting Python Strategy Service on port 50053..."
-	cd $(PYTHON_DIR) && ../venv/bin/python main.py & echo $$! > /tmp/python_service.pid
-	@echo "Starting Frontend on port 3000..."
-	cd $(FRONTEND_DIR) && npm start &
-	@echo "All services started. Dev UI: http://localhost:3000  | Prod: https://app.aetherion.cloud"
+	@if lsof -t -i:50051 >/dev/null 2>&1; then echo "Port 50051 already in use (trading service?). Skipping start."; else \
+		echo "Starting Go Trading Service on port 50051..."; \
+		AUTH_SECRET=$${AUTH_SECRET:-0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef} \
+		cd $(GO_DIR) && AUTH_SECRET=$$AUTH_SECRET ./bin/trading_service & echo $$! > /tmp/trading_service.pid ; \
+	fi
+	@if lsof -t -i:50052 >/dev/null 2>&1; then echo "Port 50052 already in use (risk service?). Skipping start."; else \
+		echo "Starting Rust Risk Service on port 50052..."; \
+		cd $(RUST_SERVICE_DIR) && cargo run --release & echo $$! > /tmp/risk_service.pid ; \
+	fi
+	@if lsof -t -i:50053 >/dev/null 2>&1; then echo "Port 50053 already in use (python strategy?). Skipping start."; else \
+		echo "Starting Python Strategy Service on port 50053..."; \
+		cd $(PYTHON_DIR) && ../venv/bin/python main.py & echo $$! > /tmp/python_service.pid ; \
+	fi
+	@if lsof -t -i:8080 >/dev/null 2>&1; then echo "Port 8080 in use (envoy?). Skipping start."; else \
+		echo "Starting Envoy proxy on port 8080..."; \
+		envoy -c envoy.yaml & echo $$! > /tmp/envoy.pid ; \
+	fi
+	@if lsof -t -i:3000 >/dev/null 2>&1; then echo "Port 3000 already in use (frontend dev server?). Skipping start."; else \
+		echo "Starting Frontend on port 3000..."; \
+		cd $(FRONTEND_DIR) && npm start & echo $$! > /tmp/frontend.pid ; \
+	fi
+	@echo "All services attempted. Dev UI: http://localhost:3000"
 
 # Stop all services
 stop:
