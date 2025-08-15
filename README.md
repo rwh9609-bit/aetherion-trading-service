@@ -37,7 +37,7 @@ Aetherion is a modern quantitative trading platform that combines real-time mark
 ### For Traders and Analysts
 
 1. **Access the Platform**
-   - Visit the web interface at `http://localhost:3000`
+   - Visit the web interface at `http://app.aetherion.trade`
    - Create your account or sign in
    - Start monitoring real-time market data
 
