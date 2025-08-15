@@ -3,6 +3,7 @@ package main
 import (
     "context"
     "encoding/json"
+    "errors"
     "log"
     "sync"
     "time"
@@ -86,47 +87,109 @@ type coinbaseTicker struct {
     Time      string `json:"time"`
 }
 
-func startCoinbaseTicker(ctx context.Context, bus *EventBus, symbols []string, onPrice func(sym string, price float64)) {
-    // TODO: Support dynamic add/remove of symbols; currently requires restart with new symbol slice
-    go func() {
-        // Reconnect loop
-        for {
-            if err := runOnce(ctx, bus, symbols, onPrice); err != nil {
-                log.Printf("[marketdata] feed error: %v (reconnecting in 3s)", err)
-                select {
-                case <-time.After(3 * time.Second):
-                case <-ctx.Done():
-                    return
-                }
-            } else {
-                return // normal exit
-            }
-        }
-    }()
+// CoinbaseFeed manages a single websocket connection with dynamic subscriptions.
+type CoinbaseFeed struct {
+    mu         sync.Mutex
+    conn       *websocket.Conn
+    bus        *EventBus
+    subscribed map[string]bool
+    onPrice    func(sym string, price float64)
+    ctx        context.Context
+    cancel     context.CancelFunc
+    restarting bool
 }
 
-func runOnce(ctx context.Context, bus *EventBus, symbols []string, onPrice func(sym string, price float64)) error {
+func NewCoinbaseFeed(bus *EventBus, onPrice func(string, float64)) *CoinbaseFeed {
+    ctx, cancel := context.WithCancel(context.Background())
+    return &CoinbaseFeed{
+        bus:        bus,
+        subscribed: make(map[string]bool),
+        onPrice:    onPrice,
+        ctx:        ctx,
+        cancel:     cancel,
+    }
+}
+
+// Start establishes connection and begins read loop. Non-blocking.
+func (f *CoinbaseFeed) Start(initial []string) {
+    for _, s := range initial { f.subscribed[s] = true }
+    go f.run()
+}
+
+// Stop gracefully stops feed.
+func (f *CoinbaseFeed) Stop() {
+    f.cancel()
+    f.mu.Lock()
+    if f.conn != nil { _ = f.conn.Close() }
+    f.mu.Unlock()
+}
+
+// EnsureSymbol subscribes if not already.
+func (f *CoinbaseFeed) EnsureSymbol(symbol string) error {
+    f.mu.Lock()
+    if f.subscribed[symbol] { f.mu.Unlock(); return nil }
+    f.subscribed[symbol] = true
+    c := f.conn
+    f.mu.Unlock()
+    if c != nil {
+        sub := coinbaseSub{Type: "subscribe", Channels: []interface{}{map[string]interface{}{"name": "ticker", "product_ids": []string{symbol}}}}
+        return c.WriteJSON(sub)
+    }
+    return nil
+}
+
+// RemoveSymbol unsubscribes if present.
+func (f *CoinbaseFeed) RemoveSymbol(symbol string) error {
+    f.mu.Lock()
+    if !f.subscribed[symbol] { f.mu.Unlock(); return nil }
+    delete(f.subscribed, symbol)
+    c := f.conn
+    f.mu.Unlock()
+    if c != nil {
+        unsub := coinbaseSub{Type: "unsubscribe", Channels: []interface{}{map[string]interface{}{"name": "ticker", "product_ids": []string{symbol}}}}
+        return c.WriteJSON(unsub)
+    }
+    return nil
+}
+
+func (f *CoinbaseFeed) run() {
+    backoff := time.Second
+    for {
+        if err := f.connectAndServe(); err != nil {
+            if errors.Is(err, context.Canceled) || f.ctx.Err() != nil { return }
+            log.Printf("[marketdata] feed error: %v (reconnecting in %s)", err, backoff)
+            select {
+            case <-time.After(backoff):
+            case <-f.ctx.Done():
+                return
+            }
+            if backoff < 30*time.Second { backoff *= 2 }
+            continue
+        }
+        return
+    }
+}
+
+func (f *CoinbaseFeed) connectAndServe() error {
     u := url.URL{Scheme: "wss", Host: "ws-feed.exchange.coinbase.com"}
     c, _, err := websocket.DefaultDialer.Dial(u.String(), nil)
     if err != nil { return err }
-    defer c.Close()
-
-    // Build subscription object
-    channels := []interface{}{map[string]interface{}{"name": "ticker", "product_ids": symbols}}
-    sub := coinbaseSub{Type: "subscribe", Channels: channels}
-    if err := c.WriteJSON(sub); err != nil { return err }
-
+    f.mu.Lock(); f.conn = c; subs := make([]string,0,len(f.subscribed)); for s := range f.subscribed { subs = append(subs, s) }; f.mu.Unlock()
+    // initial subscribe
+    if len(subs) > 0 {
+        initSub := coinbaseSub{Type: "subscribe", Channels: []interface{}{map[string]interface{}{"name": "ticker", "product_ids": subs}}}
+        if err := c.WriteJSON(initSub); err != nil { return err }
+    }
     c.SetReadLimit(1 << 20)
     c.SetReadDeadline(time.Now().Add(60 * time.Second))
     c.SetPongHandler(func(string) error { c.SetReadDeadline(time.Now().Add(60 * time.Second)); return nil })
-
     pingTicker := time.NewTicker(30 * time.Second)
     defer pingTicker.Stop()
-
+    defer c.Close()
     for {
         select {
-        case <-ctx.Done():
-            return nil
+        case <-f.ctx.Done():
+            return context.Canceled
         case <-pingTicker.C:
             _ = c.WriteControl(websocket.PingMessage, []byte("ping"), time.Now().Add(5*time.Second))
         default:
@@ -136,11 +199,10 @@ func runOnce(ctx context.Context, bus *EventBus, symbols []string, onPrice func(
             var tk coinbaseTicker
             if err := json.Unmarshal(msg, &tk); err != nil { continue }
             if tk.Type != "ticker" || tk.Price == "" { continue }
-            // Parse price
             var p float64
             if err := json.Unmarshal([]byte(tk.Price), &p); err != nil { continue }
-            onPrice(tk.ProductID, p)
-            bus.Publish(Event{Type: EventPriceTick, Data: PriceTick{Symbol: tk.ProductID, Price: p, Ts: time.Now()}})
+            if f.onPrice != nil { f.onPrice(tk.ProductID, p) }
+            f.bus.Publish(Event{Type: EventPriceTick, Data: PriceTick{Symbol: tk.ProductID, Price: p, Ts: time.Now()}})
         }
     }
 }

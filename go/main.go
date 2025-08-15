@@ -12,6 +12,8 @@ import (
 	"sync"
 	"time"
 	"os"
+	"os/signal"
+	"syscall"
 
 	"google.golang.org/grpc/keepalive"
 
@@ -209,6 +211,7 @@ type tradingServer struct {
 	eventBus     *EventBus
 	lastPrices   map[string]float64
 	priceMu      sync.RWMutex
+	feed         *CoinbaseFeed // market data feed controller (injected)
 }
 
 func newTradingServer() *tradingServer {
@@ -217,8 +220,8 @@ func newTradingServer() *tradingServer {
 		portfolios:    make(map[string]*pb.Portfolio),
 		activeSymbols: make(map[string]bool),
 		strategies:    make(map[string]*Strategy),
-			eventBus:     NewEventBus(),
-			lastPrices:   make(map[string]float64),
+		eventBus:     NewEventBus(),
+		lastPrices:   make(map[string]float64),
 	}
 }
 
@@ -420,6 +423,35 @@ func (s *tradingServer) StreamPrice(req *pb.TickStreamRequest, stream pb.Trading
 	}
 }
 
+// AddSymbol adds a symbol to the dynamic websocket feed
+func (s *tradingServer) AddSymbol(ctx context.Context, req *pb.SymbolRequest) (*pb.StatusResponse, error) {
+	sym := req.Symbol
+	if sym == "" { return &pb.StatusResponse{Success:false, Message:"symbol required"}, nil }
+	if s.feed == nil { return &pb.StatusResponse{Success:false, Message:"feed not initialized"}, nil }
+	if err := s.feed.EnsureSymbol(sym); err != nil {
+		return &pb.StatusResponse{Success:false, Message: err.Error()}, nil
+	}
+	return &pb.StatusResponse{Success:true, Message: "symbol added"}, nil
+}
+
+// RemoveSymbol removes a symbol from the dynamic websocket feed
+func (s *tradingServer) RemoveSymbol(ctx context.Context, req *pb.SymbolRequest) (*pb.StatusResponse, error) {
+	sym := req.Symbol
+	if sym == "" { return &pb.StatusResponse{Success:false, Message:"symbol required"}, nil }
+	if s.feed == nil { return &pb.StatusResponse{Success:false, Message:"feed not initialized"}, nil }
+	if err := s.feed.RemoveSymbol(sym); err != nil {
+		return &pb.StatusResponse{Success:false, Message: err.Error()}, nil
+	}
+	return &pb.StatusResponse{Success:true, Message: "symbol removed"}, nil
+}
+
+// ListSymbols returns current subscribed symbols (from feed internal state)
+func (s *tradingServer) ListSymbols(ctx context.Context, _ *pb.Empty) (*pb.SymbolList, error) {
+	if s.feed == nil { return &pb.SymbolList{Symbols: []string{}}, nil }
+	s.feed.mu.Lock(); symbols := make([]string,0,len(s.feed.subscribed)); for sym := range s.feed.subscribed { symbols = append(symbols, sym) }; s.feed.mu.Unlock()
+	return &pb.SymbolList{Symbols: symbols}, nil
+}
+
 func main() {
 	// Enable debug logging
 	log.SetFlags(log.LstdFlags | log.Lshortfile)
@@ -444,26 +476,42 @@ func main() {
 	tradingService := newTradingServer()
 	pb.RegisterTradingServiceServer(grpcServer, tradingService)
 
-	// Start websocket market data feed (expanded symbol list)
+	// Market data feed (dynamic)
 	feedSymbols := []string{"BTC-USD", "ETH-USD", "SOL-USD"}
-	go startCoinbaseTicker(context.Background(), tradingService.eventBus, feedSymbols, func(sym string, price float64) {
-		tradingService.priceMu.Lock()
-		tradingService.lastPrices[sym] = price
-		tradingService.priceMu.Unlock()
+	feed := NewCoinbaseFeed(tradingService.eventBus, func(sym string, price float64) {
+		tradingService.priceMu.Lock(); tradingService.lastPrices[sym] = price; tradingService.priceMu.Unlock()
 	})
-	log.Printf("Market data feed started for symbols: %v", feedSymbols)
+	feed.Start(feedSymbols)
+	log.Printf("Market data feed controller started for symbols: %v", feedSymbols)
+	tradingService.feed = feed
 
 	// Auth service
 	authSvc := newAuthServer(secret)
 	pb.RegisterAuthServiceServer(grpcServer, authSvc)
 
-	// Start pure gRPC server on :50051; Envoy on :8080 will proxy gRPC-Web to this
+	// Start gRPC server with graceful shutdown
 	lis, err := net.Listen("tcp", "0.0.0.0:50051")
-	if err != nil {
-		log.Fatalf("Failed to listen on :50051: %v", err)
+	if err != nil { log.Fatalf("Failed to listen on :50051: %v", err) }
+
+	stopCh := make(chan os.Signal, 1)
+	signal.Notify(stopCh, syscall.SIGINT, syscall.SIGTERM)
+
+	serverErrCh := make(chan error, 1)
+	go func() {
+		log.Printf("Starting gRPC server on :50051...")
+		serverErrCh <- grpcServer.Serve(lis)
+	}()
+
+	select {
+	case sig := <-stopCh:
+		log.Printf("Received signal %v: initiating graceful shutdown", sig)
+	case err := <-serverErrCh:
+		if err != nil { log.Printf("gRPC server error: %v", err) }
 	}
-	log.Printf("Starting gRPC server on :50051...")
-	if err := grpcServer.Serve(lis); err != nil {
-		log.Fatalf("Failed to start gRPC server: %v", err)
-	}
+
+	// Graceful stop
+	feed.Stop()
+	log.Println("Market data feed stopped")
+	grpcServer.GracefulStop()
+	log.Println("gRPC server stopped")
 }
