@@ -17,7 +17,7 @@ import (
 
 	"container/heap"
 
-	pb "aetherion-trading-service/gen/protos"
+	pb "aetherion-trading-service/gen"
 
 	"github.com/google/uuid"
 	"google.golang.org/grpc"
@@ -206,6 +206,9 @@ type tradingServer struct {
 	activeSymbols map[string]bool              // currently tracked symbols
 	strategies    map[string]*Strategy         // active strategies
 	mu            sync.RWMutex                 // protects concurrent access
+	eventBus     *EventBus
+	lastPrices   map[string]float64
+	priceMu      sync.RWMutex
 }
 
 func newTradingServer() *tradingServer {
@@ -214,22 +217,27 @@ func newTradingServer() *tradingServer {
 		portfolios:    make(map[string]*pb.Portfolio),
 		activeSymbols: make(map[string]bool),
 		strategies:    make(map[string]*Strategy),
+			eventBus:     NewEventBus(),
+			lastPrices:   make(map[string]float64),
 	}
 }
 
 
 // GetPrice returns the current price for a symbol
 func (s *tradingServer) GetPrice(ctx context.Context, req *pb.Tick) (*pb.Tick, error) {
-	price, err := getCoinbasePrice(req.Symbol)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get price: %w", err)
+	// Use cached websocket price if present
+	s.priceMu.RLock()
+	price, ok := s.lastPrices[req.Symbol]
+	s.priceMu.RUnlock()
+	if !ok {
+		p, err := getCoinbasePrice(req.Symbol)
+		if err != nil {
+			return nil, fmt.Errorf("failed to get price: %w", err)
+		}
+		price = p
+		s.priceMu.Lock(); s.lastPrices[req.Symbol] = price; s.priceMu.Unlock()
 	}
-
-	return &pb.Tick{
-		Symbol:      req.Symbol,
-		Price:       price,
-		TimestampNs: time.Now().UnixNano(),
-	}, nil
+	return &pb.Tick{Symbol: req.Symbol, Price: price, TimestampNs: time.Now().UnixNano()}, nil
 }
 
 // StartStrategy is a standard RPC call
@@ -386,6 +394,32 @@ func (s *tradingServer) SubscribeTicks(req *pb.StrategyRequest, stream pb.Tradin
 	}
 }
 
+// StreamPrice streams cached websocket-derived ticks via internal event bus (low latency)
+func (s *tradingServer) StreamPrice(req *pb.TickStreamRequest, stream pb.TradingService_StreamPriceServer) error {
+	// Immediate send of last known price if we have it
+	if req.Symbol != "" {
+		s.priceMu.RLock(); p, ok := s.lastPrices[req.Symbol]; s.priceMu.RUnlock()
+		if ok {
+			_ = stream.Send(&pb.Tick{Symbol: req.Symbol, Price: p, TimestampNs: time.Now().UnixNano()})
+		}
+	}
+	id, ch := s.eventBus.Subscribe(256)
+	defer s.eventBus.Unsubscribe(id)
+	for {
+		select {
+		case <-stream.Context().Done():
+			return nil
+		case evt := <-ch:
+			if evt.Type != EventPriceTick { continue }
+			tick := evt.Data.(PriceTick)
+			if req.Symbol != "" && tick.Symbol != req.Symbol { continue }
+			if err := stream.Send(&pb.Tick{Symbol: tick.Symbol, Price: tick.Price, TimestampNs: tick.Ts.UnixNano()}); err != nil {
+				return err
+			}
+		}
+	}
+}
+
 func main() {
 	// Enable debug logging
 	log.SetFlags(log.LstdFlags | log.Lshortfile)
@@ -409,6 +443,15 @@ func main() {
 	// Create and register our trading service
 	tradingService := newTradingServer()
 	pb.RegisterTradingServiceServer(grpcServer, tradingService)
+
+	// Start websocket market data feed (expanded symbol list)
+	feedSymbols := []string{"BTC-USD", "ETH-USD", "SOL-USD"}
+	go startCoinbaseTicker(context.Background(), tradingService.eventBus, feedSymbols, func(sym string, price float64) {
+		tradingService.priceMu.Lock()
+		tradingService.lastPrices[sym] = price
+		tradingService.priceMu.Unlock()
+	})
+	log.Printf("Market data feed started for symbols: %v", feedSymbols)
 
 	// Auth service
 	authSvc := newAuthServer(secret)

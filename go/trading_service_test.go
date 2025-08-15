@@ -8,7 +8,7 @@ import (
     "testing"
     "time"
 
-    pb "aetherion-trading-service/gen/protos"
+    pb "aetherion-trading-service/gen"
 )
 
 // mockHTTPClient returns a function matching httpGet signature

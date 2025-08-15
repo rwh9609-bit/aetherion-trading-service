@@ -5,7 +5,7 @@ import (
     "testing"
     "time"
 
-    pb "aetherion-trading-service/gen/protos"
+    pb "aetherion-trading-service/gen"
 )
 
 // Simple expiry test: temporarily adjust Login to shorter lifetime via monkey patch pattern not available; instead we directly inspect issued token's exp window.
