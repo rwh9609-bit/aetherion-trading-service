@@ -2,6 +2,7 @@ const { createProxyMiddleware } = require('http-proxy-middleware');
 
 module.exports = function(app) {
   // Proxy all gRPC-web requests to the Go service
+  // NOTE: gRPC-web traffic goes through Envoy at :8080, while health endpoint lives on :8090
   app.use(
     '/trading.TradingService',
     createProxyMiddleware({
@@ -22,6 +23,16 @@ module.exports = function(app) {
         proxyRes.headers['Access-Control-Allow-Headers'] = 'Content-Type, X-Grpc-Web, X-User-Agent';
         proxyRes.headers['Access-Control-Max-Age'] = '86400';
       },
+    })
+  );
+
+  // Health endpoint proxy (avoids CRA package.json global proxy hitting raw gRPC port)
+  app.use(
+    '/healthz',
+    createProxyMiddleware({
+      target: 'http://localhost:8090',
+      changeOrigin: true,
+      pathRewrite: { '^/healthz': '/healthz' },
     })
   );
 };

@@ -4,7 +4,6 @@ import {
   Typography, 
   Button, 
   Container, 
-  Grid, 
   Card, 
   CardContent, 
   List,
@@ -177,9 +176,9 @@ const LandingPage = ({ onGetStarted }) => {
             Why Aetherion?
           </Typography>
           
-          <Grid container spacing={4}>
+          <Box sx={{ display:'flex', flexWrap:'wrap', gap:4 }}>
             {features.map((feature, index) => (
-              <Grid item xs={12} md={4} key={index}>
+              <Box key={index} sx={{ flex:'1 1 300px', maxWidth:{ xs:'100%', md:'32%' } }}>
                 <GlowCard sx={{ height: '100%' }}>
                   <CardContent sx={{ p: 4 }}>
                     <Typography 
@@ -207,9 +206,9 @@ const LandingPage = ({ onGetStarted }) => {
                     </List>
                   </CardContent>
                 </GlowCard>
-              </Grid>
+        </Box>
             ))}
-          </Grid>
+      </Box>
         </Container>
       </Box>
 
@@ -230,9 +229,9 @@ const LandingPage = ({ onGetStarted }) => {
           
           <GlowCard sx={{ maxWidth: '900px', mx: 'auto' }}>
             <CardContent sx={{ p: 4 }}>
-              <Grid container spacing={3}>
+              <Box sx={{ display:'flex', flexWrap:'wrap', gap:3 }}>
                 {architectureServices.map((service, index) => (
-                  <Grid item xs={12} md={4} key={index}>
+                  <Box key={index} sx={{ flex:'1 1 260px', maxWidth:{ xs:'100%', md:'32%' } }}>
                     <Box 
                       sx={{ 
                         p: 3, 
@@ -266,9 +265,9 @@ const LandingPage = ({ onGetStarted }) => {
                         ))}
                       </List>
                     </Box>
-                  </Grid>
+          </Box>
                 ))}
-              </Grid>
+        </Box>
               
               <Box 
                 sx={{ 

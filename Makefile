@@ -6,6 +6,7 @@
 PROTOC = protoc
 PROTO_DIR = protos
 PROTO_FILE = trading_api.proto
+BOT_PROTO = bot.proto
 
 # Go variables
 GO_DIR = go
@@ -39,7 +40,8 @@ setup:
 generate: generate-python
 	@echo "Generating Protocol Buffers for Go, Rust, and Web..."
 	@mkdir -p $(GO_DIR)/gen
-	PATH="$(GO_BIN):$$PATH" $(PROTOC) -I$(PROTO_DIR) --go_out=$(GO_DIR)/gen --go_opt=paths=source_relative --go-grpc_out=$(GO_DIR)/gen --go-grpc_opt=paths=source_relative --grpc-web_out=import_style=commonjs,mode=grpcwebtext:$(FRONTEND_DIR)/src/proto --js_out=import_style=commonjs:$(FRONTEND_DIR)/src/proto $(PROTO_FILE)
+	PATH="$(GO_BIN):$$PATH" $(PROTOC) -I$(PROTO_DIR) --go_out=$(GO_DIR)/gen --go_opt=paths=source_relative --go-grpc_out=$(GO_DIR)/gen --go-grpc_opt=paths=source_relative $(PROTO_FILE) $(BOT_PROTO)
+	PATH="$(GO_BIN):$$PATH" $(PROTOC) -I$(PROTO_DIR) --grpc-web_out=import_style=commonjs,mode=grpcwebtext:$(FRONTEND_DIR)/src/proto --js_out=import_style=commonjs:$(FRONTEND_DIR)/src/proto $(PROTO_FILE) $(BOT_PROTO)
 	# Generate Rust code
 	cd $(RUST_SERVICE_DIR) && cargo build --release
 
@@ -99,7 +101,7 @@ generate-python: setup $(PROTO_FILE)
 	          --python_out=$(PYTHON_DIR)/protos \
 	          --pyi_out=$(PYTHON_DIR)/protos \
 	          --grpc_python_out=$(PYTHON_DIR)/protos \
-	          $(PROTO_FILE)
+	          $(PROTO_FILE) $(BOT_PROTO)
 	@ls -l $(PYTHON_DIR)/protos
 	@touch $(PYTHON_DIR)/protos/__init__.py
 

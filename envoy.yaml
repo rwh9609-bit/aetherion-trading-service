@@ -43,6 +43,12 @@ static_resources:
                   timeout: 0s
                   max_stream_duration:
                     grpc_timeout_header_max: 0s
+              - match: { prefix: "/trading.BotService/" }
+                route:
+                  cluster: trading_service
+                  timeout: 0s
+                  max_stream_duration:
+                    grpc_timeout_header_max: 0s
           http_filters:
           - name: envoy.filters.http.cors
             typed_config:

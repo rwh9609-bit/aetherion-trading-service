@@ -3,13 +3,20 @@ import { Box, Card, CardContent, Typography, CircularProgress, Chip, Stack, Tool
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, Legend, ResponsiveContainer } from 'recharts';
 import { fetchPrice, streamPrice } from '../services/grpcClient';
 
-const PriceChart = ({ symbol = 'BTC-USD' }) => {
+// Renders a streaming price chart for the currently selected symbol.
+// If the incoming symbol prop is empty/undefined we fall back to the first
+// meaningful default without locking the component to BTC forever.
+const PriceChart = ({ symbol }) => {
+  const activeSymbol = symbol && symbol.trim() ? symbol : 'BTC-USD';
   const [priceData, setPriceData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [streamState, setStreamState] = useState('connecting'); // connecting | live | snapshot | error
 
   const receivedFirstTickRef = useRef(false);
+  const streamStateRef = useRef(streamState);
+  useEffect(()=> { streamStateRef.current = streamState; }, [streamState]);
+
   useEffect(() => {
     // reset when symbol changes
     setPriceData([]);
@@ -18,7 +25,7 @@ const PriceChart = ({ symbol = 'BTC-USD' }) => {
     setError(null);
     let cleanup;
     receivedFirstTickRef.current = false;
-    cleanup = streamPrice(symbol, (tick) => {
+    cleanup = streamPrice(activeSymbol, (tick) => {
       receivedFirstTickRef.current = true;
       setStreamState('live');
       setPriceData(prevData => {
@@ -35,27 +42,44 @@ const PriceChart = ({ symbol = 'BTC-USD' }) => {
       setStreamState('error');
       setLoading(false);
     });
-
-  const fallbackTimer = setTimeout(async () => {
-      if (!receivedFirstTickRef.current) {
-        try {
-          const data = await fetchPrice(symbol);
+    // Seed immediate snapshot so the user sees the symbol change instantly.
+    // Still keep a small fallback window in case stream is slow.
+    (async () => {
+      try {
+        const data = await fetchPrice(activeSymbol);
+        if (!receivedFirstTickRef.current) {
           setPriceData([{ time: new Date().toLocaleTimeString(), price: data.price }]);
-      setStreamState('snapshot');
-          setLoading(false);
-        } catch (e) {
-          setError(e.message);
-      setStreamState('error');
+          setStreamState('snapshot');
           setLoading(false);
         }
+      } catch (e) {
+        // Only surface if stream also fails later.
+        console.debug('Initial snapshot fetch failed for', activeSymbol, e.message);
       }
-    }, 2000);
+    })();
+
+    const fallbackTimer = setTimeout(async () => {
+      if (!receivedFirstTickRef.current && streamStateRef.current !== 'error') {
+        try {
+          const data = await fetchPrice(activeSymbol);
+          setPriceData([{ time: new Date().toLocaleTimeString(), price: data.price }]);
+          setStreamState('snapshot');
+          setLoading(false);
+        } catch (e) {
+          if (!receivedFirstTickRef.current) {
+            setError(e.message);
+            setStreamState('error');
+            setLoading(false);
+          }
+        }
+      }
+    }, 1500);
 
     return () => {
       clearTimeout(fallbackTimer);
       cleanup && cleanup();
     };
-  }, [symbol]);
+  }, [activeSymbol]);
 
   if (loading) return <CircularProgress />;
   if (error) return <Typography color="error">{error}</Typography>;
@@ -105,13 +129,13 @@ const PriceChart = ({ symbol = 'BTC-USD' }) => {
       <CardContent>
         <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: 1, gap:2 }}>
           <Typography variant="h6" gutterBottom sx={{ mb: 0 }}>
-            {symbol} Price Chart
+            {activeSymbol} Price Chart
           </Typography>
           {renderStatusChip()}
         </Stack>
         <Box sx={{ width: '100%', height: 320 }}>
           <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={priceData} margin={{ top: 5, right: 20, left: 0, bottom: 5 }}>
+              <LineChart data={priceData} margin={{ top: 5, right: 20, left: 0, bottom: 5 }} key={activeSymbol}>
               <CartesianGrid strokeDasharray="3 3" />
               <XAxis dataKey="time" minTickGap={20} />
               <YAxis domain={['auto','auto']} />

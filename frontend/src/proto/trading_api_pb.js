@@ -1395,7 +1395,8 @@ proto.trading.StatusResponse.prototype.toObject = function(opt_includeInstance) 
 proto.trading.StatusResponse.toObject = function(includeInstance, msg) {
   var f, obj = {
 success: jspb.Message.getBooleanFieldWithDefault(msg, 1, false),
-message: jspb.Message.getFieldWithDefault(msg, 2, "")
+message: jspb.Message.getFieldWithDefault(msg, 2, ""),
+id: jspb.Message.getFieldWithDefault(msg, 3, "")
   };
 
   if (includeInstance) {
@@ -1440,6 +1441,10 @@ proto.trading.StatusResponse.deserializeBinaryFromReader = function(msg, reader)
       var value = /** @type {string} */ (reader.readString());
       msg.setMessage(value);
       break;
+    case 3:
+      var value = /** @type {string} */ (reader.readString());
+      msg.setId(value);
+      break;
     default:
       reader.skipField();
       break;
@@ -1483,6 +1488,13 @@ proto.trading.StatusResponse.serializeBinaryToWriter = function(message, writer)
       f
     );
   }
+  f = message.getId();
+  if (f.length > 0) {
+    writer.writeString(
+      3,
+      f
+    );
+  }
 };
 
 
@@ -1519,6 +1531,24 @@ proto.trading.StatusResponse.prototype.getMessage = function() {
  */
 proto.trading.StatusResponse.prototype.setMessage = function(value) {
   return jspb.Message.setProto3StringField(this, 2, value);
+};
+
+
+/**
+ * optional string id = 3;
+ * @return {string}
+ */
+proto.trading.StatusResponse.prototype.getId = function() {
+  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 3, ""));
+};
+
+
+/**
+ * @param {string} value
+ * @return {!proto.trading.StatusResponse} returns this
+ */
+proto.trading.StatusResponse.prototype.setId = function(value) {
+  return jspb.Message.setProto3StringField(this, 3, value);
 };
 
 
