@@ -14,10 +14,10 @@ import {
 
 // Determine gRPC-web host.
 // Priority: explicit env var -> same-origin (production) -> localhost dev fallback.
-// Set REACT_APP_GRPC_HOST in production (e.g. https://app.aetherion.trade or https://api.aetherion.trade).
+// Set REACT_APP_GRPC_HOST in production (e.g. https://app.aetherion.cloud or https://api.aetherion.cloud).
 let resolvedHost = process.env.REACT_APP_GRPC_HOST;
 if (!resolvedHost && typeof window !== 'undefined') {
-  // If we're on the marketing / app domain (e.g. https://app.aetherion.trade), assume envoy exposed on same origin
+  // If we're on the marketing / app domain (e.g. https://app.aetherion.cloud), assume envoy exposed on same origin
   // or on :8080 for local dev.
   const loc = window.location;
   if (loc.hostname === 'localhost' || /127\.0\.0\.1/.test(loc.hostname)) {

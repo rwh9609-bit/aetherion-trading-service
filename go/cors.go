@@ -21,7 +21,7 @@ func corsMiddleware() *cors.Cors {
 	if len(origins) == 0 {
 		origins = []string{
 			"http://localhost:3000",
-			"https://app.aetherion.trade",
+			"https://app.aetherion.cloud",
 		}
 	}
 	return cors.New(cors.Options{

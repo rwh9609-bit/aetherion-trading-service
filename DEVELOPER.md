@@ -328,8 +328,8 @@ export GO_SERVICE_ADDR=localhost:50051
 export RUST_SERVICE_ADDR=localhost:50052
 export ENVOY_PROXY_ADDR=localhost:8080
 export FRONTEND_PORT=3000
-export REACT_APP_GRPC_HOST=https://app.aetherion.trade   # optional: production build host override
-export CORS_ALLOWED_ORIGINS=https://app.aetherion.trade   # comma-separated list
+export REACT_APP_GRPC_HOST=https://app.aetherion.cloud   # optional: production build host override
+export CORS_ALLOWED_ORIGINS=https://app.aetherion.cloud   # comma-separated list
 export AUTH_PREVIOUS_SECRET=old-secret   # optional; enables graceful JWT key rotation
 
 ## Containerization

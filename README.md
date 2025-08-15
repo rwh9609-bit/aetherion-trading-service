@@ -37,7 +37,7 @@ Aetherion is a modern quantitative trading platform that combines real-time mark
 ### For Traders and Analysts
 
 1. **Access the Platform**
-   - Visit the web interface at `https://app.aetherion.trade`
+   - Visit the web interface at `https://app.aetherion.cloud`
    - Create your account or sign in
    - Start monitoring real-time market data
 
@@ -124,4 +124,4 @@ Aetherion is open source software licensed under the MIT License. See [LICENSE](
 
 ---
 
-**Ready to start trading?** Visit `https://app.aetherion.trade` to access your Aetherion platform, or check out the [Developer Guide](DEVELOPER.md) to set up your own instance.
+**Ready to start trading?** Visit `https://app.aetherion.cloud` to access your Aetherion platform, or check out the [Developer Guide](DEVELOPER.md) to set up your own instance.

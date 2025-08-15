@@ -8,7 +8,7 @@ This guide will walk you through using the Aetherion Trading Platform to monitor
 
 1. **Open the Platform**
    - Development: Navigate to `http://localhost:3000` in your web browser
-   - Production: Navigate to `https://app.aetherion.trade`
+   - Production: Navigate to `https://app.aetherion.cloud`
    - You'll see the Aetherion landing page
 
 2. **Create Your Account**

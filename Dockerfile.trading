@@ -11,6 +11,6 @@ USER app
 WORKDIR /app
 COPY --from=build /app/trading_service ./trading_service
 ENV AUTH_SECRET=dev-insecure-default \
-    CORS_ALLOWED_ORIGINS=http://localhost:3000,https://app.aetherion.trade
+    CORS_ALLOWED_ORIGINS=http://localhost:3000,https://app.aetherion.cloud
 EXPOSE 50051
 ENTRYPOINT ["/app/trading_service"]
