@@ -13,8 +13,10 @@ Aetherion is open source and actively seeking developers, quants, and fintech en
 
 This document contains technical setup instructions, API documentation, and development guidelines for the Aetherion Trading Engine.
 
+
 ## Table of Contents
 
+- [Local Development Workflow](#local-development-workflow)
 - [Prerequisites](#prerequisites)
 - [Installation & Setup](#installation--setup)
 - [Architecture Overview](#architecture-overview)
@@ -22,6 +24,39 @@ This document contains technical setup instructions, API documentation, and deve
 - [API Documentation](#api-documentation)
 - [Testing](#testing)
 - [Deployment](#deployment)
+
+## Local Development Workflow (dev branch)
+
+To run Aetherion locally for development:
+
+1. **Clone the dev branch:**
+   ```sh
+   git clone -b dev https://github.com/rwh9609-bit/multilanguage.git
+   cd multilanguage
+   ```
+
+2. **Install Docker Desktop** (if not already installed):
+   - Download from [Docker Desktop for Mac](https://www.docker.com/products/docker-desktop/).
+   - Install and start Docker Desktop.
+
+3. **Create ACME challenge directory for TLS (macOS fix):**
+   ```sh
+   mkdir -p ~/acme-challenge
+   ```
+
+4. **Run the stack with Docker Compose:**
+   ```sh
+   docker-compose up --build
+   ```
+   - This will start all services defined in `docker-compose.yml`.
+
+5. **Access the frontend:**
+   - Open [http://localhost:3000](http://localhost:3000) in your browser.
+
+6. **Expected behavior:**
+   - Some health endpoints may show 404 or connection errors if not all backend services are running locally, but main trading dashboard and price streams should work.
+
+For more details, see the rest of this documentation.
 
 ## 2025-08: HTTPS & Security Upgrade
 

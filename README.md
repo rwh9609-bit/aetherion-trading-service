@@ -101,8 +101,6 @@ Recommended:
 Set at build/runtime:
 
 ```bash
-REACT_APP_GRPC_HOST=https://api.aetherion.cloud
-CORS_ALLOWED_ORIGINS=https://aetherion.cloud,https://api.aetherion.cloud
 ```
 
 ## 🏗️ Architecture Highlights
