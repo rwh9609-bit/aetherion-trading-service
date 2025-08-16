@@ -37,7 +37,7 @@ services:
     depends_on:
       - trading
     ports:
-      - "8080:8080"
+      - "443:443"
     restart: unless-stopped
     environment:
       - ENVOY_UID=1337
