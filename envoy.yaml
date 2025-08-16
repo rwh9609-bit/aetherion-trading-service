@@ -118,6 +118,48 @@ static_resources:
               compressor_library: { name: text_optimized, typed_config: { "@type": type.googleapis.com/envoy.extensions.compression.gzip.compressor.v3.Gzip } }
           - name: envoy.filters.http.router
             typed_config: { "@type": type.googleapis.com/envoy.extensions.filters.http.router.v3.Router }
+  - name: listener_http
+    address:
+      socket_address: { address: 0.0.0.0, port_value: 80 }
+    filter_chains:
+    - filters:
+      - name: envoy.filters.network.http_connection_manager
+        typed_config:
+          "@type": type.googleapis.com/envoy.extensions.filters.network.http_connection_manager.v3.HttpConnectionManager
+          stat_prefix: http
+          route_config:
+            name: acme_route
+            virtual_hosts:
+            - name: acme_challenge
+              domains: ["*"]
+              routes:
+              - match: { prefix: "/.well-known/acme-challenge/" }
+                route:
+                  cluster: acme_challenge
+          http_filters:
+          - name: envoy.filters.http.router
+            typed_config: {}
+  - name: listener_http
+    address:
+      socket_address: { address: 0.0.0.0, port_value: 80 }
+    filter_chains:
+    - filters:
+      - name: envoy.filters.network.http_connection_manager
+        typed_config:
+          "@type": type.googleapis.com/envoy.extensions.filters.network.http_connection_manager.v3.HttpConnectionManager
+          stat_prefix: http
+          route_config:
+            name: acme_route
+            virtual_hosts:
+            - name: acme_challenge
+              domains: ["*"]
+              routes:
+              - match: { prefix: "/.well-known/acme-challenge/" }
+                route:
+                  cluster: acme_challenge
+          http_filters:
+          - name: envoy.filters.http.router
+            typed_config: {}
   clusters:
   - name: trading_service
     connect_timeout: 0.5s
@@ -164,6 +206,19 @@ static_resources:
               socket_address:
                 address: frontend
                 port_value: 80
+  - name: acme_challenge
+    connect_timeout: 0.5s
+    type: STRICT_DNS
+    lb_policy: ROUND_ROBIN
+    load_assignment:
+      cluster_name: acme_challenge
+      endpoints:
+      - lb_endpoints:
+        - endpoint:
+            address:
+              socket_address:
+                address: acme-challenge
+                port_value: 8080
 
 admin:
   access_log_path: /tmp/admin_access.log
