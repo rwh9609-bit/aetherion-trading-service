@@ -1,176 +1,162 @@
-# Makefile for the Aetherion Trading Engine (gRPC Microservices)
+## Makefile for the Aetherion Trading Engine (gRPC Microservices)
 
-.PHONY: all setup generate build run stop clean test_go
+.PHONY: all setup proto-gen proto-gen-go proto-gen-web proto-gen-python build run stop clean test_go docker-build docker-up docker-down docker-logs fmt help
 
-# --- Variables ---
-PROTOC = protoc
-PROTO_DIR = protos
-PROTO_FILE = trading_api.proto
-BOT_PROTO = bot.proto
+## --- Variables ---
+PROTOC ?= protoc
+PROTO_DIR := protos
+ROOT_PROTOS := trading_api.proto $(PROTO_DIR)/bot.proto
 
 # Go variables
-GO_DIR = go
-GO_MODULE = aetherion-trading-service
-GO_BIN = /Users/xeratooth/go/bin
+GO_DIR := go
+GO_BIN ?= $(HOME)/go/bin
 
 # Python variables
-PYTHON_DIR = python
-VENV_DIR = venv
+PYTHON_DIR := python
+VENV_DIR := venv
 
 # Rust variables
-RUST_SERVICE_DIR = rust/risk_service
+RUST_SERVICE_DIR := rust/risk_service
 
 # Frontend variables
-FRONTEND_DIR = frontend
+FRONTEND_DIR := frontend
+
+DOCKER_COMPOSE ?= docker compose
+COMPOSE_SERVICES := risk trading envoy orchestrator frontend
+
+## Colors (optional prettiness)
+GREEN=\033[32m
+YELLOW=\033[33m
+BLUE=\033[34m
+RESET=\033[0m
 
 # --- Main Targets ---
 
-# Default target
-all: setup generate build
+## Default target
+all: build
 
-# Setup development environment
+## Setup (idempotent)
 setup:
-	@echo "Setting up development environment..."
-	cd $(FRONTEND_DIR) && npm install
-	cd $(PYTHON_DIR) && pip install -r requirements.txt
-	cd $(RUST_SERVICE_DIR) && cargo build
-	cd $(GO_DIR) && go mod tidy
+	@echo "$(BLUE)Setting up development environment...$(RESET)"
+	@if [ ! -d "$(VENV_DIR)" ]; then python3 -m venv $(VENV_DIR); fi
+	@. $(VENV_DIR)/bin/activate; pip install -q --upgrade pip; pip install -q -r $(PYTHON_DIR)/requirements.txt
+	@cd $(FRONTEND_DIR) && npm install --legacy-peer-deps >/dev/null 2>&1 || npm install >/dev/null 2>&1
+	@cd $(RUST_SERVICE_DIR) && cargo fetch
+	@cd $(GO_DIR) && go mod tidy
+	@echo "$(GREEN)Setup complete.$(RESET)"
 
-# Generate all gRPC code
-generate: generate-python
-	@echo "Generating Protocol Buffers for Go, Rust, and Web..."
+## Proto generation aggregate
+proto-gen: proto-gen-python proto-gen-go proto-gen-web ## Generate all protobuf artifacts
+	@echo "$(GREEN)All protobuf code generated.$(RESET)"
+
+## Go protobufs (flatten into go/gen as committed layout)
+proto-gen-go:
+	@echo "Generating Go protobufs..."
+	@rm -rf $(GO_DIR)/gen
 	@mkdir -p $(GO_DIR)/gen
-	PATH="$(GO_BIN):$$PATH" $(PROTOC) -I$(PROTO_DIR) --go_out=$(GO_DIR)/gen --go_opt=paths=source_relative --go-grpc_out=$(GO_DIR)/gen --go-grpc_opt=paths=source_relative $(PROTO_FILE) $(BOT_PROTO)
-	PATH="$(GO_BIN):$$PATH" $(PROTOC) -I$(PROTO_DIR) --grpc-web_out=import_style=commonjs,mode=grpcwebtext:$(FRONTEND_DIR)/src/proto --js_out=import_style=commonjs:$(FRONTEND_DIR)/src/proto $(PROTO_FILE) $(BOT_PROTO)
-	# Generate Rust code
-	cd $(RUST_SERVICE_DIR) && cargo build --release
+	@$(PROTOC) -I . -I $(PROTO_DIR) \
+		--go_out=$(GO_DIR) --go_opt=paths=source_relative \
+		--go-grpc_out=$(GO_DIR) --go-grpc_opt=paths=source_relative \
+		$(ROOT_PROTOS)
+	@mkdir -p $(GO_DIR)/gen
+	@mv $(GO_DIR)/trading_api*.pb.go $(GO_DIR)/gen/ 2>/dev/null || true
+	@mv $(GO_DIR)/$(PROTO_DIR)/*_pb.go $(GO_DIR)/gen/ 2>/dev/null || true
+	@rmdir $(GO_DIR)/$(PROTO_DIR) 2>/dev/null || true
+	@echo "$(GREEN)Go protos updated in go/gen$(RESET)"
 
-# Build all services
-build: generate
-	@echo "Building all services..."
-	cd $(RUST_SERVICE_DIR) && cargo build --release
-	cd $(GO_DIR) && go mod tidy && go build -o bin/trading_service
-	cd $(FRONTEND_DIR) && npm run build
+## Web (gRPC-Web JS) protobufs
+proto-gen-web:
+	@echo "Generating gRPC-Web JS stubs..."
+	@mkdir -p $(FRONTEND_DIR)/src/proto
+	@$(PROTOC) -I . -I $(PROTO_DIR) \
+		--js_out=import_style=commonjs:$(FRONTEND_DIR)/src/proto \
+		--grpc-web_out=import_style=commonjs,mode=grpcwebtext:$(FRONTEND_DIR)/src/proto \
+		$(ROOT_PROTOS)
+	@echo "$(GREEN)Web stubs updated in frontend/src/proto$(RESET)"
 
-# Run all services (in background)
+## Python protobufs
+proto-gen-python: setup
+	@echo "Generating Python protobufs..."
+	@mkdir -p $(PYTHON_DIR)/protos
+	@. $(VENV_DIR)/bin/activate; python3 -m grpc_tools.protoc -I . -I $(PROTO_DIR) \
+		--python_out=$(PYTHON_DIR)/protos \
+		--pyi_out=$(PYTHON_DIR)/protos \
+		--grpc_python_out=$(PYTHON_DIR)/protos \
+		$(ROOT_PROTOS)
+	@touch $(PYTHON_DIR)/protos/__init__.py
+	@echo "$(GREEN)Python protos updated$(RESET)"
+
+## Build all (local, not docker)
+build: proto-gen
+	@echo "Building services (local)..."
+	@cd $(RUST_SERVICE_DIR) && cargo build --release
+	@cd $(GO_DIR) && go build -o bin/trading_service
+	@cd $(FRONTEND_DIR) && npm run build
+	@echo "$(GREEN)Local build complete.$(RESET)"
+
+## Run all services (background, local dev)
 run:
-	@echo "Starting all services..."
-	@if lsof -t -i:50051 >/dev/null 2>&1; then echo "Port 50051 already in use (trading service?). Skipping start."; else \
-		echo "Starting Go Trading Service on port 50051..."; \
-		AUTH_SECRET=$${AUTH_SECRET:-0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef} \
-		cd $(GO_DIR) && AUTH_SECRET=$$AUTH_SECRET ./bin/trading_service & echo $$! > /tmp/trading_service.pid ; \
-	fi
-	@if lsof -t -i:50052 >/dev/null 2>&1; then echo "Port 50052 already in use (risk service?). Skipping start."; else \
-		echo "Starting Rust Risk Service on port 50052..."; \
-		cd $(RUST_SERVICE_DIR) && cargo run --release & echo $$! > /tmp/risk_service.pid ; \
-	fi
-	@if lsof -t -i:50053 >/dev/null 2>&1; then echo "Port 50053 already in use (python strategy?). Skipping start."; else \
-		echo "Starting Python Strategy Service on port 50053..."; \
-		cd $(PYTHON_DIR) && ../venv/bin/python main.py & echo $$! > /tmp/python_service.pid ; \
-	fi
-	@if lsof -t -i:8080 >/dev/null 2>&1; then echo "Port 8080 in use (envoy?). Skipping start."; else \
-		echo "Starting Envoy proxy on port 8080..."; \
-		envoy -c envoy.yaml & echo $$! > /tmp/envoy.pid ; \
-	fi
-	@if lsof -t -i:3000 >/dev/null 2>&1; then echo "Port 3000 already in use (frontend dev server?). Skipping start."; else \
-		echo "Starting Frontend on port 3000..."; \
-		cd $(FRONTEND_DIR) && npm start & echo $$! > /tmp/frontend.pid ; \
-	fi
-	@echo "All services attempted. Dev UI: http://localhost:3000"
+	@echo "Starting local services..."
+	@$(MAKE) -s run-go || true
+	@$(MAKE) -s run-risk || true
+	@$(MAKE) -s run-python || true
+	@echo "$(GREEN)Local services started (where free ports).$(RESET)"
 
-# Stop all services
+## Stop local services
 stop:
-	@echo "Stopping all services..."
-	-kill -9 `lsof -t -i:8080` 2>/dev/null || true
-	-kill -9 `lsof -t -i:50051` 2>/dev/null || true
-	-kill -9 `lsof -t -i:50052` 2>/dev/null || true
-	-kill -9 `lsof -t -i:50053` 2>/dev/null || true
-	-kill -9 `lsof -t -i:3000` 2>/dev/null || true
-	-rm -f /tmp/envoy.pid /tmp/risk_service.pid /tmp/trading_service.pid /tmp/python_service.pid
-	@echo "All services stopped."
+	@echo "Stopping local services (best-effort)..."
+	-@pkill -f trading_service || true
+	-@pkill -f risk_service || true
+	-@pkill -f orchestrator.py || true
+	-@pkill -f node || true
+	@echo "$(GREEN)Stop sequence issued.$(RESET)"
 
-# Restart all services
-restart: stop build run
+restart: stop build run ## Rebuild & restart local services
 
-# Clean up generated files and build artifacts
+## Clean build artifacts (non-docker)
 clean:
-	@echo "Cleaning up project..."
+	@echo "Cleaning..."
 	-rm -rf $(GO_DIR)/bin/trading_service
 	-rm -rf $(GO_DIR)/gen
 	-rm -rf $(PYTHON_DIR)/protos
 	-find $(PYTHON_DIR) -type d -name "__pycache__" -exec rm -r {} +
 	-rm -rf $(RUST_SERVICE_DIR)/target
 	-rm -rf $(FRONTEND_DIR)/build
-	-rm -f cpp/*.o cpp/*.out cpp/test_load cpp/test_orderbook
-	@echo "Clean up complete."
+	@echo "$(GREEN)Clean complete.$(RESET)"
 
-# Generate Python gRPC code
-generate-python: setup $(PROTO_FILE)
-	@echo "Generating Python gRPC code..."
-	@mkdir -p $(PYTHON_DIR)/protos
-	@. $(VENV_DIR)/bin/activate; python3 -m grpc_tools.protoc -I$(PROTO_DIR) \
-	          --python_out=$(PYTHON_DIR)/protos \
-	          --pyi_out=$(PYTHON_DIR)/protos \
-	          --grpc_python_out=$(PYTHON_DIR)/protos \
-	          $(PROTO_FILE) $(BOT_PROTO)
-	@ls -l $(PYTHON_DIR)/protos
-	@touch $(PYTHON_DIR)/protos/__init__.py
+## Local single service helpers
+run-go:
+	@echo "Running Go trading service (50051)"
+	@cd $(GO_DIR) && go run . &
+run-risk:
+	@echo "Running Rust risk service (50052)"
+	@cd $(RUST_SERVICE_DIR) && cargo run --release &
+run-python:
+	@echo "Running Python orchestrator (50053)"
+	@cd $(PYTHON_DIR) && . ../$(VENV_DIR)/bin/activate && python3 orchestrator.py &
 
+## Docker convenience
+docker-build: ## Build all docker images
+	$(DOCKER_COMPOSE) build --pull --no-cache
+docker-up: ## Start all compose services
+	$(DOCKER_COMPOSE) up -d $(COMPOSE_SERVICES)
+docker-down: ## Stop all compose services
+	$(DOCKER_COMPOSE) down
+docker-logs: ## Tail logs for all services
+	$(DOCKER_COMPOSE) logs -f --tail=100
 
-
-# --- Service & Client Runners ---
-
-# Run the Go trading service
-run-go-service: generate-go
-	cd $(GO_DIR) && go mod tidy
-	@echo "Starting Go Trading Service on port 50051..."
-	cd $(GO_DIR) && go run . &
-
-# Stop the Go trading service
-stop-go-service:
-	@echo "Stopping Go Trading Service..."
-	@kill `lsof -t -i:50051` || true
-
-# Run the Rust risk service
-run-rust-service:
-	@echo "Starting Rust Risk Service on port 50052..."
-	cd $(RUST_SERVICE_DIR) && cargo run
-
-# Stop the Rust risk service
-stop-rust-service:
-	@echo "Stopping Rust Risk Service..."
-	@kill `lsof -t -i:50052` || true
-
-# Run the Python orchestrator client
-run-python-client: setup generate-python
-	@echo "Starting Python Orchestrator Client..."
-	@cd $(PYTHON_DIR) && . ../$(VENV_DIR)/bin/activate && python3 orchestrator.py
-
-# --- Setup & Cleanup ---
-
-# Set up the Python virtual environment and install dependencies
-setup:
-	@if [ ! -d "$(VENV_DIR)" ]; then \
-		echo "Python venv not found. Creating one..."; \
-		python3 -m venv $(VENV_DIR); \
-	fi
-	@echo "Installing/updating Python dependencies..."
-	@. $(VENV_DIR)/bin/activate; \
-	pip install -q --upgrade pip; \
-	pip install -q -r $(PYTHON_DIR)/requirements.txt
-
-# Clean up generated files
-clean:
-	@echo "Cleaning up..."
-	rm -rf $(GO_DIR)/gen
-	rm -rf $(PYTHON_DIR)/protos
-	# Rust's cargo clean will handle its build artifacts
-	cd $(RUST_SERVICE_DIR) && cargo clean
-	@echo "Cleanup complete."
-
-# Run Go unit tests
+## Tests
 test_go:
 	@echo "Running Go tests"
-	cd $(GO_DIR) && go test ./... -count=1 -v
+	@cd $(GO_DIR) && go test ./... -count=1 -v
 
-# --- EOF ---
+## Formatting (placeholder hooks)
+fmt:
+	@cd $(GO_DIR) && go fmt ./...
+	@echo "(Add rustfmt / black as needed)"
+
+## Help
+help:
+	@grep -E '^([a-zA-Z0-9_-]+):.*?##' $(MAKEFILE_LIST) | awk 'BEGIN {FS=":.*?## "}; {printf "\033[36m%-18s\033[0m %s\n", $$1, $$2}' | sort
+
+## End of Makefile
