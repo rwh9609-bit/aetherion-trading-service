@@ -97,7 +97,7 @@ static_resources:
                       lb_policy: ROUND_ROBIN
                       http2_protocol_options: {}
                       load_assignment:
-                        cluster_name: trading_service
+                        # cluster_name removed
                         endpoints:
                           - lb_endpoints:
                               - endpoint:
@@ -118,7 +118,7 @@ static_resources:
                       lb_policy: ROUND_ROBIN
                       http2_protocol_options: {}
                       load_assignment:
-                        cluster_name: risk_service
+                        # cluster_name removed
                         endpoints:
                           - lb_endpoints:
                               - endpoint:
@@ -138,7 +138,7 @@ static_resources:
                       type: STRICT_DNS
                       lb_policy: ROUND_ROBIN
                       load_assignment:
-                        cluster_name: frontend
+                        # cluster_name removed
                         endpoints:
                           - lb_endpoints:
                               - endpoint:
@@ -153,4 +153,4 @@ static_resources:
                     socket_address:
                       address: 0.0.0.0
                       port_value: 9901
-      cluster_name: frontend
+  # cluster_name removed
