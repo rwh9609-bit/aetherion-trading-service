@@ -25,14 +25,14 @@ if (!resolvedHost && typeof window !== 'undefined') {
   } else if (/^app\./.test(loc.hostname)) {
     // Split-domain mode: auto-map app.<root> -> api.<root> when no explicit REACT_APP_GRPC_HOST provided.
     const rootDomain = loc.hostname.replace(/^app\./, '');
-    resolvedHost = `https://api.${rootDomain}:8443`;
+    resolvedHost = `https://api.${rootDomain}:443`;
     console.log('Auto-detected split-domain API host:', resolvedHost);
   } else {
     // Same-origin fallback (single domain deployment)
     resolvedHost = `${loc.protocol}//${loc.host}`;
   }
 }
-const host = resolvedHost || 'https://api.aetherion.cloud:8443'; // final fallback for production
+const host = resolvedHost || 'https://api.aetherion.cloud:443'; // final fallback for production
 console.log('gRPC host resolved to:', host);
 const options = {
   transport: grpc.CrossBrowserHttpTransport({
