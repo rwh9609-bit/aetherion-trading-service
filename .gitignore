@@ -17,6 +17,7 @@ __pycache__/
 # Go
 go/bin/
 # Commit generated protobufs so Docker builds don't need protoc.
+go/github.com/
 
 # Rust
 target/

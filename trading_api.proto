@@ -30,6 +30,10 @@ message RegisterRequest { string username = 1; string password = 2; }
 message AuthRequest { string username = 1; string password = 2; }
 message AuthResponse { bool success = 1; string message = 2; string token = 3; int64 expires_at_unix = 4; }
 
+// Trade execution messages
+message TradeRequest { string symbol = 1; string side = 2; double size = 3; double price = 4; }
+message TradeResponse { bool accepted = 1; string message = 2; double executed_price = 3; double pnl = 4; }
+
 service TradingService {
 	rpc StreamOrderBook(OrderBookRequest) returns (stream OrderBook) {}
 	rpc GetPrice(Tick) returns (Tick) {}
@@ -47,6 +51,7 @@ service TradingService {
 	rpc StartBot(BotIdRequest) returns (StatusResponse) {}
 	rpc StopBot(BotIdRequest) returns (StatusResponse) {}
 	rpc GetBotStatus(BotIdRequest) returns (BotConfig) {}
+	rpc ExecuteTrade(TradeRequest) returns (TradeResponse) {}
 }
 
 service RiskService { rpc CalculateVaR(VaRRequest) returns (VaRResponse) {} }

@@ -6,7 +6,8 @@ RUN go mod download
 COPY go/ .
 ENV CGO_ENABLED=0 GOOS=linux GOARCH=amd64
 ARG GIT_COMMIT=unknown
-RUN go build -trimpath -ldflags "-s -w -X main.buildCommit=$GIT_COMMIT" -o trading_service ./...
+# Build only the main module (single main package) to allow -o output.
+RUN go build -trimpath -ldflags "-s -w -X main.buildCommit=$GIT_COMMIT" -o trading_service .
 
 FROM alpine:3.19
 RUN apk add --no-cache ca-certificates && adduser -D -u 10001 app
