@@ -1,4 +1,4 @@
-module aetherion-trading-service
+module github.com/rwh9609-bit/aetherion
 
 go 1.23.0
 
@@ -78,4 +78,4 @@ require (
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
 
-replace aetherion-trading-service/gen/protos => ./gen/protos
+

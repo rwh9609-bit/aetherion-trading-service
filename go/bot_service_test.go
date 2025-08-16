@@ -4,7 +4,7 @@ import (
     "context"
     "os"
     "testing"
-    pb "aetherion-trading-service/gen"
+    pb "github.com/rwh9609-bit/aetherion/gen"
 )
 
 // TestBotServiceLifecycle validates create -> list -> start -> stop and persistence reload.

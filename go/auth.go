@@ -8,7 +8,7 @@ import (
     "log"
     "strings"
 
-    pb "aetherion-trading-service/gen"
+    pb "github.com/rwh9609-bit/aetherion/gen"
 
     "github.com/golang-jwt/jwt/v5"
     "github.com/jackc/pgx/v5"

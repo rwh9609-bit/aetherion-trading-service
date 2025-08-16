@@ -5,7 +5,7 @@ import (
     "sync"
     "time"
     "github.com/google/uuid"
-    pb "aetherion-trading-service/gen"
+    pb "github.com/rwh9609-bit/aetherion/gen"
     "encoding/json"
     "os"
     "path/filepath"

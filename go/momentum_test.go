@@ -4,7 +4,7 @@ import (
     "context"
     "testing"
     "time"
-    pb "aetherion-trading-service/gen"
+    pb "github.com/rwh9609-bit/aetherion/gen"
 )
 
 // helper to build hist points

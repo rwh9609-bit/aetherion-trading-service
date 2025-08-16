@@ -6,7 +6,7 @@ import (
     "os"
     "testing"
     "time"
-    pb "aetherion-trading-service/gen"
+    pb "github.com/rwh9609-bit/aetherion/gen"
     tc "github.com/testcontainers/testcontainers-go"
     tpostgres "github.com/testcontainers/testcontainers-go/modules/postgres"
 )
