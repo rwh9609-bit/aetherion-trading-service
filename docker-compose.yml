@@ -76,7 +76,7 @@ services:
     image: python:3
     command: python3 -m http.server 8080 --directory /acme-challenge
     volumes:
-      - /root/acme-challenge:/acme-challenge
+      - /Users/xeratooth/acme-challenge:/acme-challenge
     restart: unless-stopped
 networks:
   default:
