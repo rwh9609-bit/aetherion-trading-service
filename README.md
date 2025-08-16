@@ -64,19 +64,24 @@ git clone https://github.com/rwh9609-bit/multilanguage.git
 cd multilanguage
 cp .env.example .env
 # Edit .env: set a strong AUTH_SECRET (openssl rand -hex 32)
-docker compose build
+make docker-build
 AUTH_SECRET=$(openssl rand -hex 32) docker compose up -d
 docker compose ps
 ```
-Access frontend (dev): http://localhost:3000 (if exposed) or point your React dev server at Envoy (http://localhost:8080).
+Access frontend (dev): <http://localhost:3000> (if exposed) or point your React dev server at Envoy (<https://localhost:8080> with dev certs).
+
+TLS & hardening: see `docs/SECURITY.md`. Provide `certs/server.crt` and `certs/server.key` before rebuilding Envoy for HTTPS.
 
 #### Production Domains
+
 Recommended:
-* Frontend: https://aetherion.cloud
-* API (gRPC-Web): https://api.aetherion.cloud → reverse proxy → Envoy (localhost:8080)
+
+- Frontend: <https://aetherion.cloud>
+- API (gRPC-Web): <https://api.aetherion.cloud> → reverse proxy → Envoy (localhost:8080 TLS)
 
 Set at build/runtime:
-```
+
+```bash
 REACT_APP_GRPC_HOST=https://api.aetherion.cloud
 CORS_ALLOWED_ORIGINS=https://aetherion.cloud,https://api.aetherion.cloud
 ```
@@ -113,6 +118,27 @@ Aetherion uses a polyglot microservices architecture with each component optimiz
 - **Strategy Engine (Python)** - Experimental algorithm prototyping
 
 All components communicate via gRPC for optimal performance and reliability.
+
+### Updating a Running Server
+
+```bash
+cd /opt/aetherion  # path where repo lives
+git fetch --prune
+git pull --ff-only origin main
+# (Optional) update TLS certs in certs/
+make docker-build
+AUTH_SECRET=$(openssl rand -hex 32) docker compose up -d --remove-orphans
+docker compose ps
+docker compose logs -f --tail=50 envoy
+```
+
+Update a single service (example trading only):
+
+```bash
+git pull --ff-only origin main
+docker compose build trading
+docker compose up -d trading
+```
 
 ## 📊 Supported Markets
 
