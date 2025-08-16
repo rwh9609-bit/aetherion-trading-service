@@ -1,5 +1,12 @@
 # Getting Started with Create React App
 
+---
+## Open Source & Developer Community
+
+This project is fully open source! We welcome contributors of all backgrounds. If youre interested in fintech, trading, or modern web development, check out our About and Careers pages in the app, or see DEVELOPER.md for how to get started.
+
+---
+
 This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
 
 ## Available Scripts

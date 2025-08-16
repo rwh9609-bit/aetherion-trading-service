@@ -1,5 +1,16 @@
 # Developer Documentation
 
+---
+## We Want Contributors!
+
+Aetherion is open source and actively seeking developers, quants, and fintech enthusiasts. If you want to help build the future of trading technology, please:
+- Fork and star the repo
+- Submit issues and PRs
+- Join our Discord/Matrix (coming soon)
+- See the new Careers page in the app for opportunities
+
+---
+
 This document contains technical setup instructions, API documentation, and development guidelines for the Aetherion Trading Engine.
 
 ## Table of Contents

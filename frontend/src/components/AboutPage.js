@@ -7,6 +7,12 @@ const AboutPage = () => {
       <Card variant="outlined" sx={{ background:'rgba(255,255,255,0.04)', borderColor:'rgba(255,255,255,0.08)' }}>
         <CardContent>
           <Typography variant="h4" fontWeight={700} gutterBottom>About Aetherion</Typography>
+          <Typography variant="h6" color="primary" sx={{ mt:2 }} gutterBottom>
+             Open Source & Developer Community
+          </Typography>
+          <Typography variant="body1" paragraph>
+            Aetherion is fully open source and actively seeking contributors! If youre a developer, quant, or fintech enthusiast, check out our new Careers page or see DEVELOPER.md for details.
+          </Typography>
           <Typography variant="body1" paragraph>
             Aetherion is a polyglot quantitative trading experimentation platform combining Go, Rust, Python, and
             a modern React + gRPC-Web frontend. It is designed for rapid strategy prototyping, cross‑language

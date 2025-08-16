@@ -1,6 +1,13 @@
 
 # Security & TLS Hardening (2024)
 
+---
+## Open Source & Developer Community
+
+This security guide is for an open-source project. We welcome contributors! See DEVELOPER.md and the Careers page for details.
+
+---
+
 Envoy terminates TLS for gRPC-Web on port 8080 using:
 
 ```text

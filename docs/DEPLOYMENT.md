@@ -1,5 +1,12 @@
 # Deployment Guide
 
+---
+## Open Source & Developer Community
+
+This deployment guide is for an open-source project. We welcome contributors! See DEVELOPER.md and the Careers page for details.
+
+---
+
 This document is for internal/operators. The public `README.md` intentionally omits these details.
 
 ## Domain Migration (Localhost -> Production)
