@@ -8,7 +8,7 @@ import (
     "log"
     "strings"
 
-    pb "github.com/rwh9609-bit/aetherion/gen"
+    pb "aetherion/gen"
 
     "github.com/golang-jwt/jwt/v5"
     "github.com/jackc/pgx/v5"
