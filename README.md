@@ -140,6 +140,25 @@ docker compose build trading
 docker compose up -d trading
 ```
 
+### Quick Server Sync & Rebuild
+
+When logged in on the server (e.g. root) and you just pushed commits from your workstation:
+
+```bash
+cd /opt/aetherion
+git fetch --prune && git pull --ff-only origin main
+make docker-build   # or: docker compose build <service>
+AUTH_SECRET=$(openssl rand -hex 32) docker compose up -d --remove-orphans
+```
+
+Rebuild a single updated service only:
+
+```bash
+git fetch --prune && git pull --ff-only origin main
+docker compose build envoy
+docker compose up -d envoy
+```
+
 ## 📊 Supported Markets
 
 Current data source:
