@@ -1,106 +1,156 @@
 static_resources:
   listeners:
-  - name: listener_https
-    address:
-      socket_address: { address: 0.0.0.0, port_value: 443 }
-    filter_chains:
-    - filter_chain_match: {}
-      transport_socket:
-        name: envoy.transport_sockets.tls
-        typed_config:
-          "@type": type.googleapis.com/envoy.extensions.transport_sockets.tls.v3.DownstreamTlsContext
-      # ...existing code...
-                                          runtime_key: compressor.enabled
-                                    compressor_library:
-                                      name: text_optimized
-                                      typed_config:
-                                        "@type": type.googleapis.com/envoy.extensions.compression.gzip.compressor.v3.Gzip
-                                - name: envoy.filters.http.router
-                                  typed_config:
-                                    "@type": type.googleapis.com/envoy.extensions.filters.http.router.v3.Router
-                # ...existing code...
-  - name: risk_service
-    connect_timeout: 0.5s
-    type: STRICT_DNS
-    lb_policy: ROUND_ROBIN
-    http2_protocol_options: {}
-    load_assignment:
-      cluster_name: risk_service
-      endpoints:
-        - lb_endpoints:
-            - endpoint:
-                address:
-                  socket_address:
-                    address: risk
-                    port_value: 50052
-    health_checks:
-      - timeout: 1s
-        interval: 10s
-        unhealthy_threshold: 2
-        healthy_threshold: 2
-        grpc_health_check:
-          service_name: ""
-  - name: frontend
-    connect_timeout: 0.5s
-    type: STRICT_DNS
-    lb_policy: ROUND_ROBIN
-    load_assignment:
-      cluster_name: frontend
-      endpoints:
-        - lb_endpoints:
-            - endpoint:
-                address:
-                  socket_address:
-                    address: frontend
-                    port_value: 80
-          http_filters:
-          - name: envoy.filters.http.cors
-            typed_config: { "@type": type.googleapis.com/envoy.extensions.filters.http.cors.v3.Cors }
-          - name: envoy.filters.http.grpc_web
-            typed_config: { "@type": type.googleapis.com/envoy.extensions.filters.http.grpc_web.v3.GrpcWeb }
-          - name: envoy.filters.http.compressor
+    - name: listener_https
+      address:
+        socket_address:
+          address: 0.0.0.0
+          port_value: 443
+      filter_chains:
+        - filter_chain_match: {}
+          transport_socket:
+            name: envoy.transport_sockets.tls
             typed_config:
-              "@type": type.googleapis.com/envoy.extensions.filters.http.compressor.v3.Compressor
-              response_direction_config:
-                common_config: { enabled: { default_value: true, runtime_key: compressor.enabled } }
-              compressor_library: { name: text_optimized, typed_config: { "@type": type.googleapis.com/envoy.extensions.compression.gzip.compressor.v3.Gzip } }
-          - name: envoy.filters.http.router
-            typed_config: { "@type": type.googleapis.com/envoy.extensions.filters.http.router.v3.Router }
-  clusters:
-  - name: trading_service
-    connect_timeout: 0.5s
-    type: STRICT_DNS
-    lb_policy: ROUND_ROBIN
-    http2_protocol_options: {}
-    load_assignment:
-      cluster_name: trading_service
-      endpoints:
-      - lb_endpoints:
-        - endpoint: { address: { socket_address: { address: trading, port_value: 50051 } } }
-    health_checks:
-    - timeout: 1s
-      interval: 10s
-      unhealthy_threshold: 2
-      healthy_threshold: 2
-      grpc_health_check: { service_name: "" }
-  - name: risk_service
-    connect_timeout: 0.5s
-    type: STRICT_DNS
-    lb_policy: ROUND_ROBIN
-    http2_protocol_options: {}
-    load_assignment:
-      cluster_name: risk_service
-      endpoints:
-      - lb_endpoints:
-        - endpoint: { address: { socket_address: { address: risk, port_value: 50052 } } }
-    health_checks:
-    - timeout: 1s
-      interval: 10s
-      unhealthy_threshold: 2
-      healthy_threshold: 2
-      grpc_health_check: { service_name: "" }
+              "@type": type.googleapis.com/envoy.extensions.transport_sockets.tls.v3.DownstreamTlsContext
+          filters:
+            - name: envoy.filters.network.http_connection_manager
+              typed_config:
+                "@type": type.googleapis.com/envoy.extensions.filters.network.http_connection_manager.v3.HttpConnectionManager
+                stat_prefix: ingress_https
 
-admin:
-  access_log_path: /tmp/admin_access.log
-  address:
-    socket_address: { address: 0.0.0.0, port_value: 9901 }
+                static_resources:
+                  listeners:
+                    - name: listener_https
+                      address:
+                        socket_address:
+                          address: 0.0.0.0
+                          port_value: 443
+                      filter_chains:
+                        - filter_chain_match: {}
+                          transport_socket:
+                            name: envoy.transport_sockets.tls
+                            typed_config:
+                              "@type": type.googleapis.com/envoy.extensions.transport_sockets.tls.v3.DownstreamTlsContext
+                          filters:
+                            - name: envoy.filters.network.http_connection_manager
+                              typed_config:
+                                "@type": type.googleapis.com/envoy.extensions.filters.network.http_connection_manager.v3.HttpConnectionManager
+                                stat_prefix: ingress_https
+                                route_config:
+                                  name: local_route
+                                  virtual_hosts:
+                                    - name: backend
+                                      domains:
+                                        - "*"
+                                      routes:
+                                        - match:
+                                            prefix: "/trading.TradingService/"
+                                          route:
+                                            cluster: trading_service
+                                        - match:
+                                            prefix: "/trading.RiskService/"
+                                          route:
+                                            cluster: risk_service
+                                        - match:
+                                            prefix: "/trading.AuthService/"
+                                          route:
+                                            cluster: trading_service
+                                        - match:
+                                            prefix: "/trading.BotService/"
+                                          route:
+                                            cluster: trading_service
+                                        - match:
+                                            prefix: "/healthz"
+                                          direct_response:
+                                            status: 200
+                                            body:
+                                              inline_string: "ok"
+                                        - match:
+                                            prefix: "/"
+                                          route:
+                                            cluster: frontend
+                                http_filters:
+                                  - name: envoy.filters.http.cors
+                                    typed_config:
+                                      "@type": type.googleapis.com/envoy.extensions.filters.http.cors.v3.Cors
+                                  - name: envoy.filters.http.grpc_web
+                                    typed_config:
+                                      "@type": type.googleapis.com/envoy.extensions.filters.http.grpc_web.v3.GrpcWeb
+                                  - name: envoy.filters.http.compressor
+                                    typed_config:
+                                      "@type": type.googleapis.com/envoy.extensions.filters.http.compressor.v3.Compressor
+                                      response_direction_config:
+                                        common_config:
+                                          enabled:
+                                            default_value: true
+                                            runtime_key: compressor.enabled
+                                      compressor_library:
+                                        name: text_optimized
+                                        typed_config:
+                                          "@type": type.googleapis.com/envoy.extensions.compression.gzip.compressor.v3.Gzip
+                                  - name: envoy.filters.http.router
+                                    typed_config:
+                                      "@type": type.googleapis.com/envoy.extensions.filters.http.router.v3.Router
+                  clusters:
+                    - name: trading_service
+                      connect_timeout: 0.5s
+                      type: STRICT_DNS
+                      lb_policy: ROUND_ROBIN
+                      http2_protocol_options: {}
+                      load_assignment:
+                        cluster_name: trading_service
+                        endpoints:
+                          - lb_endpoints:
+                              - endpoint:
+                                  address:
+                                    socket_address:
+                                      address: trading
+                                      port_value: 50051
+                      health_checks:
+                        - timeout: 1s
+                          interval: 10s
+                          unhealthy_threshold: 2
+                          healthy_threshold: 2
+                          grpc_health_check:
+                            service_name: ""
+                    - name: risk_service
+                      connect_timeout: 0.5s
+                      type: STRICT_DNS
+                      lb_policy: ROUND_ROBIN
+                      http2_protocol_options: {}
+                      load_assignment:
+                        cluster_name: risk_service
+                        endpoints:
+                          - lb_endpoints:
+                              - endpoint:
+                                  address:
+                                    socket_address:
+                                      address: risk
+                                      port_value: 50052
+                      health_checks:
+                        - timeout: 1s
+                          interval: 10s
+                          unhealthy_threshold: 2
+                          healthy_threshold: 2
+                          grpc_health_check:
+                            service_name: ""
+                    - name: frontend
+                      connect_timeout: 0.5s
+                      type: STRICT_DNS
+                      lb_policy: ROUND_ROBIN
+                      load_assignment:
+                        cluster_name: frontend
+                        endpoints:
+                          - lb_endpoints:
+                              - endpoint:
+                                  address:
+                                    socket_address:
+                                      address: frontend
+                                      port_value: 80
+
+                admin:
+                  access_log_path: /tmp/admin_access.log
+                  address:
+                    socket_address:
+                      address: 0.0.0.0
+                      port_value: 9901
+      cluster_name: frontend
