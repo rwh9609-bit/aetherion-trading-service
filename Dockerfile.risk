@@ -1,10 +1,14 @@
 FROM rust:1.78-alpine AS build
-RUN apk add --no-cache musl-dev pkgconfig
+# Add protobuf (for protoc) so tonic-build/prost can generate Rust code
+RUN apk add --no-cache musl-dev pkgconfig protobuf
 WORKDIR /app
 COPY rust/risk_service/Cargo.toml rust/risk_service/Cargo.lock ./
 COPY rust/risk_service/build.rs ./build.rs
 RUN mkdir -p src && echo 'fn main(){}' > src/main.rs && cargo build --release || true
+# Copy proto definitions needed by build.rs (placed at ./protos inside crate)
+COPY protos ./protos
 COPY rust/risk_service/src ./src
+# Final optimized build (will now find ./protos and protoc binary)
 RUN cargo build --release
 
 FROM alpine:3.19
