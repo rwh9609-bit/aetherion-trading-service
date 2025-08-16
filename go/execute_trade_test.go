@@ -2,7 +2,7 @@ package main
 
 import (
     "testing"
-    pb "github.com/rwh9609-bit/aetherion/gen"
+    pb "aetherion/gen"
     "context"
 )
 
