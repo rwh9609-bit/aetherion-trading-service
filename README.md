@@ -16,6 +16,17 @@ Aetherion is a modern quantitative trading platform that combines real-time mark
 
 ### Reliable Market Data
 
+## 🛡️ 2025-08: HTTPS & Security Upgrade
+
+Production endpoints now use HTTPS with Let’s Encrypt certificates for all domains:
+- Web: https://aetherion.cloud
+- API: https://api.aetherion.cloud
+- www: https://www.aetherion.cloud
+
+Envoy now terminates TLS on port 443. See docs/SECURITY.md and docs/DEPLOYMENT.md for setup and troubleshooting.
+
+If you see SSL or CORS errors, check for duplicate domains in envoy.yaml and verify certificate paths.
+
 - **Coinbase WebSocket feed** with dynamic symbol subscription (defaults configurable via `DEFAULT_SYMBOLS` env var; default: BTC-USD, ETH-USD, SOL-USD, ILV-USD)
 - **Event bus fanout** -> low-latency internal tick distribution (`StreamPrice`)
 - **Server-side momentum aggregation** (1m/5m changes + volatility score)

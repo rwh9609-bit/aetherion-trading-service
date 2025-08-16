@@ -6,6 +6,7 @@ const mockNews = [
   { id:1, ts: Date.now() - 1000*60*5,  title:'New Bot Service Persistence Layer Added', tag:'Update' },
   { id:2, ts: Date.now() - 1000*60*35, title:'Momentum Scanner Gains Server Aggregation Endpoint', tag:'Feature' },
   { id:3, ts: Date.now() - 1000*60*55, title:'Auth Secret Rotation Support Implemented', tag:'Security' },
+  { id:4, ts: Date.now(), title:'Production HTTPS & Security Upgrade Complete', tag:'Security' },
 ];
 
 const timeAgo = (t) => {

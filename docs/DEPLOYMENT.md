@@ -24,6 +24,10 @@ This document is for internal/operators. The public `README.md` intentionally om
 5. Run backend/Envoy (keep Envoy bound locally; expose via reverse proxy on api domain).
 6. Verify in browser DevTools Network tab that gRPC-web calls use the production domain and no CORS errors appear.
 
+## 2025-08: HTTPS & Security Upgrade
+
+Production endpoints now use HTTPS with Let’s Encrypt certificates for all domains. Envoy terminates TLS on port 443. If you see SSL or CORS errors, check for duplicate domains in envoy.yaml and verify certificate paths and permissions.
+
 ### Step 5: Deploy React Frontend to Apache (cPanel) & Disable Directory Listing
 
 If your root domain (e.g. `https://aetherion.cloud`) is currently showing a plain directory index, you have not yet uploaded the built React assets or Apache is allowed to list directories. Fix it by building locally and uploading the optimized build, plus adding an `.htaccess` file.

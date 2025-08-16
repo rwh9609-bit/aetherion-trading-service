@@ -16,6 +16,9 @@ This guide walks you through using the Aetherion Trading Platform to monitor mar
 3. **Access Dashboard**
    - After registration, you are logged in and see the dashboard
 
+## 2025-08: HTTPS & Security Upgrade
+
+Production endpoints now use HTTPS with Let’s Encrypt certificates for all domains. If you see SSL or CORS errors, check for duplicate domains in envoy.yaml and verify certificate paths and permissions.
 ## Dashboard Overview
 
 Main dashboard components:
