@@ -106,7 +106,6 @@ static_resources:
               "@type": type.googleapis.com/envoy.extensions.filters.http.compressor.v3.Compressor
               response_direction_config:
                 common_config: { enabled: { default_value: true, runtime_key: compressor.enabled } }
-                content_type: ["application/grpc-web-text+proto"]
               compressor_library: { name: text_optimized, typed_config: { "@type": type.googleapis.com/envoy.extensions.compression.gzip.compressor.v3.Gzip } }
           - name: envoy.filters.http.router
             typed_config: { "@type": type.googleapis.com/envoy.extensions.filters.http.router.v3.Router }
