@@ -1,5 +1,12 @@
 # API Overview (2024)
 
+---
+## Open Source & Developer Community
+
+This API and platform are fully open source. We welcome contributors! See DEVELOPER.md and the Careers page for details.
+
+---
+
 Primary external interaction: gRPC/gRPC-Web. Proto files: `protos/trading_api.proto`, `protos/bot.proto`.
 
 ## Services

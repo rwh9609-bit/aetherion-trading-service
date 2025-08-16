@@ -1,5 +1,12 @@
 # User Guide (2024)
 
+---
+## Open Source & Developer Community
+
+This user guide is for an open-source project. We welcome contributors! See DEVELOPER.md and the Careers page for details.
+
+---
+
 This guide walks you through using the Aetherion Trading Platform to monitor markets, manage risk, and execute trading strategies. For latest stack and updates, see About/Update pages in the UI.
 
 ## Getting Started
