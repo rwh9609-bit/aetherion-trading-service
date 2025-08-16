@@ -5,6 +5,7 @@ This guide walks you through using the Aetherion Trading Platform to monitor mar
 ## Getting Started
 
 ### First Login
+
 1. **Open the Platform**
    - Development: Go to `http://localhost:3000` in your browser
    - Production: Go to `https://aetherion.cloud` (API: `https://api.aetherion.cloud`)
@@ -16,24 +17,29 @@ This guide walks you through using the Aetherion Trading Platform to monitor mar
    - After registration, you are logged in and see the dashboard
 
 ## Dashboard Overview
+
 Main dashboard components:
 
 ### Symbol Manager
+
 - **Add Symbols**: Type symbol (e.g., "BTC-USD"), click "Add"
 - **Remove Symbols**: Click X to remove
 - **Select Symbol**: Click to view data
 
 ### Price Chart
+
 - Real-time price streaming for selected symbol
 - Live/Snapshot indicator for data freshness
 - Auto-updates with new market data
 
 ### Risk Metrics
+
 - Portfolio Value at Risk (VaR)
 - Risk calculations based on positions
 - Real-time updates
 
 ### Strategy Control
+
 - Configure/start trading strategies
 - Set parameters:
    - Lookback period
@@ -42,12 +48,15 @@ Main dashboard components:
    - Risk limits
 
 ### Order Book
+
 - Real-time order book for selected symbol
 - Current bids/asks
 - Continuous updates
 
 ## Managing Risk
+
 ### Setting Risk Parameters
+
 1. Go to Strategy Control
 2. Configure:
    - Max Position Size
@@ -58,14 +67,18 @@ Main dashboard components:
    - Adjust positions if risk is high
 
 ### Understanding VaR
+
 - **Value at Risk (VaR)**: Potential loss measure
 - **Confidence Level**: Probability loss won't exceed VaR
 - **Time Horizon**: Risk calculation period
 - **Portfolio Impact**: Total risk exposure
 
 ## Trading Strategies
+
 ### Mean Reversion Strategy
+
 Built-in mean reversion strategy:
+
 1. **How It Works**:
    - Analyzes price deviations from moving average
    - Enters when price moves from mean
@@ -81,18 +94,25 @@ Built-in mean reversion strategy:
    - Monitor performance
 
 ### Custom Strategies
+
 For custom strategies, see [Developer Guide](../DEVELOPER.md).
 
 ## Account Management
+
 ### Account Information
+
 - Click "Account" in top navigation
 - View portfolio, trading history, performance
 - Update settings
+
 ### Logging Out
+
 - Click "Account" → "Logout" to end session
 
 ## Monitoring Performance
+
 ### Real-time Updates
+
 - All data auto-updates
 - No refresh needed
 - Live indicators show connection status
