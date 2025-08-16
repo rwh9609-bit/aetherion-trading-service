@@ -1325,6 +1325,143 @@ func (x *AuthResponse) GetExpiresAtUnix() int64 {
 	return 0
 }
 
+// Trade execution messages
+type TradeRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Symbol        string                 `protobuf:"bytes,1,opt,name=symbol,proto3" json:"symbol,omitempty"`
+	Side          string                 `protobuf:"bytes,2,opt,name=side,proto3" json:"side,omitempty"`
+	Size          float64                `protobuf:"fixed64,3,opt,name=size,proto3" json:"size,omitempty"`
+	Price         float64                `protobuf:"fixed64,4,opt,name=price,proto3" json:"price,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *TradeRequest) Reset() {
+	*x = TradeRequest{}
+	mi := &file_trading_api_proto_msgTypes[24]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *TradeRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*TradeRequest) ProtoMessage() {}
+
+func (x *TradeRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_trading_api_proto_msgTypes[24]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use TradeRequest.ProtoReflect.Descriptor instead.
+func (*TradeRequest) Descriptor() ([]byte, []int) {
+	return file_trading_api_proto_rawDescGZIP(), []int{24}
+}
+
+func (x *TradeRequest) GetSymbol() string {
+	if x != nil {
+		return x.Symbol
+	}
+	return ""
+}
+
+func (x *TradeRequest) GetSide() string {
+	if x != nil {
+		return x.Side
+	}
+	return ""
+}
+
+func (x *TradeRequest) GetSize() float64 {
+	if x != nil {
+		return x.Size
+	}
+	return 0
+}
+
+func (x *TradeRequest) GetPrice() float64 {
+	if x != nil {
+		return x.Price
+	}
+	return 0
+}
+
+type TradeResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Accepted      bool                   `protobuf:"varint,1,opt,name=accepted,proto3" json:"accepted,omitempty"`
+	Message       string                 `protobuf:"bytes,2,opt,name=message,proto3" json:"message,omitempty"`
+	ExecutedPrice float64                `protobuf:"fixed64,3,opt,name=executed_price,json=executedPrice,proto3" json:"executed_price,omitempty"`
+	Pnl           float64                `protobuf:"fixed64,4,opt,name=pnl,proto3" json:"pnl,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *TradeResponse) Reset() {
+	*x = TradeResponse{}
+	mi := &file_trading_api_proto_msgTypes[25]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *TradeResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*TradeResponse) ProtoMessage() {}
+
+func (x *TradeResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_trading_api_proto_msgTypes[25]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use TradeResponse.ProtoReflect.Descriptor instead.
+func (*TradeResponse) Descriptor() ([]byte, []int) {
+	return file_trading_api_proto_rawDescGZIP(), []int{25}
+}
+
+func (x *TradeResponse) GetAccepted() bool {
+	if x != nil {
+		return x.Accepted
+	}
+	return false
+}
+
+func (x *TradeResponse) GetMessage() string {
+	if x != nil {
+		return x.Message
+	}
+	return ""
+}
+
+func (x *TradeResponse) GetExecutedPrice() float64 {
+	if x != nil {
+		return x.ExecutedPrice
+	}
+	return 0
+}
+
+func (x *TradeResponse) GetPnl() float64 {
+	if x != nil {
+		return x.Pnl
+	}
+	return 0
+}
+
 var File_trading_api_proto protoreflect.FileDescriptor
 
 const file_trading_api_proto_rawDesc = "" +
@@ -1435,7 +1572,17 @@ const file_trading_api_proto_rawDesc = "" +
 	"\asuccess\x18\x01 \x01(\bR\asuccess\x12\x18\n" +
 	"\amessage\x18\x02 \x01(\tR\amessage\x12\x14\n" +
 	"\x05token\x18\x03 \x01(\tR\x05token\x12&\n" +
-	"\x0fexpires_at_unix\x18\x04 \x01(\x03R\rexpiresAtUnix2\xf5\a\n" +
+	"\x0fexpires_at_unix\x18\x04 \x01(\x03R\rexpiresAtUnix\"d\n" +
+	"\fTradeRequest\x12\x16\n" +
+	"\x06symbol\x18\x01 \x01(\tR\x06symbol\x12\x12\n" +
+	"\x04side\x18\x02 \x01(\tR\x04side\x12\x12\n" +
+	"\x04size\x18\x03 \x01(\x01R\x04size\x12\x14\n" +
+	"\x05price\x18\x04 \x01(\x01R\x05price\"~\n" +
+	"\rTradeResponse\x12\x1a\n" +
+	"\baccepted\x18\x01 \x01(\bR\baccepted\x12\x18\n" +
+	"\amessage\x18\x02 \x01(\tR\amessage\x12%\n" +
+	"\x0eexecuted_price\x18\x03 \x01(\x01R\rexecutedPrice\x12\x10\n" +
+	"\x03pnl\x18\x04 \x01(\x01R\x03pnl2\xb6\b\n" +
 	"\x0eTradingService\x12D\n" +
 	"\x0fStreamOrderBook\x12\x19.trading.OrderBookRequest\x1a\x12.trading.OrderBook\"\x000\x01\x12*\n" +
 	"\bGetPrice\x12\r.trading.Tick\x1a\r.trading.Tick\"\x00\x12D\n" +
@@ -1452,7 +1599,8 @@ const file_trading_api_proto_rawDesc = "" +
 	"\bListBots\x12\x0e.trading.Empty\x1a\x10.trading.BotList\"\x00\x12<\n" +
 	"\bStartBot\x12\x15.trading.BotIdRequest\x1a\x17.trading.StatusResponse\"\x00\x12;\n" +
 	"\aStopBot\x12\x15.trading.BotIdRequest\x1a\x17.trading.StatusResponse\"\x00\x12;\n" +
-	"\fGetBotStatus\x12\x15.trading.BotIdRequest\x1a\x12.trading.BotConfig\"\x002J\n" +
+	"\fGetBotStatus\x12\x15.trading.BotIdRequest\x1a\x12.trading.BotConfig\"\x00\x12?\n" +
+	"\fExecuteTrade\x12\x15.trading.TradeRequest\x1a\x16.trading.TradeResponse\"\x002J\n" +
 	"\vRiskService\x12;\n" +
 	"\fCalculateVaR\x12\x13.trading.VaRRequest\x1a\x14.trading.VaRResponse\"\x002\x84\x01\n" +
 	"\vAuthService\x12=\n" +
@@ -1471,7 +1619,7 @@ func file_trading_api_proto_rawDescGZIP() []byte {
 	return file_trading_api_proto_rawDescData
 }
 
-var file_trading_api_proto_msgTypes = make([]protoimpl.MessageInfo, 28)
+var file_trading_api_proto_msgTypes = make([]protoimpl.MessageInfo, 30)
 var file_trading_api_proto_goTypes = []any{
 	(*Tick)(nil),              // 0: trading.Tick
 	(*TickStreamRequest)(nil), // 1: trading.TickStreamRequest
@@ -1497,20 +1645,22 @@ var file_trading_api_proto_goTypes = []any{
 	(*RegisterRequest)(nil),   // 21: trading.RegisterRequest
 	(*AuthRequest)(nil),       // 22: trading.AuthRequest
 	(*AuthResponse)(nil),      // 23: trading.AuthResponse
-	nil,                       // 24: trading.StrategyRequest.ParametersEntry
-	nil,                       // 25: trading.Portfolio.PositionsEntry
-	nil,                       // 26: trading.BotConfig.ParametersEntry
-	nil,                       // 27: trading.CreateBotRequest.ParametersEntry
+	(*TradeRequest)(nil),      // 24: trading.TradeRequest
+	(*TradeResponse)(nil),     // 25: trading.TradeResponse
+	nil,                       // 26: trading.StrategyRequest.ParametersEntry
+	nil,                       // 27: trading.Portfolio.PositionsEntry
+	nil,                       // 28: trading.BotConfig.ParametersEntry
+	nil,                       // 29: trading.CreateBotRequest.ParametersEntry
 }
 var file_trading_api_proto_depIdxs = []int32{
-	24, // 0: trading.StrategyRequest.parameters:type_name -> trading.StrategyRequest.ParametersEntry
-	25, // 1: trading.Portfolio.positions:type_name -> trading.Portfolio.PositionsEntry
+	26, // 0: trading.StrategyRequest.parameters:type_name -> trading.StrategyRequest.ParametersEntry
+	27, // 1: trading.Portfolio.positions:type_name -> trading.Portfolio.PositionsEntry
 	8,  // 2: trading.VaRRequest.current_portfolio:type_name -> trading.Portfolio
 	11, // 3: trading.OrderBook.bids:type_name -> trading.OrderBookEntry
 	11, // 4: trading.OrderBook.asks:type_name -> trading.OrderBookEntry
 	15, // 5: trading.MomentumResponse.metrics:type_name -> trading.MomentumMetric
-	26, // 6: trading.BotConfig.parameters:type_name -> trading.BotConfig.ParametersEntry
-	27, // 7: trading.CreateBotRequest.parameters:type_name -> trading.CreateBotRequest.ParametersEntry
+	28, // 6: trading.BotConfig.parameters:type_name -> trading.BotConfig.ParametersEntry
+	29, // 7: trading.CreateBotRequest.parameters:type_name -> trading.CreateBotRequest.ParametersEntry
 	17, // 8: trading.BotList.bots:type_name -> trading.BotConfig
 	13, // 9: trading.TradingService.StreamOrderBook:input_type -> trading.OrderBookRequest
 	0,  // 10: trading.TradingService.GetPrice:input_type -> trading.Tick
@@ -1528,30 +1678,32 @@ var file_trading_api_proto_depIdxs = []int32{
 	19, // 22: trading.TradingService.StartBot:input_type -> trading.BotIdRequest
 	19, // 23: trading.TradingService.StopBot:input_type -> trading.BotIdRequest
 	19, // 24: trading.TradingService.GetBotStatus:input_type -> trading.BotIdRequest
-	9,  // 25: trading.RiskService.CalculateVaR:input_type -> trading.VaRRequest
-	21, // 26: trading.AuthService.Register:input_type -> trading.RegisterRequest
-	22, // 27: trading.AuthService.Login:input_type -> trading.AuthRequest
-	12, // 28: trading.TradingService.StreamOrderBook:output_type -> trading.OrderBook
-	0,  // 29: trading.TradingService.GetPrice:output_type -> trading.Tick
-	6,  // 30: trading.TradingService.StartStrategy:output_type -> trading.StatusResponse
-	6,  // 31: trading.TradingService.StopStrategy:output_type -> trading.StatusResponse
-	8,  // 32: trading.TradingService.GetPortfolio:output_type -> trading.Portfolio
-	0,  // 33: trading.TradingService.SubscribeTicks:output_type -> trading.Tick
-	0,  // 34: trading.TradingService.StreamPrice:output_type -> trading.Tick
-	6,  // 35: trading.TradingService.AddSymbol:output_type -> trading.StatusResponse
-	6,  // 36: trading.TradingService.RemoveSymbol:output_type -> trading.StatusResponse
-	4,  // 37: trading.TradingService.ListSymbols:output_type -> trading.SymbolList
-	16, // 38: trading.TradingService.GetMomentum:output_type -> trading.MomentumResponse
-	6,  // 39: trading.TradingService.CreateBot:output_type -> trading.StatusResponse
-	20, // 40: trading.TradingService.ListBots:output_type -> trading.BotList
-	6,  // 41: trading.TradingService.StartBot:output_type -> trading.StatusResponse
-	6,  // 42: trading.TradingService.StopBot:output_type -> trading.StatusResponse
-	17, // 43: trading.TradingService.GetBotStatus:output_type -> trading.BotConfig
-	10, // 44: trading.RiskService.CalculateVaR:output_type -> trading.VaRResponse
-	23, // 45: trading.AuthService.Register:output_type -> trading.AuthResponse
-	23, // 46: trading.AuthService.Login:output_type -> trading.AuthResponse
-	28, // [28:47] is the sub-list for method output_type
-	9,  // [9:28] is the sub-list for method input_type
+	24, // 25: trading.TradingService.ExecuteTrade:input_type -> trading.TradeRequest
+	9,  // 26: trading.RiskService.CalculateVaR:input_type -> trading.VaRRequest
+	21, // 27: trading.AuthService.Register:input_type -> trading.RegisterRequest
+	22, // 28: trading.AuthService.Login:input_type -> trading.AuthRequest
+	12, // 29: trading.TradingService.StreamOrderBook:output_type -> trading.OrderBook
+	0,  // 30: trading.TradingService.GetPrice:output_type -> trading.Tick
+	6,  // 31: trading.TradingService.StartStrategy:output_type -> trading.StatusResponse
+	6,  // 32: trading.TradingService.StopStrategy:output_type -> trading.StatusResponse
+	8,  // 33: trading.TradingService.GetPortfolio:output_type -> trading.Portfolio
+	0,  // 34: trading.TradingService.SubscribeTicks:output_type -> trading.Tick
+	0,  // 35: trading.TradingService.StreamPrice:output_type -> trading.Tick
+	6,  // 36: trading.TradingService.AddSymbol:output_type -> trading.StatusResponse
+	6,  // 37: trading.TradingService.RemoveSymbol:output_type -> trading.StatusResponse
+	4,  // 38: trading.TradingService.ListSymbols:output_type -> trading.SymbolList
+	16, // 39: trading.TradingService.GetMomentum:output_type -> trading.MomentumResponse
+	6,  // 40: trading.TradingService.CreateBot:output_type -> trading.StatusResponse
+	20, // 41: trading.TradingService.ListBots:output_type -> trading.BotList
+	6,  // 42: trading.TradingService.StartBot:output_type -> trading.StatusResponse
+	6,  // 43: trading.TradingService.StopBot:output_type -> trading.StatusResponse
+	17, // 44: trading.TradingService.GetBotStatus:output_type -> trading.BotConfig
+	25, // 45: trading.TradingService.ExecuteTrade:output_type -> trading.TradeResponse
+	10, // 46: trading.RiskService.CalculateVaR:output_type -> trading.VaRResponse
+	23, // 47: trading.AuthService.Register:output_type -> trading.AuthResponse
+	23, // 48: trading.AuthService.Login:output_type -> trading.AuthResponse
+	29, // [29:49] is the sub-list for method output_type
+	9,  // [9:29] is the sub-list for method input_type
 	9,  // [9:9] is the sub-list for extension type_name
 	9,  // [9:9] is the sub-list for extension extendee
 	0,  // [0:9] is the sub-list for field type_name
@@ -1569,7 +1721,7 @@ func file_trading_api_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_trading_api_proto_rawDesc), len(file_trading_api_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   28,
+			NumMessages:   30,
 			NumExtensions: 0,
 			NumServices:   3,
 		},
