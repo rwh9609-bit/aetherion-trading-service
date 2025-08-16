@@ -8,5 +8,11 @@ COPY protos ./protos
 COPY rust/risk_service/src ./src
 RUN cargo build --release && chmod +x /app/target/release/risk_service \
 	&& ls -l /app/target/release/risk_service
+
+# Add a small startup wrapper for debugging execution issues
+RUN printf '%s\n' '#!/bin/sh' 'set -e' 'echo "[risk_entry] Starting risk_service at $(date)"' 'ls -l /app/target/release/risk_service || true' 'file /app/target/release/risk_service || true' 'exec /app/target/release/risk_service' > /app/risk_entry.sh \
+    && chmod +x /app/risk_entry.sh
+
 EXPOSE 50052
-ENTRYPOINT ["/app/target/release/risk_service"]
+ENV RUST_LOG=info
+ENTRYPOINT ["/app/risk_entry.sh"]
