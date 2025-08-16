@@ -12,6 +12,10 @@ This document contains technical setup instructions, API documentation, and deve
 - [Testing](#testing)
 - [Deployment](#deployment)
 
+## 2025-08: HTTPS & Security Upgrade
+
+Production endpoints now use HTTPS with Let’s Encrypt certificates for all domains. Envoy terminates TLS on port 443. If you see SSL or CORS errors, check for duplicate domains in envoy.yaml and verify certificate paths and permissions.
+
 ## Prerequisites
 
 ### Required Software

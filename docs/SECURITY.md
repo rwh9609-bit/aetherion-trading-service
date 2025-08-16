@@ -36,6 +36,13 @@ openssl req -x509 -newkey rsa:4096 -sha256 -days 365 -nodes \
 | Timeouts    | 15s request timeout, streaming unlimited            |
 | TLS         | ALPN h2/http1; mTLS ready                           |
 
+## 2025-08: HTTPS & Security Upgrade
+
+Production now uses Let’s Encrypt certificates for all domains. Envoy terminates TLS on port 443.
+- Certs: /etc/letsencrypt/live/aetherion.cloud/fullchain.pem, privkey.pem
+- Domains: aetherion.cloud, api.aetherion.cloud, www.aetherion.cloud
+- Troubleshooting: Remove duplicate domains in envoy.yaml, verify cert paths and permissions.
+
 
 ## Adjust CORS
 

@@ -5,6 +5,10 @@ Primary external interaction: gRPC/gRPC-Web. Proto files: `protos/trading_api.pr
 ## Services
 
 - TradingService: pricing, order book, momentum, portfolio, strategies, symbols, trade execution
+## 2025-08: HTTPS & Security Upgrade
+
+Production API endpoint: https://api.aetherion.cloud
+All traffic is now secured via Envoy TLS termination (port 443).
 - BotService: lifecycle for stored bots (create/list/start/stop/status)
 - AuthService: user registration + JWT issuance
 - RiskService: (Rust) risk calculations (Monte Carlo VaR, confidence/horizon params)
