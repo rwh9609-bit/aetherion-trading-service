@@ -2,7 +2,7 @@ package main
 
 import (
     "testing"
-    pb "aetherion/gen"
+    pb "github.com/rwh9609-bit/multilanguage/go/gen"
     "context"
 )
 

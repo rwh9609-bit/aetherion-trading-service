@@ -5,7 +5,7 @@ import (
     "testing"
     "time"
 
-    pb "aetherion/gen"
+    pb "github.com/rwh9609-bit/multilanguage/go/gen"
 )
 
 // Simple expiry test: temporarily adjust Login to shorter lifetime via monkey patch pattern not available; instead we directly inspect issued token's exp window.

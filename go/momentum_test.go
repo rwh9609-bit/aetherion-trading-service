@@ -4,7 +4,7 @@ import (
     "context"
     "testing"
     "time"
-    pb "aetherion/gen"
+    pb "github.com/rwh9609-bit/multilanguage/go/gen"
 )
 
 // helper to build hist points
