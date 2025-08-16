@@ -1,4 +1,10 @@
 FROM envoyproxy/envoy:v1.30-latest
+
+# Copy configuration
 COPY envoy.yaml /etc/envoy/envoy.yaml
-EXPOSE 8080
+
+# Optional TLS certs (provide at build time or mount at runtime)
+COPY certs/ /etc/envoy/tls/
+
+EXPOSE 8080 9901
 ENTRYPOINT ["envoy","-c","/etc/envoy/envoy.yaml","--log-level","info"]
