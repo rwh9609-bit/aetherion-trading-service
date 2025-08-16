@@ -1,5 +1,4 @@
-FROM rust:1.78-alpine AS build
-# Install build dependencies including protoc
+FROM rust:1.78-alpine
 RUN apk add --no-cache musl-dev pkgconfig protobuf
 WORKDIR /app
 COPY rust/risk_service/Cargo.toml rust/risk_service/Cargo.lock ./
@@ -7,16 +6,7 @@ COPY rust/risk_service/build.rs ./build.rs
 RUN mkdir -p src && echo 'fn main(){}' > src/main.rs && cargo build --release || true
 COPY protos ./protos
 COPY rust/risk_service/src ./src
-RUN cargo build --release && chmod +x /app/target/release/risk_service
-
-# Minimal runtime image
-FROM alpine:3.19 AS runtime
-RUN adduser -D -u 10002 app \
-	&& apk add --no-cache ca-certificates \
-	&& update-ca-certificates
-WORKDIR /app
-COPY --from=build /app/target/release/risk_service ./risk_service
-RUN chmod +x ./risk_service
-USER app
+RUN cargo build --release && chmod +x /app/target/release/risk_service \
+	&& ls -l /app/target/release/risk_service
 EXPOSE 50052
-ENTRYPOINT ["./risk_service"]
+ENTRYPOINT ["/app/target/release/risk_service"]
