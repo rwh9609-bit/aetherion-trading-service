@@ -35,6 +35,7 @@ const (
 	TradingService_StartBot_FullMethodName        = "/trading.TradingService/StartBot"
 	TradingService_StopBot_FullMethodName         = "/trading.TradingService/StopBot"
 	TradingService_GetBotStatus_FullMethodName    = "/trading.TradingService/GetBotStatus"
+	TradingService_ExecuteTrade_FullMethodName    = "/trading.TradingService/ExecuteTrade"
 )
 
 // TradingServiceClient is the client API for TradingService service.
@@ -57,6 +58,7 @@ type TradingServiceClient interface {
 	StartBot(ctx context.Context, in *BotIdRequest, opts ...grpc.CallOption) (*StatusResponse, error)
 	StopBot(ctx context.Context, in *BotIdRequest, opts ...grpc.CallOption) (*StatusResponse, error)
 	GetBotStatus(ctx context.Context, in *BotIdRequest, opts ...grpc.CallOption) (*BotConfig, error)
+	ExecuteTrade(ctx context.Context, in *TradeRequest, opts ...grpc.CallOption) (*TradeResponse, error)
 }
 
 type tradingServiceClient struct {
@@ -254,6 +256,16 @@ func (c *tradingServiceClient) GetBotStatus(ctx context.Context, in *BotIdReques
 	return out, nil
 }
 
+func (c *tradingServiceClient) ExecuteTrade(ctx context.Context, in *TradeRequest, opts ...grpc.CallOption) (*TradeResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(TradeResponse)
+	err := c.cc.Invoke(ctx, TradingService_ExecuteTrade_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // TradingServiceServer is the server API for TradingService service.
 // All implementations must embed UnimplementedTradingServiceServer
 // for forward compatibility.
@@ -274,6 +286,7 @@ type TradingServiceServer interface {
 	StartBot(context.Context, *BotIdRequest) (*StatusResponse, error)
 	StopBot(context.Context, *BotIdRequest) (*StatusResponse, error)
 	GetBotStatus(context.Context, *BotIdRequest) (*BotConfig, error)
+	ExecuteTrade(context.Context, *TradeRequest) (*TradeResponse, error)
 	mustEmbedUnimplementedTradingServiceServer()
 }
 
@@ -331,6 +344,9 @@ func (UnimplementedTradingServiceServer) StopBot(context.Context, *BotIdRequest)
 }
 func (UnimplementedTradingServiceServer) GetBotStatus(context.Context, *BotIdRequest) (*BotConfig, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetBotStatus not implemented")
+}
+func (UnimplementedTradingServiceServer) ExecuteTrade(context.Context, *TradeRequest) (*TradeResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ExecuteTrade not implemented")
 }
 func (UnimplementedTradingServiceServer) mustEmbedUnimplementedTradingServiceServer() {}
 func (UnimplementedTradingServiceServer) testEmbeddedByValue()                        {}
@@ -620,6 +636,24 @@ func _TradingService_GetBotStatus_Handler(srv interface{}, ctx context.Context, 
 	return interceptor(ctx, in, info, handler)
 }
 
+func _TradingService_ExecuteTrade_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(TradeRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(TradingServiceServer).ExecuteTrade(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: TradingService_ExecuteTrade_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(TradingServiceServer).ExecuteTrade(ctx, req.(*TradeRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // TradingService_ServiceDesc is the grpc.ServiceDesc for TradingService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -678,6 +712,10 @@ var TradingService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetBotStatus",
 			Handler:    _TradingService_GetBotStatus_Handler,
+		},
+		{
+			MethodName: "ExecuteTrade",
+			Handler:    _TradingService_ExecuteTrade_Handler,
 		},
 	},
 	Streams: []grpc.StreamDesc{
