@@ -69,6 +69,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let risk_service = MyRiskService::default();
 
     println!("Rust RiskService listening on {}", addr);
+    // Flush stdout so Docker logs show the line immediately even if buffering occurs
+    use std::io::{Write, stdout};
+    let _ = stdout().flush();
 
     Server::builder()
         .add_service(RiskServiceServer::new(risk_service))
