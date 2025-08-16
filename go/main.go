@@ -22,7 +22,7 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/keepalive"
 	"github.com/google/uuid"
-	pb "aetherion/gen"
+	pb "github.com/rwh9609-bit/multilanguage/go/gen"
 )
 
 // timeoutUnary enforces a per-request timeout if parent has none.

@@ -6,7 +6,7 @@ import (
     "testing"
     "time"
 
-    pb "aetherion/gen"
+    pb "github.com/rwh9609-bit/multilanguage/go/gen"
     "github.com/golang-jwt/jwt/v5"
     "google.golang.org/grpc/metadata"
     "google.golang.org/grpc/codes"

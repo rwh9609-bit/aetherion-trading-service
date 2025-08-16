@@ -1,4 +1,4 @@
-module aetherion
+module github.com/rwh9609-bit/multilanguage/go
 
 go 1.23.0
 
