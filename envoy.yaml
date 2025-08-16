@@ -118,7 +118,7 @@ static_resources:
       cluster_name: frontend
       endpoints:
       - lb_endpoints:
-        - endpoint: { address: { socket_address: { address: frontend, port_value: 3000 } } }
+  - endpoint: { address: { socket_address: { address: frontend, port_value: 80 } } }
           http_filters:
           - name: envoy.filters.http.cors
             typed_config: { "@type": type.googleapis.com/envoy.extensions.filters.http.cors.v3.Cors }
