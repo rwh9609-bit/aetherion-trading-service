@@ -1,6 +1,7 @@
 FROM golang:1.24-alpine AS build
 WORKDIR /app
 COPY go/go.mod go/go.sum ./
+ENV GO111MODULE=on
 RUN go mod download
 COPY go/ .
 ENV CGO_ENABLED=0 GOOS=linux GOARCH=amd64
