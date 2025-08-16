@@ -39,23 +39,10 @@ const HeroSection = styled(Box)(({ theme }) => ({
   alignItems: 'center',
   position: 'relative',
   // ...existing code...
-}))
+}));
 
 // --- Open Source & Careers Banner ---
-const OpenSourceBanner = () => (
-  <Box sx={{ py: 4, textAlign: 'center', background: 'rgba(59,130,246,0.08)' }}>
-    <Typography variant="h5" color="primary" fontWeight={700} gutterBottom>
-       Open Source & Developer Community
-    </Typography>
-    <Typography variant="body1" sx={{ mb:2 }}>
-      Aetherion is fully open source and actively seeking contributors! If youre a developer, quant, or fintech enthusiast, check out our new Careers page or see DEVELOPER.md for details.
-    </Typography>
-    <Button variant="contained" color="secondary" href="/careers">
-      Careers & Opportunities
-    </Button>
-  </Box>
-);
-}));
+// (Removed unused OpenSourceBanner component)
 
 const LandingPage = ({ onGetStarted }) => {
   const features = [
