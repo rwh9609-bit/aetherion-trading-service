@@ -6,7 +6,6 @@ RUN apk add --no-cache musl-dev pkgconfig protobuf
 WORKDIR /app
 COPY rust/risk_service/Cargo.toml rust/risk_service/Cargo.lock ./
 COPY rust/risk_service/build.rs ./build.rs
-RUN mkdir -p src && echo 'fn main(){}' > src/main.rs && cargo build --release
 COPY protos ./protos
 COPY rust/risk_service/src ./src
 RUN cargo build --release && strip target/release/risk_service
