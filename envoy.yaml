@@ -151,6 +151,19 @@ static_resources:
       unhealthy_threshold: 2
       healthy_threshold: 2
       grpc_health_check: { service_name: "" }
+  - name: frontend
+    connect_timeout: 0.5s
+    type: STRICT_DNS
+    lb_policy: ROUND_ROBIN
+    load_assignment:
+      cluster_name: frontend
+      endpoints:
+      - lb_endpoints:
+        - endpoint:
+            address:
+              socket_address:
+                address: frontend
+                port_value: 80
 
 admin:
   access_log_path: /tmp/admin_access.log
