@@ -5,7 +5,6 @@ ENV GO111MODULE=on
 RUN go mod download
 COPY go/ .
 ENV CGO_ENABLED=0 GOOS=linux GOARCH=amd64
-# Use -trimpath and strip symbols for smaller binary; embed short git SHA if available.
 ARG GIT_COMMIT=unknown
 RUN go build -trimpath -ldflags "-s -w -X main.buildCommit=$GIT_COMMIT" -o trading_service ./...
 

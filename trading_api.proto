@@ -2,7 +2,8 @@ syntax = "proto3";
 
 package trading;
 
-option go_package = "aetherion-trading-service/gen";
+// Go package path must be fully qualified (module path + subdir) for protoc-gen-go.
+option go_package = "github.com/rwh9609-bit/multilanguage/go/gen";
 
 message Tick { string symbol = 1; double price = 2; int64 timestamp_ns = 3; }
 message TickStreamRequest { string symbol = 1; }

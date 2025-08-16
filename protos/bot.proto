@@ -1,23 +1,10 @@
 syntax = "proto3";
 package trading;
-option go_package = "aetherion-trading-service/gen";
+option go_package = "github.com/rwh9609-bit/multilanguage/go/gen";
 
-import "trading_api.proto"; // For StatusResponse & Empty reuse
+import "trading_api.proto"; // Reuse existing message definitions
 
-message BotConfig {
-  string id = 1;
-  string name = 2;
-  string symbol = 3;
-  string strategy = 4;
-  map<string,string> parameters = 5;
-  bool active = 6;
-  int64 created_at_unix = 7;
-}
-
-message CreateBotRequest { string name = 1; string symbol = 2; string strategy = 3; map<string,string> parameters = 4; }
-message BotIdRequest { string id = 1; }
-message BotList { repeated BotConfig bots = 1; }
-
+// BotService provides a focused interface for bot lifecycle operations.
 service BotService {
   rpc CreateBot(CreateBotRequest) returns (StatusResponse) {}
   rpc ListBots(Empty) returns (BotList) {}
