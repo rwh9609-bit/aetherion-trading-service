@@ -6,36 +6,36 @@
 
 Aetherion is a modern quantitative trading platform that combines real-time market data, advanced risk management, and automated trading strategies in one powerful system. Whether you're a quantitative analyst, algorithmic trader, or fintech developer, Aetherion provides the tools you need to create, test, and deploy sophisticated trading strategies.
 
-## 🌟 Key Features
+## 🌟 Key Features (2024-06)
 
-### Advanced Risk Management (in progress)
+### Advanced Risk Management (Rust, Go)
 
-- **Pluggable risk engine (Rust)** foundation prepared for Monte Carlo VaR & limit checks (initial scaffolding)
-- **Real-time position tracking** (portfolio simulation) with future hooks for limits
-- **JWT‑secured control plane** with optional auth bypass for local iteration
+- **Pluggable risk engine (Rust)**: Monte Carlo VaR, limit checks, confidence/horizon params
+- **Real-time position tracking** (Go): portfolio simulation, risk metrics
+- **JWT‑secured control plane** (Go): strict auth, optional bypass for local/dev
 
-### Reliable Market Data
+### Reliable Market Data (Go)
 
-- **Coinbase WebSocket feed** with dynamic symbol subscription (defaults configurable via `DEFAULT_SYMBOLS` env var; default: BTC-USD, ETH-USD, SOL-USD, ILV-USD)
-- **Event bus fanout** -> low-latency internal tick distribution (`StreamPrice`)
-- **Server-side momentum aggregation** (1m/5m changes + volatility score)
-- **Health endpoint** (`:8090/healthz`) & status badge in UI
+- **Coinbase WebSocket feed** (dynamic symbols, configurable)
+- **Event bus fanout**: low-latency tick distribution
+- **Momentum aggregation**: 1m/5m changes, volatility score
+- **Health endpoint** (`:8090/healthz`), UI status badge
 
-### Strategy & Bot Automation
+### Strategy & Bot Automation (Go, Python)
 
-- **Mean reversion prototype strategy** (Go-based orchestration placeholder) with safe period guard
-- **Bot Service** (create/list/start/stop/status) persisting to `data/bots.json`
-- **Strategy linkage**: Bot start launches strategy and stores `strategy_id`
-- **Momentum & OHLC visualizations** for rapid exploratory strategy tuning
+- **Mean reversion strategy** (Go orchestration, Python prototyping)
+- **Bot Service**: create/list/start/stop/status, JSON persistence
+- **Strategy linkage**: bot start launches strategy, stores `strategy_id`
+- **Momentum & OHLC visualizations**
 
-### Modern Architecture
+### Modern Architecture (2024)
 
-- **Polyglot services** (Go trading + Rust risk + Python strategy playground + React frontend)
-- **gRPC + Envoy (gRPC-Web)** boundary for browser clients
-- **Streaming-first design** (ticks, order books, future risk events)
-- **Persistence-light** (JSON bot registry) – easy to swap for DB later
+- **Polyglot microservices**: Go (trading/bots), Rust (risk), Python (orchestrator), React (frontend)
+- **gRPC-Web via Envoy proxy**: TLS termination, strict CORS, security headers
+- **Streaming-first design**: ticks, order books, future risk events
+- **Persistence-light**: JSON bot registry, DB-ready
 
-## 🚀 Getting Started
+## 🚀 Getting Started (2024)
 
 ### For Traders and Analysts
 
@@ -68,25 +68,22 @@ make docker-build
 AUTH_SECRET=$(openssl rand -hex 32) docker compose up -d
 docker compose ps
 ```
-Access frontend (dev): <http://localhost:3000> (if exposed) or point your React dev server at Envoy (<https://localhost:8080> with dev certs).
+Access frontend (dev): <http://localhost:3000> (if exposed) or point React dev server at Envoy (<https://localhost:8080> with dev certs).
 
-TLS & hardening: see `docs/SECURITY.md`. Provide `certs/server.crt` and `certs/server.key` before rebuilding Envoy for HTTPS.
+TLS & hardening: see `docs/SECURITY.md`. Provide `certs/server.crt` and `certs/server.key` before rebuilding Envoy for HTTPS. Strict CORS and security headers enforced.
 
 #### Production Domains
 
 Recommended:
-
 - Frontend: <https://aetherion.cloud>
 - API (gRPC-Web): <https://api.aetherion.cloud> → reverse proxy → Envoy (localhost:8080 TLS)
-
 Set at build/runtime:
-
 ```bash
 REACT_APP_GRPC_HOST=https://api.aetherion.cloud
 CORS_ALLOWED_ORIGINS=https://aetherion.cloud,https://api.aetherion.cloud
 ```
 
-## 🏗️ Architecture Highlights
+## 🏗️ Architecture Highlights (2024)
 
 Aetherion uses a polyglot microservices architecture with each component optimized for its role:
 
@@ -119,7 +116,7 @@ Aetherion uses a polyglot microservices architecture with each component optimiz
 
 All components communicate via gRPC for optimal performance and reliability.
 
-### Updating a Running Server
+### Updating a Running Server (2024)
 
 ```bash
 cd /opt/aetherion  # path where repo lives
@@ -133,7 +130,6 @@ docker compose logs -f --tail=50 envoy
 ```
 
 Update a single service (example trading only):
-
 ```bash
 git pull --ff-only origin main
 docker compose build trading
@@ -141,18 +137,14 @@ docker compose up -d trading
 ```
 
 ### Quick Server Sync & Rebuild
-
 When logged in on the server (e.g. root) and you just pushed commits from your workstation:
-
 ```bash
 cd /opt/aetherion
 git fetch --prune && git pull --ff-only origin main
 make docker-build   # or: docker compose build <service>
 AUTH_SECRET=$(openssl rand -hex 32) docker compose up -d --remove-orphans
 ```
-
 Rebuild a single updated service only:
-
 ```bash
 git fetch --prune && git pull --ff-only origin main
 docker compose build envoy
@@ -175,10 +167,11 @@ Early-stage risk roadmap:
 - Pre-trade checks & circuit breakers (future)
 
 ## 📚 Documentation
-
 - [User Guide](docs/USER_GUIDE.md) - How to use the UI & features
 - [API Reference](docs/API.md) - gRPC service + message overview
-- [Developer Guide](DEVELOPER.md) - Setup, architecture, protos
+- [Deployment Guide](docs/DEPLOYMENT.md) - Domains, TLS, CORS, troubleshooting
+- [Security Guide](docs/SECURITY.md) - TLS, CORS, headers, health, rate limits
+- [Developer Guide](docs/DEVELOPER.md) - Setup, architecture, protos
 - (Planned) Strategy & Risk deep-dive docs
 
 ## 🤝 Support
@@ -194,3 +187,7 @@ Aetherion is open source software licensed under the MIT License. See [LICENSE](
 ---
 
 **Ready to explore?** Visit `https://aetherion.cloud` (when live) or run locally via `docker compose up -d`. See [Developer Guide](DEVELOPER.md) to hack on services.
+
+---
+
+**See About/Update pages in the UI for latest stack, features, and changelog.**
