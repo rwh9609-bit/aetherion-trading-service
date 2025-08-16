@@ -50,7 +50,7 @@ services:
       context: .
       dockerfile: Dockerfile.frontend
       args:
-        REACT_APP_GRPC_HOST: http://localhost:8080
+        REACT_APP_GRPC_HOST: https://api.aetherion.cloud
     ports:
       - "3000:80"
     depends_on:
