@@ -1,3 +1,6 @@
+############################
+# Build stage
+############################
 FROM rust:1.78-alpine
 RUN apk add --no-cache musl-dev pkgconfig protobuf
 WORKDIR /app
@@ -9,9 +12,25 @@ COPY rust/risk_service/src ./src
 RUN cargo build --release && chmod +x /app/target/release/risk_service \
 	&& ls -l /app/target/release/risk_service
 
-# Add a small startup wrapper for debugging execution issues
-RUN printf '%s\n' '#!/bin/sh' 'set -e' 'echo "[risk_entry] Starting risk_service at $(date)"' 'ls -l /app/target/release/risk_service || true' 'file /app/target/release/risk_service || true' 'exec /app/target/release/risk_service' > /app/risk_entry.sh \
-    && chmod +x /app/risk_entry.sh
+############################
+# Runtime stage
+############################
+FROM alpine:3.19
+RUN adduser -D -u 10002 app && apk add --no-cache ca-certificates
+WORKDIR /app
+COPY --from=build /app/target/release/risk_service /app/risk_service
+RUN chmod 0555 /app/risk_service \
+	&& printf '%s\n' '#!/bin/sh' \
+		 'echo "[risk_entry] $(date) launching /app/risk_service"' \
+		 'ls -l /app/risk_service' \
+		 'file /app/risk_service || true' \
+		 'exec /app/risk_service' > /usr/local/bin/start-risk \
+	&& chmod 0555 /usr/local/bin/start-risk \
+	&& chown app:app /app/risk_service
+USER app
+EXPOSE 50052
+ENV RUST_LOG=info
+ENTRYPOINT ["/usr/local/bin/start-risk"]
 
 EXPOSE 50052
 ENV RUST_LOG=info
