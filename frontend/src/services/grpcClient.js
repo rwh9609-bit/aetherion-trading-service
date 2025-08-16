@@ -1,6 +1,6 @@
 import { grpc } from '@improbable-eng/grpc-web';
-import { TradingServiceClient, RiskServiceClient, AuthServiceClient } from '../proto/trading_api_grpc_web_pb';
-import { BotServiceClient } from '../proto/bot_grpc_web_pb';
+import { TradingServiceClient, RiskServiceClient, AuthServiceClient } from '../proto/trading_api_grpc_web_pb.js';
+import { BotServiceClient } from '../proto/bot_grpc_web_pb.js';
 import { 
   OrderBookRequest,
   StrategyRequest,
@@ -11,7 +11,7 @@ import {
   AuthRequest,
   TickStreamRequest,
   SymbolRequest
-} from '../proto/trading_api_pb.js';
+} from '../proto/trading_api_pb.js'; // explicit extension already present
 
 // Determine gRPC-web host.
 // Priority: explicit env var -> same-origin (production) -> localhost dev fallback.
