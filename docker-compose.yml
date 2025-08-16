@@ -31,6 +31,9 @@ services:
     expose:
       - "50051"
   envoy:
+    volumes:
+      - /etc/letsencrypt:/etc/letsencrypt:ro
+      - ./envoy.yaml:/etc/envoy/envoy.yaml:ro
     build:
       context: .
       dockerfile: Dockerfile.envoy
