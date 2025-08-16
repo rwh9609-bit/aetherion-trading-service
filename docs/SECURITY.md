@@ -9,6 +9,8 @@ Envoy now terminates TLS on port 8080 using certificates at:
 
 Provide these via bind mount or by placing them in `certs/` before build.
 
+If you don't yet have real certificates, the repository includes an empty `certs/.gitkeep` so the Docker build won't fail; Envoy will still start but serve TLS errors if no valid keypair is present.
+
 ## Dev Self-Signed Cert
 
 ```bash

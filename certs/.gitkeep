@@ -1,0 +1,1 @@
+# Placeholder so Docker COPY certs/ doesn't fail when no certs present.
