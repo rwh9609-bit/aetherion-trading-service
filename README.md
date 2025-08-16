@@ -58,6 +58,29 @@ Aetherion is a modern quantitative trading platform that combines real-time mark
 
 Want to extend Aetherion or run your own instance? See [Developer Documentation](DEVELOPER.md) for setup, protos, and contribution workflow.
 
+#### Quick Docker Start
+```bash
+git clone https://github.com/rwh9609-bit/multilanguage.git
+cd multilanguage
+cp .env.example .env
+# Edit .env: set a strong AUTH_SECRET (openssl rand -hex 32)
+docker compose build
+AUTH_SECRET=$(openssl rand -hex 32) docker compose up -d
+docker compose ps
+```
+Access frontend (dev): http://localhost:3000 (if exposed) or point your React dev server at Envoy (http://localhost:8080).
+
+#### Production Domains
+Recommended:
+* Frontend: https://aetherion.cloud
+* API (gRPC-Web): https://api.aetherion.cloud → reverse proxy → Envoy (localhost:8080)
+
+Set at build/runtime:
+```
+REACT_APP_GRPC_HOST=https://api.aetherion.cloud
+CORS_ALLOWED_ORIGINS=https://aetherion.cloud,https://api.aetherion.cloud
+```
+
 ## 🏗️ Architecture Highlights
 
 Aetherion uses a polyglot microservices architecture with each component optimized for its role:
@@ -125,4 +148,4 @@ Aetherion is open source software licensed under the MIT License. See [LICENSE](
 
 ---
 
-**Ready to explore?** Visit `https://app.aetherion.cloud` (when live) or run locally via `make run`. See [Developer Guide](DEVELOPER.md) to hack on services.
+**Ready to explore?** Visit `https://aetherion.cloud` (when live) or run locally via `docker compose up -d`. See [Developer Guide](DEVELOPER.md) to hack on services.

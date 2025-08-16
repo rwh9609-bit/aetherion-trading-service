@@ -33,11 +33,14 @@ pip install grpcio grpcio-tools
 
 ### Version Requirements
 
-- **Go**: 1.21+
-- **Rust**: 1.70+  
-- **Python**: 3.11+
-- **Node.js**: 18+
-- **Protocol Buffers**: 3.15+
+| Component | Required | Notes |
+|-----------|----------|-------|
+| Go | 1.24.x (toolchain directive) | go.mod uses toolchain go1.24.x |
+| Rust | 1.78+ | Docker uses rust:1.78-alpine |
+| Python | 3.11+ | Strategies / orchestration |
+| Node.js | 18+ | React build |
+| protoc | 3.21+ | Alpine package `protobuf` |
+| Envoy | ≥1.29 | gRPC-Web translation |
 
 ## Installation & Setup
 
@@ -118,7 +121,7 @@ make run-python-client   # Terminal 3
 |----------|-------------|---------|
 | `GRPC_LISTEN_ADDR` | gRPC listen address | `:50051` |
 | `HTTP_HEALTH_ADDR` | Health HTTP server address | `:8090` |
-| `AUTH_SECRET` | Primary JWT signing secret (>=32 chars in prod) | (auto-generated in non-prod if empty) |
+| `AUTH_SECRET` | Primary JWT signing secret (>=32 chars in prod) | (must set in prod) |
 | `AUTH_PREVIOUS_SECRET` | Previous JWT secret for rotation window | (empty) |
 | `POSTGRES_DSN` | Postgres connection string for users/bots | (empty -> in-memory/JSON) |
 | `DEFAULT_SYMBOLS` | Comma-separated startup symbol subscriptions | `BTC-USD,ETH-USD,SOL-USD,ILV-USD` |
@@ -361,20 +364,23 @@ export REACT_APP_GRPC_HOST=https://app.aetherion.cloud   # production deployment
 export CORS_ALLOWED_ORIGINS=https://app.aetherion.cloud   # comma-separated list
 export AUTH_PREVIOUS_SECRET=old-secret   # optional; enables graceful JWT key rotation
 
+```
+
 ## Containerization
 
 ### Local (Docker Compose)
 
 ```bash
 docker compose build
-AUTH_SECRET=mysecret docker compose up -d
+AUTH_SECRET=$(openssl rand -hex 32) docker compose up -d
 ```
 
 Services
-- frontend (port 3000)
-- envoy (port 8080, gRPC-web proxy)
-- trading (Go gRPC, internal)
-- risk (Rust service, internal)
+* frontend (3000)
+* envoy (8080, gRPC-Web proxy)
+* trading (50051 internal)
+* risk (50052 internal)
+* orchestrator (python experimental)
 
 Update a single service:
 ```bash
@@ -404,7 +410,9 @@ docker tag aetherion-frontend:prod ghcr.io/yourorg/aetherion-frontend:prod
 docker push ghcr.io/yourorg/aetherion-frontend:prod
 ```
 
-# Authentication
+### Authentication / Configuration Exports
+
+```bash
 export AUTH_SECRET=your-secret-key-here
 export AUTH_PREVIOUS_SECRET=old-secret-if-rotating
 export AUTH_DISABLED=0             # set to 1 to bypass auth in dev ONLY
@@ -499,8 +507,6 @@ To disable the auto `api.` mapping, set an explicit `REACT_APP_GRPC_HOST` to the
 
 - `CryptoScanner`: Client-side, streaming computations using live tick stream. Updates continuously; ideal for immediate responsiveness.
 - `ServerMomentum`: Calls `GetMomentum` every 30s; aggregates on the server (consistent, lower client CPU). Click any row to focus symbol.
-
-```
 
 ### Rust Service (`rust/risk_service/src/main.rs`)
 
