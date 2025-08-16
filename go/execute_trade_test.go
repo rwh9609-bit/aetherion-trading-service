@@ -2,7 +2,7 @@ package main
 
 import (
     "testing"
-    pb "aetherion-trading-service/gen"
+    pb "github.com/rwh9609-bit/aetherion/gen"
     "context"
 )
 

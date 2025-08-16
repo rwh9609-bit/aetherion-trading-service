@@ -4,7 +4,7 @@ import (
     "context"
     "testing"
     "time"
-    pb "aetherion-trading-service/gen"
+    pb "github.com/rwh9609-bit/aetherion/gen"
 )
 
 // TestStrategyPeriodGuard ensures non-positive period parameter doesn't panic and defaults.
