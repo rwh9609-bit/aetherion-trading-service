@@ -41,6 +41,7 @@ services:
       - trading
     ports:
       - "443:443"
+      - "80:80"
     restart: unless-stopped
     environment:
       - ENVOY_UID=1337
@@ -71,7 +72,12 @@ services:
       replicas: 1
       restart_policy:
         condition: on-failure
-
+  acme-challenge:
+    image: python:3
+    command: python3 -m http.server 8080 --directory /acme-challenge
+    volumes:
+      - /root/acme-challenge:/acme-challenge
+    restart: unless-stopped
 networks:
   default:
     name: aetherion-net
