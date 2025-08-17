@@ -94,8 +94,6 @@ Access frontend (dev): <http://localhost:3000> (if exposed) or point React dev s
 
 TLS & hardening: see `docs/SECURITY.md`. Provide `certs/server.crt` and `certs/server.key` before rebuilding Envoy for HTTPS. Strict CORS and security headers enforced.
 
-[SECURE JWT TOKEN GENERATION & USAGE]
-
 ### Secure JWT Token Generation & Usage (2025)
 
 To securely authenticate the orchestrator with the Go backend, you must generate a JWT token using your AUTH_SECRET and update your .env file:
