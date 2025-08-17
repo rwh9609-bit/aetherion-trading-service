@@ -1,67 +1,41 @@
-import React, { useState } from 'react';
-import { Line, Scatter } from 'react-chartjs-2';
-import { Box, Typography, Button, CircularProgress, Alert } from '@mui/material';
 
-const BacktestResultsChart = ({ symbol = "BTCUSD", params = {} }) => {
-  const [results, setResults] = useState(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
+import React from 'react';
+import { Line } from 'react-chartjs-2';
+import { Chart, CategoryScale, LinearScale, PointElement, LineElement } from 'chart.js';
+import { Box, Typography } from '@mui/material';
 
-  const runBacktest = () => {
-    setLoading(true); setError(null);
-    fetch('/api/backtest', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ symbol, params })
-    })
-      .then(res => res.json())
-      .then(json => { setResults(json); setLoading(false); })
-      .catch(e => { setError(e.message); setLoading(false); });
+// Register required scales and elements for Chart.js v3+
+Chart.register(CategoryScale, LinearScale, PointElement, LineElement);
+
+export default function BacktestResultsChart({ equityCurve }) {
+  if (!equityCurve || equityCurve.length === 0) return null;
+  const data = {
+    labels: equityCurve.map(e => e.timestamp),
+    datasets: [
+      {
+        label: 'Equity',
+        data: equityCurve.map(e => e.equity),
+        borderColor: 'rgb(59, 130, 246)',
+        backgroundColor: 'rgba(59, 130, 246, 0.2)',
+        tension: 0.2,
+      },
+    ],
   };
-
+  const options = {
+    responsive: true,
+    plugins: {
+      legend: { position: 'top' },
+      title: { display: true, text: 'Equity Curve' },
+    },
+    scales: {
+      x: { display: false },
+      y: { beginAtZero: true },
+    },
+  };
   return (
     <Box sx={{ mt: 4 }}>
-      <Typography variant="h6">Backtest Results</Typography>
-      <Button variant="contained" onClick={runBacktest} disabled={loading}>Run Backtest</Button>
-      {loading && <CircularProgress sx={{ ml:2 }} />}
-      {error && <Alert severity="error">{error}</Alert>}
-      {results && Array.isArray(results.equity_curve) && Array.isArray(results.trades) ? (
-        <>
-          <Line
-            data={{
-              labels: results.equity_curve.map(e => e.timestamp),
-              datasets: [{
-                label: 'Equity Curve',
-                data: results.equity_curve.map(e => e.equity),
-                borderColor: 'green',
-                fill: false,
-              }]
-            }}
-          />
-          <Scatter
-            data={{
-              datasets: [{
-                label: 'Trades',
-                data: results.trades.filter(t => t && typeof t.price === 'number' && t.timestamp).map(t => ({
-                  x: t.timestamp,
-                  y: t.price,
-                })),
-                backgroundColor: results.trades.map(t => t.side === 'BUY' ? 'blue' : 'red'),
-              }]
-            }}
-            options={{
-              scales: {
-                x: { type: 'category', title: { display: true, text: 'Time' } },
-                y: { title: { display: true, text: 'Price' } }
-              }
-            }}
-          />
-        </>
-      ) : (
-        <Typography>No valid backtest results to display.</Typography>
-      )}
+      <Typography variant="h6">Equity Curve</Typography>
+      <Line data={data} options={options} />
     </Box>
   );
-};
-
-export default BacktestResultsChart;
+}

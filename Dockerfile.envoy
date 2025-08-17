@@ -1,9 +1,9 @@
 FROM envoyproxy/envoy:v1.30-latest
 
 # Copy configuration
-COPY envoy.yaml /etc/envoy/envoy.yaml
 
-# Optional TLS certs (provide at build time or mount at runtime)
+COPY envoy.yaml /etc/envoy/envoy.yaml
+COPY deprecated_features.yaml /etc/envoy/deprecated_features.yaml
 COPY certs/ /etc/envoy/tls/
 
 EXPOSE 8080 9901
