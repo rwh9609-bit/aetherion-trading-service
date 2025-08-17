@@ -1,7 +1,0 @@
-version: "3.9"
-services:
-  envoy:
-    volumes:
-      - ./envoydev.yaml:/etc/envoy/envoy.yaml:ro
-      # Remove or comment out the production TLS certs for dev
-      # - /etc/letsencrypt:/etc/letsencrypt:ro
