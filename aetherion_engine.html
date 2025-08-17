@@ -11,58 +11,37 @@
     <style>
         body {
             font-family: 'Inter', sans-serif;
-            background: linear-gradient(120deg, #e0e7ff 0%, #f0fdfa 100%);
         }
         .gradient-text {
-            background: linear-gradient(90deg, #a7f3d0 0%, #f0abfc 50%, #bae6fd 100%);
+            background: linear-gradient(to right, #6EE7B7, #3B82F6, #9333EA);
             -webkit-background-clip: text;
             background-clip: text;
             -webkit-text-fill-color: transparent;
         }
-        .glass {
-            background: rgba(255,255,255,0.15);
-            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.15);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-            border-radius: 16px;
-            border: 1px solid rgba(255,255,255,0.18);
-        }
         .glow-effect {
-            box-shadow: 0 0 30px 10px rgba(186, 230, 253, 0.25), 0 0 60px 20px rgba(240, 171, 252, 0.15);
+             box-shadow: 0 0 15px rgba(110, 231, 183, 0.4), 0 0 30px rgba(59, 130, 246, 0.3);
         }
         .code-block {
             font-family: 'Fira Code', monospace;
-            background: rgba(30, 41, 59, 0.7);
-            padding: 1.5rem;
-            border-radius: 1rem;
-            margin: 2rem 0;
-            box-shadow: 0 4px 24px rgba(59, 130, 246, 0.08);
-        }
-        .fade-in {
-            animation: fadeIn 1.5s ease-in;
-        }
-        @keyframes fadeIn {
-            0% { opacity: 0; transform: translateY(20px); }
-            100% { opacity: 1; transform: translateY(0); }
-        }
-        .airy {
-            letter-spacing: 0.03em;
-            font-weight: 400;
+            background: #1a1a1a;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            margin: 1rem 0;
         }
     </style>
 </head>
 <body class="bg-gray-900 text-gray-200">
 
     <!-- Header -->
-    <header class="fixed top-0 left-0 right-0 glass z-50 border-b border-gray-200 fade-in">
-        <div class="container mx-auto px-8 py-6 flex justify-between items-center">
-            <h1 class="text-3xl font-extrabold tracking-tight gradient-text airy">Aetherion Engine</h1>
-            <nav class="hidden md:flex space-x-10">
-                <a href="#features" class="hover:text-emerald-400 transition-colors airy">Features</a>
-                <a href="#architecture" class="hover:text-emerald-400 transition-colors airy">Architecture</a>
-                <a href="https://github.com/rwh9609-bit/multilanguage" class="hover:text-emerald-400 transition-colors airy">GitHub</a>
+    <header class="fixed top-0 left-0 right-0 bg-gray-900 bg-opacity-80 backdrop-blur-md z-50 border-b border-gray-700">
+        <div class="container mx-auto px-6 py-4 flex justify-between items-center">
+            <h1 class="text-2xl font-bold tracking-tighter">Aetherion Engine</h1>
+            <nav class="hidden md:flex space-x-8">
+                <a href="#features" class="hover:text-emerald-400 transition-colors">Features</a>
+                <a href="#architecture" class="hover:text-emerald-400 transition-colors">Architecture</a>
+                <a href="https://github.com/rwh9609-bit/multilanguage" class="hover:text-emerald-400 transition-colors">GitHub</a>
             </nav>
-            <a href="#quickstart" class="inline-block bg-gradient-to-r from-emerald-400 via-blue-400 to-purple-400 hover:from-emerald-500 hover:to-purple-500 text-white font-bold py-2.5 px-6 rounded-xl shadow-lg transition-transform transform hover:scale-105 airy">
+            <a href="#quickstart" class="inline-block bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-2 px-4 rounded-lg transition-transform transform hover:scale-105">
                 Get Started
             </a>
         </div>
@@ -70,32 +49,32 @@
 
     <!-- Hero Section -->
     <main class="pt-24">
-        <section class="text-center py-24 px-8 fade-in">
+        <section class="text-center py-20 px-6">
             <div class="container mx-auto">
-                <h2 class="text-6xl md:text-8xl font-extrabold mb-6 leading-tight gradient-text airy">
-                    Modern Trading Architecture
+                <h2 class="text-5xl md:text-7xl font-black mb-4 leading-tight">
+                    Modern <span class="gradient-text">Trading Architecture</span>
                 </h2>
-                <p class="text-xl md:text-2xl text-gray-500 max-w-3xl mx-auto mb-10 airy">
-                    Aetherion is a next-generation, cloud-native trading engine for ambitious quants and developers. Create, deploy, and scale your strategies seamlessly with our ethereal, polyglot architecture.
+                <p class="text-lg md:text-xl text-gray-400 max-w-3xl mx-auto mb-8">
+                    Aetherion is a next-generation, cloud-native trading engine designed for ambitious quants and developers. Create, deploy, and scale your strategies seamlessly with our powerful, polyglot architecture.
                 </p>
-                <div class="flex justify-center space-x-6">
-                    <a href="#architecture" class="inline-block bg-gradient-to-r from-blue-400 via-purple-400 to-emerald-400 hover:from-blue-500 hover:to-emerald-500 text-white font-bold py-4 px-12 rounded-2xl shadow-lg text-xl transition-transform transform hover:scale-105 airy">View Architecture</a>
+                <div class="flex justify-center space-x-4">
+                    <a href="#architecture" class="inline-block bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-8 rounded-lg text-lg transition-transform transform hover:scale-105">View Architecture</a>
                 </div>
             </div>
         </section>
 
         <!-- Features Section -->
         <section id="features" class="py-20 bg-gray-800 bg-opacity-50">
-            <div class="container mx-auto px-8">
-                <h3 class="text-5xl font-extrabold text-center mb-16 gradient-text airy">Why Aetherion?</h3>
-                <div class="grid md:grid-cols-3 gap-12">
+            <div class="container mx-auto px-6">
+                <h3 class="text-4xl font-bold text-center mb-12">Why Aetherion?</h3>
+                <div class="grid md:grid-cols-3 gap-8">
                     <!-- Feature 1: Risk Management -->
-                    <div class="glass p-10 rounded-3xl border border-gray-200 glow-effect fade-in">
-                        <h4 class="text-2xl font-bold mb-4 text-emerald-400 airy">Advanced Risk Management</h4>
-                        <p class="text-gray-500 airy">
+                    <div class="bg-gray-900 p-8 rounded-xl border border-gray-700 glow-effect">
+                        <h4 class="text-2xl font-bold mb-3 text-emerald-400">Advanced Risk Management</h4>
+                        <p class="text-gray-400">
                             Built with Rust for safety-critical calculations, our risk service provides real-time VaR analysis, position monitoring, and automated risk controls with microsecond precision.
                         </p>
-                        <ul class="mt-6 space-y-3 text-base text-gray-400 airy">
+                        <ul class="mt-4 space-y-2 text-sm text-gray-400">
                             <li>• Real-time Value at Risk (VaR)</li>
                             <li>• Position-level risk limits</li>
                             <li>• Portfolio exposure controls</li>
@@ -103,93 +82,19 @@
                         </ul>
                     </div>
                     <!-- Feature 2: Market Data -->
-                    <div class="glass p-10 rounded-3xl border border-gray-200 glow-effect fade-in">
-                        <h4 class="text-2xl font-bold mb-4 text-blue-400 airy">Reliable Market Data</h4>
-                        <p class="text-gray-500 airy">
-                            Our Go-powered market data service provides redundant data feeds with automatic failover between Coinbase and Binance, ensuring uninterrupted trading operations.
-                        </p>
-                        <ul class="mt-6 space-y-3 text-base text-gray-400 airy">
-                            <li>• Multi-exchange support</li>
-                            <li>• Automatic failover</li>
-                            <li>• Real-time price feeds</li>
-                            <li>• HTTP monitoring endpoints</li>
-                        </ul>
-                    </div>
-                    <!-- Feature 3: Trading Strategies -->
-                    <div class="glass p-10 rounded-3xl border border-gray-200 glow-effect fade-in">
-                        <h4 class="text-2xl font-bold mb-4 text-purple-400 airy">Smart Trading Strategies</h4>
-                        <p class="text-gray-500 airy">
-                            Implement sophisticated trading strategies in Python with our flexible strategy framework, including built-in mean reversion with dynamic position sizing.
-                        </p>
-                        <ul class="mt-6 space-y-3 text-base text-gray-400 airy">
-                            <li>• Z-score based signals</li>
-                            <li>• Dynamic position sizing</li>
-                            <li>• Automated stop losses</li>
-                            <li>• Risk-adjusted sizing</li>
-                        </ul>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <!-- Architecture Section -->
-        <section id="architecture" class="py-20">
-            <div class="container mx-auto px-8">
-                <h3 class="text-5xl font-extrabold text-center mb-16 gradient-text airy">A Polyglot Architecture That Performs</h3>
-                <p class="text-center text-gray-500 max-w-2xl mx-auto mb-16 airy">We use the best tool for every job, giving you a stable and powerful foundation for your quantitative strategies.</p>
-                <div class="glass rounded-3xl p-12 border border-gray-200 max-w-5xl mx-auto fade-in">
-                    <div class="flex flex-col md:flex-row md:space-x-12">
-                        <!-- Left Side: Services -->
-                        <div class="md:w-1/2 space-y-8 mb-12 md:mb-0">
-                            <div class="p-6 rounded-xl bg-gradient-to-br from-emerald-100 via-white to-blue-100 shadow-lg">
-                                <h5 class="font-bold text-xl text-emerald-400 airy">Rust Risk Service (Port 50052)</h5>
-                                <p class="text-base text-gray-600 airy">High-performance risk calculations and position monitoring</p>
-                                <ul class="mt-4 text-sm text-gray-500 space-y-2 airy">
-                                    <li>• Real-time VaR calculations</li>
-                                    <li>• Position risk assessment</li>
-                                    <li>• Pre-trade risk checks</li>
-                                </ul>
-                            </div>
-                            <div class="p-6 rounded-xl bg-gradient-to-br from-blue-100 via-white to-purple-100 shadow-lg">
-                                <h5 class="font-bold text-xl text-blue-400 airy">Go Trading Service (Port 50051)</h5>
-                                <p class="text-base text-gray-600 airy">Market data and trade execution gateway</p>
-                                <ul class="mt-4 text-sm text-gray-500 space-y-2 airy">
-                                    <li>• Multi-exchange price feeds</li>
-                                    <li>• Order execution</li>
-                                    <li>• HTTP monitoring (Port 8080)</li>
-                                </ul>
-                            </div>
-                            <div class="p-6 rounded-xl bg-gradient-to-br from-purple-100 via-white to-emerald-100 shadow-lg">
-                                <h5 class="font-bold text-xl text-purple-400 airy">Python Orchestrator</h5>
-                                <p class="text-base text-gray-600 airy">Strategy implementation and coordination</p>
-                                <ul class="mt-4 text-sm text-gray-500 space-y-2 airy">
-                                    <li>• Mean reversion strategy</li>
-                                    <li>• Position management</li>
-                                    <li>• Risk limit enforcement</li>
-                                </ul>
-                            </div>
-                        </div>
-                        <!-- Right Side: Diagram/Visual -->
-                        <div class="md:w-2/3 bg-gradient-to-br from-white via-blue-50 to-purple-50 rounded-xl p-8 flex items-center justify-center shadow-lg">
-                            <p class="text-gray-400 text-center airy">
-                                <!-- Placeholder for a cool architecture diagram -->
-                                [ Architecture Diagram: Aetherion Client (Python) interacts with Cloud Backend (Go). The core matching engine and risk services are powered by Rust. ]
-                            </p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-    </main>
-
-    <!-- Footer -->
-    <footer class="glass border-t border-gray-200 mt-24 fade-in">
-        <div class="container mx-auto px-8 py-10 text-center text-gray-400 airy">
-            <p>&copy; 2025 Aetherion. All rights reserved.</p>
-            <p class="text-base mt-3">Built for the next generation of quantitative trading.</p>
+                    <div class="bg-gray-900 p-8 rounded-xl border border-gray-700 glow-effect">
+@@ -179,14 +179,5 @@
         </div>
     </footer>
+
+
+
+
+
+
+
+
+
 
 </body>
 </html>
