@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Container, Box, ToggleButtonGroup, ToggleButton, Typography } from '@mui/material';
 import OhlcPriceChart from './OhlcPriceChart';
+import LivePriceChart from './LivePriceChart';
 import CryptoScanner from './CryptoScanner';
 import ServerMomentum from './ServerMomentum';
 import SymbolManager from './SymbolManager';
@@ -83,6 +84,7 @@ const TradingDashboard = () => {
         </Box>
   <Box sx={{ order:{ xs:1, lg:2 }, minWidth:0 }}>
           <OhlcPriceChart symbol={selected} />
+          <LivePriceChart symbol={selected} />
         </Box>
       </Box>
     </Container>
