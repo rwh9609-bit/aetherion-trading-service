@@ -35,8 +35,3 @@ frontend/build/
 *.out
 test_load
 test_orderbook
-
-# Protobuf generated files (keep committed where needed for builds without protoc)
-# Removed frontend/src/proto/ so gRPC-web JS stubs are included in builds.
-python/protos/
-go/protos/
