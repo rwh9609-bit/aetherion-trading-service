@@ -48,53 +48,6 @@ If you see SSL or CORS errors, check for duplicate domains in envoy.yaml and ver
 - **Persistence-light** (JSON bot registry) – easy to swap for DB later
 
 ## 🚀 Getting Started (2025)
-[SECURE JWT TOKEN GENERATION & USAGE]
-
-### Secure JWT Token Generation & Usage (2025)
-
-To securely authenticate the orchestrator with the Go backend, you must generate a JWT token using your AUTH_SECRET and update your .env file:
-
-1. Generate a JWT token:
-
-   ```bash
-   make jwt-generate
-   ```
-
-   This will run the token generation script and automatically update your .env with the new AUTH_TOKEN.
-
-2. Restart the orchestrator service:
-
-   ```bash
-   docker compose up --build
-   ```
-
-3. Confirm successful authentication in orchestrator logs:
-   - Look for `Strategy initialized` and price fetch messages.
-
-**Note:** Never commit your .env file with real secrets or tokens to version control. For production, use Docker secrets or environment variable injection.
-
-[SECURE JWT TOKEN GENERATION & USAGE]
-
-### Secure JWT Token Generation & Usage
-
-To securely authenticate the orchestrator with the Go backend, you must generate a JWT token using your AUTH_SECRET and update your .env file:
-
-1. Generate a JWT token:
-   ```bash
-   make jwt-generate
-   ```
-   This will run the token generation script and automatically update your .env with the new AUTH_TOKEN.
-
-2. Restart the orchestrator service:
-   ```bash
-   docker compose up --build
-   ```
-
-3. Confirm successful authentication in orchestrator logs:
-   - Look for `Strategy initialized` and price fetch messages.
-
-**Note:** Never commit your .env file with real secrets or tokens to version control. For production, use Docker secrets or environment variable injection.
-
 
 ### For Traders and Analysts
 
@@ -140,6 +93,32 @@ docker compose ps
 Access frontend (dev): <http://localhost:3000> (if exposed) or point React dev server at Envoy (<https://localhost:8080> with dev certs).
 
 TLS & hardening: see `docs/SECURITY.md`. Provide `certs/server.crt` and `certs/server.key` before rebuilding Envoy for HTTPS. Strict CORS and security headers enforced.
+
+[SECURE JWT TOKEN GENERATION & USAGE]
+
+### Secure JWT Token Generation & Usage (2025)
+
+To securely authenticate the orchestrator with the Go backend, you must generate a JWT token using your AUTH_SECRET and update your .env file:
+
+1. Generate a JWT token:
+
+   ```bash
+   make jwt-generate
+   ```
+
+   This will run the token generation script and automatically update your .env with the new AUTH_TOKEN.
+
+2. Restart the orchestrator service:
+
+   ```bash
+   docker compose up --build
+   ```
+
+3. Confirm successful authentication in orchestrator logs:
+   - Look for `Strategy initialized` and price fetch messages.
+
+**Note:** Never commit your .env file with real secrets or tokens to version control. For production, use Docker secrets or environment variable injection.
+
 
 Recommended:
 
