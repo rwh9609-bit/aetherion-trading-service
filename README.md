@@ -19,9 +19,10 @@ Aetherion is a modern quantitative trading platform that combines real-time mark
 ## 🛡️ 2025-08: HTTPS & Security Upgrade
 
 Production endpoints now use HTTPS with Let’s Encrypt certificates for all domains:
-- Web: https://aetherion.cloud
-- API: https://api.aetherion.cloud
-- www: https://www.aetherion.cloud
+
+- Web: <https://aetherion.cloud> (down for now)
+- API: <https://api.aetherion.cloud>
+- www: <https://www.aetherion.cloud>
 
 Envoy now terminates TLS on port 443. See docs/SECURITY.md and docs/DEPLOYMENT.md for setup and troubleshooting.
 
@@ -189,10 +190,11 @@ Early-stage risk roadmap:
 - Pre-trade checks & circuit breakers (future)
 
 ## 📚 Documentation
+
 - [User Guide](docs/USER_GUIDE.md) - How to use the UI & features
-- [API Reference](docs/API.md) - gRPC service + message overview
-- [Deployment Guide](docs/DEPLOYMENT.md) - Domains, TLS, CORS, troubleshooting
-- [Security Guide](docs/SECURITY.md) - TLS, CORS, headers, health, rate limits
+- [API Reference](docs/API.md) - REST & gRPC endpoints
+- [Deployment Guide](docs/DEPLOYMENT.md) - Docker, TLS, scaling
+- [Security Guide](docs/SECURITY.md) - TLS, authentication, best practices
 - [Developer Guide](docs/DEVELOPER.md) - Setup, architecture, protos
 - (Planned) Strategy & Risk deep-dive docs
 
@@ -213,3 +215,12 @@ Aetherion is open source software licensed under the MIT License. See [LICENSE](
 ---
 
 **See About/Update pages in the UI for latest stack, features, and changelog.**
+
+## Envoy Configuration for Dev and Production
+
+- For development, Envoy uses `envoydev.yaml` via `docker-compose.override.yml`.
+- For production, Envoy uses `envoy.yaml` as the default config.
+- To run in dev mode, simply use `docker compose up` (the override is applied automatically).
+- To run in production, remove or rename `docker-compose.override.yml` before deploying.
+
+This setup allows you to safely test and iterate on local configs without affecting production deployments.
