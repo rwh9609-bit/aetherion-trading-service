@@ -26,7 +26,12 @@ class TradingOrchestrator:
         self.go_service_addr = os.environ.get('GO_SERVICE_ADDR', 'localhost:50051')
         self.rust_service_addr = os.environ.get('RUST_SERVICE_ADDR', 'localhost:50052')
         self.account_value = float(os.environ.get('INITIAL_ACCOUNT_VALUE', '10000.0'))
-        
+        self.auth_secret = os.environ.get('AUTH_SECRET', None)
+        if self.auth_secret:
+            masked_secret = self.auth_secret[:4] + '...' + self.auth_secret[-4:] if len(self.auth_secret) > 8 else '***'
+            print(f"[DEBUG] AUTH_SECRET loaded: {masked_secret}")
+        else:
+            print("[DEBUG] AUTH_SECRET not set.")
         # Initialize strategy
         params = MeanReversionParams(
             lookback_period=20,
@@ -45,10 +50,13 @@ class TradingOrchestrator:
         
         with grpc.insecure_channel(self.go_service_addr) as trading_channel, \
              grpc.insecure_channel(self.rust_service_addr) as risk_channel:
-            
             trading_stub = rpc.TradingServiceStub(trading_channel)
             risk_stub = rpc.RiskServiceStub(risk_channel)
-            
+            # Prepare gRPC metadata for authorization
+            metadata = []
+            if self.auth_secret:
+                metadata.append(('authorization', f'Bearer {self.auth_secret}'))
+            print(f"[DEBUG] gRPC metadata: {metadata}")
             # Start the strategy
             print("Starting strategy...")
             strategy_req = pb.StrategyRequest(
@@ -56,9 +64,8 @@ class TradingOrchestrator:
                 symbol="BTC-USD",
                 parameters={"order_size": "0.1"}
             )
-            
             try:
-                status_response = trading_stub.StartStrategy(strategy_req)
+                status_response = trading_stub.StartStrategy(strategy_req, metadata=metadata)
                 print(f"Strategy initialized: {status_response.message}")
             except grpc.RpcError as e:
                 print(f"Error initializing strategy: {e.details()}")
@@ -85,7 +92,7 @@ class TradingOrchestrator:
                             horizon_days=1
                         )
                         try:
-                            var_response = risk_stub.CalculateVaR(var_request)
+                            var_response = risk_stub.CalculateVaR(var_request, metadata=metadata)
                             risk_ok = var_response.value_at_risk <= (self.account_value * 0.02)
                             if risk_ok:
                                 trade_request = pb.TradeRequest(
@@ -95,7 +102,7 @@ class TradingOrchestrator:
                                     price=float(price)
                                 )
                                 try:
-                                    trade_response = trading_stub.ExecuteTrade(trade_request)
+                                    trade_response = trading_stub.ExecuteTrade(trade_request, metadata=metadata)
                                     print(f"Trade executed @ {trade_response.executed_price:.2f}: {trade_response.message}")
                                     print(f"Signal: {json.dumps(signal)}  VaR: {var_response.value_at_risk:.2f}")
                                     if hasattr(trade_response, 'pnl'):
