@@ -57,6 +57,8 @@ services:
       - envoy
     restart: unless-stopped
   orchestrator:
+    env_file:
+      - .env
     build:
       context: .
       dockerfile: Dockerfile.orchestrator

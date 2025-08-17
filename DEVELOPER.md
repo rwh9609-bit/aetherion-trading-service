@@ -26,6 +26,31 @@ This document contains technical setup instructions, API documentation, and deve
 - [Deployment](#deployment)
 
 ## Local Development Workflow (dev branch)
+[SECURE JWT TOKEN GENERATION & USAGE]
+
+### Secure JWT Token Generation & Usage
+
+To securely authenticate the orchestrator with the Go backend, generate a JWT token using your AUTH_SECRET and update your .env file:
+
+1. Generate a JWT token:
+
+   ```bash
+   make jwt-generate
+   ```
+
+   This will run the token generation script and automatically update your .env with the new AUTH_TOKEN.
+
+2. Restart the orchestrator service:
+
+   ```bash
+   docker compose up --build
+   ```
+
+3. Confirm successful authentication in orchestrator logs:
+   - Look for `Strategy initialized` and price fetch messages.
+
+**Note:** Never commit your .env file with real secrets or tokens to version control. For production, use Docker secrets or environment variable injection.
+
 
 To run Aetherion locally for development:
 
