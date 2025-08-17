@@ -1,5 +1,8 @@
 {
     "files.associations": {
         "string": "cpp"
-    }
+    },
+    "python.analysis.extraPaths": [
+        "./python/protos"
+    ]
 }

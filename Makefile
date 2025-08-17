@@ -52,7 +52,6 @@ proto-gen: proto-gen-python proto-gen-go proto-gen-web ## Generate all protobuf 
 ## Go protobufs (flatten into go/gen as committed layout)
 proto-gen-go:
 	@echo "Generating Go protobufs..."
-	@rm -rf $(GO_DIR)/gen
 	@mkdir -p $(GO_DIR)/gen
 	@$(PROTOC) -I . -I $(PROTO_DIR) \
 		--go_out=$(GO_DIR) --go_opt=paths=source_relative \
@@ -60,7 +59,9 @@ proto-gen-go:
 		$(ROOT_PROTOS)
 	@mkdir -p $(GO_DIR)/gen
 	@mv $(GO_DIR)/trading_api*.pb.go $(GO_DIR)/gen/ 2>/dev/null || true
-	@mv $(GO_DIR)/$(PROTO_DIR)/*_pb.go $(GO_DIR)/gen/ 2>/dev/null || true
+	@# Do NOT delete or overwrite bot_grpc.pb.go and bot.pb.go in go/gen
+	@if [ -f $(GO_DIR)/$(PROTO_DIR)/bot.pb.go ]; then mv $(GO_DIR)/$(PROTO_DIR)/bot.pb.go $(GO_DIR)/gen/; fi
+	@if [ -f $(GO_DIR)/$(PROTO_DIR)/bot_grpc.pb.go ]; then mv $(GO_DIR)/$(PROTO_DIR)/bot_grpc.pb.go $(GO_DIR)/gen/; fi
 	@rmdir $(GO_DIR)/$(PROTO_DIR) 2>/dev/null || true
 	@echo "$(GREEN)Go protos updated in go/gen$(RESET)"
 
