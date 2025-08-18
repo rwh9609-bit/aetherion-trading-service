@@ -32,8 +32,8 @@ services:
       - "50051"
   backend:
     build:
-      context: ./python
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: python/Dockerfile
     environment:
       - AUTH_SECRET=${AUTH_SECRET}
     expose:

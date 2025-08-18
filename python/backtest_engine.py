@@ -37,7 +37,7 @@ class BacktestEngine:
 
 def load_historical_data(csv_path):
     data = []
-    with open(csv_path, 'r') as f:
+    with open(csv_path, 'r', encoding='utf-8', newline='') as f:
         reader = csv.DictReader(f)
         for row in reader:
             data.append({
