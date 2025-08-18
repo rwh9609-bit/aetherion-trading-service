@@ -5,7 +5,7 @@ import (
 	"os"
 	"testing"
 
-	pb "github.com/rwh9609-bit/multilanguage/go/gen"
+		pb "github.com/rwh9609-bit/multilanguage/go/gen"
 )
 
 // TestBotServiceLifecycle validates create -> list -> start -> stop and persistence reload.

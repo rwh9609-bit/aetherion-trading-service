@@ -16,9 +16,9 @@ type OrderBookSide []PriceLevel
 
 // OrderBookManager manages the order book for a symbol
 type OrderBookManager struct {
-	mu   sync.RWMutex
-	bids *OrderBookSide
-	asks *OrderBookSide
+	Mu   sync.RWMutex
+	Bids *OrderBookSide
+	Asks *OrderBookSide
 }
 
 func NewOrderBookManager() *OrderBookManager {
@@ -27,8 +27,8 @@ func NewOrderBookManager() *OrderBookManager {
 	heap.Init(bids)
 	heap.Init(asks)
 	return &OrderBookManager{
-		bids: bids,
-		asks: asks,
+		 Bids: bids,
+		 Asks: asks,
 	}
 }
 

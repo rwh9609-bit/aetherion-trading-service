@@ -160,4 +160,17 @@ fmt:
 help:
 	@grep -E '^([a-zA-Z0-9_-]+):.*?##' $(MAKEFILE_LIST) | awk 'BEGIN {FS=":.*?## "}; {printf "\033[36m%-18s\033[0m %s\n", $$1, $$2}' | sort
 
+## --- Simple aggregate targets for devs ---
+proto:
+	bash scripts/gen_proto.sh
+
+build:
+	cd go && go build ./...
+
+test:
+	cd go && go test ./...
+
+docker-build:
+	$(DOCKER_COMPOSE) up --build
+
 ## End of Makefile

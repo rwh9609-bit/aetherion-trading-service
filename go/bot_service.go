@@ -10,9 +10,10 @@ import (
 	"sync"
 	"time"
 
+	pb "github.com/rwh9609-bit/multilanguage/go/gen"
+
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
-	pb "github.com/rwh9609-bit/multilanguage/go/gen"
 )
 
 type botRegistry struct {
@@ -74,7 +75,7 @@ func (r *botRegistry) loadFromPg(ctx context.Context) {
 		}
 		m := map[string]string{}
 		_ = json.Unmarshal(paramsBytes, &m)
-		r.bots[id] = &pb.BotConfig{Id: id, Name: name, Symbol: symbol, Strategy: strategy, Parameters: m, Active: active, CreatedAtUnix: created}
+	r.bots[id] = &pb.BotConfig{Id: id, Name: name, Symbol: symbol, Strategy: strategy, Parameters: m, Active: active}
 	}
 }
 
@@ -104,7 +105,7 @@ func (r *botRegistry) persist() {
 			_, err := r.pg.Exec(ctx, `INSERT INTO bots (id,name,symbol,strategy,parameters,active,created_at)
                 VALUES ($1,$2,$3,$4,$5,$6,to_timestamp($7))
                 ON CONFLICT (id) DO UPDATE SET name=EXCLUDED.name,symbol=EXCLUDED.symbol,strategy=EXCLUDED.strategy,parameters=EXCLUDED.parameters,active=EXCLUDED.active`,
-				b.Id, b.Name, b.Symbol, b.Strategy, string(paramsJSON), b.Active, b.CreatedAtUnix)
+				b.Id, b.Name, b.Symbol, b.Strategy, string(paramsJSON), b.Active)
 			if err != nil && !strings.Contains(err.Error(), "duplicate") {
 				log.Printf("bot upsert err: %v", err)
 			}
@@ -143,7 +144,7 @@ func (s *botServiceServer) CreateBot(ctx context.Context, req *pb.CreateBotReque
 		return &pb.StatusResponse{Success: false, Message: "name, symbol, strategy required"}, nil
 	}
 	id := uuid.New().String()
-	bot := &pb.BotConfig{Id: id, Name: req.GetName(), Symbol: req.GetSymbol(), Strategy: req.GetStrategy(), Parameters: req.GetParameters(), Active: false, CreatedAtUnix: time.Now().Unix()}
+	bot := &pb.BotConfig{Id: id, Name: req.GetName(), Symbol: req.GetSymbol(), Strategy: req.GetStrategy(), Parameters: req.GetParameters(), Active: false}
 	s.reg.mu.Lock()
 	s.reg.bots[id] = bot
 	s.reg.mu.Unlock()

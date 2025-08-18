@@ -73,39 +73,42 @@ func (h *OrderBookSide) Pop() interface{} {
 // OrderBookManager is defined in orderbook.go
 
 func (ob *OrderBookManager) AddBid(price, size float64) {
-	ob.mu.Lock()
-	defer ob.mu.Unlock()
-	heap.Push(ob.bids, PriceLevel{Price: price, Size: size})
+	ob.Mu.Lock()
+	defer ob.Mu.Unlock()
+	heap.Push(ob.Bids, PriceLevel{Price: price, Size: size})
 }
 
 func (ob *OrderBookManager) AddAsk(price, size float64) {
-	ob.mu.Lock()
-	defer ob.mu.Unlock()
-	heap.Push(ob.asks, PriceLevel{Price: price, Size: size})
+	ob.Mu.Lock()
+	defer ob.Mu.Unlock()
+	heap.Push(ob.Asks, PriceLevel{Price: price, Size: size})
 }
 
 func (ob *OrderBookManager) GetTopLevels(numLevels int) ([]*pb.OrderBookEntry, []*pb.OrderBookEntry) {
-	ob.mu.RLock()
-	defer ob.mu.RUnlock()
+	ob.Mu.RLock()
+	defer ob.Mu.RUnlock()
 
 	bids := make([]*pb.OrderBookEntry, 0, numLevels)
 	asks := make([]*pb.OrderBookEntry, 0, numLevels)
 
+	now := time.Now().UnixMilli()
 	// Get top bids
-	for i := 0; i < numLevels && i < len(*ob.bids); i++ {
-		bid := (*ob.bids)[i]
+	for i := 0; i < numLevels && i < len(*ob.Bids); i++ {
+		bid := (*ob.Bids)[i]
 		bids = append(bids, &pb.OrderBookEntry{
-			Price: bid.Price,
-			Size:  bid.Size,
+			Price:     bid.Price,
+			Size:      bid.Size,
+			Timestamp: now,
 		})
 	}
 
 	// Get top asks
-	for i := 0; i < numLevels && i < len(*ob.asks); i++ {
-		ask := (*ob.asks)[i]
+	for i := 0; i < numLevels && i < len(*ob.Asks); i++ {
+		ask := (*ob.Asks)[i]
 		asks = append(asks, &pb.OrderBookEntry{
-			Price: ask.Price,
-			Size:  ask.Size,
+			Price:     ask.Price,
+			Size:      ask.Size,
+			Timestamp: now,
 		})
 	}
 
@@ -121,12 +124,12 @@ type CoinbasePriceResponse struct {
 
 // Function to fetch price from Coinbase REST API
 // httpGet is a package-level variable to allow test overrides
-var httpGet = http.Get
+var HttpGet = http.Get
 
-func getCoinbasePrice(symbol string) (float64, error) {
+func GetCoinbasePrice(symbol string) (float64, error) {
 	// Coinbase uses symbol format like BTC-USD
 	url := fmt.Sprintf("https://api.coinbase.com/v2/prices/%s/spot", symbol)
-	resp, err := httpGet(url)
+	resp, err := HttpGet(url)
 	if err != nil {
 		return 0, fmt.Errorf("failed to fetch price from Coinbase: %w", err)
 	}
@@ -164,8 +167,9 @@ type OrderBook struct {
 
 // OrderBookEntry represents a single order in the book
 type OrderBookEntry struct {
-	Price float64
-	Size  float64
+	Price     float64
+	Size      float64
+	Timestamp int64 // Unix epoch milliseconds
 }
 
 // Strategy represents an active trading strategy
@@ -205,7 +209,7 @@ func (s *Strategy) Run(ctx context.Context, server *tradingServer) {
 			}
 
 			// Get current price from your price source
-			price, err := getCoinbasePrice(s.Symbol)
+			price, err := GetCoinbasePrice(s.Symbol)
 			if err != nil {
 				log.Printf("Error getting price for %s: %v", s.Symbol, err)
 				continue
@@ -269,7 +273,7 @@ func (s *tradingServer) GetPrice(ctx context.Context, req *pb.Tick) (*pb.Tick, e
 	price, ok := s.lastPrices[req.Symbol]
 	s.priceMu.RUnlock()
 	if !ok {
-		p, err := getCoinbasePrice(req.Symbol)
+		p, err := GetCoinbasePrice(req.Symbol)
 		if err != nil {
 			return nil, fmt.Errorf("failed to get price: %w", err)
 		}
@@ -366,7 +370,7 @@ func (s *tradingServer) StreamOrderBook(req *pb.OrderBookRequest, stream pb.Trad
 			return nil
 		case <-ticker.C:
 			// Get the current price to simulate order book around it
-			price, err := getCoinbasePrice(symbol)
+			price, err := GetCoinbasePrice(symbol)
 			if err != nil {
 				log.Printf("Error getting price for %s: %v", symbol, err)
 				continue
@@ -419,7 +423,7 @@ func (s *tradingServer) SubscribeTicks(req *pb.StrategyRequest, stream pb.Tradin
 		// Coinbase uses symbol format like BTC-USD
 		coinbaseSymbol := req.Symbol
 
-		price, err := getCoinbasePrice(coinbaseSymbol)
+		price, err := GetCoinbasePrice(coinbaseSymbol)
 		if err != nil {
 			log.Printf("Error fetching price for %s: %v", coinbaseSymbol, err)
 			time.Sleep(1 * time.Second) // Wait before retrying
@@ -717,7 +721,7 @@ func main() {
 			Timeout:           1 * time.Second,
 		}),
 		grpc.UnaryInterceptor(chainUnary(
-			authUnaryInterceptorWithFallback([]byte(secret), []byte(prevSecret)),
+			authUnaryInterceptor([]byte(secret)),
 			timeoutUnary(cfg.RequestTimeout),
 		)),
 	)

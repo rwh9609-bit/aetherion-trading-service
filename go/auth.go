@@ -154,14 +154,12 @@ func (a *authServer) Login(ctx context.Context, req *pb.AuthRequest) (*pb.AuthRe
 // authUnaryInterceptor enforces JWT auth for all non-auth unary RPCs.
 func authUnaryInterceptor(secret []byte) grpc.UnaryServerInterceptor {
 	return func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
-		// Dev bypass if environment variable set
 		if os.Getenv("AUTH_DISABLED") == "1" {
 			return handler(ctx, req)
 		}
 		if info.FullMethod == "/trading.AuthService/Login" || info.FullMethod == "/trading.AuthService/Register" {
 			return handler(ctx, req)
 		}
-		// TEMP: Allow unauthenticated GetPrice until frontend auth wired
 		if info.FullMethod == "/trading.TradingService/GetPrice" {
 			return handler(ctx, req)
 		}
@@ -234,4 +232,5 @@ func authUnaryInterceptorWithFallback(primary, previous []byte) grpc.UnaryServer
 		}
 		return handler(ctx, req)
 	}
+
 }
