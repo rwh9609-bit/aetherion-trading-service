@@ -46,6 +46,46 @@ class MeanReversionStrategy:
         # Cap at max position size
         return min(position_size, self.params.max_position_size)
         
+    def on_tick(self, tick: Dict) -> Optional[Dict]:
+        """Process a market tick and decide action (buy/sell/hold) as a dictionary."""
+        price = tick.get('price')
+        account_value = tick.get('account_value', 10000)
+        if price is None:
+            return None
+        zscore = self.calculate_zscore(price)
+        action = {
+            'side': None,
+            'size': 0.0,
+            'price': price,
+            'zscore': zscore,
+            'stop_loss': None
+        }
+        if self.position == 0:
+            if zscore < -self.params.entry_std_dev:
+                self.position = self.calculate_position_size(price, account_value)
+                self.entry_price = price
+                action['side'] = 'BUY'
+                action['size'] = self.position
+                action['stop_loss'] = price * (1 - self.params.stop_loss_pct)
+                return action
+            elif zscore > self.params.entry_std_dev:
+                self.position = -self.calculate_position_size(price, account_value)
+                self.entry_price = price
+                action['side'] = 'SELL'
+                action['size'] = abs(self.position)
+                action['stop_loss'] = price * (1 + self.params.stop_loss_pct)
+                return action
+        else:
+            # Exit conditions
+            if abs(zscore) < self.params.exit_std_dev:
+                action['side'] = 'EXIT'
+                action['size'] = abs(self.position)
+                self.position = 0
+                self.entry_price = None
+                return action
+        action['side'] = 'HOLD'
+        return action
+        
     def generate_signal(self, price: float, account_value: float) -> Dict[str, any]:
         """Generate trading signal based on mean reversion strategy."""
         zscore = self.calculate_zscore(price)

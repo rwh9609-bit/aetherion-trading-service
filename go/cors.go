@@ -15,7 +15,9 @@ func corsMiddleware() *cors.Cors {
 	if originsEnv != "" {
 		for _, o := range strings.Split(originsEnv, ",") {
 			o = strings.TrimSpace(o)
-			if o != "" { origins = append(origins, o) }
+			if o != "" {
+				origins = append(origins, o)
+			}
 		}
 	}
 	if len(origins) == 0 {

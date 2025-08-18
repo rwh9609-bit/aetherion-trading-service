@@ -159,11 +159,13 @@ export const streamOrderBook = (symbol, onData, onError) => {
           onData({
             bids: data.bidsList.map(bid => ({
               price: bid.price,
-              size: bid.size
+              size: bid.size,
+              timestamp: bid.timestamp
             })) || [],
             asks: data.asksList.map(ask => ({
               price: ask.price,
-              size: ask.size
+              size: ask.size,
+              timestamp: ask.timestamp
             })) || []
           });
           retryCount = 0; // Reset retry count on successful data

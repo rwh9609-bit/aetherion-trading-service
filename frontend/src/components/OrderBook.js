@@ -4,6 +4,7 @@ import { streamOrderBook } from '../services/grpcClient';
 
 const OrderBook = () => {
   const [orderBook, setOrderBook] = useState({ bids: [], asks: [] });
+  const [lastUpdate, setLastUpdate] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -22,6 +23,7 @@ const OrderBook = () => {
         'BTC-USD',
         (data) => {
           setOrderBook(data);
+          setLastUpdate(new Date().toLocaleString());
           setLoading(false);
           retryCount = 0; // Reset retry count on successful data
         },
@@ -60,6 +62,7 @@ const OrderBook = () => {
             <TableCell>Price</TableCell>
             <TableCell align="right">Size</TableCell>
             <TableCell align="right">Total</TableCell>
+            <TableCell align="right">Timestamp</TableCell>
           </TableRow>
         </TableHead>
         <TableBody>
@@ -72,6 +75,9 @@ const OrderBook = () => {
               </TableCell>
               <TableCell align="right">{order.size.toFixed(4)}</TableCell>
               <TableCell align="right">${(order.price * order.size).toFixed(2)}</TableCell>
+              <TableCell align="right">
+                {order.timestamp ? new Date(order.timestamp).toLocaleTimeString() : '-'}
+              </TableCell>
             </TableRow>
           ))}
         </TableBody>
@@ -88,6 +94,11 @@ const OrderBook = () => {
         <Typography variant="h6" gutterBottom>
           Order Book
         </Typography>
+        {lastUpdate && (
+          <Typography variant="caption" color="text.secondary" gutterBottom>
+            Last update: {lastUpdate}
+          </Typography>
+        )}
         <Box sx={{ display: 'grid', gap: 2, gridTemplateColumns: 'repeat(2, 1fr)' }}>
           <Box>
             <Typography variant="subtitle2" color="error.main" gutterBottom>
