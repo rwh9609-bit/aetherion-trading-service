@@ -65,7 +65,7 @@ function App() {
     if (!user) return;
     const fetchLive = async () => {
       try {
-  const res = await fetch('http://localhost:8000/fetch_live_data', { method: 'POST' });
+  const res = await fetch('/fetch_live_data', { method: 'POST' });
         const data = await res.json();
         if (data.status === 'success') {
           setLiveFetchStatus('success');
