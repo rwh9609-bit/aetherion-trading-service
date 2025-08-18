@@ -127,6 +127,11 @@ func (a *authServer) Register(ctx context.Context, req *pb.RegisterRequest) (*pb
 	if req.GetUsername() == "" || req.GetPassword() == "" {
 		return &pb.AuthResponse{Success: false, Message: "username and password required"}, nil
 	}
+	// Add password length check
+	const minPasswordLength = 8
+	if len(req.GetPassword()) < minPasswordLength {
+		return &pb.AuthResponse{Success: false, Message: fmt.Sprintf("password must be at least %d characters long", minPasswordLength)}, nil
+	}
 	if err := a.store.CreateUser(ctx, req.Username, hashPassword(req.Password)); err != nil {
 		if err.Error() == "exists" {
 			return &pb.AuthResponse{Success: false, Message: "user exists"}, nil
