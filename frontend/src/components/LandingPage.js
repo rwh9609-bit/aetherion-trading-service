@@ -45,6 +45,11 @@ const HeroSection = styled(Box)(({ theme }) => ({
 // (Removed unused OpenSourceBanner component)
 
 const LandingPage = ({ onGetStarted }) => {
+  const architectureRef = React.useRef(null);
+
+  const handleScrollToArchitecture = () => {
+    architectureRef.current.scrollIntoView({ behavior: 'smooth' });
+  };
   const features = [
     {
       title: 'Advanced Risk Management',
@@ -154,6 +159,7 @@ const LandingPage = ({ onGetStarted }) => {
               <Button 
                 variant="outlined" 
                 size="large"
+                onClick={handleScrollToArchitecture}
                 sx={{ 
                   fontSize: '1.1rem',
                   py: 1.5,
@@ -217,7 +223,7 @@ const LandingPage = ({ onGetStarted }) => {
       </Box>
 
       {/* Architecture Section */}
-      <Box sx={{ py: 10 }}>
+      <Box sx={{ py: 10 }} ref={architectureRef}>
         <Container maxWidth="lg">
           <Typography variant="h2" textAlign="center" gutterBottom sx={{ mb: 3, fontWeight: 700 }}>
             A Polyglot Architecture That Performs
