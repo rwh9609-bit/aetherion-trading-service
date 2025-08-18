@@ -91,14 +91,12 @@ func (ob *OrderBookManager) GetTopLevels(numLevels int) ([]*pb.OrderBookEntry, [
 	bids := make([]*pb.OrderBookEntry, 0, numLevels)
 	asks := make([]*pb.OrderBookEntry, 0, numLevels)
 
-	now := time.Now().UnixMilli()
 	// Get top bids
 	for i := 0; i < numLevels && i < len(*ob.Bids); i++ {
 		bid := (*ob.Bids)[i]
 		bids = append(bids, &pb.OrderBookEntry{
-			Price:     bid.Price,
-			Size:      bid.Size,
-			Timestamp: now,
+			Price: bid.Price,
+			Size:  bid.Size,
 		})
 	}
 
@@ -106,9 +104,8 @@ func (ob *OrderBookManager) GetTopLevels(numLevels int) ([]*pb.OrderBookEntry, [
 	for i := 0; i < numLevels && i < len(*ob.Asks); i++ {
 		ask := (*ob.Asks)[i]
 		asks = append(asks, &pb.OrderBookEntry{
-			Price:     ask.Price,
-			Size:      ask.Size,
-			Timestamp: now,
+			Price: ask.Price,
+			Size:  ask.Size,
 		})
 	}
 

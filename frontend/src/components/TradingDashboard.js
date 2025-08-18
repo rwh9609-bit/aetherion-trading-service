@@ -53,8 +53,8 @@ const TradingDashboard = () => {
     }
   };
   return (
-    <Container maxWidth="xl" sx={{ mt:4, mb:4 }}>
-  <Box sx={{ display:'grid', gap:3, gridTemplateColumns: { xs:'1fr', lg:'1.2fr 1fr' }, alignItems:'start' }}>
+    <Container maxWidth={false} sx={{ mt:4, mb:4 }}>
+  <Box sx={{ display:'grid', gap:3, gridTemplateColumns: { xs:'1fr' }, alignItems:'start' }}>
         <Box sx={{ gridColumn:'1 / -1', display:'flex', flexDirection:'column', gap:1 }}>
           <Box sx={{ display:'flex', alignItems:{ xs:'stretch', sm:'center' }, flexWrap:'wrap', gap:2, justifyContent:'space-between' }}>
             <Box sx={{ flex:1, minWidth:260 }}>
@@ -77,7 +77,7 @@ const TradingDashboard = () => {
             </Box>
           </Box>
         </Box>
-  <Box sx={{ display:'grid', gap:3, gridTemplateColumns:{ xs:'1fr', md:'repeat(auto-fit,minmax(320px,1fr))' }, minWidth:0 }}>
+  <Box sx={{ display:'grid', gap:3, gridTemplateColumns:{ xs:'1fr' }, minWidth:0 }}>
     <Box>
       {momentumMode === 'client' && <CryptoScanner symbols={symbols} onSelect={(sym)=> setSelected(sym)} />}
       {momentumMode === 'server' && <ServerMomentum onSelect={(sym)=> setSelected(sym)} />}
