@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Container, Box, ToggleButtonGroup, ToggleButton, Typography } from '@mui/material';
 import OhlcPriceChart from './OhlcPriceChart';
-import LivePriceChart from './LivePriceChart';
 import CryptoScanner from './CryptoScanner';
 import ServerMomentum from './ServerMomentum';
 import SymbolManager from './SymbolManager';
@@ -78,14 +77,15 @@ const TradingDashboard = () => {
             </Box>
           </Box>
         </Box>
-  <Box sx={{ display:'grid', gap:3, order:{ xs:2, lg:1 }, gridTemplateColumns:{ xs:'1fr', md:'repeat(auto-fit,minmax(320px,1fr))' }, minWidth:0 }}>
-          {momentumMode === 'client' && <CryptoScanner symbols={symbols} onSelect={(sym)=> setSelected(sym)} />}
-          {momentumMode === 'server' && <ServerMomentum onSelect={(sym)=> setSelected(sym)} />}
-        </Box>
-  <Box sx={{ order:{ xs:1, lg:2 }, minWidth:0 }}>
-          <OhlcPriceChart symbol={selected} />
-          <LivePriceChart symbol={selected} />
-        </Box>
+  <Box sx={{ display:'grid', gap:3, gridTemplateColumns:{ xs:'1fr', md:'repeat(auto-fit,minmax(320px,1fr))' }, minWidth:0 }}>
+    <Box>
+      {momentumMode === 'client' && <CryptoScanner symbols={symbols} onSelect={(sym)=> setSelected(sym)} />}
+      {momentumMode === 'server' && <ServerMomentum onSelect={(sym)=> setSelected(sym)} />}
+    </Box>
+    <Box>
+      <OhlcPriceChart symbol={selected} />
+    </Box>
+  </Box>
       </Box>
     </Container>
   );

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { ThemeProvider, createTheme, CssBaseline, AppBar, Toolbar, Typography, Button, Box, Tooltip, CircularProgress, Snackbar, Alert } from '@mui/material';
 import TradingDashboard from './components/TradingDashboard';
+
 import TradingOperations from './components/TradingOperations';
 import BotsPage from './components/BotsPage';
 import DevelopBotPage from './components/DevelopBotPage';
@@ -102,6 +103,7 @@ function App() {
                   <Button color="inherit" onClick={()=>setView('news')} sx={{ mr:1 }}>News</Button>
                   <Button color="inherit" onClick={()=>setView('contact')} sx={{ mr:1 }}>Contact</Button>
                   {user && <Button color="inherit" onClick={()=>setView('backtest')} sx={{ mr:2 }}>Backtesting</Button>}
+
                   {user ? (
                     <>
                       <Button color="inherit" onClick={()=>setView('account')} sx={{ mr:1 }}>Account</Button>
@@ -131,6 +133,7 @@ function App() {
           
           {/* Content based on current view */}
           {view === 'landing' && <LandingPage onGetStarted={handleGetStarted} />}
+
           {view === 'login' && (
             <Box sx={{ 
               minHeight: '100vh', 
