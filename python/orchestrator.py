@@ -4,6 +4,7 @@ import grpc
 import sys
 import json
 import time
+import jwt
 from datetime import datetime
 from strategies.mean_reversion import MeanReversionStrategy, MeanReversionParams
 from fetch_binance import fetch_binance_price
@@ -43,6 +44,16 @@ class TradingOrchestrator:
         )
         self.strategy = MeanReversionStrategy(params)
 
+    def _generate_jwt(self):
+        if not self.auth_secret:
+            return None
+        claims = {
+            'sub': 'orchestrator',
+            'iat': int(time.time()),
+            'exp': int(time.time()) + 3600  # 1 hour expiry
+        }
+        return jwt.encode(claims, self.auth_secret, algorithm='HS256')
+
     def run(self):
         """Main strategy execution loop"""
         print(f"Connecting to Go service at {self.go_service_addr}")
@@ -53,9 +64,10 @@ class TradingOrchestrator:
             trading_stub = rpc.TradingServiceStub(trading_channel)
             risk_stub = rpc.RiskServiceStub(risk_channel)
             # Prepare gRPC metadata for authorization
+            token = self._generate_jwt()
             metadata = []
-            if self.auth_secret:
-                metadata.append(('authorization', f'Bearer {self.auth_secret}'))
+            if token:
+                metadata.append(('authorization', f'Bearer {token}'))
             print(f"[DEBUG] gRPC metadata: {metadata}")
             # Start the strategy
             print("Starting strategy...")
