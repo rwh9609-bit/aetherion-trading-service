@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { Card, CardContent, TextField, Button, Typography, Alert, Box, Tabs, Tab } from '@mui/material';
+import { Card, CardContent, TextField, Button, Typography, Alert, Box, Tabs, Tab, InputAdornment, IconButton } from '@mui/material';
+import { Visibility, VisibilityOff } from '@mui/icons-material'; // Import icons
 import { loginUser, registerUser } from '../services/grpcClient';
 
 const Login = ({ onAuth, onBack }) => {
@@ -8,10 +9,26 @@ const Login = ({ onAuth, onBack }) => {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [passwordError, setPasswordError] = useState(false);
+  const [showPassword, setShowPassword] = useState(false); // New state for password visibility
+  const MIN_PASSWORD_LENGTH = 8; // Consistent with backend
+
+  const handleClickShowPassword = () => setShowPassword((show) => !show); // New handler
+  const handleMouseDownPassword = (event) => {
+    event.preventDefault();
+  };
 
   const submit = async (e) => {
     e.preventDefault();
     setError(null);
+    setPasswordError(false); // Reset password error
+
+    if (mode === 'register' && password.length < MIN_PASSWORD_LENGTH) {
+      setPasswordError(true);
+      setError(`Password must be at least ${MIN_PASSWORD_LENGTH} characters long.`);
+      return;
+    }
+
     setLoading(true);
     try {
       const fn = mode === 'login' ? loginUser : registerUser;
@@ -55,7 +72,29 @@ const Login = ({ onAuth, onBack }) => {
         {error && <Alert severity="error" sx={{ mb:2 }}>{error}</Alert>}
         <Box component="form" onSubmit={submit} sx={{ display:'flex', flexDirection:'column', gap:2 }}>
           <TextField label="Username" value={username} onChange={e=>setUsername(e.target.value)} required autoFocus />
-          <TextField label="Password" type="password" value={password} onChange={e=>setPassword(e.target.value)} required />
+          <TextField
+            label="Password"
+            type={showPassword ? 'text' : 'password'} // Dynamic type
+            value={password}
+            onChange={e=>setPassword(e.target.value)}
+            required
+            error={passwordError}
+            helperText={passwordError ? `Password must be at least ${MIN_PASSWORD_LENGTH} characters long.` : ''}
+            InputProps={{ // InputProps for adornment
+              endAdornment: (
+                <InputAdornment position="end">
+                  <IconButton
+                    aria-label="toggle password visibility"
+                    onClick={handleClickShowPassword}
+                    onMouseDown={handleMouseDownPassword}
+                    edge="end"
+                  >
+                    {showPassword ? <VisibilityOff /> : <Visibility />}
+                  </IconButton>
+                </InputAdornment>
+              ),
+            }}
+          />
           <Button type="submit" variant="contained" disabled={loading}>
             {loading ? (mode === 'login' ? 'Signing in...' : 'Registering...') : (mode === 'login' ? 'Login' : 'Register')}
           </Button>
