@@ -2,7 +2,7 @@
 // versions:
 // 	protoc-gen-go v1.36.7
 // 	protoc        v5.29.3
-// source: bot.proto
+// source: protos/bot.proto
 
 package gen
 
@@ -10,7 +10,6 @@ import (
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	reflect "reflect"
-	sync "sync"
 	unsafe "unsafe"
 )
 
@@ -21,278 +20,11 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
-// Minimal message definitions for bot management
-type CreateBotRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Name          string                 `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
-	Symbol        string                 `protobuf:"bytes,2,opt,name=symbol,proto3" json:"symbol,omitempty"`
-	Strategy      string                 `protobuf:"bytes,3,opt,name=strategy,proto3" json:"strategy,omitempty"`
-	Parameters    map[string]string      `protobuf:"bytes,4,rep,name=parameters,proto3" json:"parameters,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
+var File_protos_bot_proto protoreflect.FileDescriptor
 
-func (x *CreateBotRequest) Reset() {
-	*x = CreateBotRequest{}
-	mi := &file_bot_proto_msgTypes[0]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *CreateBotRequest) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*CreateBotRequest) ProtoMessage() {}
-
-func (x *CreateBotRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_bot_proto_msgTypes[0]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use CreateBotRequest.ProtoReflect.Descriptor instead.
-func (*CreateBotRequest) Descriptor() ([]byte, []int) {
-	return file_bot_proto_rawDescGZIP(), []int{0}
-}
-
-func (x *CreateBotRequest) GetName() string {
-	if x != nil {
-		return x.Name
-	}
-	return ""
-}
-
-func (x *CreateBotRequest) GetSymbol() string {
-	if x != nil {
-		return x.Symbol
-	}
-	return ""
-}
-
-func (x *CreateBotRequest) GetStrategy() string {
-	if x != nil {
-		return x.Strategy
-	}
-	return ""
-}
-
-func (x *CreateBotRequest) GetParameters() map[string]string {
-	if x != nil {
-		return x.Parameters
-	}
-	return nil
-}
-
-type BotList struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Bots          []*BotConfig           `protobuf:"bytes,1,rep,name=bots,proto3" json:"bots,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *BotList) Reset() {
-	*x = BotList{}
-	mi := &file_bot_proto_msgTypes[1]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *BotList) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*BotList) ProtoMessage() {}
-
-func (x *BotList) ProtoReflect() protoreflect.Message {
-	mi := &file_bot_proto_msgTypes[1]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use BotList.ProtoReflect.Descriptor instead.
-func (*BotList) Descriptor() ([]byte, []int) {
-	return file_bot_proto_rawDescGZIP(), []int{1}
-}
-
-func (x *BotList) GetBots() []*BotConfig {
-	if x != nil {
-		return x.Bots
-	}
-	return nil
-}
-
-type BotIdRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *BotIdRequest) Reset() {
-	*x = BotIdRequest{}
-	mi := &file_bot_proto_msgTypes[2]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *BotIdRequest) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*BotIdRequest) ProtoMessage() {}
-
-func (x *BotIdRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_bot_proto_msgTypes[2]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use BotIdRequest.ProtoReflect.Descriptor instead.
-func (*BotIdRequest) Descriptor() ([]byte, []int) {
-	return file_bot_proto_rawDescGZIP(), []int{2}
-}
-
-func (x *BotIdRequest) GetId() string {
-	if x != nil {
-		return x.Id
-	}
-	return ""
-}
-
-type BotConfig struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	Name          string                 `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
-	Symbol        string                 `protobuf:"bytes,3,opt,name=symbol,proto3" json:"symbol,omitempty"`
-	Strategy      string                 `protobuf:"bytes,4,opt,name=strategy,proto3" json:"strategy,omitempty"`
-	Parameters    map[string]string      `protobuf:"bytes,5,rep,name=parameters,proto3" json:"parameters,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
-	Active        bool                   `protobuf:"varint,6,opt,name=active,proto3" json:"active,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *BotConfig) Reset() {
-	*x = BotConfig{}
-	mi := &file_bot_proto_msgTypes[3]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *BotConfig) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*BotConfig) ProtoMessage() {}
-
-func (x *BotConfig) ProtoReflect() protoreflect.Message {
-	mi := &file_bot_proto_msgTypes[3]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use BotConfig.ProtoReflect.Descriptor instead.
-func (*BotConfig) Descriptor() ([]byte, []int) {
-	return file_bot_proto_rawDescGZIP(), []int{3}
-}
-
-func (x *BotConfig) GetId() string {
-	if x != nil {
-		return x.Id
-	}
-	return ""
-}
-
-func (x *BotConfig) GetName() string {
-	if x != nil {
-		return x.Name
-	}
-	return ""
-}
-
-func (x *BotConfig) GetSymbol() string {
-	if x != nil {
-		return x.Symbol
-	}
-	return ""
-}
-
-func (x *BotConfig) GetStrategy() string {
-	if x != nil {
-		return x.Strategy
-	}
-	return ""
-}
-
-func (x *BotConfig) GetParameters() map[string]string {
-	if x != nil {
-		return x.Parameters
-	}
-	return nil
-}
-
-func (x *BotConfig) GetActive() bool {
-	if x != nil {
-		return x.Active
-	}
-	return false
-}
-
-var File_bot_proto protoreflect.FileDescriptor
-
-const file_bot_proto_rawDesc = "" +
+const file_protos_bot_proto_rawDesc = "" +
 	"\n" +
-	"\tbot.proto\x12\atrading\x1a\x11trading_api.proto\"\xe4\x01\n" +
-	"\x10CreateBotRequest\x12\x12\n" +
-	"\x04name\x18\x01 \x01(\tR\x04name\x12\x16\n" +
-	"\x06symbol\x18\x02 \x01(\tR\x06symbol\x12\x1a\n" +
-	"\bstrategy\x18\x03 \x01(\tR\bstrategy\x12I\n" +
-	"\n" +
-	"parameters\x18\x04 \x03(\v2).trading.CreateBotRequest.ParametersEntryR\n" +
-	"parameters\x1a=\n" +
-	"\x0fParametersEntry\x12\x10\n" +
-	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
-	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"1\n" +
-	"\aBotList\x12&\n" +
-	"\x04bots\x18\x01 \x03(\v2\x12.trading.BotConfigR\x04bots\"\x1e\n" +
-	"\fBotIdRequest\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\tR\x02id\"\xfe\x01\n" +
-	"\tBotConfig\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\tR\x02id\x12\x12\n" +
-	"\x04name\x18\x02 \x01(\tR\x04name\x12\x16\n" +
-	"\x06symbol\x18\x03 \x01(\tR\x06symbol\x12\x1a\n" +
-	"\bstrategy\x18\x04 \x01(\tR\bstrategy\x12B\n" +
-	"\n" +
-	"parameters\x18\x05 \x03(\v2\".trading.BotConfig.ParametersEntryR\n" +
-	"parameters\x12\x16\n" +
-	"\x06active\x18\x06 \x01(\bR\x06active\x1a=\n" +
-	"\x0fParametersEntry\x12\x10\n" +
-	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
-	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x012\xb7\x02\n" +
+	"\x10protos/bot.proto\x12\atrading\x1a\x11trading_api.proto2\xb7\x02\n" +
 	"\n" +
 	"BotService\x12A\n" +
 	"\tCreateBot\x12\x19.trading.CreateBotRequest\x1a\x17.trading.StatusResponse\"\x00\x12.\n" +
@@ -301,53 +33,35 @@ const file_bot_proto_rawDesc = "" +
 	"\aStopBot\x12\x15.trading.BotIdRequest\x1a\x17.trading.StatusResponse\"\x00\x12;\n" +
 	"\fGetBotStatus\x12\x15.trading.BotIdRequest\x1a\x12.trading.BotConfig\"\x00B-Z+github.com/rwh9609-bit/multilanguage/go/genb\x06proto3"
 
-var (
-	file_bot_proto_rawDescOnce sync.Once
-	file_bot_proto_rawDescData []byte
-)
-
-func file_bot_proto_rawDescGZIP() []byte {
-	file_bot_proto_rawDescOnce.Do(func() {
-		file_bot_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_bot_proto_rawDesc), len(file_bot_proto_rawDesc)))
-	})
-	return file_bot_proto_rawDescData
-}
-
-var file_bot_proto_msgTypes = make([]protoimpl.MessageInfo, 6)
-var file_bot_proto_goTypes = []any{
+var file_protos_bot_proto_goTypes = []any{
 	(*CreateBotRequest)(nil), // 0: trading.CreateBotRequest
-	(*BotList)(nil),          // 1: trading.BotList
+	(*Empty)(nil),            // 1: trading.Empty
 	(*BotIdRequest)(nil),     // 2: trading.BotIdRequest
-	(*BotConfig)(nil),        // 3: trading.BotConfig
-	nil,                      // 4: trading.CreateBotRequest.ParametersEntry
-	nil,                      // 5: trading.BotConfig.ParametersEntry
-	(*Empty)(nil),            // 6: trading.Empty
-	(*StatusResponse)(nil),   // 7: trading.StatusResponse
+	(*StatusResponse)(nil),   // 3: trading.StatusResponse
+	(*BotList)(nil),          // 4: trading.BotList
+	(*BotConfig)(nil),        // 5: trading.BotConfig
 }
-var file_bot_proto_depIdxs = []int32{
-	4, // 0: trading.CreateBotRequest.parameters:type_name -> trading.CreateBotRequest.ParametersEntry
-	3, // 1: trading.BotList.bots:type_name -> trading.BotConfig
-	5, // 2: trading.BotConfig.parameters:type_name -> trading.BotConfig.ParametersEntry
-	0, // 3: trading.BotService.CreateBot:input_type -> trading.CreateBotRequest
-	6, // 4: trading.BotService.ListBots:input_type -> trading.Empty
-	2, // 5: trading.BotService.StartBot:input_type -> trading.BotIdRequest
-	2, // 6: trading.BotService.StopBot:input_type -> trading.BotIdRequest
-	2, // 7: trading.BotService.GetBotStatus:input_type -> trading.BotIdRequest
-	7, // 8: trading.BotService.CreateBot:output_type -> trading.StatusResponse
-	1, // 9: trading.BotService.ListBots:output_type -> trading.BotList
-	7, // 10: trading.BotService.StartBot:output_type -> trading.StatusResponse
-	7, // 11: trading.BotService.StopBot:output_type -> trading.StatusResponse
-	3, // 12: trading.BotService.GetBotStatus:output_type -> trading.BotConfig
-	8, // [8:13] is the sub-list for method output_type
-	3, // [3:8] is the sub-list for method input_type
-	3, // [3:3] is the sub-list for extension type_name
-	3, // [3:3] is the sub-list for extension extendee
-	0, // [0:3] is the sub-list for field type_name
+var file_protos_bot_proto_depIdxs = []int32{
+	0, // 0: trading.BotService.CreateBot:input_type -> trading.CreateBotRequest
+	1, // 1: trading.BotService.ListBots:input_type -> trading.Empty
+	2, // 2: trading.BotService.StartBot:input_type -> trading.BotIdRequest
+	2, // 3: trading.BotService.StopBot:input_type -> trading.BotIdRequest
+	2, // 4: trading.BotService.GetBotStatus:input_type -> trading.BotIdRequest
+	3, // 5: trading.BotService.CreateBot:output_type -> trading.StatusResponse
+	4, // 6: trading.BotService.ListBots:output_type -> trading.BotList
+	3, // 7: trading.BotService.StartBot:output_type -> trading.StatusResponse
+	3, // 8: trading.BotService.StopBot:output_type -> trading.StatusResponse
+	5, // 9: trading.BotService.GetBotStatus:output_type -> trading.BotConfig
+	5, // [5:10] is the sub-list for method output_type
+	0, // [0:5] is the sub-list for method input_type
+	0, // [0:0] is the sub-list for extension type_name
+	0, // [0:0] is the sub-list for extension extendee
+	0, // [0:0] is the sub-list for field type_name
 }
 
-func init() { file_bot_proto_init() }
-func file_bot_proto_init() {
-	if File_bot_proto != nil {
+func init() { file_protos_bot_proto_init() }
+func file_protos_bot_proto_init() {
+	if File_protos_bot_proto != nil {
 		return
 	}
 	file_trading_api_proto_init()
@@ -355,17 +69,16 @@ func file_bot_proto_init() {
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
-			RawDescriptor: unsafe.Slice(unsafe.StringData(file_bot_proto_rawDesc), len(file_bot_proto_rawDesc)),
+			RawDescriptor: unsafe.Slice(unsafe.StringData(file_protos_bot_proto_rawDesc), len(file_protos_bot_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   6,
+			NumMessages:   0,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
-		GoTypes:           file_bot_proto_goTypes,
-		DependencyIndexes: file_bot_proto_depIdxs,
-		MessageInfos:      file_bot_proto_msgTypes,
+		GoTypes:           file_protos_bot_proto_goTypes,
+		DependencyIndexes: file_protos_bot_proto_depIdxs,
 	}.Build()
-	File_bot_proto = out.File
-	file_bot_proto_goTypes = nil
-	file_bot_proto_depIdxs = nil
+	File_protos_bot_proto = out.File
+	file_protos_bot_proto_goTypes = nil
+	file_protos_bot_proto_depIdxs = nil
 }

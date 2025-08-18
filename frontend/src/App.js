@@ -95,7 +95,7 @@ function App() {
           {view !== 'landing' && (
             <AppBar position="static">
               <Toolbar>
-                <Typography variant="h6" component="div" sx={{ flexGrow: 1, cursor:'pointer' }} onClick={()=>setView(user ? 'dashboard' : 'landing')}>
+                <Typography variant="h6" component="div" sx={{ flexGrow: 1, cursor:'pointer' }} onClick={()=>setView('landing')}>
                   Aetherion Trading Engine
                 </Typography>
                 <Box>
