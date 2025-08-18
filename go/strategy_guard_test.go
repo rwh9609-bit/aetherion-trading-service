@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	pb "github.com/rwh9609-bit/multilanguage/go/gen"
+		pb "github.com/rwh9609-bit/multilanguage/go/gen"
 )
 
 // TestStrategyPeriodGuard ensures non-positive period parameter doesn't panic and defaults.

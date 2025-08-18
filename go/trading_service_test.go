@@ -8,7 +8,7 @@ import (
 	"testing"
 	"time"
 
-	pb "github.com/rwh9609-bit/multilanguage/go/gen"
+		pb "github.com/rwh9609-bit/multilanguage/go/gen"
 )
 
 // mockHTTPClient returns a function matching httpGet signature

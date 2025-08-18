@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	pb "github.com/rwh9609-bit/multilanguage/go/gen"
+		pb "github.com/rwh9609-bit/multilanguage/go/gen"
 )
 
 // helper to invoke trade and return response

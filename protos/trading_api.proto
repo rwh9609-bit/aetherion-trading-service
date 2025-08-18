@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package trading;
 
-option go_package = "aetherion-trading-service/gen";
+option go_package = "github.com/rwh9609-bit/multilanguage/go/gen";
 
 // Represents a single market data tick
 message Tick {
@@ -94,6 +94,7 @@ message TradeResponse {
 message OrderBookEntry {
     double price = 1;
     double size = 2;
+    int64 timestamp = 3; // Unix epoch milliseconds
 }
 
 message OrderBook {

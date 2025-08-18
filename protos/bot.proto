@@ -2,7 +2,7 @@ syntax = "proto3";
 package trading;
 option go_package = "github.com/rwh9609-bit/multilanguage/go/gen";
 
-import "trading_api.proto"; // Reuse existing message definitions
+import "trading_api.proto";
 
 // BotService provides a focused interface for bot lifecycle operations.
 service BotService {
@@ -11,4 +11,29 @@ service BotService {
   rpc StartBot(BotIdRequest) returns (StatusResponse) {}
   rpc StopBot(BotIdRequest) returns (StatusResponse) {}
   rpc GetBotStatus(BotIdRequest) returns (BotConfig) {}
+}
+
+// Minimal message definitions for bot management
+message CreateBotRequest {
+  string name = 1;
+  string symbol = 2;
+  string strategy = 3;
+  map<string, string> parameters = 4;
+}
+
+message BotList {
+  repeated BotConfig bots = 1;
+}
+
+message BotIdRequest {
+  string id = 1;
+}
+
+message BotConfig {
+  string id = 1;
+  string name = 2;
+  string symbol = 3;
+  string strategy = 4;
+  map<string, string> parameters = 5;
+  bool active = 6;
 }
