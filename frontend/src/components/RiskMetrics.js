@@ -18,6 +18,11 @@ const RiskMetrics = () => {
           positionSize: data.positionSize || 0,
           accountValue: data.accountValue || 0,
           dailyPnL: data.dailyPnL || 0,
+          assetNames: data.assetNames || [],
+          correlationMatrix: data.correlationMatrix || [],
+          volatilityPerAsset: data.volatilityPerAsset || [],
+          simulationMode: data.simulationMode || '',
+          lastUpdate: data.lastUpdate || '',
         });
         setLoading(false);
       } catch (err) {
@@ -76,6 +81,68 @@ const RiskMetrics = () => {
               ${metrics.dailyPnL.toFixed(2)}
             </Typography>
           </Box>
+        </Box>
+        {/* Advanced Metrics Section */}
+        <Box mt={3}>
+          <Typography variant="subtitle1" gutterBottom>
+            Advanced Risk Metrics
+          </Typography>
+          <Typography variant="body2" color="textSecondary">
+            Simulation Mode: <b>{metrics.simulationMode}</b>
+          </Typography>
+          <Typography variant="body2" color="textSecondary">
+            Last Update: {metrics.lastUpdate}
+          </Typography>
+          {/* Correlation Matrix Table */}
+          {metrics.assetNames.length > 0 && metrics.correlationMatrix.length > 0 && (
+            <Box mt={2}>
+              <Typography variant="subtitle2">Asset Correlations</Typography>
+              <table style={{ width: '100%', borderCollapse: 'collapse', marginTop: 8 }}>
+                <thead>
+                  <tr>
+                    <th></th>
+                    {metrics.assetNames.map((name, idx) => (
+                      <th key={idx} style={{ border: '1px solid #ccc', padding: 4 }}>{name}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {metrics.assetNames.map((rowName, i) => (
+                    <tr key={i}>
+                      <td style={{ border: '1px solid #ccc', padding: 4 }}>{rowName}</td>
+                      {metrics.assetNames.map((_, j) => (
+                        <td key={j} style={{ border: '1px solid #ccc', padding: 4 }}>
+                          {metrics.correlationMatrix[i * metrics.assetNames.length + j].toFixed(2)}
+                        </td>
+                      ))}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </Box>
+          )}
+          {/* Volatility Table */}
+          {metrics.assetNames.length > 0 && metrics.volatilityPerAsset.length > 0 && (
+            <Box mt={2}>
+              <Typography variant="subtitle2">Per-Asset Volatility</Typography>
+              <table style={{ width: '100%', borderCollapse: 'collapse', marginTop: 8 }}>
+                <thead>
+                  <tr>
+                    <th>Asset</th>
+                    <th>Volatility</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {metrics.assetNames.map((name, i) => (
+                    <tr key={i}>
+                      <td style={{ border: '1px solid #ccc', padding: 4 }}>{name}</td>
+                      <td style={{ border: '1px solid #ccc', padding: 4 }}>{metrics.volatilityPerAsset[i].toFixed(4)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </Box>
+          )}
         </Box>
       </CardContent>
     </Card>

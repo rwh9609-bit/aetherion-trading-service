@@ -68,6 +68,11 @@ message VaRRequest {
 // Response with the calculated VaR
 message VaRResponse {
     double value_at_risk = 1;
+    repeated string asset_names = 2;
+    repeated double correlation_matrix = 3; // row-major flattened
+    repeated double volatility_per_asset = 4;
+    string simulation_mode = 5;
+    string last_update = 6;
 }
 
 // Trade execution messages
