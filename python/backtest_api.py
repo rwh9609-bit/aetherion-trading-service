@@ -32,7 +32,7 @@ async def download_historical_data(request: Request):
         resp = requests.get(url)
         resp.raise_for_status()
         klines = resp.json()
-        with open(csv_file, mode="w", newline="") as f:
+        with open(csv_file, mode="w", newline="", encoding="utf-8") as f:
             writer = csv.writer(f)
             writer.writerow(["timestamp", "price"])
             for k in klines:
@@ -70,24 +70,12 @@ async def fetch_live_data(request: Request, symbol: str = None):
         price = fetch_binance_price(symbol)
         timestamp = datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")
         csv_file = f"data/{symbol.replace('USDT','USD')}_1min.csv"
-        with open(csv_file, mode="a", newline="") as f:
+        with open(csv_file, mode="a", newline="", encoding="utf-8") as f:
             writer = csv.writer(f)
             writer.writerow([timestamp, price])
         return {"timestamp": timestamp, "price": price, "status": "success"}
     except Exception as e:
-        return {"error": str(e), "status": "failed"}
-        try:
-            price = fetch_binance_price(symbol)
-            timestamp = datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")
-            # Normalize symbol for CSV filename
-            base = symbol.replace("USDT", "").replace("USD", "")
-            csv_file = f"data/{base}USD_1min.csv"
-            with open(csv_file, mode="a", newline="") as f:
-                writer = csv.writer(f)
-                writer.writerow([timestamp, price])
-            return {"timestamp": timestamp, "price": price, "status": "success"}
-        except Exception as e:
-            return {"error": str(e), "status": "error"}
+        return {"error": str(e), "status": "error"}
 
 @router.get("/marketdata")
 async def get_market_data(symbol: str = "BTCUSD"):
