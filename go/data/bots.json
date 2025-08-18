@@ -1,18 +1,12 @@
 [
   {
-    "id": "8c92c24d-a46e-4597-a96c-92163b1f0980",
-    "name": "randy",
+    "id": "62d27391-9fc3-4531-a9d8-7a9d6e5b1bcc",
+    "name": "bot1",
     "symbol": "BTC-USD",
     "strategy": "MEAN_REVERSION",
     "parameters": {
-      "entryStd": "2",
-      "exitStd": "0.5",
-      "lookback": "20",
-      "maxPos": "0.1",
-      "riskPerTradePct": "0.01",
-      "stopLossPct": "0.02",
-      "strategy_id": "86e5842e-2824-468b-aba7-76af40968680"
-    },
-    "created_at_unix": 1755290054
+      "strategy_id": "83a7d66b-5224-49bd-8ced-b71d88991bd0",
+      "threshold": "1.0"
+    }
   }
 ]

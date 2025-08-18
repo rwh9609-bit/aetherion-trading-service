@@ -8,7 +8,7 @@ import (
 	"testing"
 	"time"
 
-		pb "github.com/rwh9609-bit/multilanguage/go/gen"
+	pb "github.com/rwh9609-bit/multilanguage/go/gen"
 )
 
 // mockHTTPClient returns a function matching httpGet signature
@@ -20,9 +20,9 @@ func mockHTTPClient(t *testing.T, price string, status int) func(string) (*http.
 }
 
 func TestGetPrice(t *testing.T) {
-	old := httpGet
-	defer func() { httpGet = old }()
-	httpGet = mockHTTPClient(t, "54321.12", 200)
+	old := HttpGet
+	defer func() { HttpGet = old }()
+	HttpGet = mockHTTPClient(t, "54321.12", 200)
 
 	s := newTradingServer()
 	resp, err := s.GetPrice(context.Background(), &pb.Tick{Symbol: "BTC-USD"})
@@ -35,9 +35,9 @@ func TestGetPrice(t *testing.T) {
 }
 
 func TestGetPriceHTTPError(t *testing.T) {
-	old := httpGet
-	defer func() { httpGet = old }()
-	httpGet = func(url string) (*http.Response, error) {
+	old := HttpGet
+	defer func() { HttpGet = old }()
+	HttpGet = func(url string) (*http.Response, error) {
 		return &http.Response{StatusCode: 500, Body: ioutil.NopCloser(strings.NewReader("oops"))}, nil
 	}
 	s := newTradingServer()
