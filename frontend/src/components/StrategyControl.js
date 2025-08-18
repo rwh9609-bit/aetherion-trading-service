@@ -34,13 +34,15 @@ const StrategyControl = () => {
       // Import gRPC helpers lazily to avoid circular imports on initial bundle
       const { startStrategy } = await import('../services/grpcClient');
       if (status === 'stopped') {
-        // Map UI params to backend StrategyRequest parameters; include safe defaults
-        const strategyParams = {
-          type: 'MEAN_REVERSION',
-          threshold: String(params.entryStdDev || 2.0),
-          period: String(Math.max(1, params.lookbackPeriod || 5)),
-        };
-        const resp = await startStrategy({ symbol: 'BTC-USD', parameters: strategyParams });
+        // Pass all UI params to backend
+        const resp = await startStrategy({
+          lookbackPeriod: params.lookbackPeriod,
+          entryStdDev: params.entryStdDev,
+          exitStdDev: params.exitStdDev,
+          maxPositionSize: params.maxPositionSize,
+          stopLossPercent: params.stopLossPct,
+          riskPerTradePercent: params.riskPerTradePct
+        });
         if (!resp.success) throw new Error(resp.message || 'Start failed');
         setStatus('running');
         setAlert({ type:'success', message:`Strategy started (id=${resp.id || 'n/a'})` });

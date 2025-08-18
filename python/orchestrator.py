@@ -126,3 +126,12 @@ if __name__ == "__main__":
         orchestrator.run()
     except KeyboardInterrupt:
         print("\nOrchestrator shutdown.")
+# Example: Run a backtest programmatically
+from backtest_engine import BacktestEngine, load_historical_data
+from strategies.mean_reversion import MeanReversionStrategy, MeanReversionParams
+params = MeanReversionParams(lookback_period=20, entry_std_dev=2.0, exit_std_dev=0.5)
+strategy = MeanReversionStrategy(params)
+historical_data = load_historical_data("data/BTCUSD_1min.csv")
+engine = BacktestEngine(strategy, historical_data)
+trades, equity_curve = engine.run()
+print(f"Backtest complete: {len(trades)} trades, {len(equity_curve)} equity points.")

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { ThemeProvider, createTheme, CssBaseline, AppBar, Toolbar, Typography, Button, Box, Tooltip, CircularProgress, Snackbar, Alert } from '@mui/material';
 import TradingDashboard from './components/TradingDashboard';
+
 import TradingOperations from './components/TradingOperations';
 import BotsPage from './components/BotsPage';
 import DevelopBotPage from './components/DevelopBotPage';
@@ -11,6 +12,7 @@ import Login from './components/Login';
 import AccountPage from './components/AccountPage';
 import LandingPage from './components/LandingPage';
 import ErrorBoundary from './components/ErrorBoundary';
+import BacktestRunner from './components/BacktestRunner';
 import './App.css';
 
 const darkTheme = createTheme({
@@ -34,6 +36,8 @@ function App() {
   const [view, setView] = useState('landing'); // Start with landing page
   const [health, setHealth] = useState({ status:'unknown', ts:null, fails:0 });
   const [showHealthWarn, setShowHealthWarn] = useState(false);
+  const [liveFetchStatus, setLiveFetchStatus] = useState(null); // null | 'success' | 'error'
+  const [showLiveFetchSnackbar, setShowLiveFetchSnackbar] = useState(false);
 
   useEffect(()=> {
     let cancelled = false;
@@ -46,15 +50,37 @@ function App() {
             try { res = await fetch('http://localhost:8090/healthz', { cache:'no-store' }); } catch {}
         }
         if (cancelled) return;
-  if (res.ok) setHealth({ status:'ok', ts:Date.now(), fails:0 }); else setHealth(h => { const fails=(h.fails||0)+1; if (fails===3) setShowHealthWarn(true); return { status:'error', ts:Date.now(), fails }; });
+        if (res.ok) setHealth({ status:'ok', ts:Date.now(), fails:0 }); else setHealth(h => { const fails=(h.fails||0)+1; if (fails===3) setShowHealthWarn(true); return { status:'error', ts:Date.now(), fails }; });
       } catch {
-  if (!cancelled) setHealth(h => { const fails=(h.fails||0)+1; if (fails===3) setShowHealthWarn(true); return { status:'error', ts:Date.now(), fails }; });
+        if (!cancelled) setHealth(h => { const fails=(h.fails||0)+1; if (fails===3) setShowHealthWarn(true); return { status:'error', ts:Date.now(), fails }; });
       }
     };
     check();
     const id = setInterval(check, 20000);
     return () => { cancelled = true; clearInterval(id); };
   }, []);
+
+  // Automation: Periodically fetch live data every minute when user is logged in
+  useEffect(() => {
+    if (!user) return;
+    const fetchLive = async () => {
+      try {
+  const res = await fetch('http://localhost:8000/fetch_live_data', { method: 'POST' });
+        const data = await res.json();
+        if (data.status === 'success') {
+          setLiveFetchStatus('success');
+        } else {
+          setLiveFetchStatus('error');
+        }
+      } catch {
+        setLiveFetchStatus('error');
+      }
+      setShowLiveFetchSnackbar(true);
+    };
+    fetchLive();
+    const intervalId = setInterval(fetchLive, 60000);
+    return () => { clearInterval(intervalId); };
+  }, [user]);
   
   const handleGetStarted = () => {
     setView('login');
@@ -75,7 +101,9 @@ function App() {
                 <Box>
                   <Button color="inherit" onClick={()=>setView('about')} sx={{ mr:1 }}>About</Button>
                   <Button color="inherit" onClick={()=>setView('news')} sx={{ mr:1 }}>News</Button>
-                  <Button color="inherit" onClick={()=>setView('contact')} sx={{ mr:2 }}>Contact</Button>
+                  <Button color="inherit" onClick={()=>setView('contact')} sx={{ mr:1 }}>Contact</Button>
+                  {user && <Button color="inherit" onClick={()=>setView('backtest')} sx={{ mr:2 }}>Backtesting</Button>}
+
                   {user ? (
                     <>
                       <Button color="inherit" onClick={()=>setView('account')} sx={{ mr:1 }}>Account</Button>
@@ -105,6 +133,7 @@ function App() {
           
           {/* Content based on current view */}
           {view === 'landing' && <LandingPage onGetStarted={handleGetStarted} />}
+
           {view === 'login' && (
             <Box sx={{ 
               minHeight: '100vh', 
@@ -119,6 +148,11 @@ function App() {
           {user && view === 'dashboard' && (
             <div style={{ padding: '24px' }}>
               <TradingDashboard />
+            </div>
+          )}
+          {user && view === 'backtest' && (
+            <div style={{ padding: '24px' }}>
+              <BacktestRunner />
             </div>
           )}
           {user && view === 'operations' && (
@@ -148,6 +182,11 @@ function App() {
         <Snackbar open={showHealthWarn} autoHideDuration={6000} onClose={()=>setShowHealthWarn(false)} anchorOrigin={{ vertical:'bottom', horizontal:'right' }}>
           <Alert severity="warning" variant="filled" onClose={()=>setShowHealthWarn(false)}>
             Backend health failing. Check server or network.
+          </Alert>
+        </Snackbar>
+        <Snackbar open={showLiveFetchSnackbar} autoHideDuration={3000} onClose={()=>setShowLiveFetchSnackbar(false)} anchorOrigin={{ vertical:'bottom', horizontal:'left' }}>
+          <Alert severity={liveFetchStatus==='success' ? 'success' : 'error'} variant="filled" onClose={()=>setShowLiveFetchSnackbar(false)}>
+            {liveFetchStatus==='success' ? 'Live price fetched and saved!' : 'Live price fetch failed.'}
           </Alert>
         </Snackbar>
       </ThemeProvider>

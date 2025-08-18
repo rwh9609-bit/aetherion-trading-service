@@ -30,34 +30,38 @@ const (
 	TradingService_RemoveSymbol_FullMethodName    = "/trading.TradingService/RemoveSymbol"
 	TradingService_ListSymbols_FullMethodName     = "/trading.TradingService/ListSymbols"
 	TradingService_GetMomentum_FullMethodName     = "/trading.TradingService/GetMomentum"
-	TradingService_CreateBot_FullMethodName       = "/trading.TradingService/CreateBot"
-	TradingService_ListBots_FullMethodName        = "/trading.TradingService/ListBots"
-	TradingService_StartBot_FullMethodName        = "/trading.TradingService/StartBot"
-	TradingService_StopBot_FullMethodName         = "/trading.TradingService/StopBot"
-	TradingService_GetBotStatus_FullMethodName    = "/trading.TradingService/GetBotStatus"
 	TradingService_ExecuteTrade_FullMethodName    = "/trading.TradingService/ExecuteTrade"
 )
 
 // TradingServiceClient is the client API for TradingService service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
+//
+// Service definition
 type TradingServiceClient interface {
+	// Stream order book updates
 	StreamOrderBook(ctx context.Context, in *OrderBookRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[OrderBook], error)
+	// Get current price for a symbol
 	GetPrice(ctx context.Context, in *Tick, opts ...grpc.CallOption) (*Tick, error)
+	// Start a trading strategy
 	StartStrategy(ctx context.Context, in *StrategyRequest, opts ...grpc.CallOption) (*StatusResponse, error)
+	// Stop a trading strategy
 	StopStrategy(ctx context.Context, in *StrategyRequest, opts ...grpc.CallOption) (*StatusResponse, error)
+	// Gets the current portfolio status
 	GetPortfolio(ctx context.Context, in *PortfolioRequest, opts ...grpc.CallOption) (*Portfolio, error)
+	// Subscribes to a real-time feed of market data
 	SubscribeTicks(ctx context.Context, in *StrategyRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[Tick], error)
+	// Streams live ticks from internal event bus (websocket sourced)
 	StreamPrice(ctx context.Context, in *TickStreamRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[Tick], error)
+	// Dynamically add a symbol to market data feed
 	AddSymbol(ctx context.Context, in *SymbolRequest, opts ...grpc.CallOption) (*StatusResponse, error)
+	// Dynamically remove a symbol from market data feed
 	RemoveSymbol(ctx context.Context, in *SymbolRequest, opts ...grpc.CallOption) (*StatusResponse, error)
+	// List currently subscribed symbols in market data feed
 	ListSymbols(ctx context.Context, in *Empty, opts ...grpc.CallOption) (*SymbolList, error)
+	// Aggregate short-term momentum metrics for symbols (server-side analog of client scanner)
 	GetMomentum(ctx context.Context, in *MomentumRequest, opts ...grpc.CallOption) (*MomentumResponse, error)
-	CreateBot(ctx context.Context, in *CreateBotRequest, opts ...grpc.CallOption) (*StatusResponse, error)
-	ListBots(ctx context.Context, in *Empty, opts ...grpc.CallOption) (*BotList, error)
-	StartBot(ctx context.Context, in *BotIdRequest, opts ...grpc.CallOption) (*StatusResponse, error)
-	StopBot(ctx context.Context, in *BotIdRequest, opts ...grpc.CallOption) (*StatusResponse, error)
-	GetBotStatus(ctx context.Context, in *BotIdRequest, opts ...grpc.CallOption) (*BotConfig, error)
+	// Execute a trade (simplified demo endpoint)
 	ExecuteTrade(ctx context.Context, in *TradeRequest, opts ...grpc.CallOption) (*TradeResponse, error)
 }
 
@@ -206,56 +210,6 @@ func (c *tradingServiceClient) GetMomentum(ctx context.Context, in *MomentumRequ
 	return out, nil
 }
 
-func (c *tradingServiceClient) CreateBot(ctx context.Context, in *CreateBotRequest, opts ...grpc.CallOption) (*StatusResponse, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(StatusResponse)
-	err := c.cc.Invoke(ctx, TradingService_CreateBot_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *tradingServiceClient) ListBots(ctx context.Context, in *Empty, opts ...grpc.CallOption) (*BotList, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(BotList)
-	err := c.cc.Invoke(ctx, TradingService_ListBots_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *tradingServiceClient) StartBot(ctx context.Context, in *BotIdRequest, opts ...grpc.CallOption) (*StatusResponse, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(StatusResponse)
-	err := c.cc.Invoke(ctx, TradingService_StartBot_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *tradingServiceClient) StopBot(ctx context.Context, in *BotIdRequest, opts ...grpc.CallOption) (*StatusResponse, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(StatusResponse)
-	err := c.cc.Invoke(ctx, TradingService_StopBot_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *tradingServiceClient) GetBotStatus(ctx context.Context, in *BotIdRequest, opts ...grpc.CallOption) (*BotConfig, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(BotConfig)
-	err := c.cc.Invoke(ctx, TradingService_GetBotStatus_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
 func (c *tradingServiceClient) ExecuteTrade(ctx context.Context, in *TradeRequest, opts ...grpc.CallOption) (*TradeResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(TradeResponse)
@@ -269,23 +223,32 @@ func (c *tradingServiceClient) ExecuteTrade(ctx context.Context, in *TradeReques
 // TradingServiceServer is the server API for TradingService service.
 // All implementations must embed UnimplementedTradingServiceServer
 // for forward compatibility.
+//
+// Service definition
 type TradingServiceServer interface {
+	// Stream order book updates
 	StreamOrderBook(*OrderBookRequest, grpc.ServerStreamingServer[OrderBook]) error
+	// Get current price for a symbol
 	GetPrice(context.Context, *Tick) (*Tick, error)
+	// Start a trading strategy
 	StartStrategy(context.Context, *StrategyRequest) (*StatusResponse, error)
+	// Stop a trading strategy
 	StopStrategy(context.Context, *StrategyRequest) (*StatusResponse, error)
+	// Gets the current portfolio status
 	GetPortfolio(context.Context, *PortfolioRequest) (*Portfolio, error)
+	// Subscribes to a real-time feed of market data
 	SubscribeTicks(*StrategyRequest, grpc.ServerStreamingServer[Tick]) error
+	// Streams live ticks from internal event bus (websocket sourced)
 	StreamPrice(*TickStreamRequest, grpc.ServerStreamingServer[Tick]) error
+	// Dynamically add a symbol to market data feed
 	AddSymbol(context.Context, *SymbolRequest) (*StatusResponse, error)
+	// Dynamically remove a symbol from market data feed
 	RemoveSymbol(context.Context, *SymbolRequest) (*StatusResponse, error)
+	// List currently subscribed symbols in market data feed
 	ListSymbols(context.Context, *Empty) (*SymbolList, error)
+	// Aggregate short-term momentum metrics for symbols (server-side analog of client scanner)
 	GetMomentum(context.Context, *MomentumRequest) (*MomentumResponse, error)
-	CreateBot(context.Context, *CreateBotRequest) (*StatusResponse, error)
-	ListBots(context.Context, *Empty) (*BotList, error)
-	StartBot(context.Context, *BotIdRequest) (*StatusResponse, error)
-	StopBot(context.Context, *BotIdRequest) (*StatusResponse, error)
-	GetBotStatus(context.Context, *BotIdRequest) (*BotConfig, error)
+	// Execute a trade (simplified demo endpoint)
 	ExecuteTrade(context.Context, *TradeRequest) (*TradeResponse, error)
 	mustEmbedUnimplementedTradingServiceServer()
 }
@@ -329,21 +292,6 @@ func (UnimplementedTradingServiceServer) ListSymbols(context.Context, *Empty) (*
 }
 func (UnimplementedTradingServiceServer) GetMomentum(context.Context, *MomentumRequest) (*MomentumResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetMomentum not implemented")
-}
-func (UnimplementedTradingServiceServer) CreateBot(context.Context, *CreateBotRequest) (*StatusResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method CreateBot not implemented")
-}
-func (UnimplementedTradingServiceServer) ListBots(context.Context, *Empty) (*BotList, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method ListBots not implemented")
-}
-func (UnimplementedTradingServiceServer) StartBot(context.Context, *BotIdRequest) (*StatusResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method StartBot not implemented")
-}
-func (UnimplementedTradingServiceServer) StopBot(context.Context, *BotIdRequest) (*StatusResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method StopBot not implemented")
-}
-func (UnimplementedTradingServiceServer) GetBotStatus(context.Context, *BotIdRequest) (*BotConfig, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetBotStatus not implemented")
 }
 func (UnimplementedTradingServiceServer) ExecuteTrade(context.Context, *TradeRequest) (*TradeResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ExecuteTrade not implemented")
@@ -546,96 +494,6 @@ func _TradingService_GetMomentum_Handler(srv interface{}, ctx context.Context, d
 	return interceptor(ctx, in, info, handler)
 }
 
-func _TradingService_CreateBot_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(CreateBotRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(TradingServiceServer).CreateBot(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: TradingService_CreateBot_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(TradingServiceServer).CreateBot(ctx, req.(*CreateBotRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _TradingService_ListBots_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(Empty)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(TradingServiceServer).ListBots(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: TradingService_ListBots_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(TradingServiceServer).ListBots(ctx, req.(*Empty))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _TradingService_StartBot_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(BotIdRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(TradingServiceServer).StartBot(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: TradingService_StartBot_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(TradingServiceServer).StartBot(ctx, req.(*BotIdRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _TradingService_StopBot_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(BotIdRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(TradingServiceServer).StopBot(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: TradingService_StopBot_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(TradingServiceServer).StopBot(ctx, req.(*BotIdRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _TradingService_GetBotStatus_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(BotIdRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(TradingServiceServer).GetBotStatus(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: TradingService_GetBotStatus_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(TradingServiceServer).GetBotStatus(ctx, req.(*BotIdRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
 func _TradingService_ExecuteTrade_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(TradeRequest)
 	if err := dec(in); err != nil {
@@ -694,26 +552,6 @@ var TradingService_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _TradingService_GetMomentum_Handler,
 		},
 		{
-			MethodName: "CreateBot",
-			Handler:    _TradingService_CreateBot_Handler,
-		},
-		{
-			MethodName: "ListBots",
-			Handler:    _TradingService_ListBots_Handler,
-		},
-		{
-			MethodName: "StartBot",
-			Handler:    _TradingService_StartBot_Handler,
-		},
-		{
-			MethodName: "StopBot",
-			Handler:    _TradingService_StopBot_Handler,
-		},
-		{
-			MethodName: "GetBotStatus",
-			Handler:    _TradingService_GetBotStatus_Handler,
-		},
-		{
 			MethodName: "ExecuteTrade",
 			Handler:    _TradingService_ExecuteTrade_Handler,
 		},
@@ -745,7 +583,10 @@ const (
 // RiskServiceClient is the client API for RiskService service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
+//
+// Service for performing risk calculations
 type RiskServiceClient interface {
+	// Calculates the Value at Risk for a given portfolio
 	CalculateVaR(ctx context.Context, in *VaRRequest, opts ...grpc.CallOption) (*VaRResponse, error)
 }
 
@@ -770,7 +611,10 @@ func (c *riskServiceClient) CalculateVaR(ctx context.Context, in *VaRRequest, op
 // RiskServiceServer is the server API for RiskService service.
 // All implementations must embed UnimplementedRiskServiceServer
 // for forward compatibility.
+//
+// Service for performing risk calculations
 type RiskServiceServer interface {
+	// Calculates the Value at Risk for a given portfolio
 	CalculateVaR(context.Context, *VaRRequest) (*VaRResponse, error)
 	mustEmbedUnimplementedRiskServiceServer()
 }
@@ -848,6 +692,8 @@ const (
 // AuthServiceClient is the client API for AuthService service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
+//
+// Service for authentication
 type AuthServiceClient interface {
 	Register(ctx context.Context, in *RegisterRequest, opts ...grpc.CallOption) (*AuthResponse, error)
 	Login(ctx context.Context, in *AuthRequest, opts ...grpc.CallOption) (*AuthResponse, error)
@@ -884,6 +730,8 @@ func (c *authServiceClient) Login(ctx context.Context, in *AuthRequest, opts ...
 // AuthServiceServer is the server API for AuthService service.
 // All implementations must embed UnimplementedAuthServiceServer
 // for forward compatibility.
+//
+// Service for authentication
 type AuthServiceServer interface {
 	Register(context.Context, *RegisterRequest) (*AuthResponse, error)
 	Login(context.Context, *AuthRequest) (*AuthResponse, error)

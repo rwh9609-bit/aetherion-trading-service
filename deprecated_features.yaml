@@ -1,0 +1,2 @@
+overload:
+  envoy.deprecated_features:envoy.extensions.access_loggers.file.v3.FileAccessLog.format: true

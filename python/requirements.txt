@@ -1,6 +1,9 @@
+matplotlib
 grpcio
 grpcio-tools
 protobuf
 numpy
 pandas
 requests
+uvicorn
+fastapi
