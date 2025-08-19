@@ -55,8 +55,12 @@ func TestStartStrategyCreatesAndStores(t *testing.T) {
 	if err != nil || !resp.Success {
 		t.Fatalf("start strategy failed: %v %v", resp, err)
 	}
-	if len(s.strategies) != 1 {
-		t.Fatalf("expected 1 strategy stored, got %d", len(s.strategies))
+	strategies, err := s.db.GetStrategiesByUserID(context.Background(), "default-user-id")
+	if err != nil {
+		t.Fatalf("failed to get strategies: %v", err)
+	}
+	if len(strategies) != 1 {
+		t.Fatalf("expected 1 strategy stored, got %d", len(strategies))
 	}
 	time.Sleep(150 * time.Millisecond)
 }
@@ -85,8 +89,12 @@ func TestStrategyCancellation(t *testing.T) {
 	if err != nil || !resp.Success {
 		t.Fatalf("start strategy failed: %v %v", resp, err)
 	}
-	if len(s.strategies) != 1 {
-		t.Fatalf("expected 1 strategy stored")
+	strategies, err := s.db.GetStrategiesByUserID(context.Background(), "default-user-id")
+	if err != nil {
+		t.Fatalf("failed to get strategies: %v", err)
+	}
+	if len(strategies) != 1 {
+		t.Fatalf("expected 1 strategy stored, got %d", len(strategies))
 	}
 	cancel()                          // cancel context
 	time.Sleep(50 * time.Millisecond) // allow goroutine to observe cancellation

@@ -733,7 +733,7 @@ func (s *tradingServer) ExecuteTrade(ctx context.Context, req *pb.TradeRequest) 
 	trade := &Trade{
 		ID:         uuid.New().String(),
 		UserID:     userID,
-		StrategyID: req.StrategyID,
+		StrategyID: req.StrategyId,
 		Symbol:     req.Symbol,
 		Side:       side,
 		Quantity:   qty,
