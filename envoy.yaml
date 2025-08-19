@@ -19,10 +19,10 @@ static_resources:
               common_tls_context:
                 alpn_protocols: ["h2", "http/1.1"]
                 tls_certificates: 
-                  - certificate_chain:
-                      filename: /etc/letsencrypt/live/aetherion.cloud/fullchain.pem
-                    private_key:
-                      filename: /etc/letsencrypt/live/aetherion.cloud/privkey.pem
+                  # - certificate_chain:
+                  #     filename: /etc/letsencrypt/live/aetherion.cloud/fullchain.pem
+                  #   private_key:
+                  #     filename: /etc/letsencrypt/live/aetherion.cloud/privkey.pem
                   - certificate_chain:
                       filename: /etc/envoy/certs/server.crt
                     private_key:
