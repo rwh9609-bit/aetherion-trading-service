@@ -45,6 +45,12 @@ setup:
 	@cd $(GO_DIR) && go mod tidy
 	@echo "$(GREEN)Setup complete.$(RESET)"
 
+## Generate JWT token for orchestrator authentication
+jwt-generate:
+	@echo "Generating JWT token using scripts/generate_jwt_token.py..."
+	@if [ -z "$$AUTH_SECRET" ]; then echo "AUTH_SECRET environment variable must be set"; exit 1; fi
+	python3 scripts/generate_jwt_token.py
+
 ## Proto generation aggregate
 proto-gen: proto-gen-python proto-gen-go proto-gen-web ## Generate all protobuf artifacts
 	@echo "$(GREEN)All protobuf code generated.$(RESET)"
