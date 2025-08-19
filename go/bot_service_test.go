@@ -5,7 +5,7 @@ import (
 	"os"
 	"testing"
 
-		pb "github.com/rwh9609-bit/multilanguage/go/gen"
+	pb "github.com/rwh9609-bit/multilanguage/go/gen"
 )
 
 // TestBotServiceLifecycle validates create -> list -> start -> stop and persistence reload.
@@ -27,15 +27,15 @@ func TestBotServiceLifecycle(t *testing.T) {
 	if err != nil || len(list.Bots) != 1 {
 		t.Fatalf("expected 1 bot listed, got %v err=%v", list, err)
 	}
-	id := list.Bots[0].Id
+	id := list.Bots[0].BotId
 
 	// Start bot -> should mark active and assign strategy_id parameter
-	startResp, err := svc.StartBot(context.Background(), &pb.BotIdRequest{Id: id})
+	startResp, err := svc.StartBot(context.Background(), &pb.BotIdRequest{BotId: id})
 	if err != nil || !startResp.Success {
 		t.Fatalf("start bot failed: %v %v", startResp, err)
 	}
-	st, _ := svc.GetBotStatus(context.Background(), &pb.BotIdRequest{Id: id})
-	if !st.Active {
+	st, _ := svc.GetBotStatus(context.Background(), &pb.BotIdRequest{BotId: id})
+	if !st.IsActive {
 		t.Fatalf("expected bot active after start")
 	}
 	if st.Parameters["strategy_id"] == "" {
@@ -43,12 +43,12 @@ func TestBotServiceLifecycle(t *testing.T) {
 	}
 
 	// Stop bot
-	stopResp, err := svc.StopBot(context.Background(), &pb.BotIdRequest{Id: id})
+	stopResp, err := svc.StopBot(context.Background(), &pb.BotIdRequest{BotId: id})
 	if err != nil || !stopResp.Success {
 		t.Fatalf("stop bot failed: %v %v", stopResp, err)
 	}
-	st2, _ := svc.GetBotStatus(context.Background(), &pb.BotIdRequest{Id: id})
-	if st2.Active {
+	st2, _ := svc.GetBotStatus(context.Background(), &pb.BotIdRequest{BotId: id})
+	if st2.IsActive {
 		t.Fatalf("expected bot inactive after stop")
 	}
 

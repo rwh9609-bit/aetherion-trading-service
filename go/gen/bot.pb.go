@@ -2,7 +2,7 @@
 // versions:
 // 	protoc-gen-go v1.36.7
 // 	protoc        v5.29.3
-// source: protos/bot.proto
+// source: bot.proto
 
 package gen
 
@@ -30,13 +30,14 @@ type BotConfig struct {
 	Parameters      map[string]string      `protobuf:"bytes,4,rep,name=parameters,proto3" json:"parameters,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
 	IsActive        bool                   `protobuf:"varint,5,opt,name=is_active,json=isActive,proto3" json:"is_active,omitempty"`
 	CreatedAtUnixMs int64                  `protobuf:"varint,6,opt,name=created_at_unix_ms,json=createdAtUnixMs,proto3" json:"created_at_unix_ms,omitempty"`
+	Name            string                 `protobuf:"bytes,7,opt,name=name,proto3" json:"name,omitempty"`
 	unknownFields   protoimpl.UnknownFields
 	sizeCache       protoimpl.SizeCache
 }
 
 func (x *BotConfig) Reset() {
 	*x = BotConfig{}
-	mi := &file_protos_bot_proto_msgTypes[0]
+	mi := &file_bot_proto_msgTypes[0]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -48,7 +49,7 @@ func (x *BotConfig) String() string {
 func (*BotConfig) ProtoMessage() {}
 
 func (x *BotConfig) ProtoReflect() protoreflect.Message {
-	mi := &file_protos_bot_proto_msgTypes[0]
+	mi := &file_bot_proto_msgTypes[0]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -61,7 +62,7 @@ func (x *BotConfig) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use BotConfig.ProtoReflect.Descriptor instead.
 func (*BotConfig) Descriptor() ([]byte, []int) {
-	return file_protos_bot_proto_rawDescGZIP(), []int{0}
+	return file_bot_proto_rawDescGZIP(), []int{0}
 }
 
 func (x *BotConfig) GetBotId() string {
@@ -106,19 +107,27 @@ func (x *BotConfig) GetCreatedAtUnixMs() int64 {
 	return 0
 }
 
+func (x *BotConfig) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
 // Request to create a new trading bot.
 type CreateBotRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Symbol        string                 `protobuf:"bytes,1,opt,name=symbol,proto3" json:"symbol,omitempty"`
 	Strategy      string                 `protobuf:"bytes,2,opt,name=strategy,proto3" json:"strategy,omitempty"`
 	Parameters    map[string]string      `protobuf:"bytes,3,rep,name=parameters,proto3" json:"parameters,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+	Name          string                 `protobuf:"bytes,4,opt,name=name,proto3" json:"name,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *CreateBotRequest) Reset() {
 	*x = CreateBotRequest{}
-	mi := &file_protos_bot_proto_msgTypes[1]
+	mi := &file_bot_proto_msgTypes[1]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -130,7 +139,7 @@ func (x *CreateBotRequest) String() string {
 func (*CreateBotRequest) ProtoMessage() {}
 
 func (x *CreateBotRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_protos_bot_proto_msgTypes[1]
+	mi := &file_bot_proto_msgTypes[1]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -143,7 +152,7 @@ func (x *CreateBotRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateBotRequest.ProtoReflect.Descriptor instead.
 func (*CreateBotRequest) Descriptor() ([]byte, []int) {
-	return file_protos_bot_proto_rawDescGZIP(), []int{1}
+	return file_bot_proto_rawDescGZIP(), []int{1}
 }
 
 func (x *CreateBotRequest) GetSymbol() string {
@@ -167,6 +176,13 @@ func (x *CreateBotRequest) GetParameters() map[string]string {
 	return nil
 }
 
+func (x *CreateBotRequest) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
 // Request based on a bot's unique ID.
 type BotIdRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
@@ -177,7 +193,7 @@ type BotIdRequest struct {
 
 func (x *BotIdRequest) Reset() {
 	*x = BotIdRequest{}
-	mi := &file_protos_bot_proto_msgTypes[2]
+	mi := &file_bot_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -189,7 +205,7 @@ func (x *BotIdRequest) String() string {
 func (*BotIdRequest) ProtoMessage() {}
 
 func (x *BotIdRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_protos_bot_proto_msgTypes[2]
+	mi := &file_bot_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -202,7 +218,7 @@ func (x *BotIdRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use BotIdRequest.ProtoReflect.Descriptor instead.
 func (*BotIdRequest) Descriptor() ([]byte, []int) {
-	return file_protos_bot_proto_rawDescGZIP(), []int{2}
+	return file_bot_proto_rawDescGZIP(), []int{2}
 }
 
 func (x *BotIdRequest) GetBotId() string {
@@ -222,7 +238,7 @@ type BotList struct {
 
 func (x *BotList) Reset() {
 	*x = BotList{}
-	mi := &file_protos_bot_proto_msgTypes[3]
+	mi := &file_bot_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -234,7 +250,7 @@ func (x *BotList) String() string {
 func (*BotList) ProtoMessage() {}
 
 func (x *BotList) ProtoReflect() protoreflect.Message {
-	mi := &file_protos_bot_proto_msgTypes[3]
+	mi := &file_bot_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -247,7 +263,7 @@ func (x *BotList) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use BotList.ProtoReflect.Descriptor instead.
 func (*BotList) Descriptor() ([]byte, []int) {
-	return file_protos_bot_proto_rawDescGZIP(), []int{3}
+	return file_bot_proto_rawDescGZIP(), []int{3}
 }
 
 func (x *BotList) GetBots() []*BotConfig {
@@ -257,11 +273,11 @@ func (x *BotList) GetBots() []*BotConfig {
 	return nil
 }
 
-var File_protos_bot_proto protoreflect.FileDescriptor
+var File_bot_proto protoreflect.FileDescriptor
 
-const file_protos_bot_proto_rawDesc = "" +
+const file_bot_proto_rawDesc = "" +
 	"\n" +
-	"\x10protos/bot.proto\x12\atrading\x1a\x11trading_api.proto\"\xa3\x02\n" +
+	"\tbot.proto\x12\atrading\x1a\x11trading_api.proto\"\xb7\x02\n" +
 	"\tBotConfig\x12\x15\n" +
 	"\x06bot_id\x18\x01 \x01(\tR\x05botId\x12\x16\n" +
 	"\x06symbol\x18\x02 \x01(\tR\x06symbol\x12\x1a\n" +
@@ -270,16 +286,18 @@ const file_protos_bot_proto_rawDesc = "" +
 	"parameters\x18\x04 \x03(\v2\".trading.BotConfig.ParametersEntryR\n" +
 	"parameters\x12\x1b\n" +
 	"\tis_active\x18\x05 \x01(\bR\bisActive\x12+\n" +
-	"\x12created_at_unix_ms\x18\x06 \x01(\x03R\x0fcreatedAtUnixMs\x1a=\n" +
+	"\x12created_at_unix_ms\x18\x06 \x01(\x03R\x0fcreatedAtUnixMs\x12\x12\n" +
+	"\x04name\x18\a \x01(\tR\x04name\x1a=\n" +
 	"\x0fParametersEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
-	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\xd0\x01\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\xe4\x01\n" +
 	"\x10CreateBotRequest\x12\x16\n" +
 	"\x06symbol\x18\x01 \x01(\tR\x06symbol\x12\x1a\n" +
 	"\bstrategy\x18\x02 \x01(\tR\bstrategy\x12I\n" +
 	"\n" +
 	"parameters\x18\x03 \x03(\v2).trading.CreateBotRequest.ParametersEntryR\n" +
-	"parameters\x1a=\n" +
+	"parameters\x12\x12\n" +
+	"\x04name\x18\x04 \x01(\tR\x04name\x1a=\n" +
 	"\x0fParametersEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
 	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"%\n" +
@@ -296,19 +314,19 @@ const file_protos_bot_proto_rawDesc = "" +
 	"\fGetBotStatus\x12\x15.trading.BotIdRequest\x1a\x12.trading.BotConfig\"\x00B-Z+github.com/rwh9609-bit/multilanguage/go/genb\x06proto3"
 
 var (
-	file_protos_bot_proto_rawDescOnce sync.Once
-	file_protos_bot_proto_rawDescData []byte
+	file_bot_proto_rawDescOnce sync.Once
+	file_bot_proto_rawDescData []byte
 )
 
-func file_protos_bot_proto_rawDescGZIP() []byte {
-	file_protos_bot_proto_rawDescOnce.Do(func() {
-		file_protos_bot_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_protos_bot_proto_rawDesc), len(file_protos_bot_proto_rawDesc)))
+func file_bot_proto_rawDescGZIP() []byte {
+	file_bot_proto_rawDescOnce.Do(func() {
+		file_bot_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_bot_proto_rawDesc), len(file_bot_proto_rawDesc)))
 	})
-	return file_protos_bot_proto_rawDescData
+	return file_bot_proto_rawDescData
 }
 
-var file_protos_bot_proto_msgTypes = make([]protoimpl.MessageInfo, 6)
-var file_protos_bot_proto_goTypes = []any{
+var file_bot_proto_msgTypes = make([]protoimpl.MessageInfo, 6)
+var file_bot_proto_goTypes = []any{
 	(*BotConfig)(nil),        // 0: trading.BotConfig
 	(*CreateBotRequest)(nil), // 1: trading.CreateBotRequest
 	(*BotIdRequest)(nil),     // 2: trading.BotIdRequest
@@ -318,7 +336,7 @@ var file_protos_bot_proto_goTypes = []any{
 	(*Empty)(nil),            // 6: trading.Empty
 	(*StatusResponse)(nil),   // 7: trading.StatusResponse
 }
-var file_protos_bot_proto_depIdxs = []int32{
+var file_bot_proto_depIdxs = []int32{
 	4, // 0: trading.BotConfig.parameters:type_name -> trading.BotConfig.ParametersEntry
 	5, // 1: trading.CreateBotRequest.parameters:type_name -> trading.CreateBotRequest.ParametersEntry
 	0, // 2: trading.BotList.bots:type_name -> trading.BotConfig
@@ -339,9 +357,9 @@ var file_protos_bot_proto_depIdxs = []int32{
 	0, // [0:3] is the sub-list for field type_name
 }
 
-func init() { file_protos_bot_proto_init() }
-func file_protos_bot_proto_init() {
-	if File_protos_bot_proto != nil {
+func init() { file_bot_proto_init() }
+func file_bot_proto_init() {
+	if File_bot_proto != nil {
 		return
 	}
 	file_trading_api_proto_init()
@@ -349,17 +367,17 @@ func file_protos_bot_proto_init() {
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
-			RawDescriptor: unsafe.Slice(unsafe.StringData(file_protos_bot_proto_rawDesc), len(file_protos_bot_proto_rawDesc)),
+			RawDescriptor: unsafe.Slice(unsafe.StringData(file_bot_proto_rawDesc), len(file_bot_proto_rawDesc)),
 			NumEnums:      0,
 			NumMessages:   6,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
-		GoTypes:           file_protos_bot_proto_goTypes,
-		DependencyIndexes: file_protos_bot_proto_depIdxs,
-		MessageInfos:      file_protos_bot_proto_msgTypes,
+		GoTypes:           file_bot_proto_goTypes,
+		DependencyIndexes: file_bot_proto_depIdxs,
+		MessageInfos:      file_bot_proto_msgTypes,
 	}.Build()
-	File_protos_bot_proto = out.File
-	file_protos_bot_proto_goTypes = nil
-	file_protos_bot_proto_depIdxs = nil
+	File_bot_proto = out.File
+	file_bot_proto_goTypes = nil
+	file_bot_proto_depIdxs = nil
 }

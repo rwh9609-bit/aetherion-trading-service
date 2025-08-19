@@ -67,12 +67,12 @@ func TestPostgresUserAndBotIntegration(t *testing.T) {
 	if len(list.Bots) != 1 {
 		t.Fatalf("expected 1 bot got %d", len(list.Bots))
 	}
-	startResp, _ := botSvc.StartBot(ctx, &pb.BotIdRequest{Id: cResp.Id})
+	startResp, _ := botSvc.StartBot(ctx, &pb.BotIdRequest{BotId: cResp.Id})
 	if !startResp.Success {
 		t.Fatalf("start bot failed: %v", startResp)
 	}
 	time.Sleep(50 * time.Millisecond)
-	stopResp, _ := botSvc.StopBot(ctx, &pb.BotIdRequest{Id: cResp.Id})
+	stopResp, _ := botSvc.StopBot(ctx, &pb.BotIdRequest{BotId: cResp.Id})
 	if !stopResp.Success {
 		t.Fatalf("stop bot failed: %v", stopResp)
 	}

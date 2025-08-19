@@ -75,7 +75,7 @@ func (r *botRegistry) loadFromPg(ctx context.Context) {
 		}
 		m := map[string]string{}
 		_ = json.Unmarshal(paramsBytes, &m)
-	r.bots[id] = &pb.BotConfig{Id: id, Name: name, Symbol: symbol, Strategy: strategy, Parameters: m, Active: active}
+		r.bots[id] = &pb.BotConfig{BotId: id, Name: name, Symbol: symbol, Strategy: strategy, Parameters: m, IsActive: active}
 	}
 }
 
@@ -92,7 +92,7 @@ func (r *botRegistry) loadFromFile() {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 	for _, bot := range arr {
-		r.bots[bot.Id] = bot
+		r.bots[bot.BotId] = bot
 	}
 }
 
@@ -105,7 +105,7 @@ func (r *botRegistry) persist() {
 			_, err := r.pg.Exec(ctx, `INSERT INTO bots (id,name,symbol,strategy,parameters,active,created_at)
                 VALUES ($1,$2,$3,$4,$5,$6,to_timestamp($7))
                 ON CONFLICT (id) DO UPDATE SET name=EXCLUDED.name,symbol=EXCLUDED.symbol,strategy=EXCLUDED.strategy,parameters=EXCLUDED.parameters,active=EXCLUDED.active`,
-				b.Id, b.Name, b.Symbol, b.Strategy, string(paramsJSON), b.Active)
+				b.BotId, b.Name, b.Symbol, b.Strategy, string(paramsJSON), b.IsActive)
 			if err != nil && !strings.Contains(err.Error(), "duplicate") {
 				log.Printf("bot upsert err: %v", err)
 			}
@@ -144,7 +144,7 @@ func (s *botServiceServer) CreateBot(ctx context.Context, req *pb.CreateBotReque
 		return &pb.StatusResponse{Success: false, Message: "name, symbol, strategy required"}, nil
 	}
 	id := uuid.New().String()
-	bot := &pb.BotConfig{Id: id, Name: req.GetName(), Symbol: req.GetSymbol(), Strategy: req.GetStrategy(), Parameters: req.GetParameters(), Active: false}
+	bot := &pb.BotConfig{BotId: id, Name: req.GetName(), Symbol: req.GetSymbol(), Strategy: req.GetStrategy(), Parameters: req.GetParameters(), IsActive: false}
 	s.reg.mu.Lock()
 	s.reg.bots[id] = bot
 	s.reg.mu.Unlock()
@@ -164,7 +164,7 @@ func (s *botServiceServer) ListBots(ctx context.Context, _ *pb.Empty) (*pb.BotLi
 
 func (s *botServiceServer) StartBot(ctx context.Context, req *pb.BotIdRequest) (*pb.StatusResponse, error) {
 	s.reg.mu.Lock()
-	bot, ok := s.reg.bots[req.GetId()]
+	bot, ok := s.reg.bots[req.GetBotId()]
 	s.reg.mu.Unlock()
 	if !ok {
 		return &pb.StatusResponse{Success: false, Message: "not found"}, nil
@@ -176,16 +176,16 @@ func (s *botServiceServer) StartBot(ctx context.Context, req *pb.BotIdRequest) (
 		return &pb.StatusResponse{Success: false, Message: err.Error()}, nil
 	}
 	s.reg.mu.Lock()
-	bot.Active = true
+	bot.IsActive = true
 	bot.Parameters["strategy_id"] = resp.Id
 	s.reg.mu.Unlock()
 	s.reg.persist()
-	return &pb.StatusResponse{Success: true, Message: "bot started", Id: bot.Id}, nil
+	return &pb.StatusResponse{Success: true, Message: "bot started", Id: bot.BotId}, nil
 }
 
 func (s *botServiceServer) StopBot(ctx context.Context, req *pb.BotIdRequest) (*pb.StatusResponse, error) {
 	s.reg.mu.Lock()
-	bot, ok := s.reg.bots[req.GetId()]
+	bot, ok := s.reg.bots[req.GetBotId()]
 	s.reg.mu.Unlock()
 	if !ok {
 		return &pb.StatusResponse{Success: false, Message: "not found"}, nil
@@ -195,15 +195,15 @@ func (s *botServiceServer) StopBot(ctx context.Context, req *pb.BotIdRequest) (*
 		_, _ = s.trading.StopStrategy(ctx, &pb.StrategyRequest{StrategyId: sid, Symbol: bot.Symbol})
 	}
 	s.reg.mu.Lock()
-	bot.Active = false
+	bot.IsActive = false
 	s.reg.mu.Unlock()
 	s.reg.persist()
-	return &pb.StatusResponse{Success: true, Message: "bot stopped", Id: bot.Id}, nil
+	return &pb.StatusResponse{Success: true, Message: "bot stopped", Id: bot.BotId}, nil
 }
 
 func (s *botServiceServer) GetBotStatus(ctx context.Context, req *pb.BotIdRequest) (*pb.BotConfig, error) {
 	s.reg.mu.RLock()
-	bot, ok := s.reg.bots[req.GetId()]
+	bot, ok := s.reg.bots[req.GetBotId()]
 	s.reg.mu.RUnlock()
 	if !ok {
 		return &pb.BotConfig{}, nil
