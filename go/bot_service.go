@@ -143,6 +143,8 @@ func (s *botServiceServer) CreateBot(ctx context.Context, req *pb.CreateBotReque
 	if req.GetName() == "" || req.GetSymbol() == "" || req.GetStrategy() == "" {
 		return &pb.StatusResponse{Success: false, Message: "name, symbol, strategy required"}, nil
 	}
+	// Log incoming CreateBot request for debugging
+	log.Printf("[CreateBot] Received request: Name=%s, Symbol=%s, Strategy=%s, Parameters=%v", req.GetName(), req.GetSymbol(), req.GetStrategy(), req.GetParameters())
 	id := uuid.New().String()
 	bot := &pb.BotConfig{BotId: id, Name: req.GetName(), Symbol: req.GetSymbol(), Strategy: req.GetStrategy(), Parameters: req.GetParameters(), IsActive: false}
 	s.reg.mu.Lock()

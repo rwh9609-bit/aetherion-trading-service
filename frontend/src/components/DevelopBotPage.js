@@ -28,28 +28,36 @@ const DevelopBotPage = ({ onNavigate }) => {
 
   const setField = (field) => (e) => setCfg(prev => ({ ...prev, [field]: e.target.value }));
 
-  const handleSubmit = async () => {
-    setSubmitting(true); setAlert(null);
-    try {
-      const params = {
-        lookback: String(cfg.lookback),
-        entryStd: String(cfg.entryStd),
-        exitStd: String(cfg.exitStd),
-        maxPos: String(cfg.maxPos),
-        stopLossPct: String(cfg.stopLossPct),
-        riskPerTradePct: String(cfg.riskPerTradePct)
-      };
-      const resp = await createBot({ name: cfg.name, symbol: cfg.symbol, strategy: cfg.strategy, parameters: params });
-      if (resp.success) {
-        setAlert({ type:'success', msg: `Bot created (id=${resp.id})` });
-        setTimeout(()=> onNavigate && onNavigate('bots'), 900);
-      } else {
-        setAlert({ type:'error', msg: resp.message || 'Failed to create bot' });
-      }
-    } catch (e) {
-      setAlert({ type:'error', msg: e.message || 'Failed to submit' });
-    } finally { setSubmitting(false); }
-  };
+const handleSubmit = async () => {
+  setSubmitting(true); setAlert(null);
+  try {
+    const params = {
+      lookback: String(cfg.lookback),
+      entryStd: String(cfg.entryStd),
+      exitStd: String(cfg.exitStd),
+      maxPos: String(cfg.maxPos),
+      stopLossPct: String(cfg.stopLossPct),
+      riskPerTradePct: String(cfg.riskPerTradePct)
+    };
+    console.log('[DevelopBotPage] createBot request:', {
+      name: cfg.name,
+      symbol: cfg.symbol,
+      strategy: cfg.strategy,
+      parameters: params
+    });
+    const resp = await createBot({ name: cfg.name, symbol: cfg.symbol, strategy: cfg.strategy, parameters: params });
+    console.log('[DevelopBotPage] createBot response:', resp);
+    if (resp.success) {
+      setAlert({ type:'success', msg: `Bot created (id=${resp.id})` });
+      setTimeout(()=> onNavigate && onNavigate('bots'), 900);
+    } else {
+      setAlert({ type:'error', msg: resp.message || 'Failed to create bot' });
+    }
+  } catch (e) {
+    console.error('[DevelopBotPage] createBot error:', e);
+    setAlert({ type:'error', msg: e.message || 'Failed to submit' });
+  } finally { setSubmitting(false); }
+};
 
   return (
     <Container maxWidth="md" sx={{ mt:4, mb:6 }}>
