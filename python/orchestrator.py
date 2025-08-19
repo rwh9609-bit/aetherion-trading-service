@@ -43,6 +43,11 @@ class TradingOrchestrator:
             risk_per_trade_pct=0.01
         )
         self.strategy = MeanReversionStrategy(params)
+        self.orchestrator_user_id = os.environ.get('ORCHESTRATOR_USER_ID')
+        print(f"[DEBUG] Using orchestrator_user_id: {self.orchestrator_user_id}")
+        if not self.orchestrator_user_id:
+            print("Error: ORCHESTRATOR_USER_ID environment variable not set.")
+            exit(1)
 
     def _generate_jwt(self):
         if not self.auth_secret:
@@ -74,7 +79,8 @@ class TradingOrchestrator:
             strategy_req = pb.StrategyRequest(
                 strategy_id="mean_reversion_01",
                 symbol="BTC-USD",
-                parameters={"order_size": "0.1"}
+                parameters={"order_size": "0.1"},
+                user_id=self.orchestrator_user_id
             )
             try:
                 status_response = trading_stub.StartStrategy(strategy_req, metadata=metadata)
@@ -111,7 +117,8 @@ class TradingOrchestrator:
                                     symbol="BTC-USD",
                                     side=signal['action'].upper(),
                                     size=float(signal['size']),
-                                    price=float(price)
+                                    price=float(price),
+                                    user_id=self.orchestrator_user_id
                                 )
                                 try:
                                     trade_response = trading_stub.ExecuteTrade(trade_request, metadata=metadata)

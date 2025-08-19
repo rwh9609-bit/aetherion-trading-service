@@ -8,7 +8,7 @@ from typing import ClassVar as _ClassVar, Optional as _Optional, Union as _Union
 DESCRIPTOR: _descriptor.FileDescriptor
 
 class BotConfig(_message.Message):
-    __slots__ = ("bot_id", "symbol", "strategy", "parameters", "is_active", "created_at_unix_ms")
+    __slots__ = ("bot_id", "symbol", "strategy", "parameters", "is_active", "created_at_unix_ms", "name")
     class ParametersEntry(_message.Message):
         __slots__ = ("key", "value")
         KEY_FIELD_NUMBER: _ClassVar[int]
@@ -22,16 +22,18 @@ class BotConfig(_message.Message):
     PARAMETERS_FIELD_NUMBER: _ClassVar[int]
     IS_ACTIVE_FIELD_NUMBER: _ClassVar[int]
     CREATED_AT_UNIX_MS_FIELD_NUMBER: _ClassVar[int]
+    NAME_FIELD_NUMBER: _ClassVar[int]
     bot_id: str
     symbol: str
     strategy: str
     parameters: _containers.ScalarMap[str, str]
     is_active: bool
     created_at_unix_ms: int
-    def __init__(self, bot_id: _Optional[str] = ..., symbol: _Optional[str] = ..., strategy: _Optional[str] = ..., parameters: _Optional[_Mapping[str, str]] = ..., is_active: bool = ..., created_at_unix_ms: _Optional[int] = ...) -> None: ...
+    name: str
+    def __init__(self, bot_id: _Optional[str] = ..., symbol: _Optional[str] = ..., strategy: _Optional[str] = ..., parameters: _Optional[_Mapping[str, str]] = ..., is_active: bool = ..., created_at_unix_ms: _Optional[int] = ..., name: _Optional[str] = ...) -> None: ...
 
 class CreateBotRequest(_message.Message):
-    __slots__ = ("symbol", "strategy", "parameters")
+    __slots__ = ("symbol", "strategy", "parameters", "name")
     class ParametersEntry(_message.Message):
         __slots__ = ("key", "value")
         KEY_FIELD_NUMBER: _ClassVar[int]
@@ -42,10 +44,12 @@ class CreateBotRequest(_message.Message):
     SYMBOL_FIELD_NUMBER: _ClassVar[int]
     STRATEGY_FIELD_NUMBER: _ClassVar[int]
     PARAMETERS_FIELD_NUMBER: _ClassVar[int]
+    NAME_FIELD_NUMBER: _ClassVar[int]
     symbol: str
     strategy: str
     parameters: _containers.ScalarMap[str, str]
-    def __init__(self, symbol: _Optional[str] = ..., strategy: _Optional[str] = ..., parameters: _Optional[_Mapping[str, str]] = ...) -> None: ...
+    name: str
+    def __init__(self, symbol: _Optional[str] = ..., strategy: _Optional[str] = ..., parameters: _Optional[_Mapping[str, str]] = ..., name: _Optional[str] = ...) -> None: ...
 
 class BotIdRequest(_message.Message):
     __slots__ = ("bot_id",)

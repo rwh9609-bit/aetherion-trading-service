@@ -29,11 +29,11 @@ message SymbolList {
     repeated string symbols = 1;
 }
 
-// Request to start or stop a strategy
 message StrategyRequest {
     string strategy_id = 1;
     string symbol = 2;
-    map<string, string> parameters = 3; // e.g., {"order_size": "10", "threshold": "0.5"}
+    map<string, string> parameters = 3;
+    string user_id = 4; // <-- Add this line
 }
 
 // Generic response for operations
@@ -75,13 +75,13 @@ message VaRResponse {
     string last_update = 6;
 }
 
-// Trade execution messages
 message TradeRequest {
     string symbol = 1;
-    string side = 2; // BUY or SELL
-    double size = 3; // quantity in base asset
-    double price = 4; // intended execution price
-    string strategy_id = 5; 
+    string side = 2;
+    double size = 3;
+    double price = 4;
+    string strategy_id = 5;
+    string user_id = 6; // <-- Add this line
 }
 
 message TradeResponse {

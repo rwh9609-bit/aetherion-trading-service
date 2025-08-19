@@ -41,7 +41,6 @@ CREATE TABLE IF NOT EXISTS trades (
     executed_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     pnl NUMERIC(20, 8)
 );
-
 -- Add indexes for performance
 CREATE INDEX IF NOT EXISTS idx_portfolios_user_id ON portfolios (user_id);
 CREATE INDEX IF NOT EXISTS idx_strategies_user_id ON strategies (user_id);

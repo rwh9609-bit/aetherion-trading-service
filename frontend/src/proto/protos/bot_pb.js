@@ -148,7 +148,8 @@ symbol: jspb.Message.getFieldWithDefault(msg, 2, ""),
 strategy: jspb.Message.getFieldWithDefault(msg, 3, ""),
 parametersMap: (f = msg.getParametersMap()) ? f.toObject(includeInstance, undefined) : [],
 isActive: jspb.Message.getBooleanFieldWithDefault(msg, 5, false),
-createdAtUnixMs: jspb.Message.getFieldWithDefault(msg, 6, 0)
+createdAtUnixMs: jspb.Message.getFieldWithDefault(msg, 6, 0),
+name: jspb.Message.getFieldWithDefault(msg, 7, "")
   };
 
   if (includeInstance) {
@@ -210,6 +211,10 @@ proto.trading.BotConfig.deserializeBinaryFromReader = function(msg, reader) {
     case 6:
       var value = /** @type {number} */ (reader.readInt64());
       msg.setCreatedAtUnixMs(value);
+      break;
+    case 7:
+      var value = /** @type {string} */ (reader.readString());
+      msg.setName(value);
       break;
     default:
       reader.skipField();
@@ -276,6 +281,13 @@ proto.trading.BotConfig.serializeBinaryToWriter = function(message, writer) {
   if (f !== 0) {
     writer.writeInt64(
       6,
+      f
+    );
+  }
+  f = message.getName();
+  if (f.length > 0) {
+    writer.writeString(
+      7,
       f
     );
   }
@@ -395,6 +407,24 @@ proto.trading.BotConfig.prototype.setCreatedAtUnixMs = function(value) {
 };
 
 
+/**
+ * optional string name = 7;
+ * @return {string}
+ */
+proto.trading.BotConfig.prototype.getName = function() {
+  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 7, ""));
+};
+
+
+/**
+ * @param {string} value
+ * @return {!proto.trading.BotConfig} returns this
+ */
+proto.trading.BotConfig.prototype.setName = function(value) {
+  return jspb.Message.setProto3StringField(this, 7, value);
+};
+
+
 
 
 
@@ -429,7 +459,8 @@ proto.trading.CreateBotRequest.toObject = function(includeInstance, msg) {
   var f, obj = {
 symbol: jspb.Message.getFieldWithDefault(msg, 1, ""),
 strategy: jspb.Message.getFieldWithDefault(msg, 2, ""),
-parametersMap: (f = msg.getParametersMap()) ? f.toObject(includeInstance, undefined) : []
+parametersMap: (f = msg.getParametersMap()) ? f.toObject(includeInstance, undefined) : [],
+name: jspb.Message.getFieldWithDefault(msg, 4, "")
   };
 
   if (includeInstance) {
@@ -480,6 +511,10 @@ proto.trading.CreateBotRequest.deserializeBinaryFromReader = function(msg, reade
         jspb.Map.deserializeBinary(message, reader, jspb.BinaryReader.prototype.readString, jspb.BinaryReader.prototype.readString, null, "", "");
          });
       break;
+    case 4:
+      var value = /** @type {string} */ (reader.readString());
+      msg.setName(value);
+      break;
     default:
       reader.skipField();
       break;
@@ -526,6 +561,13 @@ proto.trading.CreateBotRequest.serializeBinaryToWriter = function(message, write
   f = message.getParametersMap(true);
   if (f && f.getLength() > 0) {
     f.serializeBinary(3, writer, jspb.BinaryWriter.prototype.writeString, jspb.BinaryWriter.prototype.writeString);
+  }
+  f = message.getName();
+  if (f.length > 0) {
+    writer.writeString(
+      4,
+      f
+    );
   }
 };
 
@@ -586,6 +628,24 @@ proto.trading.CreateBotRequest.prototype.getParametersMap = function(opt_noLazyC
 proto.trading.CreateBotRequest.prototype.clearParametersMap = function() {
   this.getParametersMap().clear();
   return this;
+};
+
+
+/**
+ * optional string name = 4;
+ * @return {string}
+ */
+proto.trading.CreateBotRequest.prototype.getName = function() {
+  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 4, ""));
+};
+
+
+/**
+ * @param {string} value
+ * @return {!proto.trading.CreateBotRequest} returns this
+ */
+proto.trading.CreateBotRequest.prototype.setName = function(value) {
+  return jspb.Message.setProto3StringField(this, 4, value);
 };
 
 

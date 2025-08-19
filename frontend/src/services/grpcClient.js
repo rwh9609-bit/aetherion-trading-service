@@ -241,6 +241,7 @@ export const startStrategy = async (params) => {
     const request = new StrategyRequest();
     request.setStrategyId('mean_reversion');
     request.setSymbol('BTC-USD');
+    request.setUserId('currentUserId'); // Replace with actual user ID from context or state
   
     // Convert parameters to strings for the map
     const paramMap = {};
@@ -254,7 +255,8 @@ export const startStrategy = async (params) => {
     paramMap['period'] = '5'; // Update interval in seconds
     paramMap['threshold'] = params.entryStdDev.toString();
   
-    request.setParametersMap(paramMap);
+    const map = request.getParametersMap();
+    Object.entries(paramMap || {}).forEach(([k, v]) => map.set(k, String(v)));
 
     return new Promise((resolve, reject) => {
       tradingClient.startStrategy(request, createMetadata(), (err, response) => {

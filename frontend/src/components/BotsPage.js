@@ -41,8 +41,8 @@ const BotsPage = ({ onNavigate }) => {
         {bots.map(bot => (
           <Card key={bot.id} variant="outlined" sx={{ borderColor:'rgba(255,255,255,0.1)' }}>
             <CardContent>
-              <Typography variant="subtitle1" fontWeight={600}>{bot.name || bot.strategy}</Typography>
-              <Typography variant="caption" color="text.secondary">ID: {bot.id}</Typography>
+              <Typography variant="subtitle1" fontWeight={600}>{String(bot.name || bot.strategy || "Unnamed Bot")}</Typography>
+              <Typography variant="caption" color="text.secondary">ID: {String(bot.id || "N/A")}</Typography>
               <Box sx={{ mt:1, display:'flex', flexDirection:'column', gap:0.5 }}>
                 <Typography variant="body2"><strong>Symbol:</strong> {bot.symbol}</Typography>
                 <Typography variant="body2"><strong>Strategy:</strong> {bot.strategy}</Typography>

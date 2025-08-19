@@ -19,6 +19,20 @@ import (
 	"google.golang.org/grpc/status"
 )
 
+// contextKey is a private type to prevent collisions in context keys.
+type contextKey string
+
+const (
+	// userIDKey is the key for the user ID in the context.
+	userIDKey contextKey = "userID"
+)
+
+// getUserIDFromContext extracts the user ID from the context, if it exists.
+func getUserIDFromContext(ctx context.Context) (string, bool) {
+	userID, ok := ctx.Value(userIDKey).(string)
+	return userID, ok
+}
+
 // authServer implements the AuthService defined in protobufs.
 // NOTE: In-memory user store & unsalted SHA-256 hashing for demo purposes only.
 type userStore interface {
@@ -180,7 +194,7 @@ func authUnaryInterceptor(secret []byte) grpc.UnaryServerInterceptor {
 		if len(tokenStr) > 7 && (tokenStr[:7] == "Bearer " || tokenStr[:7] == "bearer ") {
 			tokenStr = tokenStr[7:]
 		}
-		_, err := jwt.Parse(tokenStr, func(t *jwt.Token) (interface{}, error) {
+		token, err := jwt.Parse(tokenStr, func(t *jwt.Token) (interface{}, error) {
 			if _, ok := t.Method.(*jwt.SigningMethodHMAC); !ok {
 				return nil, fmt.Errorf("unexpected signing method")
 			}
@@ -189,7 +203,15 @@ func authUnaryInterceptor(secret []byte) grpc.UnaryServerInterceptor {
 		if err != nil {
 			return nil, status.Error(codes.Unauthenticated, "invalid token")
 		}
-		return handler(ctx, req)
+
+		if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
+			if sub, ok := claims["sub"].(string); ok {
+				newCtx := context.WithValue(ctx, userIDKey, sub)
+				return handler(newCtx, req)
+			}
+		}
+
+		return nil, status.Error(codes.Unauthenticated, "invalid token claims")
 	}
 }
 
@@ -217,25 +239,33 @@ func authUnaryInterceptorWithFallback(primary, previous []byte) grpc.UnaryServer
 		if len(tokenStr) > 7 && (tokenStr[:7] == "Bearer " || tokenStr[:7] == "bearer ") {
 			tokenStr = tokenStr[7:]
 		}
-		parseWith := func(secret []byte) error {
-			_, err := jwt.Parse(tokenStr, func(t *jwt.Token) (interface{}, error) {
+		parseWith := func(secret []byte) (*jwt.Token, error) {
+			return jwt.Parse(tokenStr, func(t *jwt.Token) (interface{}, error) {
 				if _, ok := t.Method.(*jwt.SigningMethodHMAC); !ok {
 					return nil, fmt.Errorf("unexpected signing method")
 				}
 				return secret, nil
 			})
-			return err
 		}
-		if err := parseWith(primary); err != nil {
+		token, err := parseWith(primary)
+		if err != nil {
 			if len(previous) > 0 {
-				if err2 := parseWith(previous); err2 != nil {
+				token, err = parseWith(previous)
+				if err != nil {
 					return nil, status.Error(codes.Unauthenticated, "invalid token")
 				}
 			} else {
 				return nil, status.Error(codes.Unauthenticated, "invalid token")
 			}
 		}
-		return handler(ctx, req)
-	}
 
+		if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
+			if sub, ok := claims["sub"].(string); ok {
+				newCtx := context.WithValue(ctx, userIDKey, sub)
+				return handler(newCtx, req)
+			}
+		}
+
+		return nil, status.Error(codes.Unauthenticated, "invalid token claims")
+	}
 }

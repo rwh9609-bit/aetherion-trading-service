@@ -39,7 +39,7 @@ class SymbolList(_message.Message):
     def __init__(self, symbols: _Optional[_Iterable[str]] = ...) -> None: ...
 
 class StrategyRequest(_message.Message):
-    __slots__ = ("strategy_id", "symbol", "parameters")
+    __slots__ = ("strategy_id", "symbol", "parameters", "user_id")
     class ParametersEntry(_message.Message):
         __slots__ = ("key", "value")
         KEY_FIELD_NUMBER: _ClassVar[int]
@@ -50,10 +50,12 @@ class StrategyRequest(_message.Message):
     STRATEGY_ID_FIELD_NUMBER: _ClassVar[int]
     SYMBOL_FIELD_NUMBER: _ClassVar[int]
     PARAMETERS_FIELD_NUMBER: _ClassVar[int]
+    USER_ID_FIELD_NUMBER: _ClassVar[int]
     strategy_id: str
     symbol: str
     parameters: _containers.ScalarMap[str, str]
-    def __init__(self, strategy_id: _Optional[str] = ..., symbol: _Optional[str] = ..., parameters: _Optional[_Mapping[str, str]] = ...) -> None: ...
+    user_id: str
+    def __init__(self, strategy_id: _Optional[str] = ..., symbol: _Optional[str] = ..., parameters: _Optional[_Mapping[str, str]] = ..., user_id: _Optional[str] = ...) -> None: ...
 
 class StatusResponse(_message.Message):
     __slots__ = ("success", "message", "id")
@@ -117,16 +119,20 @@ class VaRResponse(_message.Message):
     def __init__(self, value_at_risk: _Optional[float] = ..., asset_names: _Optional[_Iterable[str]] = ..., correlation_matrix: _Optional[_Iterable[float]] = ..., volatility_per_asset: _Optional[_Iterable[float]] = ..., simulation_mode: _Optional[str] = ..., last_update: _Optional[str] = ...) -> None: ...
 
 class TradeRequest(_message.Message):
-    __slots__ = ("symbol", "side", "size", "price")
+    __slots__ = ("symbol", "side", "size", "price", "strategy_id", "user_id")
     SYMBOL_FIELD_NUMBER: _ClassVar[int]
     SIDE_FIELD_NUMBER: _ClassVar[int]
     SIZE_FIELD_NUMBER: _ClassVar[int]
     PRICE_FIELD_NUMBER: _ClassVar[int]
+    STRATEGY_ID_FIELD_NUMBER: _ClassVar[int]
+    USER_ID_FIELD_NUMBER: _ClassVar[int]
     symbol: str
     side: str
     size: float
     price: float
-    def __init__(self, symbol: _Optional[str] = ..., side: _Optional[str] = ..., size: _Optional[float] = ..., price: _Optional[float] = ...) -> None: ...
+    strategy_id: str
+    user_id: str
+    def __init__(self, symbol: _Optional[str] = ..., side: _Optional[str] = ..., size: _Optional[float] = ..., price: _Optional[float] = ..., strategy_id: _Optional[str] = ..., user_id: _Optional[str] = ...) -> None: ...
 
 class TradeResponse(_message.Message):
     __slots__ = ("accepted", "message", "executed_price", "pnl")
