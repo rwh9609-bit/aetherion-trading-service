@@ -81,6 +81,7 @@ message TradeRequest {
     string side = 2; // BUY or SELL
     double size = 3; // quantity in base asset
     double price = 4; // intended execution price
+    string strategy_id = 5; 
 }
 
 message TradeResponse {
