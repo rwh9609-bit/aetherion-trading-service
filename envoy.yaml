@@ -49,7 +49,7 @@ static_resources:
                   name: local_route
                   virtual_hosts:
                     - name: api_services
-                      domains: ["api.aetherion.cloud", "www.aetherion.cloud", "localhost", "localhost:8080"]
+                      domains: ["api.aetherion.cloud", "www.aetherion.cloud", "localhost", "localhost:8080", "aetherion.cloud"]
                       cors:
                         allow_origin_string_match:
                           - exact: "http://localhost:3000"
