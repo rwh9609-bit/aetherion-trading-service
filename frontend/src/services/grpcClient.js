@@ -1,6 +1,5 @@
 import { grpc } from '@improbable-eng/grpc-web';
-import { TradingServiceClient, RiskServiceClient, AuthServiceClient } from '../proto/trading_api_grpc_web_pb.js';
-import { BotServiceClient } from '../proto/bot_grpc_web_pb.js';
+import { TradingServiceClient, RiskServiceClient, AuthServiceClient, BotServiceClient } from '../proto/trading_api_grpc_web_pb.js';
 import { 
   OrderBookRequest,
   StrategyRequest,
@@ -376,15 +375,20 @@ export const streamPrice = (symbol, onData, onError) => {
 };
 
 // --- Bot Service Helpers ---
-export const createBot = async ({ name, symbol, strategy, parameters }) => {
-  const { CreateBotRequest } = await import('../proto/bot_pb.js');
+export const createBot = async ({ name, symbol, strategy, parameters, userId }) => {
+  const { CreateBotRequest } = await import('../proto/trading_api_grpc_web_pb.js');
+  console.log('[grpcClient] Sending createBot request:', { name, symbol, strategy, parameters, userId });
   return new Promise((resolve, reject) => {
     const req = new CreateBotRequest();
     req.setName(name); req.setSymbol(symbol); req.setStrategy(strategy);
+    if (userId) req.setUserId(userId);
     const map = req.getParametersMap();
     Object.entries(parameters || {}).forEach(([k,v]) => map.set(k, String(v)));
     botClient.createBot(req, createMetadata(), (err, resp) => {
-      if (err) return reject(err);
+      if (err) {
+        console.error('[grpcClient] createBot error:', err);
+        return reject(err);
+      }
       resolve(resp.toObject());
     });
   });
@@ -402,7 +406,7 @@ export const listBots = async () => {
 };
 
 export const startBot = async (id) => {
-  const { BotIdRequest } = await import('../proto/bot_pb.js');
+  const { BotIdRequest } = await import('../proto/trading_api_grpc_web_pb.js');
   const req = new BotIdRequest(); req.setId(id);
   return new Promise((resolve, reject) => {
     botClient.startBot(req, createMetadata(), (err, resp) => {
@@ -413,7 +417,7 @@ export const startBot = async (id) => {
 };
 
 export const stopBot = async (id) => {
-  const { BotIdRequest } = await import('../proto/bot_pb.js');
+  const { BotIdRequest } = await import('../proto/trading_api_grpc_web_pb.js');
   const req = new BotIdRequest(); req.setId(id);
   return new Promise((resolve, reject) => {
     botClient.stopBot(req, createMetadata(), (err, resp) => {
@@ -424,7 +428,7 @@ export const stopBot = async (id) => {
 };
 
 export const getBotStatus = async (id) => {
-  const { BotIdRequest } = await import('../proto/bot_pb.js');
+  const { BotIdRequest } = await import('../proto/trading_api_grpc_web_pb.js');
   const req = new BotIdRequest(); req.setId(id);
   return new Promise((resolve, reject) => {
     botClient.getBotStatus(req, createMetadata(), (err, resp) => {

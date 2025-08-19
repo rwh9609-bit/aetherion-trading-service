@@ -229,3 +229,59 @@ class AuthResponse(_message.Message):
     token: str
     expires_at_unix: int
     def __init__(self, success: bool = ..., message: _Optional[str] = ..., token: _Optional[str] = ..., expires_at_unix: _Optional[int] = ...) -> None: ...
+
+class BotConfig(_message.Message):
+    __slots__ = ("bot_id", "symbol", "strategy", "parameters", "is_active", "created_at_unix_ms", "name")
+    class ParametersEntry(_message.Message):
+        __slots__ = ("key", "value")
+        KEY_FIELD_NUMBER: _ClassVar[int]
+        VALUE_FIELD_NUMBER: _ClassVar[int]
+        key: str
+        value: str
+        def __init__(self, key: _Optional[str] = ..., value: _Optional[str] = ...) -> None: ...
+    BOT_ID_FIELD_NUMBER: _ClassVar[int]
+    SYMBOL_FIELD_NUMBER: _ClassVar[int]
+    STRATEGY_FIELD_NUMBER: _ClassVar[int]
+    PARAMETERS_FIELD_NUMBER: _ClassVar[int]
+    IS_ACTIVE_FIELD_NUMBER: _ClassVar[int]
+    CREATED_AT_UNIX_MS_FIELD_NUMBER: _ClassVar[int]
+    NAME_FIELD_NUMBER: _ClassVar[int]
+    bot_id: str
+    symbol: str
+    strategy: str
+    parameters: _containers.ScalarMap[str, str]
+    is_active: bool
+    created_at_unix_ms: int
+    name: str
+    def __init__(self, bot_id: _Optional[str] = ..., symbol: _Optional[str] = ..., strategy: _Optional[str] = ..., parameters: _Optional[_Mapping[str, str]] = ..., is_active: bool = ..., created_at_unix_ms: _Optional[int] = ..., name: _Optional[str] = ...) -> None: ...
+
+class CreateBotRequest(_message.Message):
+    __slots__ = ("symbol", "strategy", "parameters", "name")
+    class ParametersEntry(_message.Message):
+        __slots__ = ("key", "value")
+        KEY_FIELD_NUMBER: _ClassVar[int]
+        VALUE_FIELD_NUMBER: _ClassVar[int]
+        key: str
+        value: str
+        def __init__(self, key: _Optional[str] = ..., value: _Optional[str] = ...) -> None: ...
+    SYMBOL_FIELD_NUMBER: _ClassVar[int]
+    STRATEGY_FIELD_NUMBER: _ClassVar[int]
+    PARAMETERS_FIELD_NUMBER: _ClassVar[int]
+    NAME_FIELD_NUMBER: _ClassVar[int]
+    symbol: str
+    strategy: str
+    parameters: _containers.ScalarMap[str, str]
+    name: str
+    def __init__(self, symbol: _Optional[str] = ..., strategy: _Optional[str] = ..., parameters: _Optional[_Mapping[str, str]] = ..., name: _Optional[str] = ...) -> None: ...
+
+class BotIdRequest(_message.Message):
+    __slots__ = ("bot_id",)
+    BOT_ID_FIELD_NUMBER: _ClassVar[int]
+    bot_id: str
+    def __init__(self, bot_id: _Optional[str] = ...) -> None: ...
+
+class BotList(_message.Message):
+    __slots__ = ("bots",)
+    BOTS_FIELD_NUMBER: _ClassVar[int]
+    bots: _containers.RepeatedCompositeFieldContainer[BotConfig]
+    def __init__(self, bots: _Optional[_Iterable[_Union[BotConfig, _Mapping]]] = ...) -> None: ...

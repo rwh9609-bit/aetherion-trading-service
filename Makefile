@@ -5,7 +5,7 @@
 ## --- Variables ---
 PROTOC ?= protoc
 PROTO_DIR := protos
-ROOT_PROTOS := trading_api.proto $(PROTO_DIR)/bot.proto
+ROOT_PROTO := trading_api.proto
 
 # Go variables
 GO_DIR := go
@@ -62,12 +62,9 @@ proto-gen-go:
 	@$(PROTOC) -I . -I $(PROTO_DIR) \
 		--go_out=$(GO_DIR) --go_opt=paths=source_relative \
 		--go-grpc_out=$(GO_DIR) --go-grpc_opt=paths=source_relative \
-		$(ROOT_PROTOS)
+		$(ROOT_PROTO)
 	@mkdir -p $(GO_DIR)/gen
 	@mv $(GO_DIR)/trading_api*.pb.go $(GO_DIR)/gen/ 2>/dev/null || true
-	@# Do NOT delete or overwrite bot_grpc.pb.go and bot.pb.go in go/gen
-	@if [ -f $(GO_DIR)/$(PROTO_DIR)/bot.pb.go ]; then mv $(GO_DIR)/$(PROTO_DIR)/bot.pb.go $(GO_DIR)/gen/; fi
-	@if [ -f $(GO_DIR)/$(PROTO_DIR)/bot_grpc.pb.go ]; then mv $(GO_DIR)/$(PROTO_DIR)/bot_grpc.pb.go $(GO_DIR)/gen/; fi
 	@rmdir $(GO_DIR)/$(PROTO_DIR) 2>/dev/null || true
 	@echo "$(GREEN)Go protos updated in go/gen$(RESET)"
 
@@ -78,7 +75,7 @@ proto-gen-web:
 	@$(PROTOC) -I . -I $(PROTO_DIR) \
 		--js_out=import_style=commonjs:$(FRONTEND_DIR)/src/proto \
 		--grpc-web_out=import_style=commonjs,mode=grpcwebtext:$(FRONTEND_DIR)/src/proto \
-		$(ROOT_PROTOS)
+		$(ROOT_PROTO)
 	@echo "$(GREEN)Web stubs updated in frontend/src/proto$(RESET)"
 
 ## Python protobufs
@@ -89,7 +86,7 @@ proto-gen-python: setup
 		--python_out=$(PYTHON_DIR)/protos \
 		--pyi_out=$(PYTHON_DIR)/protos \
 		--grpc_python_out=$(PYTHON_DIR)/protos \
-		$(ROOT_PROTOS)
+		$(ROOT_PROTO)
 	@touch $(PYTHON_DIR)/protos/__init__.py
 	@echo "$(GREEN)Python protos updated$(RESET)"
 
