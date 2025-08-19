@@ -180,6 +180,36 @@ func (s *botServiceServer) StartBot(ctx context.Context, req *pb.BotIdRequest) (
 	bot.Parameters["strategy_id"] = resp.Id
 	s.reg.mu.Unlock()
 	s.reg.persist()
+
+	// --- Added: trading goroutine for bot ---
+	go func(bot *pb.BotConfig) {
+		for bot.IsActive {
+			// Example: fetch price from trading server
+			tick, err := s.trading.GetPrice(context.Background(), &pb.Tick{Symbol: bot.Symbol})
+			if err != nil {
+				time.Sleep(time.Second)
+				continue
+			}
+			price := tick.Price
+			// Example: simple buy condition (replace with your strategy logic)
+			if price > 0 { // Replace with real condition
+				tradeReq := &pb.TradeRequest{
+					Symbol:     bot.Symbol,
+					Side:       "BUY",
+					Size:       1, // or from bot.Parameters
+					Price:      price,
+					StrategyId: bot.Parameters["strategy_id"],
+				}
+				resp, err := s.trading.ExecuteTrade(context.Background(), tradeReq)
+				if err == nil && resp.Accepted {
+					log.Printf("Bot %s executed BUY at %.2f", bot.Name, price)
+				}
+			}
+			time.Sleep(10 * time.Second) // Control loop frequency
+		}
+	}(bot)
+	// --- End added ---
+
 	return &pb.StatusResponse{Success: true, Message: "bot started", Id: bot.BotId}, nil
 }
 
