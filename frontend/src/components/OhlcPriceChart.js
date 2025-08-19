@@ -162,7 +162,7 @@ const OhlcPriceChart = ({ symbol }) => {
         <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 1 }}>
           <Stack direction="row" spacing={1} alignItems="center">
             <Fade in key={animKey} timeout={300}>
-              <Typography variant="h6" sx={{ mb: 0 }}>{activeSymbol} {mode === 'candles' ? 'Candles' : 'Line'} (5s)</Typography>
+              <Typography variant="h6" sx={{ mb: 0 }}>{activeSymbol} {mode === 'candles' ? 'Candles' : 'Line'}</Typography>
             </Fade>
             {renderStatusChip()}
           </Stack>
@@ -206,7 +206,7 @@ const OhlcPriceChart = ({ symbol }) => {
           </svg>
         </Box>
         <Typography variant="caption" color="text.secondary" display="block" sx={{ mt: 1 }}>
-          Synthetic OHLC bars from live ticks (5s interval, 30m window). Illustration only.
+                    OHLC bars from live ticks (5s interval, 30m window).
         </Typography>
       </CardContent>
     </Card>

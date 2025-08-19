@@ -19,6 +19,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/gorilla/websocket"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 	pb "github.com/rwh9609-bit/multilanguage/go/gen"
@@ -679,6 +680,51 @@ func (s *tradingServer) ExecuteTrade(ctx context.Context, req *pb.TradeRequest) 
 	return &pb.TradeResponse{Accepted: true, Message: "executed", ExecutedPrice: execPrice, Pnl: pnl}, nil
 }
 
+// wsMarketDataHandler handles WebSocket connections for market data
+func wsMarketDataHandler(bus *EventBus, w http.ResponseWriter, r *http.Request) {
+	upgrader := websocket.Upgrader{
+		ReadBufferSize:  1024,
+		WriteBufferSize: 1024,
+		CheckOrigin: func(r *http.Request) bool {
+			// Allow all origins for now, consider restricting in production
+			return true
+		},
+	}
+
+	conn, err := upgrader.Upgrade(w, r, nil)
+	if err != nil {
+		log.Error().Err(err).Msg("Failed to upgrade to websocket")
+		return
+	}
+	defer conn.Close()
+	log.Info().Msg("WebSocket client connected for market data")
+
+	// Subscribe to the event bus
+	id, ch := bus.Subscribe(256) // Use a buffered channel
+	defer bus.Unsubscribe(id)
+
+	for {
+		select {
+		case <-r.Context().Done():
+			log.Info().Msg("WebSocket client disconnected (context done)")
+			return
+		case event := <-ch:
+			if event.Type == EventPriceTick {
+				priceTick, ok := event.Data.(PriceTick)
+				if !ok {
+					log.Error().Msg("Received non-PriceTick event on price channel")
+					continue
+				}
+				// Marshal PriceTick to JSON and send
+				if err := conn.WriteJSON(priceTick); err != nil {
+					log.Error().Err(err).Msg("Failed to write JSON to websocket")
+					return // Exit loop on write error
+				}
+			}
+		}
+	}
+}
+
 func main() {
 	cfg, err := loadConfig()
 	if err != nil {
@@ -770,9 +816,13 @@ func main() {
 			w.WriteHeader(http.StatusOK)
 			_, _ = w.Write([]byte("ok"))
 		})
+		// Add WebSocket handler
+		mux.HandleFunc("/ws/marketdata", func(w http.ResponseWriter, r *http.Request) {
+			wsMarketDataHandler(tradingService.eventBus, w, r)
+		})
 		srv := &http.Server{Addr: addr, Handler: mux}
 		if err := srv.ListenAndServe(); err != nil {
-			log.Warn().Err(err).Msg("health server exited")
+			log.Warn().Err(err).Msg("health/websocket server exited")
 		}
 	}(cfg.HTTPHealthAddr)
 
