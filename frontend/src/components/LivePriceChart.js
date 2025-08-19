@@ -1,103 +1,110 @@
-import React, { useEffect, useState } from 'react';
-import { Box, Typography, CircularProgress, Paper, Button } from '@mui/material';
-import BacktestResultsChart from './BacktestResultsChart';
+import React, { useEffect, useRef, useState } from 'react';
+import { createChart } from 'lightweight-charts';
+import useWebSocket from '../hooks/useWebSocket';
 
-export default function LivePriceChart({ symbol = 'BTCUSD' }) {
-  // Normalize symbol to BTCUSD format for API requests
-  const normalizedSymbol = symbol.replace(/[-_]/g, '').toUpperCase();
-  const [data, setData] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+const LivePriceChart = ({ symbol }) => {
+  const chartContainerRef = useRef();
+  const chartRef = useRef();
+  const seriesRef = useRef();
+  const [currentPrice, setCurrentPrice] = useState(null);
+
+  // State to hold the current OHLC bar being built
+  const currentBar = useRef(null);
+  // State to hold all historical OHLC bars
+  const allBars = useRef([]);
+
+  // Use the WebSocket hook to connect to the Go backend
+  const { lastMessage, isConnected } = useWebSocket(`ws://localhost:8080/ws/marketdata`);
 
   useEffect(() => {
-    let cancelled = false;
-    async function fetchData() {
-      setLoading(true);
-      setError(null);
-      try {
-        const res = await fetch(`http://localhost:8000/fetch_live_data?symbol=${normalizedSymbol}`, { method: 'POST' });
-        const json = await res.json();
-        if (!cancelled) {
-          if (json.error) {
-          // Reload chart data after successful fetch
-          if (typeof fetchData === 'function') {
-            fetchData();
-          }
-            setData(json.data || []);
-          }
+    if (!chartContainerRef.current) return;
+
+    const chart = createChart(chartContainerRef.current, {
+      width: chartContainerRef.current.clientWidth,
+      height: 400,
+      layout: {
+        backgroundColor: '#1a1a1a',
+        textColor: 'rgba(255, 255, 255, 0.9)',
+      },
+      grid: {
+        vertLines: {
+          color: 'rgba(70, 70, 70, 0.5)',
+        },
+        horzLines: {
+          color: 'rgba(70, 70, 70, 0.5)',
+        },
+      },
+      timeScale: {
+        timeVisible: true,
+        secondsVisible: true,
+      },
+    });
+
+    const newSeries = chart.addCandlestickSeries({
+      upColor: '#26a69a',
+      downColor: '#ef5350',
+      borderVisible: false,
+      wickColor: '#747474',
+    });
+
+    seriesRef.current = newSeries;
+    chartRef.current = chart;
+
+    const handleResize = () => {
+      chart.applyOptions({ width: chartContainerRef.current.clientWidth });
+    };
+
+    window.addEventListener('resize', handleResize);
+
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      chart.remove();
+    };
+  }, []);
+
+  // OHLC aggregation logic
+  useEffect(() => {
+    if (lastMessage && lastMessage.Symbol === symbol) {
+      const price = lastMessage.Price;
+      const time = Math.floor(lastMessage.Ts / 1000000000); // Convert nanoseconds to seconds
+
+      setCurrentPrice(price);
+
+      // Determine the bar time (e.g., start of a 5-second interval)
+      const barTime = Math.floor(time / 5) * 5;
+
+      if (!currentBar.current || currentBar.current.time !== barTime) {
+        // New bar or first bar
+        if (currentBar.current) {
+          // Finalize the previous bar and add to allBars
+          allBars.current.push(currentBar.current);
+          seriesRef.current.update(currentBar.current); // Update chart with finalized bar
         }
-      } catch (e) {
-        if (!cancelled) setError(e.message);
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
-    }
-    fetchData();
-    const intervalId = setInterval(fetchData, 60000); // refresh every minute
-    return () => { cancelled = true; clearInterval(intervalId); };
-  }, [normalizedSymbol]);
-  // Expose fetchData for manual reload after download
-  const fetchData = async () => {
-    setLoading(true);
-    let cancelled = false;
-    try {
-      const res = await fetch(`/marketdata?symbol=${normalizedSymbol}`);
-      const json = await res.json();
-      if (json.status === 'error') {
-        setData([]);
+        currentBar.current = {
+          time: barTime,
+          open: price,
+          high: price,
+          low: price,
+          close: price,
+        };
       } else {
-        setData(json.data || []);
+        // Update existing bar
+        currentBar.current.high = Math.max(currentBar.current.high, price);
+        currentBar.current.low = Math.min(currentBar.current.low, price);
+        currentBar.current.close = price;
       }
-    } catch {
-      setData([]);
+      // Always update the current bar on the chart for real-time visualization
+      seriesRef.current.update(currentBar.current);
     }
-    if (!cancelled) setLoading(false);
-    return () => { cancelled = true; };
-  };
-  useEffect(() => {
-    fetchData();
-    const intervalId = setInterval(fetchData, 60000); // refresh every minute
-    return () => clearInterval(intervalId);
-  }, [normalizedSymbol]);
-
-  const [downloading, setDownloading] = useState(false);
-  const [downloadMsg, setDownloadMsg] = useState(null);
-
-  const handleDownload = async () => {
-    setDownloading(true);
-    setDownloadMsg(null);
-    try {
-  const res = await fetch(`http://localhost:8000/fetch_live_data?symbol=${normalizedSymbol}`, { method: 'POST' });
-      const json = await res.json();
-      if (json.status === 'success') {
-        setDownloadMsg('Live price fetched and saved!');
-      } else {
-        setDownloadMsg(json.error || 'Download failed.');
-      }
-    } catch (e) {
-      setDownloadMsg('Download failed.');
-    }
-    setDownloading(false);
-  };
+  }, [lastMessage, symbol]);
 
   return (
-    <Paper sx={{ p: 3, mt: 4 }} elevation={3}>
-      <Typography variant="h6" gutterBottom>
-        Live Price Chart ({normalizedSymbol})
-      </Typography>
-      <Button variant="contained" color="primary" onClick={handleDownload} disabled={downloading} sx={{ mb:2 }}>
-        {downloading ? 'Downloading...' : `Download Live Price for ${normalizedSymbol}`}
-      </Button>
-      {downloadMsg && <Typography color={downloadMsg.includes('failed') ? 'error' : 'success'} sx={{ mb:2 }}>{downloadMsg}</Typography>}
-      {loading ? (
-        <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: 120 }}>
-          <CircularProgress />
-        </Box>
-      ) : error ? (
-        <Typography color="error">{error}</Typography>
-      ) : (
-        <BacktestResultsChart equityCurve={data.map(d => ({ timestamp: d.timestamp, equity: d.price }))} />
-      )}
-    </Paper>
+    <div>
+      <h2>Live Price for {symbol}: {currentPrice ? currentPrice.toFixed(2) : 'Loading...'}</h2>
+      <div ref={chartContainerRef} style={{ position: 'relative', height: '400px' }}></div>
+      {!isConnected && <p>Connecting to WebSocket...</p>}
+    </div>
   );
-}
+};
+
+export default LivePriceChart;
