@@ -170,24 +170,16 @@ type OrderBookEntry struct {
 	Timestamp int64 // Unix epoch milliseconds
 }
 
-// Strategy represents an active trading strategy
-type Strategy struct {
-	ID           string
-	Symbol       string
-	StrategyType string
-	Parameters   map[string]string
-	IsActive     bool
-	CreatedAt    time.Time
-	mu           sync.Mutex
-}
-
 func (s *Strategy) Run(ctx context.Context, server *tradingServer) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
+	// Unmarshal Parameters JSONB to map
+	var params map[string]string
+	if err := json.Unmarshal(s.Parameters, &params); err != nil {
+		log.Error().Err(err).Msg("Failed to unmarshal strategy parameters")
+		return
+	}
 
-	// Initialize strategy-specific parameters
-	threshold, _ := strconv.ParseFloat(s.Parameters["threshold"], 64)
-	period, _ := strconv.Atoi(s.Parameters["period"])
+	threshold, _ := strconv.ParseFloat(params["threshold"], 64)
+	period, _ := strconv.Atoi(params["period"])
 	if period <= 0 {
 		period = 5 // sane fallback to avoid zero/negative panic
 	}
@@ -213,8 +205,8 @@ func (s *Strategy) Run(ctx context.Context, server *tradingServer) {
 				continue
 			}
 
-			// Implement strategy logic here based on StrategyType
-			switch s.StrategyType {
+			// Implement strategy logic here based on Type
+			switch s.Type {
 			case "MEAN_REVERSION":
 				// Example mean reversion logic
 				// You would typically calculate moving average here
@@ -224,7 +216,7 @@ func (s *Strategy) Run(ctx context.Context, server *tradingServer) {
 				// Implement momentum strategy logic
 				log.Printf("Running momentum strategy for %s at price %.2f", s.Symbol, price)
 			default:
-				log.Printf("Unknown strategy type: %s", s.StrategyType)
+				log.Printf("Unknown strategy type: %s", s.Type)
 			}
 		}
 	}
@@ -233,18 +225,19 @@ func (s *Strategy) Run(ctx context.Context, server *tradingServer) {
 // server implements the TradingService
 type tradingServer struct {
 	pb.UnimplementedTradingServiceServer
-	orderBooks    map[string]*OrderBookManager // symbol -> order book
-	portfolios    map[string]*pb.Portfolio     // account -> portfolio
-	activeSymbols map[string]bool              // currently tracked symbols
-	strategies    map[string]*Strategy         // active strategies
-	mu            sync.RWMutex                 // protects concurrent access
-	eventBus      *EventBus
-	lastPrices    map[string]float64
-	priceMu       sync.RWMutex
-	feed          *CoinbaseFeed // market data feed controller (injected)
+	orderBooks map[string]*OrderBookManager // symbol -> order book
+	// portfolios    map[string]*pb.Portfolio     // account -> portfolio - now in DB
+	activeSymbols map[string]bool // currently tracked symbols
+	// strategies    map[string]*Strategy         // active strategies - now in DB
+	mu         sync.RWMutex // protects concurrent access
+	eventBus   *EventBus
+	lastPrices map[string]float64
+	priceMu    sync.RWMutex
+	feed       *CoinbaseFeed // market data feed controller (injected)
 	// in-memory price history for momentum metrics: symbol -> slice of (ts, price)
 	histMu    sync.RWMutex
 	priceHist map[string][]histPoint
+	db        *DBService // Database service
 }
 
 type histPoint struct {
@@ -255,9 +248,7 @@ type histPoint struct {
 func newTradingServer() *tradingServer {
 	return &tradingServer{
 		orderBooks:    make(map[string]*OrderBookManager),
-		portfolios:    make(map[string]*pb.Portfolio),
 		activeSymbols: make(map[string]bool),
-		strategies:    make(map[string]*Strategy),
 		eventBus:      NewEventBus(),
 		lastPrices:    make(map[string]float64),
 		priceHist:     make(map[string][]histPoint),
@@ -287,28 +278,35 @@ func (s *tradingServer) GetPrice(ctx context.Context, req *pb.Tick) (*pb.Tick, e
 func (s *tradingServer) StartStrategy(ctx context.Context, req *pb.StrategyRequest) (*pb.StatusResponse, error) {
 	// Create a new strategy instance
 	strategy := &Strategy{
-		ID:           uuid.New().String(),
-		Symbol:       req.Symbol,
-		StrategyType: req.Parameters["type"],
-		Parameters:   req.Parameters,
-		IsActive:     true,
-		CreatedAt:    time.Now(),
+		ID:         uuid.New().String(),
+		UserID:     "default-user-id", // Replace with actual user ID from context/auth if available
+		Name:       req.Parameters["name"],
+		Symbol:     req.Symbol,
+		Type:       req.Parameters["type"],
+		Parameters: []byte("{}"), // You may want to marshal req.Parameters to JSON here
+		IsActive:   true,
+		CreatedAt:  time.Now(),
+		UpdatedAt:  time.Now(),
 	}
 
-	// Store the strategy in the server's strategies map
-	s.mu.Lock()
-	s.strategies[strategy.ID] = strategy
-	s.mu.Unlock()
+	// Save strategy to DB
+	id, err := s.db.SaveStrategy(ctx, strategy)
+	if err != nil {
+		return &pb.StatusResponse{
+			Success: false,
+			Message: fmt.Sprintf("Failed to save strategy: %v", err),
+		}, err
+	}
 
-	// Start strategy-specific processing in a goroutine
-	go func() {
-		strategy.Run(ctx, s)
-	}()
+	// Optionally, start strategy logic in a goroutine if needed
+	// go func() {
+	//     // Implement strategy execution logic here if required
+	// }()
 
 	return &pb.StatusResponse{
 		Success: true,
-		Message: fmt.Sprintf("Strategy started with ID: %s", strategy.ID),
-		Id:      strategy.ID,
+		Message: fmt.Sprintf("Strategy started with ID: %s", id),
+		Id:      id,
 	}, nil
 }
 
@@ -325,27 +323,51 @@ func (s *tradingServer) StopStrategy(ctx context.Context, req *pb.StrategyReques
 
 // --- Bot Management RPCs ---
 
-// GetPortfolio returns the current portfolio status
+// GetPortfolio returns the current portfolio status from the database
 func (s *tradingServer) GetPortfolio(ctx context.Context, req *pb.PortfolioRequest) (*pb.Portfolio, error) {
-	s.mu.RLock()
-	portfolio, exists := s.portfolios[req.AccountId]
-	s.mu.RUnlock()
+	// For simplicity, assuming a single user for now, or derive from context
+	userID := "default-user-id" // TODO: Replace with actual user ID from context/auth
 
-	if !exists {
-		// Create a new portfolio with some mock data
-		portfolio = &pb.Portfolio{
-			Positions: map[string]float64{
-				"BTC": 1.5,
-				"USD": 50000.0,
-			},
-			TotalValueUsd: 100000.0,
-		}
-		s.mu.Lock()
-		s.portfolios[req.AccountId] = portfolio
-		s.mu.Unlock()
+	dbPortfolios, err := s.db.GetPortfolioByUserID(ctx, userID)
+	if err != nil {
+		log.Error().Err(err).Str("userID", userID).Msg("Failed to get portfolio from DB")
+		return nil, fmt.Errorf("failed to retrieve portfolio: %w", err)
 	}
 
-	return portfolio, nil
+	// Convert DB portfolios to gRPC portfolio format
+	grpcPositions := make(map[string]float64)
+	totalValueUsd := 0.0 // This would ideally be computed based on current market prices
+
+	for _, p := range dbPortfolios {
+		grpcPositions[p.Symbol] = p.Quantity
+		// For totalValueUsd, you'd need to fetch current prices for each symbol
+		// and sum them up. For now, we'll just sum up USD.
+		if p.Symbol == "USD" {
+			totalValueUsd += p.Quantity
+		}
+	}
+
+	// If no portfolio exists, create a default one and save it
+	if len(dbPortfolios) == 0 {
+		defaultPortfolio := &Portfolio{
+			ID:           uuid.New().String(),
+			UserID:       userID,
+			Symbol:       "USD",
+			Quantity:     100000.0, // Initial USD balance
+			AveragePrice: 1.0,
+		}
+		if err := s.db.SavePortfolio(ctx, defaultPortfolio); err != nil {
+			log.Error().Err(err).Msg("Failed to save default portfolio")
+			// Continue without error, as it's just a default
+		}
+		grpcPositions["USD"] = 100000.0
+		totalValueUsd = 100000.0
+	}
+
+	return &pb.Portfolio{
+		Positions:     grpcPositions,
+		TotalValueUsd: totalValueUsd,
+	}, nil
 }
 
 // StreamOrderBook streams order book updates
@@ -639,45 +661,91 @@ func (s *tradingServer) ExecuteTrade(ctx context.Context, req *pb.TradeRequest) 
 		execPrice = tick.Price
 	}
 
-	accountID := "default"
-	s.mu.Lock()
-	portfolio, exists := s.portfolios[accountID]
-	if !exists {
-		portfolio = &pb.Portfolio{Positions: map[string]float64{"USD": 100000}}
-		s.portfolios[accountID] = portfolio
+	userID := "default-user-id" // Replace with actual user ID from context/auth if available
+
+	// Fetch portfolio from DB
+	portfolios, err := s.db.GetPortfolioByUserID(ctx, userID)
+	if err != nil {
+		return &pb.TradeResponse{Accepted: false, Message: "failed to fetch portfolio"}, err
 	}
-	// Initialize symbol position if absent
-	if _, ok := portfolio.Positions[req.Symbol]; !ok {
-		portfolio.Positions[req.Symbol] = 0
+
+	// Find or create symbol position
+	var portfolio *Portfolio
+	for _, p := range portfolios {
+		if p.Symbol == req.Symbol {
+			portfolio = p
+			break
+		}
 	}
-	// Simple cash/position update (no fees, slippage)
+	if portfolio == nil {
+		portfolio = &Portfolio{
+			ID:           uuid.New().String(),
+			UserID:       userID,
+			Symbol:       req.Symbol,
+			Quantity:     0,
+			AveragePrice: execPrice,
+		}
+	}
+
+	// Fetch USD position
+	var usdPortfolio *Portfolio
+	for _, p := range portfolios {
+		if p.Symbol == "USD" {
+			usdPortfolio = p
+			break
+		}
+	}
+	if usdPortfolio == nil {
+		usdPortfolio = &Portfolio{
+			ID:           uuid.New().String(),
+			UserID:       userID,
+			Symbol:       "USD",
+			Quantity:     100000.0,
+			AveragePrice: 1.0,
+		}
+	}
+
 	qty := req.Size
 	notional := qty * execPrice
 	if side == "BUY" {
-		// Ensure sufficient USD
-		if portfolio.Positions["USD"] < notional {
-			s.mu.Unlock()
+		if usdPortfolio.Quantity < notional {
 			return &pb.TradeResponse{Accepted: false, Message: "insufficient USD balance"}, nil
 		}
-		portfolio.Positions[req.Symbol] += qty
-		portfolio.Positions["USD"] -= notional
+		portfolio.Quantity += qty
+		usdPortfolio.Quantity -= notional
 	} else { // SELL
-		if portfolio.Positions[req.Symbol] < qty {
-			s.mu.Unlock()
+		if portfolio.Quantity < qty {
 			return &pb.TradeResponse{Accepted: false, Message: "insufficient position"}, nil
 		}
-		portfolio.Positions[req.Symbol] -= qty
-		portfolio.Positions["USD"] += notional
-	}
-	s.mu.Unlock()
-
-	// PnL simplified: positive for SELL, negative for BUY relative to notional (placeholder)
-	pnl := 0.0
-	if side == "SELL" {
-		pnl = notional * 0.0 // placeholder for realized PnL tracking
+		portfolio.Quantity -= qty
+		usdPortfolio.Quantity += notional
 	}
 
-	return &pb.TradeResponse{Accepted: true, Message: "executed", ExecutedPrice: execPrice, Pnl: pnl}, nil
+	// Save updated portfolios
+	if err := s.db.SavePortfolio(ctx, portfolio); err != nil {
+		return &pb.TradeResponse{Accepted: false, Message: "failed to save portfolio"}, err
+	}
+	if err := s.db.SavePortfolio(ctx, usdPortfolio); err != nil {
+		return &pb.TradeResponse{Accepted: false, Message: "failed to save USD portfolio"}, err
+	}
+
+	// Record trade in DB
+	trade := &Trade{
+		ID:         uuid.New().String(),
+		UserID:     userID,
+		StrategyID: req.StrategyID,
+		Symbol:     req.Symbol,
+		Side:       side,
+		Quantity:   qty,
+		Price:      execPrice,
+		ExecutedAt: time.Now(),
+		PnL:        0.0, // You can compute actual PnL if needed
+	}
+	if err := s.db.RecordTrade(ctx, trade); err != nil {
+		return &pb.TradeResponse{Accepted: false, Message: "failed to record trade"}, err
+	}
+
+	return &pb.TradeResponse{Accepted: true, Message: "executed", ExecutedPrice: execPrice, Pnl: trade.PnL}, nil
 }
 
 // wsMarketDataHandler handles WebSocket connections for market data
@@ -769,8 +837,22 @@ func main() {
 		)),
 	)
 
+	// Initialize database service
+	dbService, err := NewDBService(cfg.PostgresDSN)
+	if err != nil {
+		log.Fatal().Err(err).Msg("Failed to connect to database")
+	}
+	defer dbService.Close() // Ensure database connection is closed on shutdown
+
 	// Create and register our trading service
-	tradingService := newTradingServer()
+	tradingService := &tradingServer{
+		orderBooks:    make(map[string]*OrderBookManager),
+		activeSymbols: make(map[string]bool),
+		eventBus:      NewEventBus(),
+		lastPrices:    make(map[string]float64),
+		priceHist:     make(map[string][]histPoint),
+		db:            dbService,
+	}
 	pb.RegisterTradingServiceServer(grpcServer, tradingService)
 
 	// Bot service (in-memory)

@@ -206,7 +206,7 @@ const OhlcPriceChart = ({ symbol }) => {
           </svg>
         </Box>
         <Typography variant="caption" color="text.secondary" display="block" sx={{ mt: 1 }}>
-                    OHLC bars from live ticks (5s interval, 30m window).
+          OHLC bars from live ticks (5s interval, 30m window). Illustration only.
         </Typography>
       </CardContent>
     </Card>
