@@ -85,7 +85,7 @@ proto.trading.BotServicePromiseClient =
 const methodDescriptor_BotService_CreateBot = new grpc.web.MethodDescriptor(
   '/trading.BotService/CreateBot',
   grpc.web.MethodType.UNARY,
-  trading_api_pb.CreateBotRequest,
+  proto.trading.CreateBotRequest,
   trading_api_pb.StatusResponse,
   /**
    * @param {!proto.trading.CreateBotRequest} request
@@ -147,7 +147,7 @@ const methodDescriptor_BotService_ListBots = new grpc.web.MethodDescriptor(
   '/trading.BotService/ListBots',
   grpc.web.MethodType.UNARY,
   trading_api_pb.Empty,
-  trading_api_pb.BotList,
+  proto.trading.BotList,
   /**
    * @param {!proto.trading.Empty} request
    * @return {!Uint8Array}
@@ -155,7 +155,7 @@ const methodDescriptor_BotService_ListBots = new grpc.web.MethodDescriptor(
   function(request) {
     return request.serializeBinary();
   },
-  trading_api_pb.BotList.deserializeBinary
+  proto.trading.BotList.deserializeBinary
 );
 
 
@@ -207,7 +207,7 @@ proto.trading.BotServicePromiseClient.prototype.listBots =
 const methodDescriptor_BotService_StartBot = new grpc.web.MethodDescriptor(
   '/trading.BotService/StartBot',
   grpc.web.MethodType.UNARY,
-  trading_api_pb.BotIdRequest,
+  proto.trading.BotIdRequest,
   trading_api_pb.StatusResponse,
   /**
    * @param {!proto.trading.BotIdRequest} request
@@ -268,7 +268,7 @@ proto.trading.BotServicePromiseClient.prototype.startBot =
 const methodDescriptor_BotService_StopBot = new grpc.web.MethodDescriptor(
   '/trading.BotService/StopBot',
   grpc.web.MethodType.UNARY,
-  trading_api_pb.BotIdRequest,
+  proto.trading.BotIdRequest,
   trading_api_pb.StatusResponse,
   /**
    * @param {!proto.trading.BotIdRequest} request
@@ -329,8 +329,8 @@ proto.trading.BotServicePromiseClient.prototype.stopBot =
 const methodDescriptor_BotService_GetBotStatus = new grpc.web.MethodDescriptor(
   '/trading.BotService/GetBotStatus',
   grpc.web.MethodType.UNARY,
-  trading_api_pb.BotIdRequest,
-  trading_api_pb.BotConfig,
+  proto.trading.BotIdRequest,
+  proto.trading.BotConfig,
   /**
    * @param {!proto.trading.BotIdRequest} request
    * @return {!Uint8Array}
@@ -338,7 +338,7 @@ const methodDescriptor_BotService_GetBotStatus = new grpc.web.MethodDescriptor(
   function(request) {
     return request.serializeBinary();
   },
-  trading_api_pb.BotConfig.deserializeBinary
+  proto.trading.BotConfig.deserializeBinary
 );
 
 

@@ -25,7 +25,7 @@ _sym_db = _symbol_database.Default()
 import trading_api_pb2 as trading__api__pb2
 
 
-DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x10protos/bot.proto\x12\x07trading\x1a\x11trading_api.proto2\xb7\x02\n\nBotService\x12\x41\n\tCreateBot\x12\x19.trading.CreateBotRequest\x1a\x17.trading.StatusResponse\"\x00\x12.\n\x08ListBots\x12\x0e.trading.Empty\x1a\x10.trading.BotList\"\x00\x12<\n\x08StartBot\x12\x15.trading.BotIdRequest\x1a\x17.trading.StatusResponse\"\x00\x12;\n\x07StopBot\x12\x15.trading.BotIdRequest\x1a\x17.trading.StatusResponse\"\x00\x12;\n\x0cGetBotStatus\x12\x15.trading.BotIdRequest\x1a\x12.trading.BotConfig\"\x00\x42-Z+github.com/rwh9609-bit/multilanguage/go/genb\x06proto3')
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x10protos/bot.proto\x12\x07trading\x1a\x11trading_api.proto\"\xd7\x01\n\tBotConfig\x12\x0e\n\x06\x62ot_id\x18\x01 \x01(\t\x12\x0e\n\x06symbol\x18\x02 \x01(\t\x12\x10\n\x08strategy\x18\x03 \x01(\t\x12\x36\n\nparameters\x18\x04 \x03(\x0b\x32\".trading.BotConfig.ParametersEntry\x12\x11\n\tis_active\x18\x05 \x01(\x08\x12\x1a\n\x12\x63reated_at_unix_ms\x18\x06 \x01(\x03\x1a\x31\n\x0fParametersEntry\x12\x0b\n\x03key\x18\x01 \x01(\t\x12\r\n\x05value\x18\x02 \x01(\t:\x02\x38\x01\"\xa6\x01\n\x10\x43reateBotRequest\x12\x0e\n\x06symbol\x18\x01 \x01(\t\x12\x10\n\x08strategy\x18\x02 \x01(\t\x12=\n\nparameters\x18\x03 \x03(\x0b\x32).trading.CreateBotRequest.ParametersEntry\x1a\x31\n\x0fParametersEntry\x12\x0b\n\x03key\x18\x01 \x01(\t\x12\r\n\x05value\x18\x02 \x01(\t:\x02\x38\x01\"\x1e\n\x0c\x42otIdRequest\x12\x0e\n\x06\x62ot_id\x18\x01 \x01(\t\"+\n\x07\x42otList\x12 \n\x04\x62ots\x18\x01 \x03(\x0b\x32\x12.trading.BotConfig2\xb7\x02\n\nBotService\x12\x41\n\tCreateBot\x12\x19.trading.CreateBotRequest\x1a\x17.trading.StatusResponse\"\x00\x12.\n\x08ListBots\x12\x0e.trading.Empty\x1a\x10.trading.BotList\"\x00\x12<\n\x08StartBot\x12\x15.trading.BotIdRequest\x1a\x17.trading.StatusResponse\"\x00\x12;\n\x07StopBot\x12\x15.trading.BotIdRequest\x1a\x17.trading.StatusResponse\"\x00\x12;\n\x0cGetBotStatus\x12\x15.trading.BotIdRequest\x1a\x12.trading.BotConfig\"\x00\x42-Z+github.com/rwh9609-bit/multilanguage/go/genb\x06proto3')
 
 _globals = globals()
 _builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, _globals)
@@ -33,6 +33,22 @@ _builder.BuildTopDescriptorsAndMessages(DESCRIPTOR, 'protos.bot_pb2', _globals)
 if not _descriptor._USE_C_DESCRIPTORS:
   _globals['DESCRIPTOR']._loaded_options = None
   _globals['DESCRIPTOR']._serialized_options = b'Z+github.com/rwh9609-bit/multilanguage/go/gen'
-  _globals['_BOTSERVICE']._serialized_start=49
-  _globals['_BOTSERVICE']._serialized_end=360
+  _globals['_BOTCONFIG_PARAMETERSENTRY']._loaded_options = None
+  _globals['_BOTCONFIG_PARAMETERSENTRY']._serialized_options = b'8\001'
+  _globals['_CREATEBOTREQUEST_PARAMETERSENTRY']._loaded_options = None
+  _globals['_CREATEBOTREQUEST_PARAMETERSENTRY']._serialized_options = b'8\001'
+  _globals['_BOTCONFIG']._serialized_start=49
+  _globals['_BOTCONFIG']._serialized_end=264
+  _globals['_BOTCONFIG_PARAMETERSENTRY']._serialized_start=215
+  _globals['_BOTCONFIG_PARAMETERSENTRY']._serialized_end=264
+  _globals['_CREATEBOTREQUEST']._serialized_start=267
+  _globals['_CREATEBOTREQUEST']._serialized_end=433
+  _globals['_CREATEBOTREQUEST_PARAMETERSENTRY']._serialized_start=215
+  _globals['_CREATEBOTREQUEST_PARAMETERSENTRY']._serialized_end=264
+  _globals['_BOTIDREQUEST']._serialized_start=435
+  _globals['_BOTIDREQUEST']._serialized_end=465
+  _globals['_BOTLIST']._serialized_start=467
+  _globals['_BOTLIST']._serialized_end=510
+  _globals['_BOTSERVICE']._serialized_start=513
+  _globals['_BOTSERVICE']._serialized_end=824
 # @@protoc_insertion_point(module_scope)

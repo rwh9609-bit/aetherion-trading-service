@@ -89,26 +89,66 @@ class Portfolio(_message.Message):
     def __init__(self, positions: _Optional[_Mapping[str, float]] = ..., total_value_usd: _Optional[float] = ..., last_price_change: _Optional[float] = ...) -> None: ...
 
 class VaRRequest(_message.Message):
-    __slots__ = ("current_portfolio", "risk_model")
+    __slots__ = ("current_portfolio", "risk_model", "confidence_level", "horizon_days")
     CURRENT_PORTFOLIO_FIELD_NUMBER: _ClassVar[int]
     RISK_MODEL_FIELD_NUMBER: _ClassVar[int]
+    CONFIDENCE_LEVEL_FIELD_NUMBER: _ClassVar[int]
+    HORIZON_DAYS_FIELD_NUMBER: _ClassVar[int]
     current_portfolio: Portfolio
     risk_model: str
-    def __init__(self, current_portfolio: _Optional[_Union[Portfolio, _Mapping]] = ..., risk_model: _Optional[str] = ...) -> None: ...
+    confidence_level: float
+    horizon_days: float
+    def __init__(self, current_portfolio: _Optional[_Union[Portfolio, _Mapping]] = ..., risk_model: _Optional[str] = ..., confidence_level: _Optional[float] = ..., horizon_days: _Optional[float] = ...) -> None: ...
 
 class VaRResponse(_message.Message):
-    __slots__ = ("value_at_risk",)
+    __slots__ = ("value_at_risk", "asset_names", "correlation_matrix", "volatility_per_asset", "simulation_mode", "last_update")
     VALUE_AT_RISK_FIELD_NUMBER: _ClassVar[int]
+    ASSET_NAMES_FIELD_NUMBER: _ClassVar[int]
+    CORRELATION_MATRIX_FIELD_NUMBER: _ClassVar[int]
+    VOLATILITY_PER_ASSET_FIELD_NUMBER: _ClassVar[int]
+    SIMULATION_MODE_FIELD_NUMBER: _ClassVar[int]
+    LAST_UPDATE_FIELD_NUMBER: _ClassVar[int]
     value_at_risk: float
-    def __init__(self, value_at_risk: _Optional[float] = ...) -> None: ...
+    asset_names: _containers.RepeatedScalarFieldContainer[str]
+    correlation_matrix: _containers.RepeatedScalarFieldContainer[float]
+    volatility_per_asset: _containers.RepeatedScalarFieldContainer[float]
+    simulation_mode: str
+    last_update: str
+    def __init__(self, value_at_risk: _Optional[float] = ..., asset_names: _Optional[_Iterable[str]] = ..., correlation_matrix: _Optional[_Iterable[float]] = ..., volatility_per_asset: _Optional[_Iterable[float]] = ..., simulation_mode: _Optional[str] = ..., last_update: _Optional[str] = ...) -> None: ...
+
+class TradeRequest(_message.Message):
+    __slots__ = ("symbol", "side", "size", "price")
+    SYMBOL_FIELD_NUMBER: _ClassVar[int]
+    SIDE_FIELD_NUMBER: _ClassVar[int]
+    SIZE_FIELD_NUMBER: _ClassVar[int]
+    PRICE_FIELD_NUMBER: _ClassVar[int]
+    symbol: str
+    side: str
+    size: float
+    price: float
+    def __init__(self, symbol: _Optional[str] = ..., side: _Optional[str] = ..., size: _Optional[float] = ..., price: _Optional[float] = ...) -> None: ...
+
+class TradeResponse(_message.Message):
+    __slots__ = ("accepted", "message", "executed_price", "pnl")
+    ACCEPTED_FIELD_NUMBER: _ClassVar[int]
+    MESSAGE_FIELD_NUMBER: _ClassVar[int]
+    EXECUTED_PRICE_FIELD_NUMBER: _ClassVar[int]
+    PNL_FIELD_NUMBER: _ClassVar[int]
+    accepted: bool
+    message: str
+    executed_price: float
+    pnl: float
+    def __init__(self, accepted: bool = ..., message: _Optional[str] = ..., executed_price: _Optional[float] = ..., pnl: _Optional[float] = ...) -> None: ...
 
 class OrderBookEntry(_message.Message):
-    __slots__ = ("price", "size")
+    __slots__ = ("price", "size", "timestamp")
     PRICE_FIELD_NUMBER: _ClassVar[int]
     SIZE_FIELD_NUMBER: _ClassVar[int]
+    TIMESTAMP_FIELD_NUMBER: _ClassVar[int]
     price: float
     size: float
-    def __init__(self, price: _Optional[float] = ..., size: _Optional[float] = ...) -> None: ...
+    timestamp: int
+    def __init__(self, price: _Optional[float] = ..., size: _Optional[float] = ..., timestamp: _Optional[int] = ...) -> None: ...
 
 class OrderBook(_message.Message):
     __slots__ = ("bids", "asks", "symbol")
@@ -156,62 +196,6 @@ class MomentumResponse(_message.Message):
     generated_at_unix_ms: int
     def __init__(self, metrics: _Optional[_Iterable[_Union[MomentumMetric, _Mapping]]] = ..., generated_at_unix_ms: _Optional[int] = ...) -> None: ...
 
-class BotConfig(_message.Message):
-    __slots__ = ("id", "name", "symbol", "strategy", "parameters", "active", "created_at_unix")
-    class ParametersEntry(_message.Message):
-        __slots__ = ("key", "value")
-        KEY_FIELD_NUMBER: _ClassVar[int]
-        VALUE_FIELD_NUMBER: _ClassVar[int]
-        key: str
-        value: str
-        def __init__(self, key: _Optional[str] = ..., value: _Optional[str] = ...) -> None: ...
-    ID_FIELD_NUMBER: _ClassVar[int]
-    NAME_FIELD_NUMBER: _ClassVar[int]
-    SYMBOL_FIELD_NUMBER: _ClassVar[int]
-    STRATEGY_FIELD_NUMBER: _ClassVar[int]
-    PARAMETERS_FIELD_NUMBER: _ClassVar[int]
-    ACTIVE_FIELD_NUMBER: _ClassVar[int]
-    CREATED_AT_UNIX_FIELD_NUMBER: _ClassVar[int]
-    id: str
-    name: str
-    symbol: str
-    strategy: str
-    parameters: _containers.ScalarMap[str, str]
-    active: bool
-    created_at_unix: int
-    def __init__(self, id: _Optional[str] = ..., name: _Optional[str] = ..., symbol: _Optional[str] = ..., strategy: _Optional[str] = ..., parameters: _Optional[_Mapping[str, str]] = ..., active: bool = ..., created_at_unix: _Optional[int] = ...) -> None: ...
-
-class CreateBotRequest(_message.Message):
-    __slots__ = ("name", "symbol", "strategy", "parameters")
-    class ParametersEntry(_message.Message):
-        __slots__ = ("key", "value")
-        KEY_FIELD_NUMBER: _ClassVar[int]
-        VALUE_FIELD_NUMBER: _ClassVar[int]
-        key: str
-        value: str
-        def __init__(self, key: _Optional[str] = ..., value: _Optional[str] = ...) -> None: ...
-    NAME_FIELD_NUMBER: _ClassVar[int]
-    SYMBOL_FIELD_NUMBER: _ClassVar[int]
-    STRATEGY_FIELD_NUMBER: _ClassVar[int]
-    PARAMETERS_FIELD_NUMBER: _ClassVar[int]
-    name: str
-    symbol: str
-    strategy: str
-    parameters: _containers.ScalarMap[str, str]
-    def __init__(self, name: _Optional[str] = ..., symbol: _Optional[str] = ..., strategy: _Optional[str] = ..., parameters: _Optional[_Mapping[str, str]] = ...) -> None: ...
-
-class BotIdRequest(_message.Message):
-    __slots__ = ("id",)
-    ID_FIELD_NUMBER: _ClassVar[int]
-    id: str
-    def __init__(self, id: _Optional[str] = ...) -> None: ...
-
-class BotList(_message.Message):
-    __slots__ = ("bots",)
-    BOTS_FIELD_NUMBER: _ClassVar[int]
-    bots: _containers.RepeatedCompositeFieldContainer[BotConfig]
-    def __init__(self, bots: _Optional[_Iterable[_Union[BotConfig, _Mapping]]] = ...) -> None: ...
-
 class RegisterRequest(_message.Message):
     __slots__ = ("username", "password")
     USERNAME_FIELD_NUMBER: _ClassVar[int]
@@ -239,27 +223,3 @@ class AuthResponse(_message.Message):
     token: str
     expires_at_unix: int
     def __init__(self, success: bool = ..., message: _Optional[str] = ..., token: _Optional[str] = ..., expires_at_unix: _Optional[int] = ...) -> None: ...
-
-class TradeRequest(_message.Message):
-    __slots__ = ("symbol", "side", "size", "price")
-    SYMBOL_FIELD_NUMBER: _ClassVar[int]
-    SIDE_FIELD_NUMBER: _ClassVar[int]
-    SIZE_FIELD_NUMBER: _ClassVar[int]
-    PRICE_FIELD_NUMBER: _ClassVar[int]
-    symbol: str
-    side: str
-    size: float
-    price: float
-    def __init__(self, symbol: _Optional[str] = ..., side: _Optional[str] = ..., size: _Optional[float] = ..., price: _Optional[float] = ...) -> None: ...
-
-class TradeResponse(_message.Message):
-    __slots__ = ("accepted", "message", "executed_price", "pnl")
-    ACCEPTED_FIELD_NUMBER: _ClassVar[int]
-    MESSAGE_FIELD_NUMBER: _ClassVar[int]
-    EXECUTED_PRICE_FIELD_NUMBER: _ClassVar[int]
-    PNL_FIELD_NUMBER: _ClassVar[int]
-    accepted: bool
-    message: str
-    executed_price: float
-    pnl: float
-    def __init__(self, accepted: bool = ..., message: _Optional[str] = ..., executed_price: _Optional[float] = ..., pnl: _Optional[float] = ...) -> None: ...

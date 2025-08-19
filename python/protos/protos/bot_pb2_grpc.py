@@ -3,6 +3,7 @@
 import grpc
 import warnings
 
+from protos import bot_pb2 as protos_dot_bot__pb2
 import trading_api_pb2 as trading__api__pb2
 
 GRPC_GENERATED_VERSION = '1.74.0'
@@ -37,28 +38,28 @@ class BotServiceStub(object):
         """
         self.CreateBot = channel.unary_unary(
                 '/trading.BotService/CreateBot',
-                request_serializer=trading__api__pb2.CreateBotRequest.SerializeToString,
+                request_serializer=protos_dot_bot__pb2.CreateBotRequest.SerializeToString,
                 response_deserializer=trading__api__pb2.StatusResponse.FromString,
                 _registered_method=True)
         self.ListBots = channel.unary_unary(
                 '/trading.BotService/ListBots',
                 request_serializer=trading__api__pb2.Empty.SerializeToString,
-                response_deserializer=trading__api__pb2.BotList.FromString,
+                response_deserializer=protos_dot_bot__pb2.BotList.FromString,
                 _registered_method=True)
         self.StartBot = channel.unary_unary(
                 '/trading.BotService/StartBot',
-                request_serializer=trading__api__pb2.BotIdRequest.SerializeToString,
+                request_serializer=protos_dot_bot__pb2.BotIdRequest.SerializeToString,
                 response_deserializer=trading__api__pb2.StatusResponse.FromString,
                 _registered_method=True)
         self.StopBot = channel.unary_unary(
                 '/trading.BotService/StopBot',
-                request_serializer=trading__api__pb2.BotIdRequest.SerializeToString,
+                request_serializer=protos_dot_bot__pb2.BotIdRequest.SerializeToString,
                 response_deserializer=trading__api__pb2.StatusResponse.FromString,
                 _registered_method=True)
         self.GetBotStatus = channel.unary_unary(
                 '/trading.BotService/GetBotStatus',
-                request_serializer=trading__api__pb2.BotIdRequest.SerializeToString,
-                response_deserializer=trading__api__pb2.BotConfig.FromString,
+                request_serializer=protos_dot_bot__pb2.BotIdRequest.SerializeToString,
+                response_deserializer=protos_dot_bot__pb2.BotConfig.FromString,
                 _registered_method=True)
 
 
@@ -101,28 +102,28 @@ def add_BotServiceServicer_to_server(servicer, server):
     rpc_method_handlers = {
             'CreateBot': grpc.unary_unary_rpc_method_handler(
                     servicer.CreateBot,
-                    request_deserializer=trading__api__pb2.CreateBotRequest.FromString,
+                    request_deserializer=protos_dot_bot__pb2.CreateBotRequest.FromString,
                     response_serializer=trading__api__pb2.StatusResponse.SerializeToString,
             ),
             'ListBots': grpc.unary_unary_rpc_method_handler(
                     servicer.ListBots,
                     request_deserializer=trading__api__pb2.Empty.FromString,
-                    response_serializer=trading__api__pb2.BotList.SerializeToString,
+                    response_serializer=protos_dot_bot__pb2.BotList.SerializeToString,
             ),
             'StartBot': grpc.unary_unary_rpc_method_handler(
                     servicer.StartBot,
-                    request_deserializer=trading__api__pb2.BotIdRequest.FromString,
+                    request_deserializer=protos_dot_bot__pb2.BotIdRequest.FromString,
                     response_serializer=trading__api__pb2.StatusResponse.SerializeToString,
             ),
             'StopBot': grpc.unary_unary_rpc_method_handler(
                     servicer.StopBot,
-                    request_deserializer=trading__api__pb2.BotIdRequest.FromString,
+                    request_deserializer=protos_dot_bot__pb2.BotIdRequest.FromString,
                     response_serializer=trading__api__pb2.StatusResponse.SerializeToString,
             ),
             'GetBotStatus': grpc.unary_unary_rpc_method_handler(
                     servicer.GetBotStatus,
-                    request_deserializer=trading__api__pb2.BotIdRequest.FromString,
-                    response_serializer=trading__api__pb2.BotConfig.SerializeToString,
+                    request_deserializer=protos_dot_bot__pb2.BotIdRequest.FromString,
+                    response_serializer=protos_dot_bot__pb2.BotConfig.SerializeToString,
             ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
@@ -151,7 +152,7 @@ class BotService(object):
             request,
             target,
             '/trading.BotService/CreateBot',
-            trading__api__pb2.CreateBotRequest.SerializeToString,
+            protos_dot_bot__pb2.CreateBotRequest.SerializeToString,
             trading__api__pb2.StatusResponse.FromString,
             options,
             channel_credentials,
@@ -179,7 +180,7 @@ class BotService(object):
             target,
             '/trading.BotService/ListBots',
             trading__api__pb2.Empty.SerializeToString,
-            trading__api__pb2.BotList.FromString,
+            protos_dot_bot__pb2.BotList.FromString,
             options,
             channel_credentials,
             insecure,
@@ -205,7 +206,7 @@ class BotService(object):
             request,
             target,
             '/trading.BotService/StartBot',
-            trading__api__pb2.BotIdRequest.SerializeToString,
+            protos_dot_bot__pb2.BotIdRequest.SerializeToString,
             trading__api__pb2.StatusResponse.FromString,
             options,
             channel_credentials,
@@ -232,7 +233,7 @@ class BotService(object):
             request,
             target,
             '/trading.BotService/StopBot',
-            trading__api__pb2.BotIdRequest.SerializeToString,
+            protos_dot_bot__pb2.BotIdRequest.SerializeToString,
             trading__api__pb2.StatusResponse.FromString,
             options,
             channel_credentials,
@@ -259,8 +260,8 @@ class BotService(object):
             request,
             target,
             '/trading.BotService/GetBotStatus',
-            trading__api__pb2.BotIdRequest.SerializeToString,
-            trading__api__pb2.BotConfig.FromString,
+            protos_dot_bot__pb2.BotIdRequest.SerializeToString,
+            protos_dot_bot__pb2.BotConfig.FromString,
             options,
             channel_credentials,
             insecure,

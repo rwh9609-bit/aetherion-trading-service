@@ -26,7 +26,8 @@ if _version_not_supported:
 
 
 class TradingServiceStub(object):
-    """Missing associated documentation comment in .proto file."""
+    """Service definition
+    """
 
     def __init__(self, channel):
         """Constructor.
@@ -89,31 +90,6 @@ class TradingServiceStub(object):
                 request_serializer=trading__api__pb2.MomentumRequest.SerializeToString,
                 response_deserializer=trading__api__pb2.MomentumResponse.FromString,
                 _registered_method=True)
-        self.CreateBot = channel.unary_unary(
-                '/trading.TradingService/CreateBot',
-                request_serializer=trading__api__pb2.CreateBotRequest.SerializeToString,
-                response_deserializer=trading__api__pb2.StatusResponse.FromString,
-                _registered_method=True)
-        self.ListBots = channel.unary_unary(
-                '/trading.TradingService/ListBots',
-                request_serializer=trading__api__pb2.Empty.SerializeToString,
-                response_deserializer=trading__api__pb2.BotList.FromString,
-                _registered_method=True)
-        self.StartBot = channel.unary_unary(
-                '/trading.TradingService/StartBot',
-                request_serializer=trading__api__pb2.BotIdRequest.SerializeToString,
-                response_deserializer=trading__api__pb2.StatusResponse.FromString,
-                _registered_method=True)
-        self.StopBot = channel.unary_unary(
-                '/trading.TradingService/StopBot',
-                request_serializer=trading__api__pb2.BotIdRequest.SerializeToString,
-                response_deserializer=trading__api__pb2.StatusResponse.FromString,
-                _registered_method=True)
-        self.GetBotStatus = channel.unary_unary(
-                '/trading.TradingService/GetBotStatus',
-                request_serializer=trading__api__pb2.BotIdRequest.SerializeToString,
-                response_deserializer=trading__api__pb2.BotConfig.FromString,
-                _registered_method=True)
         self.ExecuteTrade = channel.unary_unary(
                 '/trading.TradingService/ExecuteTrade',
                 request_serializer=trading__api__pb2.TradeRequest.SerializeToString,
@@ -122,106 +98,89 @@ class TradingServiceStub(object):
 
 
 class TradingServiceServicer(object):
-    """Missing associated documentation comment in .proto file."""
+    """Service definition
+    """
 
     def StreamOrderBook(self, request, context):
-        """Missing associated documentation comment in .proto file."""
+        """Stream order book updates
+        """
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
     def GetPrice(self, request, context):
-        """Missing associated documentation comment in .proto file."""
+        """Get current price for a symbol
+        """
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
     def StartStrategy(self, request, context):
-        """Missing associated documentation comment in .proto file."""
+        """Start a trading strategy
+        """
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
     def StopStrategy(self, request, context):
-        """Missing associated documentation comment in .proto file."""
+        """Stop a trading strategy
+        """
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
     def GetPortfolio(self, request, context):
-        """Missing associated documentation comment in .proto file."""
+        """Gets the current portfolio status
+        """
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
     def SubscribeTicks(self, request, context):
-        """Missing associated documentation comment in .proto file."""
+        """Subscribes to a real-time feed of market data
+        """
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
     def StreamPrice(self, request, context):
-        """Missing associated documentation comment in .proto file."""
+        """Streams live ticks from internal event bus (websocket sourced)
+        """
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
     def AddSymbol(self, request, context):
-        """Missing associated documentation comment in .proto file."""
+        """Dynamically add a symbol to market data feed
+        """
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
     def RemoveSymbol(self, request, context):
-        """Missing associated documentation comment in .proto file."""
+        """Dynamically remove a symbol from market data feed
+        """
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
     def ListSymbols(self, request, context):
-        """Missing associated documentation comment in .proto file."""
+        """List currently subscribed symbols in market data feed
+        """
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
     def GetMomentum(self, request, context):
-        """Missing associated documentation comment in .proto file."""
-        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
-        context.set_details('Method not implemented!')
-        raise NotImplementedError('Method not implemented!')
-
-    def CreateBot(self, request, context):
-        """Missing associated documentation comment in .proto file."""
-        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
-        context.set_details('Method not implemented!')
-        raise NotImplementedError('Method not implemented!')
-
-    def ListBots(self, request, context):
-        """Missing associated documentation comment in .proto file."""
-        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
-        context.set_details('Method not implemented!')
-        raise NotImplementedError('Method not implemented!')
-
-    def StartBot(self, request, context):
-        """Missing associated documentation comment in .proto file."""
-        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
-        context.set_details('Method not implemented!')
-        raise NotImplementedError('Method not implemented!')
-
-    def StopBot(self, request, context):
-        """Missing associated documentation comment in .proto file."""
-        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
-        context.set_details('Method not implemented!')
-        raise NotImplementedError('Method not implemented!')
-
-    def GetBotStatus(self, request, context):
-        """Missing associated documentation comment in .proto file."""
+        """Aggregate short-term momentum metrics for symbols (server-side analog of client scanner)
+        """
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
     def ExecuteTrade(self, request, context):
-        """Missing associated documentation comment in .proto file."""
+        """Execute a trade (simplified demo endpoint)
+        """
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
@@ -284,31 +243,6 @@ def add_TradingServiceServicer_to_server(servicer, server):
                     request_deserializer=trading__api__pb2.MomentumRequest.FromString,
                     response_serializer=trading__api__pb2.MomentumResponse.SerializeToString,
             ),
-            'CreateBot': grpc.unary_unary_rpc_method_handler(
-                    servicer.CreateBot,
-                    request_deserializer=trading__api__pb2.CreateBotRequest.FromString,
-                    response_serializer=trading__api__pb2.StatusResponse.SerializeToString,
-            ),
-            'ListBots': grpc.unary_unary_rpc_method_handler(
-                    servicer.ListBots,
-                    request_deserializer=trading__api__pb2.Empty.FromString,
-                    response_serializer=trading__api__pb2.BotList.SerializeToString,
-            ),
-            'StartBot': grpc.unary_unary_rpc_method_handler(
-                    servicer.StartBot,
-                    request_deserializer=trading__api__pb2.BotIdRequest.FromString,
-                    response_serializer=trading__api__pb2.StatusResponse.SerializeToString,
-            ),
-            'StopBot': grpc.unary_unary_rpc_method_handler(
-                    servicer.StopBot,
-                    request_deserializer=trading__api__pb2.BotIdRequest.FromString,
-                    response_serializer=trading__api__pb2.StatusResponse.SerializeToString,
-            ),
-            'GetBotStatus': grpc.unary_unary_rpc_method_handler(
-                    servicer.GetBotStatus,
-                    request_deserializer=trading__api__pb2.BotIdRequest.FromString,
-                    response_serializer=trading__api__pb2.BotConfig.SerializeToString,
-            ),
             'ExecuteTrade': grpc.unary_unary_rpc_method_handler(
                     servicer.ExecuteTrade,
                     request_deserializer=trading__api__pb2.TradeRequest.FromString,
@@ -323,7 +257,8 @@ def add_TradingServiceServicer_to_server(servicer, server):
 
  # This class is part of an EXPERIMENTAL API.
 class TradingService(object):
-    """Missing associated documentation comment in .proto file."""
+    """Service definition
+    """
 
     @staticmethod
     def StreamOrderBook(request,
@@ -623,141 +558,6 @@ class TradingService(object):
             _registered_method=True)
 
     @staticmethod
-    def CreateBot(request,
-            target,
-            options=(),
-            channel_credentials=None,
-            call_credentials=None,
-            insecure=False,
-            compression=None,
-            wait_for_ready=None,
-            timeout=None,
-            metadata=None):
-        return grpc.experimental.unary_unary(
-            request,
-            target,
-            '/trading.TradingService/CreateBot',
-            trading__api__pb2.CreateBotRequest.SerializeToString,
-            trading__api__pb2.StatusResponse.FromString,
-            options,
-            channel_credentials,
-            insecure,
-            call_credentials,
-            compression,
-            wait_for_ready,
-            timeout,
-            metadata,
-            _registered_method=True)
-
-    @staticmethod
-    def ListBots(request,
-            target,
-            options=(),
-            channel_credentials=None,
-            call_credentials=None,
-            insecure=False,
-            compression=None,
-            wait_for_ready=None,
-            timeout=None,
-            metadata=None):
-        return grpc.experimental.unary_unary(
-            request,
-            target,
-            '/trading.TradingService/ListBots',
-            trading__api__pb2.Empty.SerializeToString,
-            trading__api__pb2.BotList.FromString,
-            options,
-            channel_credentials,
-            insecure,
-            call_credentials,
-            compression,
-            wait_for_ready,
-            timeout,
-            metadata,
-            _registered_method=True)
-
-    @staticmethod
-    def StartBot(request,
-            target,
-            options=(),
-            channel_credentials=None,
-            call_credentials=None,
-            insecure=False,
-            compression=None,
-            wait_for_ready=None,
-            timeout=None,
-            metadata=None):
-        return grpc.experimental.unary_unary(
-            request,
-            target,
-            '/trading.TradingService/StartBot',
-            trading__api__pb2.BotIdRequest.SerializeToString,
-            trading__api__pb2.StatusResponse.FromString,
-            options,
-            channel_credentials,
-            insecure,
-            call_credentials,
-            compression,
-            wait_for_ready,
-            timeout,
-            metadata,
-            _registered_method=True)
-
-    @staticmethod
-    def StopBot(request,
-            target,
-            options=(),
-            channel_credentials=None,
-            call_credentials=None,
-            insecure=False,
-            compression=None,
-            wait_for_ready=None,
-            timeout=None,
-            metadata=None):
-        return grpc.experimental.unary_unary(
-            request,
-            target,
-            '/trading.TradingService/StopBot',
-            trading__api__pb2.BotIdRequest.SerializeToString,
-            trading__api__pb2.StatusResponse.FromString,
-            options,
-            channel_credentials,
-            insecure,
-            call_credentials,
-            compression,
-            wait_for_ready,
-            timeout,
-            metadata,
-            _registered_method=True)
-
-    @staticmethod
-    def GetBotStatus(request,
-            target,
-            options=(),
-            channel_credentials=None,
-            call_credentials=None,
-            insecure=False,
-            compression=None,
-            wait_for_ready=None,
-            timeout=None,
-            metadata=None):
-        return grpc.experimental.unary_unary(
-            request,
-            target,
-            '/trading.TradingService/GetBotStatus',
-            trading__api__pb2.BotIdRequest.SerializeToString,
-            trading__api__pb2.BotConfig.FromString,
-            options,
-            channel_credentials,
-            insecure,
-            call_credentials,
-            compression,
-            wait_for_ready,
-            timeout,
-            metadata,
-            _registered_method=True)
-
-    @staticmethod
     def ExecuteTrade(request,
             target,
             options=(),
@@ -786,7 +586,8 @@ class TradingService(object):
 
 
 class RiskServiceStub(object):
-    """Missing associated documentation comment in .proto file."""
+    """Service for performing risk calculations
+    """
 
     def __init__(self, channel):
         """Constructor.
@@ -802,10 +603,12 @@ class RiskServiceStub(object):
 
 
 class RiskServiceServicer(object):
-    """Missing associated documentation comment in .proto file."""
+    """Service for performing risk calculations
+    """
 
     def CalculateVaR(self, request, context):
-        """Missing associated documentation comment in .proto file."""
+        """Calculates the Value at Risk for a given portfolio
+        """
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
@@ -827,7 +630,8 @@ def add_RiskServiceServicer_to_server(servicer, server):
 
  # This class is part of an EXPERIMENTAL API.
 class RiskService(object):
-    """Missing associated documentation comment in .proto file."""
+    """Service for performing risk calculations
+    """
 
     @staticmethod
     def CalculateVaR(request,
@@ -858,7 +662,8 @@ class RiskService(object):
 
 
 class AuthServiceStub(object):
-    """Missing associated documentation comment in .proto file."""
+    """Service for authentication
+    """
 
     def __init__(self, channel):
         """Constructor.
@@ -879,7 +684,8 @@ class AuthServiceStub(object):
 
 
 class AuthServiceServicer(object):
-    """Missing associated documentation comment in .proto file."""
+    """Service for authentication
+    """
 
     def Register(self, request, context):
         """Missing associated documentation comment in .proto file."""
@@ -915,7 +721,8 @@ def add_AuthServiceServicer_to_server(servicer, server):
 
  # This class is part of an EXPERIMENTAL API.
 class AuthService(object):
-    """Missing associated documentation comment in .proto file."""
+    """Service for authentication
+    """
 
     @staticmethod
     def Register(request,
