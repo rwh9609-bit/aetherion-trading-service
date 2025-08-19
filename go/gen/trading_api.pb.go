@@ -254,12 +254,12 @@ func (x *SymbolList) GetSymbols() []string {
 	return nil
 }
 
-// Request to start or stop a strategy
 type StrategyRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	StrategyId    string                 `protobuf:"bytes,1,opt,name=strategy_id,json=strategyId,proto3" json:"strategy_id,omitempty"`
 	Symbol        string                 `protobuf:"bytes,2,opt,name=symbol,proto3" json:"symbol,omitempty"`
-	Parameters    map[string]string      `protobuf:"bytes,3,rep,name=parameters,proto3" json:"parameters,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"` // e.g., {"order_size": "10", "threshold": "0.5"}
+	Parameters    map[string]string      `protobuf:"bytes,3,rep,name=parameters,proto3" json:"parameters,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+	UserId        string                 `protobuf:"bytes,4,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"` // <-- Add this line
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -313,6 +313,13 @@ func (x *StrategyRequest) GetParameters() map[string]string {
 		return x.Parameters
 	}
 	return nil
+}
+
+func (x *StrategyRequest) GetUserId() string {
+	if x != nil {
+		return x.UserId
+	}
+	return ""
 }
 
 // Generic response for operations
@@ -637,14 +644,14 @@ func (x *VaRResponse) GetLastUpdate() string {
 	return ""
 }
 
-// Trade execution messages
 type TradeRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Symbol        string                 `protobuf:"bytes,1,opt,name=symbol,proto3" json:"symbol,omitempty"`
-	Side          string                 `protobuf:"bytes,2,opt,name=side,proto3" json:"side,omitempty"`     // BUY or SELL
-	Size          float64                `protobuf:"fixed64,3,opt,name=size,proto3" json:"size,omitempty"`   // quantity in base asset
-	Price         float64                `protobuf:"fixed64,4,opt,name=price,proto3" json:"price,omitempty"` // intended execution price
+	Side          string                 `protobuf:"bytes,2,opt,name=side,proto3" json:"side,omitempty"`
+	Size          float64                `protobuf:"fixed64,3,opt,name=size,proto3" json:"size,omitempty"`
+	Price         float64                `protobuf:"fixed64,4,opt,name=price,proto3" json:"price,omitempty"`
 	StrategyId    string                 `protobuf:"bytes,5,opt,name=strategy_id,json=strategyId,proto3" json:"strategy_id,omitempty"`
+	UserId        string                 `protobuf:"bytes,6,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"` // <-- Add this line
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -710,6 +717,13 @@ func (x *TradeRequest) GetPrice() float64 {
 func (x *TradeRequest) GetStrategyId() string {
 	if x != nil {
 		return x.StrategyId
+	}
+	return ""
+}
+
+func (x *TradeRequest) GetUserId() string {
+	if x != nil {
+		return x.UserId
 	}
 	return ""
 }
@@ -1322,14 +1336,15 @@ const file_trading_api_proto_rawDesc = "" +
 	"\x05Empty\"&\n" +
 	"\n" +
 	"SymbolList\x12\x18\n" +
-	"\asymbols\x18\x01 \x03(\tR\asymbols\"\xd3\x01\n" +
+	"\asymbols\x18\x01 \x03(\tR\asymbols\"\xec\x01\n" +
 	"\x0fStrategyRequest\x12\x1f\n" +
 	"\vstrategy_id\x18\x01 \x01(\tR\n" +
 	"strategyId\x12\x16\n" +
 	"\x06symbol\x18\x02 \x01(\tR\x06symbol\x12H\n" +
 	"\n" +
 	"parameters\x18\x03 \x03(\v2(.trading.StrategyRequest.ParametersEntryR\n" +
-	"parameters\x1a=\n" +
+	"parameters\x12\x17\n" +
+	"\auser_id\x18\x04 \x01(\tR\x06userId\x1a=\n" +
 	"\x0fParametersEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
 	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"T\n" +
@@ -1363,14 +1378,15 @@ const file_trading_api_proto_rawDesc = "" +
 	"\x14volatility_per_asset\x18\x04 \x03(\x01R\x12volatilityPerAsset\x12'\n" +
 	"\x0fsimulation_mode\x18\x05 \x01(\tR\x0esimulationMode\x12\x1f\n" +
 	"\vlast_update\x18\x06 \x01(\tR\n" +
-	"lastUpdate\"\x85\x01\n" +
+	"lastUpdate\"\x9e\x01\n" +
 	"\fTradeRequest\x12\x16\n" +
 	"\x06symbol\x18\x01 \x01(\tR\x06symbol\x12\x12\n" +
 	"\x04side\x18\x02 \x01(\tR\x04side\x12\x12\n" +
 	"\x04size\x18\x03 \x01(\x01R\x04size\x12\x14\n" +
 	"\x05price\x18\x04 \x01(\x01R\x05price\x12\x1f\n" +
 	"\vstrategy_id\x18\x05 \x01(\tR\n" +
-	"strategyId\"~\n" +
+	"strategyId\x12\x17\n" +
+	"\auser_id\x18\x06 \x01(\tR\x06userId\"~\n" +
 	"\rTradeResponse\x12\x1a\n" +
 	"\baccepted\x18\x01 \x01(\bR\baccepted\x12\x18\n" +
 	"\amessage\x18\x02 \x01(\tR\amessage\x12%\n" +

@@ -276,10 +276,15 @@ func (s *tradingServer) GetPrice(ctx context.Context, req *pb.Tick) (*pb.Tick, e
 
 // StartStrategy is a standard RPC call
 func (s *tradingServer) StartStrategy(ctx context.Context, req *pb.StrategyRequest) (*pb.StatusResponse, error) {
+	// Use the user_id from the gRPC request, not from context
+	userID := req.UserId
+	if userID == "" {
+		return &pb.StatusResponse{Success: false, Message: "error: user ID not provided in request"}, nil
+	}
 	// Create a new strategy instance
 	strategy := &Strategy{
 		ID:         uuid.New().String(),
-		UserID:     "default-user-id", // Replace with actual user ID from context/auth if available
+		UserID:     userID, // <-- This now uses the correct UUID from the orchestrator
 		Name:       req.Parameters["name"],
 		Symbol:     req.Symbol,
 		Type:       req.Parameters["type"],
@@ -325,8 +330,13 @@ func (s *tradingServer) StopStrategy(ctx context.Context, req *pb.StrategyReques
 
 // GetPortfolio returns the current portfolio status from the database
 func (s *tradingServer) GetPortfolio(ctx context.Context, req *pb.PortfolioRequest) (*pb.Portfolio, error) {
-	// For simplicity, assuming a single user for now, or derive from context
-	userID := "default-user-id" // TODO: Replace with actual user ID from context/auth
+	userID, ok := getUserIDFromContext(ctx)
+	if !ok {
+		// Handle missing user ID, perhaps return an error or a default portfolio
+		// For now, we log and return an error.
+		log.Error().Msg("user ID not found in context")
+		return nil, fmt.Errorf("authentication error: user ID not found")
+	}
 
 	dbPortfolios, err := s.db.GetPortfolioByUserID(ctx, userID)
 	if err != nil {
@@ -661,7 +671,10 @@ func (s *tradingServer) ExecuteTrade(ctx context.Context, req *pb.TradeRequest) 
 		execPrice = tick.Price
 	}
 
-	userID := "default-user-id" // Replace with actual user ID from context/auth if available
+	userID, ok := getUserIDFromContext(ctx)
+	if !ok {
+		return &pb.TradeResponse{Accepted: false, Message: "error: user ID not found in context"}, nil
+	}
 
 	// Fetch portfolio from DB
 	portfolios, err := s.db.GetPortfolioByUserID(ctx, userID)

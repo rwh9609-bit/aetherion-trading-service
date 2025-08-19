@@ -104,6 +104,7 @@ services:
       - GO_SERVICE_ADDR=trading:50051
       - RUST_SERVICE_ADDR=risk:50052
       - INITIAL_ACCOUNT_VALUE=10000.0
+      - ORCHESTRATOR_USER_ID=6b8e2c8e-1234-5678-90ab-abcdef123456
     restart: unless-stopped
     volumes:
       - ./data/BTCUSD_1min.csv:/app/data/BTCUSD_1min.csv:ro

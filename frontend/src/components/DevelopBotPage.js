@@ -32,12 +32,12 @@ const DevelopBotPage = ({ onNavigate }) => {
     setSubmitting(true); setAlert(null);
     try {
       const params = {
-        lookback: cfg.lookback,
-        entryStd: cfg.entryStd,
-        exitStd: cfg.exitStd,
-        maxPos: cfg.maxPos,
-        stopLossPct: cfg.stopLossPct,
-        riskPerTradePct: cfg.riskPerTradePct
+        lookback: String(cfg.lookback),
+        entryStd: String(cfg.entryStd),
+        exitStd: String(cfg.exitStd),
+        maxPos: String(cfg.maxPos),
+        stopLossPct: String(cfg.stopLossPct),
+        riskPerTradePct: String(cfg.riskPerTradePct)
       };
       const resp = await createBot({ name: cfg.name, symbol: cfg.symbol, strategy: cfg.strategy, parameters: params });
       if (resp.success) {
