@@ -20,10 +20,8 @@ services:
       - DEFAULT_SYMBOLS=${DEFAULT_SYMBOLS}
       - LOG_LEVEL=${LOG_LEVEL}
       - REQUEST_TIMEOUT=${REQUEST_TIMEOUT}
-      - POSTGRES_DSN=postgres://user:password@postgres:5432/aetherion?sslmode=disable
     depends_on:
       - risk
-      - postgres
     healthcheck:
       test: ["CMD", "wget", "-qO-", "http://localhost:8090/healthz"]
       interval: 15s
@@ -32,27 +30,10 @@ services:
     restart: unless-stopped
     expose:
       - "50051"
-  postgres:
-    image: postgres:16-alpine
-    restart: unless-stopped
-    environment:
-      POSTGRES_DB: aetherion
-      POSTGRES_USER: user
-      POSTGRES_PASSWORD: password
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-      - ./go/db/migrations:/migrations:ro
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U user -d aetherion"]
-      interval: 5s
-      timeout: 5s
-      retries: 5
-    expose:
-      - "5432"
   backend:
     build:
-      context: .
-      dockerfile: python/Dockerfile
+      context: ./python
+      dockerfile: Dockerfile
     environment:
       - AUTH_SECRET=${AUTH_SECRET}
     expose:
@@ -64,7 +45,6 @@ services:
       - ./data/BTCUSD_1min.csv:/app/data/BTCUSD_1min.csv
   envoy:
     volumes:
-      - ./certs:/etc/envoy/certs:ro
       - /etc/letsencrypt:/etc/letsencrypt:ro
       - ./envoy.yaml:/etc/envoy/envoy.yaml:ro
     build:
@@ -105,7 +85,6 @@ services:
       - GO_SERVICE_ADDR=trading:50051
       - RUST_SERVICE_ADDR=risk:50052
       - INITIAL_ACCOUNT_VALUE=10000.0
-      - ORCHESTRATOR_USER_ID=6b8e2c8e-1234-5678-90ab-abcdef123456
     restart: unless-stopped
     volumes:
       - ./data/BTCUSD_1min.csv:/app/data/BTCUSD_1min.csv:ro
@@ -119,8 +98,6 @@ services:
     volumes:
       - ./acme-challenge:/acme-challenge
     restart: unless-stopped
-volumes:
-  postgres_data:
 networks:
   default:
     name: aetherion-net

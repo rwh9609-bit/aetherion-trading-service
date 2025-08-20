@@ -82,11 +82,9 @@ proto-gen-web:
 proto-gen-python: setup
 	@echo "Generating Python protobufs..."
 	@mkdir -p $(PYTHON_DIR)/protos
-	@. $(VENV_DIR)/bin/activate; python3 -m grpc_tools.protoc -I . -I $(PROTO_DIR) \
-		--python_out=$(PYTHON_DIR)/protos \
-		--pyi_out=$(PYTHON_DIR)/protos \
-		--grpc_python_out=$(PYTHON_DIR)/protos \
-		$(ROOT_PROTO)
+	@cd $(PYTHON_DIR)/protos && \
+	. ../../$(VENV_DIR)/bin/activate && \
+	python -m grpc_tools.protoc -I. -I../../protos --python_out=. --grpc_python_out=. ../../protos/trading_api.proto
 	@touch $(PYTHON_DIR)/protos/__init__.py
 	@echo "$(GREEN)Python protos updated$(RESET)"
 

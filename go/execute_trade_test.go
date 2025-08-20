@@ -25,19 +25,10 @@ func TestExecuteTradeBuySellHappyPath(t *testing.T) {
 	if !resp.Accepted {
 		t.Fatalf("expected buy accepted, got %+v", resp)
 	}
-	portfolios, err := s.db.GetPortfolioByUserID(context.Background(), "default-user-id")
-	if err != nil {
-		t.Fatalf("failed to get portfolio: %v", err)
-	}
-	var usd, pos float64
-	for _, p := range portfolios {
-		if p.Symbol == "USD" {
-			usd = p.Quantity
-		}
-		if p.Symbol == "TEST-USD" {
-			pos = p.Quantity
-		}
-	}
+	s.mu.RLock()
+	usd := s.portfolios["default"].Positions["USD"]
+	pos := s.portfolios["default"].Positions["TEST-USD"]
+	s.mu.RUnlock()
 	if pos != 10 {
 		t.Errorf("expected position 10 got %v", pos)
 	}
@@ -51,19 +42,10 @@ func TestExecuteTradeBuySellHappyPath(t *testing.T) {
 	if !resp2.Accepted {
 		t.Fatalf("expected sell accepted, got %+v", resp2)
 	}
-	portfolios2, err := s.db.GetPortfolioByUserID(context.Background(), "default-user-id")
-	if err != nil {
-		t.Fatalf("failed to get portfolio: %v", err)
-	}
-	var usd2, pos2 float64
-	for _, p := range portfolios2 {
-		if p.Symbol == "USD" {
-			usd2 = p.Quantity
-		}
-		if p.Symbol == "TEST-USD" {
-			pos2 = p.Quantity
-		}
-	}
+	s.mu.RLock()
+	usd2 := s.portfolios["default"].Positions["USD"]
+	pos2 := s.portfolios["default"].Positions["TEST-USD"]
+	s.mu.RUnlock()
 	if pos2 != 5 {
 		t.Errorf("expected remaining position 5 got %v", pos2)
 	}

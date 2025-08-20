@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Container, Box, Typography, Breadcrumbs, Link } from '@mui/material';
 import RiskMetrics from './RiskMetrics';
 import StrategyControl from './StrategyControl';

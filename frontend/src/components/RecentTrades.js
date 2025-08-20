@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { TradingServiceClient } from '../proto/trading_api_grpc_web_pb';
+import { tradingClient, createMetadata } from '../services/grpcClient';
 import { TradeHistoryRequest } from '../proto/trading_api_pb';
 import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Typography } from '@mui/material';
 
@@ -7,12 +7,11 @@ const RecentTrades = ({ user }) => {
   const [trades, setTrades] = useState([]);
 
   useEffect(() => {
-    const fetchTrades = () => {
-      const client = new TradingServiceClient('http://localhost:8080');
+    const fetchTrades = () => { 
       const request = new TradeHistoryRequest();
       request.setUserId(user.id);
 
-      client.getTradeHistory(request, {}, (err, response) => {
+      tradingClient.getTradeHistory(request, createMetadata(), (err, response) => {
         if (err) {
           console.error('Error fetching trade history:', err);
           return;

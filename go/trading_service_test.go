@@ -20,9 +20,9 @@ func mockHTTPClient(t *testing.T, price string, status int) func(string) (*http.
 }
 
 func TestGetPrice(t *testing.T) {
-	old := HttpGet
-	defer func() { HttpGet = old }()
-	HttpGet = mockHTTPClient(t, "54321.12", 200)
+	old := httpGet
+	defer func() { httpGet = old }()
+	httpGet = mockHTTPClient(t, "54321.12", 200)
 
 	s := newTradingServer()
 	resp, err := s.GetPrice(context.Background(), &pb.Tick{Symbol: "BTC-USD"})
@@ -35,9 +35,9 @@ func TestGetPrice(t *testing.T) {
 }
 
 func TestGetPriceHTTPError(t *testing.T) {
-	old := HttpGet
-	defer func() { HttpGet = old }()
-	HttpGet = func(url string) (*http.Response, error) {
+	old := httpGet
+	defer func() { httpGet = old }()
+	httpGet = func(url string) (*http.Response, error) {
 		return &http.Response{StatusCode: 500, Body: ioutil.NopCloser(strings.NewReader("oops"))}, nil
 	}
 	s := newTradingServer()
@@ -55,12 +55,8 @@ func TestStartStrategyCreatesAndStores(t *testing.T) {
 	if err != nil || !resp.Success {
 		t.Fatalf("start strategy failed: %v %v", resp, err)
 	}
-	strategies, err := s.db.GetStrategiesByUserID(context.Background(), "default-user-id")
-	if err != nil {
-		t.Fatalf("failed to get strategies: %v", err)
-	}
-	if len(strategies) != 1 {
-		t.Fatalf("expected 1 strategy stored, got %d", len(strategies))
+	if len(s.strategies) != 1 {
+		t.Fatalf("expected 1 strategy stored, got %d", len(s.strategies))
 	}
 	time.Sleep(150 * time.Millisecond)
 }
@@ -89,12 +85,8 @@ func TestStrategyCancellation(t *testing.T) {
 	if err != nil || !resp.Success {
 		t.Fatalf("start strategy failed: %v %v", resp, err)
 	}
-	strategies, err := s.db.GetStrategiesByUserID(context.Background(), "default-user-id")
-	if err != nil {
-		t.Fatalf("failed to get strategies: %v", err)
-	}
-	if len(strategies) != 1 {
-		t.Fatalf("expected 1 strategy stored, got %d", len(strategies))
+	if len(s.strategies) != 1 {
+		t.Fatalf("expected 1 strategy stored")
 	}
 	cancel()                          // cancel context
 	time.Sleep(50 * time.Millisecond) // allow goroutine to observe cancellation

@@ -125,7 +125,7 @@ function App() {
                   <Button color="inherit" onClick={()=>setView('contact')} sx={{ mr:1 }}>Contact</Button>
 
                   {user ? (
-                    <> 
+                    <>
                       <Button color="inherit" onClick={()=>setView('account')} sx={{ mr:1 }}>Account</Button>
                       <Button
                         color="inherit"

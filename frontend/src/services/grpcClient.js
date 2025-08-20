@@ -41,9 +41,13 @@ const options = {
 };
 
 const tradingClient = new TradingServiceClient(host, null, {...options, format: 'text'});
+export { tradingClient };
 const riskClient = new RiskServiceClient(host, null, {...options, format: 'text'});
+export { riskClient };
 const botClient = new BotServiceClient(host, null, {...options, format: 'text'});
+export { botClient };
 const authClient = new AuthServiceClient(host, null, {...options, format: 'text'});
+export { authClient };
 
 const MAX_RETRIES = 5;
 const RETRY_DELAY = 2000; // 2 seconds
@@ -67,6 +71,7 @@ const createMetadata = () => {
   }
   return meta;
 };
+export { createMetadata };
 
 // Auth helper calls
 export const registerUser = async (username, password) => {
