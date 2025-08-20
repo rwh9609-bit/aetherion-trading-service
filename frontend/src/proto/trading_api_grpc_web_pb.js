@@ -792,6 +792,67 @@ proto.trading.TradingServicePromiseClient.prototype.executeTrade =
 
 
 /**
+ * @const
+ * @type {!grpc.web.MethodDescriptor<
+ *   !proto.trading.TradeHistoryRequest,
+ *   !proto.trading.TradeHistoryResponse>}
+ */
+const methodDescriptor_TradingService_GetTradeHistory = new grpc.web.MethodDescriptor(
+  '/trading.TradingService/GetTradeHistory',
+  grpc.web.MethodType.UNARY,
+  proto.trading.TradeHistoryRequest,
+  proto.trading.TradeHistoryResponse,
+  /**
+   * @param {!proto.trading.TradeHistoryRequest} request
+   * @return {!Uint8Array}
+   */
+  function(request) {
+    return request.serializeBinary();
+  },
+  proto.trading.TradeHistoryResponse.deserializeBinary
+);
+
+
+/**
+ * @param {!proto.trading.TradeHistoryRequest} request The
+ *     request proto
+ * @param {?Object<string, string>} metadata User defined
+ *     call metadata
+ * @param {function(?grpc.web.RpcError, ?proto.trading.TradeHistoryResponse)}
+ *     callback The callback function(error, response)
+ * @return {!grpc.web.ClientReadableStream<!proto.trading.TradeHistoryResponse>|undefined}
+ *     The XHR Node Readable Stream
+ */
+proto.trading.TradingServiceClient.prototype.getTradeHistory =
+    function(request, metadata, callback) {
+  return this.client_.rpcCall(this.hostname_ +
+      '/trading.TradingService/GetTradeHistory',
+      request,
+      metadata || {},
+      methodDescriptor_TradingService_GetTradeHistory,
+      callback);
+};
+
+
+/**
+ * @param {!proto.trading.TradeHistoryRequest} request The
+ *     request proto
+ * @param {?Object<string, string>=} metadata User defined
+ *     call metadata
+ * @return {!Promise<!proto.trading.TradeHistoryResponse>}
+ *     Promise that resolves to the response
+ */
+proto.trading.TradingServicePromiseClient.prototype.getTradeHistory =
+    function(request, metadata) {
+  return this.client_.unaryCall(this.hostname_ +
+      '/trading.TradingService/GetTradeHistory',
+      request,
+      metadata || {},
+      methodDescriptor_TradingService_GetTradeHistory);
+};
+
+
+/**
  * @param {string} hostname
  * @param {?Object} credentials
  * @param {?grpc.web.ClientOptions} options

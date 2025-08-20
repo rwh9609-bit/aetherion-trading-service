@@ -95,6 +95,11 @@ class TradingServiceStub(object):
                 request_serializer=trading__api__pb2.TradeRequest.SerializeToString,
                 response_deserializer=trading__api__pb2.TradeResponse.FromString,
                 _registered_method=True)
+        self.GetTradeHistory = channel.unary_unary(
+                '/trading.TradingService/GetTradeHistory',
+                request_serializer=trading__api__pb2.TradeHistoryRequest.SerializeToString,
+                response_deserializer=trading__api__pb2.TradeHistoryResponse.FromString,
+                _registered_method=True)
 
 
 class TradingServiceServicer(object):
@@ -185,6 +190,13 @@ class TradingServiceServicer(object):
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
+    def GetTradeHistory(self, request, context):
+        """Get trade history for a user
+        """
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
 
 def add_TradingServiceServicer_to_server(servicer, server):
     rpc_method_handlers = {
@@ -247,6 +259,11 @@ def add_TradingServiceServicer_to_server(servicer, server):
                     servicer.ExecuteTrade,
                     request_deserializer=trading__api__pb2.TradeRequest.FromString,
                     response_serializer=trading__api__pb2.TradeResponse.SerializeToString,
+            ),
+            'GetTradeHistory': grpc.unary_unary_rpc_method_handler(
+                    servicer.GetTradeHistory,
+                    request_deserializer=trading__api__pb2.TradeHistoryRequest.FromString,
+                    response_serializer=trading__api__pb2.TradeHistoryResponse.SerializeToString,
             ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
@@ -574,6 +591,33 @@ class TradingService(object):
             '/trading.TradingService/ExecuteTrade',
             trading__api__pb2.TradeRequest.SerializeToString,
             trading__api__pb2.TradeResponse.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def GetTradeHistory(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/trading.TradingService/GetTradeHistory',
+            trading__api__pb2.TradeHistoryRequest.SerializeToString,
+            trading__api__pb2.TradeHistoryResponse.FromString,
             options,
             channel_credentials,
             insecure,
