@@ -406,8 +406,8 @@ export const listBots = async () => {
 };
 
 export const startBot = async (id) => {
-  const { BotIdRequest } = await import('../proto/trading_api_grpc_web_pb.js');
-  const req = new BotIdRequest(); req.setId(id);
+  const { BotIdRequest } = await import('../proto/trading_api_pb.js'); // Corrected import
+  const req = new BotIdRequest(); req.setBotId(id); // Corrected setter
   return new Promise((resolve, reject) => {
     botClient.startBot(req, createMetadata(), (err, resp) => {
       if (err) return reject(err);
@@ -417,8 +417,8 @@ export const startBot = async (id) => {
 };
 
 export const stopBot = async (id) => {
-  const { BotIdRequest } = await import('../proto/trading_api_grpc_web_pb.js');
-  const req = new BotIdRequest(); req.setId(id);
+  const { BotIdRequest } = await import('../proto/trading_api_pb.js'); // Corrected import
+  const req = new BotIdRequest(); req.setBotId(id); // Corrected setter
   return new Promise((resolve, reject) => {
     botClient.stopBot(req, createMetadata(), (err, resp) => {
       if (err) return reject(err);
@@ -428,8 +428,8 @@ export const stopBot = async (id) => {
 };
 
 export const getBotStatus = async (id) => {
-  const { BotIdRequest } = await import('../proto/trading_api_grpc_web_pb.js');
-  const req = new BotIdRequest(); req.setId(id);
+  const { BotIdRequest } = await import('../proto/trading_api_pb.js'); // Corrected import
+  const req = new BotIdRequest(); req.setBotId(id); // Corrected setter
   return new Promise((resolve, reject) => {
     botClient.getBotStatus(req, createMetadata(), (err, resp) => {
       if (err) return reject(err);
