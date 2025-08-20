@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ThemeProvider, createTheme, CssBaseline, AppBar, Toolbar, Typography, Button, Box, Tooltip, CircularProgress, Snackbar, Alert } from '@mui/material';
+import { ThemeProvider, createTheme, CssBaseline, AppBar, Toolbar, Typography, Button, Box, Tooltip, CircularProgress, Snackbar, Alert, Menu, MenuItem } from '@mui/material';
 import TradingDashboard from './components/TradingDashboard';
 
 import TradingOperations from './components/TradingOperations';
@@ -38,6 +38,20 @@ function App() {
   const [showHealthWarn, setShowHealthWarn] = useState(false);
   const [liveFetchStatus, setLiveFetchStatus] = useState(null); // null | 'success' | 'error'
   const [showLiveFetchSnackbar, setShowLiveFetchSnackbar] = useState(false);
+  const [anchorEl, setAnchorEl] = useState(null);
+
+  const handleMenuClick = (event) => {
+    setAnchorEl(event.currentTarget);
+  };
+
+  const handleMenuClose = () => {
+    setAnchorEl(null);
+  };
+
+  const handleMenuItemClick = (view) => {
+    setView(view);
+    handleMenuClose();
+  };
 
   useEffect(()=> {
     let cancelled = false;
@@ -102,13 +116,26 @@ function App() {
                   <Button color="inherit" onClick={()=>setView('about')} sx={{ mr:1 }}>About</Button>
                   <Button color="inherit" onClick={()=>setView('news')} sx={{ mr:1 }}>News</Button>
                   <Button color="inherit" onClick={()=>setView('contact')} sx={{ mr:1 }}>Contact</Button>
-                  {user && <Button color="inherit" onClick={()=>setView('backtest')} sx={{ mr:2 }}>Backtesting</Button>}
 
                   {user ? (
                     <>
                       <Button color="inherit" onClick={()=>setView('account')} sx={{ mr:1 }}>Account</Button>
-                      <Button color="inherit" onClick={()=>setView('dashboard')} sx={{ mr:1 }}>Dashboard</Button>
-                      <Button color="inherit" onClick={()=>setView('operations')} sx={{ mr:1 }}>Simulator</Button>
+                      <Button
+                        color="inherit"
+                        onClick={handleMenuClick}
+                        sx={{ mr: 1 }}
+                      >
+                        Simulator
+                      </Button>
+                      <Menu
+                        anchorEl={anchorEl}
+                        open={Boolean(anchorEl)}
+                        onClose={handleMenuClose}
+                      >
+                        <MenuItem onClick={() => handleMenuItemClick('dashboard')}>Dashboard</MenuItem>
+                        <MenuItem onClick={() => handleMenuItemClick('backtest')}>Backtesting</MenuItem>
+                        <MenuItem onClick={() => handleMenuItemClick('operations')}>Operations</MenuItem>
+                      </Menu>
                       <Button color="inherit" onClick={()=>setView('bots')} sx={{ mr:1 }}>Bots</Button>
                       <Button color="inherit" onClick={()=>setView('developBot')} sx={{ mr:1 }}>Develop Bot</Button>
                       <Button color="inherit" onClick={()=> { setUser(null); setView('landing'); }}>Logout</Button>

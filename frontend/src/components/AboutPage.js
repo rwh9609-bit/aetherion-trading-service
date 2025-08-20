@@ -21,7 +21,7 @@ const AboutPage = () => {
             About Aetherion
           </Typography>
           <Typography variant="h6" color="text.secondary" sx={{ mb: 4 }}>
-            Empowering the next generation of quantitative finance.
+            Let's build the future of trading, together.
           </Typography>
 
           <Grid container spacing={4} justifyContent="center">
@@ -30,7 +30,7 @@ const AboutPage = () => {
                 Our Mission
               </Typography>
               <Typography variant="body1" color="text.secondary">
-                Our mission is to democratize access to institutional-grade trading technology. We believe that by providing powerful, accessible, and transparent tools, we can empower individuals and small teams.
+                We want to make top-tier trading tech available to everyone. We believe that with the right tools, anyone can build powerful trading strategies.
               </Typography>
             </Grid>
 
@@ -39,7 +39,7 @@ const AboutPage = () => {
                 Our Story
               </Typography>
               <Typography variant="body1" color="text.secondary">
-                Aetherion was born from the idea that cutting-edge trading technology should be accessible to everyone. Our founders, a group of passionate traders and engineers, came together to create a platform that breaks down the barriers to entry in the world of algorithmic trading.
+                Aetherion started with a simple idea: trading technology should be for everyone. We're a team of traders and engineers who wanted to build a platform that makes it easier for anyone to get into algorithmic trading.
               </Typography>
             </Grid>
           </Grid>
