@@ -28,7 +28,7 @@ const BotsPage = ({ onNavigate }) => {
 
   const handleStart = async (id) => { setActionBusy(id); try { await startBot(id); await refresh(); } finally { setActionBusy(null); } };
   const handleStop = async (id) => { setActionBusy(id); try { await stopBot(id); await refresh(); } finally { setActionBusy(null); } };
-  const handleView = async (bot) => { try { const status = await getBotStatus(bot.id); setViewBot(status); } catch { setViewBot(bot); } };
+  const handleView = async (bot) => { try { const status = await getBotStatus(bot.botId); setViewBot(status); } catch { setViewBot(bot); } };
 
   return (
     <Container maxWidth="lg" sx={{ mt:4, mb:4 }}>
@@ -39,21 +39,21 @@ const BotsPage = ({ onNavigate }) => {
       {error && <Alert severity="error" sx={{ mb:2 }}>{error}</Alert>}
       <Box sx={{ display:'grid', gap:2, gridTemplateColumns:{ xs:'1fr', sm:'1fr 1fr', md:'1fr 1fr 1fr' } }}>
         {bots.map(bot => (
-          <Card key={bot.id} variant="outlined" sx={{ borderColor:'rgba(255,255,255,0.1)' }}>
+          <Card key={bot.botId} variant="outlined" sx={{ borderColor:'rgba(255,255,255,0.1)' }}>
             <CardContent>
               <Typography variant="subtitle1" fontWeight={600}>{String(bot.name || bot.strategy || "Unnamed Bot")}</Typography>
-              <Typography variant="caption" color="text.secondary">ID: {String(bot.id || "N/A")}</Typography>
+              <Typography variant="caption" color="text.secondary">ID: {String(bot.botId || "N/A")}</Typography>
               <Box sx={{ mt:1, display:'flex', flexDirection:'column', gap:0.5 }}>
                 <Typography variant="body2"><strong>Symbol:</strong> {bot.symbol}</Typography>
                 <Typography variant="body2"><strong>Strategy:</strong> {bot.strategy}</Typography>
-                <Typography variant="body2" sx={{ color: statusColor(bot.active) }}><strong>Status:</strong> {bot.active ? 'running' : 'stopped'}</Typography>
+                <Typography variant="body2" sx={{ color: statusColor(bot.isActive) }}><strong>Status:</strong> {bot.isActive ? 'running' : 'stopped'}</Typography>
               </Box>
               <Stack direction="row" spacing={1} sx={{ mt:2 }}>
                 <Button size="small" variant="outlined" onClick={()=>handleView(bot)}>View</Button>
-                {!bot.active ? (
-                  <Button size="small" variant="contained" color="success" disabled={actionBusy===bot.id} onClick={()=>handleStart(bot.id)}>{actionBusy===bot.id? '...':'Start'}</Button>
+                {!bot.isActive ? (
+                  <Button size="small" variant="contained" color="success" disabled={actionBusy===bot.botId} onClick={()=>handleStart(bot.botId)}>{actionBusy===bot.botId? '...':'Start'}</Button>
                 ) : (
-                  <Button size="small" variant="contained" color="warning" disabled={actionBusy===bot.id} onClick={()=>handleStop(bot.id)}>{actionBusy===bot.id? '...':'Stop'}</Button>
+                  <Button size="small" variant="contained" color="warning" disabled={actionBusy===bot.botId} onClick={()=>handleStop(bot.botId)}>{actionBusy===bot.botId? '...':'Stop'}</Button>
                 )}
               </Stack>
             </CardContent>
@@ -73,11 +73,11 @@ const BotsPage = ({ onNavigate }) => {
         <DialogContent dividers>
           {viewBot && (
             <Box sx={{ display:'flex', flexDirection:'column', gap:1 }}>
-              <Typography variant="body2"><strong>ID:</strong> {viewBot.id}</Typography>
+              <Typography variant="body2"><strong>ID:</strong> {viewBot.botId}</Typography>
               <Typography variant="body2"><strong>Name:</strong> {viewBot.name}</Typography>
               <Typography variant="body2"><strong>Symbol:</strong> {viewBot.symbol}</Typography>
               <Typography variant="body2"><strong>Strategy:</strong> {viewBot.strategy}</Typography>
-              <Typography variant="body2"><strong>Status:</strong> <Chip size="small" color={viewBot.active? 'success':'default'} label={viewBot.active? 'running':'stopped'} /></Typography>
+              <Typography variant="body2"><strong>Status:</strong> <Chip size="small" color={viewBot.isActive? 'success':'default'} label={viewBot.isActive? 'running':'stopped'} /></Typography>
               <Typography variant="subtitle2" sx={{ mt:1 }}>Parameters</Typography>
               <Box component="pre" sx={{ p:1, bgcolor:'rgba(255,255,255,0.05)', borderRadius:1, fontSize:12, maxHeight:180, overflow:'auto' }}>{JSON.stringify(viewBot.parameters || {}, null, 2)}</Box>
             </Box>
