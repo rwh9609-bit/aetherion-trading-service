@@ -165,23 +165,32 @@ func (s *botServiceServer) ListBots(ctx context.Context, _ *pb.Empty) (*pb.BotLi
 }
 
 func (s *botServiceServer) StartBot(ctx context.Context, req *pb.BotIdRequest) (*pb.StatusResponse, error) {
+	log.Printf("[StartBot] Received request for bot ID: %s", req.GetBotId())
 	s.reg.mu.Lock()
 	bot, ok := s.reg.bots[req.GetBotId()]
 	s.reg.mu.Unlock()
 	if !ok {
+		log.Printf("[StartBot] Bot with ID %s not found", req.GetBotId())
 		return &pb.StatusResponse{Success: false, Message: "not found"}, nil
 	}
+	log.Printf("[StartBot] Bot %s found. Current IsActive: %t", bot.Name, bot.IsActive)
+
 	// Kick off strategy via trading server
-	stratReq := &pb.StrategyRequest{Symbol: bot.Symbol, Parameters: map[string]string{"type": bot.Strategy}}
+	stratReq := &pb.StrategyRequest{Symbol: bot.Symbol, Parameters: map[string]string{"type": bot.Strategy, "user_id": bot.BotId}} // Pass bot.BotId as user_id
 	resp, err := s.trading.StartStrategy(ctx, stratReq)
 	if err != nil {
+		log.Printf("[StartBot] Error starting strategy for bot %s: %v", bot.Name, err)
 		return &pb.StatusResponse{Success: false, Message: err.Error()}, nil
 	}
+	log.Printf("[StartBot] Strategy started for bot %s. Strategy ID: %s", bot.Name, resp.Id)
+
 	s.reg.mu.Lock()
 	bot.IsActive = true
 	bot.Parameters["strategy_id"] = resp.Id
 	s.reg.mu.Unlock()
+	log.Printf("[StartBot] Bot %s IsActive set to true. Persisting...", bot.Name)
 	s.reg.persist()
+	log.Printf("[StartBot] Bot %s persisted. New IsActive: %t", bot.Name, bot.IsActive)
 
 	// --- Added: trading goroutine for bot ---
 	go func(bot *pb.BotConfig) {

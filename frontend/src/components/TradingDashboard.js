@@ -9,7 +9,7 @@ import { listSymbols } from '../services/grpcClient';
 
 console.log('TradingDashboard component loaded');
 
-const TradingDashboard = ({ user }) => {
+const TradingDashboard = ({ user, selectedBot }) => {
   // Start with empty; hydrate via backend ListSymbols
   const [symbols, setSymbols] = useState([]);
   const [selected, setSelected] = useState('');
@@ -55,7 +55,16 @@ const TradingDashboard = ({ user }) => {
   };
   return (
     <Container maxWidth={false} sx={{ mt:4, mb:4 }}>
-  <Box sx={{ display:'grid', gap:3, gridTemplateColumns: { xs:'1fr' }, alignItems:'start' }}>
+      {selectedBot && (
+        <Box sx={{ mb: 3, p: 2, border: '1px solid rgba(255,255,255,0.1)', borderRadius: 1 }}>
+          <Typography variant="h6" gutterBottom>Selected Bot:</Typography>
+          <Typography variant="body1"><strong>Name:</strong> {selectedBot.name}</Typography>
+          <Typography variant="body1"><strong>Symbol:</strong> {selectedBot.symbol}</Typography>
+          <Typography variant="body1"><strong>Strategy:</strong> {selectedBot.strategy}</Typography>
+          <Typography variant="body1"><strong>Status:</strong> {selectedBot.isActive ? 'Running' : 'Stopped'}</Typography>
+        </Box>
+      )}
+      <Box sx={{ display:'grid', gap:3, gridTemplateColumns: { xs:'1fr' }, alignItems:'start' }}>
         <Box sx={{ gridColumn:'1 / -1', display:'flex', flexDirection:'column', gap:1 }}>
           <Box sx={{ display:'flex', alignItems:{ xs:'stretch', sm:'center' }, flexWrap:'wrap', gap:2, justifyContent:'space-between' }}>
             <Box sx={{ flex:1, minWidth:260 }}>
@@ -78,18 +87,18 @@ const TradingDashboard = ({ user }) => {
             </Box>
           </Box>
         </Box>
-  <Box sx={{ display:'grid', gap:3, gridTemplateColumns:{ xs:'1fr' }, minWidth:0 }}>
-    <Box>
-      {momentumMode === 'client' && <CryptoScanner symbols={symbols} onSelect={(sym)=> setSelected(sym)} />}
-      {momentumMode === 'server' && <ServerMomentum onSelect={(sym)=> setSelected(sym)} />}
-    </Box>
-    <Box>
-      <OhlcPriceChart symbol={selected} />
-    </Box>
-    <Box>
-      <RecentTrades user={user} />
-    </Box>
-  </Box>
+        <Box sx={{ display:'grid', gap:3, gridTemplateColumns:{ xs:'1fr' }, minWidth:0 }}>
+          <Box>
+            {momentumMode === 'client' && <CryptoScanner symbols={symbols} onSelect={(sym)=> setSelected(sym)} />}
+            {momentumMode === 'server' && <ServerMomentum onSelect={(sym)=> setSelected(sym)} />}
+          </Box>
+          <Box>
+            <OhlcPriceChart symbol={selected} />
+          </Box>
+          <Box>
+            <RecentTrades user={user} />
+          </Box>
+        </Box>
       </Box>
     </Container>
   );

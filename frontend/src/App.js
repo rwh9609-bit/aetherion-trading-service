@@ -39,6 +39,7 @@ function App() {
   const [liveFetchStatus, setLiveFetchStatus] = useState(null); // null | 'success' | 'error'
   const [showLiveFetchSnackbar, setShowLiveFetchSnackbar] = useState(false);
   const [anchorEl, setAnchorEl] = useState(null);
+  const [selectedBot, setSelectedBot] = useState(null); // New state for selected bot
 
   const handleMenuClick = (event) => {
     setAnchorEl(event.currentTarget);
@@ -51,6 +52,12 @@ function App() {
   const handleMenuItemClick = (view) => {
     setView(view);
     handleMenuClose();
+  };
+
+  const handleSelectBot = (botConfig) => {
+    setSelectedBot(botConfig);
+    // Optionally navigate to a specific view after selection, e.g., dashboard
+    setView('dashboard');
   };
 
   useEffect(()=> {
@@ -118,7 +125,7 @@ function App() {
                   <Button color="inherit" onClick={()=>setView('contact')} sx={{ mr:1 }}>Contact</Button>
 
                   {user ? (
-                    <>
+                    <> 
                       <Button color="inherit" onClick={()=>setView('account')} sx={{ mr:1 }}>Account</Button>
                       <Button
                         color="inherit"
@@ -174,7 +181,7 @@ function App() {
           )}
           {user && view === 'dashboard' && (
             <div style={{ padding: '24px' }}>
-              <TradingDashboard user={user} />
+              <TradingDashboard user={user} selectedBot={selectedBot} />
             </div>
           )}
           {user && view === 'backtest' && (
@@ -184,12 +191,12 @@ function App() {
           )}
           {user && view === 'operations' && (
             <div style={{ padding: '24px' }}>
-              <TradingOperations onNavigate={setView} />
+              <TradingOperations onNavigate={setView} selectedBot={selectedBot} />
             </div>
           )}
           {user && view === 'bots' && (
             <div style={{ padding: '24px' }}>
-              <BotsPage onNavigate={setView} />
+              <BotsPage onNavigate={setView} onSelectBot={handleSelectBot} selectedBot={selectedBot} />
             </div>
           )}
           {user && view === 'developBot' && (

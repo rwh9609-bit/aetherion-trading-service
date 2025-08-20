@@ -4,7 +4,7 @@ import { listBots, startBot, stopBot, getBotStatus } from '../services/grpcClien
 
 const statusColor = (active) => active ? 'success.main' : 'text.secondary';
 
-const BotsPage = ({ onNavigate }) => {
+const BotsPage = ({ onNavigate, onSelectBot, selectedBot }) => {
   const [bots, setBots] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -39,7 +39,14 @@ const BotsPage = ({ onNavigate }) => {
       {error && <Alert severity="error" sx={{ mb:2 }}>{error}</Alert>}
       <Box sx={{ display:'grid', gap:2, gridTemplateColumns:{ xs:'1fr', sm:'1fr 1fr', md:'1fr 1fr 1fr' } }}>
         {bots.map(bot => (
-          <Card key={bot.botId} variant="outlined" sx={{ borderColor:'rgba(255,255,255,0.1)' }}>
+          <Card
+            key={bot.botId}
+            variant="outlined"
+            sx={{
+              borderColor: selectedBot && selectedBot.botId === bot.botId ? 'primary.main' : 'rgba(255,255,255,0.1)',
+              borderWidth: selectedBot && selectedBot.botId === bot.botId ? '2px' : '1px',
+            }}
+          >
             <CardContent>
               <Typography variant="subtitle1" fontWeight={600}>{String(bot.name || bot.strategy || "Unnamed Bot")}</Typography>
               <Typography variant="caption" color="text.secondary">ID: {String(bot.botId || "N/A")}</Typography>
@@ -55,6 +62,13 @@ const BotsPage = ({ onNavigate }) => {
                 ) : (
                   <Button size="small" variant="contained" color="warning" disabled={actionBusy===bot.botId} onClick={()=>handleStop(bot.botId)}>{actionBusy===bot.botId? '...':'Stop'}</Button>
                 )}
+                <Button
+                  size="small"
+                  variant={selectedBot && selectedBot.botId === bot.botId ? "contained" : "outlined"}
+                  onClick={() => onSelectBot(bot)}
+                >
+                  {selectedBot && selectedBot.botId === bot.botId ? "Selected" : "Select"}
+                </Button>
               </Stack>
             </CardContent>
           </Card>
