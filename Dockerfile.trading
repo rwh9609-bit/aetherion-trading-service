@@ -33,7 +33,7 @@ FROM alpine:3.19 AS runtime
 RUN apk add --no-cache ca-certificates && adduser -D -u 10001 app
 USER app
 WORKDIR /app
-COPY --from=build /app/trading_service ./trading_service
+COPY --from=build /app/go/trading_service ./trading_service
 ENV AUTH_SECRET=dev-insecure-default \
     CORS_ALLOWED_ORIGINS=http://localhost:3000,https://app.aetherion.cloud
 EXPOSE 50051
