@@ -146,6 +146,36 @@ class TradeResponse(_message.Message):
     pnl: float
     def __init__(self, accepted: bool = ..., message: _Optional[str] = ..., executed_price: _Optional[float] = ..., pnl: _Optional[float] = ...) -> None: ...
 
+class Trade(_message.Message):
+    __slots__ = ("trade_id", "symbol", "side", "quantity", "price", "executed_at", "strategy_id")
+    TRADE_ID_FIELD_NUMBER: _ClassVar[int]
+    SYMBOL_FIELD_NUMBER: _ClassVar[int]
+    SIDE_FIELD_NUMBER: _ClassVar[int]
+    QUANTITY_FIELD_NUMBER: _ClassVar[int]
+    PRICE_FIELD_NUMBER: _ClassVar[int]
+    EXECUTED_AT_FIELD_NUMBER: _ClassVar[int]
+    STRATEGY_ID_FIELD_NUMBER: _ClassVar[int]
+    trade_id: str
+    symbol: str
+    side: str
+    quantity: float
+    price: float
+    executed_at: int
+    strategy_id: str
+    def __init__(self, trade_id: _Optional[str] = ..., symbol: _Optional[str] = ..., side: _Optional[str] = ..., quantity: _Optional[float] = ..., price: _Optional[float] = ..., executed_at: _Optional[int] = ..., strategy_id: _Optional[str] = ...) -> None: ...
+
+class TradeHistoryRequest(_message.Message):
+    __slots__ = ("user_id",)
+    USER_ID_FIELD_NUMBER: _ClassVar[int]
+    user_id: str
+    def __init__(self, user_id: _Optional[str] = ...) -> None: ...
+
+class TradeHistoryResponse(_message.Message):
+    __slots__ = ("trades",)
+    TRADES_FIELD_NUMBER: _ClassVar[int]
+    trades: _containers.RepeatedCompositeFieldContainer[Trade]
+    def __init__(self, trades: _Optional[_Iterable[_Union[Trade, _Mapping]]] = ...) -> None: ...
+
 class OrderBookEntry(_message.Message):
     __slots__ = ("price", "size", "timestamp")
     PRICE_FIELD_NUMBER: _ClassVar[int]
