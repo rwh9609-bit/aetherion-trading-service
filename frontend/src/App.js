@@ -83,7 +83,7 @@ function App() {
   }, [user]);
   
   const handleGetStarted = () => {
-    setView('login');
+    setView('news');
   };
   
   return (
