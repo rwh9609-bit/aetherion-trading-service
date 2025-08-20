@@ -1,88 +1,36 @@
-# Aetherion Trading Engine
+# Aetherion Trading Service
 
-**Aetherion is a professional-grade, cloud-native platform for algorithmic trading and quantitative analysis.**
+Aetherion is a next-generation, multi-language trading platform engineered for speed, flexibility, and reliability. Built on a cutting-edge microservices architecture, it harnesses the power of Docker for seamless containerization and orchestration—making deployment, scaling, and upgrades effortless.
 
-Aetherion empowers quantitative analysts, algorithmic traders, and fintech developers to design, backtest, and deploy sophisticated trading strategies with institutional-grade tools and real-time performance insights.
+### Key Features
+- **Real-Time Market Data:** Instantly fetch live cryptocurrency prices (e.g., BTC from Coinbase) for lightning-fast trading decisions.
+- **Polyglot Microservices:** Each service is crafted in the best language for the job—Rust for risk analytics, Go for trading logic, Python for orchestration, and more.
+- **Service Mesh Magic:** Envoy powers secure, high-performance service-to-service communication.
+- **Modern Frontend & Backend:** A sleek web interface for traders, backed by robust backend logic.
+- **Intelligent Orchestration:** The orchestrator coordinates complex trading operations and strategies with ease.
+- **Persistent Data:** All trades and analytics are safely stored in a PostgreSQL database.
 
-## Key Features
+### Architecture Overview
+Aetherion is composed of specialized microservices, each with a unique mission:
+- `multilanguage-backend`: The brains of the operation.
+- `multilanguage-frontend`: The trader’s command center.
+- `multilanguage-orchestrator`: The master coordinator for trading strategies.
+- `multilanguage-trading`: Executes trades with precision.
+- `multilanguage-risk`: Rust-powered risk management for peace of mind.
+- `multilanguage-envoy`: The high-speed service mesh proxy.
+- `multilanguage-postgres`: Reliable, scalable data storage.
 
-*   **High-Performance Trading:** Built with a polyglot architecture (Go, Rust, Python) for low-latency execution and robust performance.
-*   **Real-Time Market Data:** Direct integration with live WebSocket feeds from major exchanges like Coinbase, providing tick-by-tick data.
-*   **Advanced Risk Management:** A sophisticated risk engine built in Rust to provide real-time position tracking and (planned) advanced risk metrics like Value at Risk (VaR).
-*   **Strategy Automation:** A powerful bot framework to automate your trading strategies, with support for custom algorithms.
-*   **Modern, Intuitive UI:** A sleek and responsive React-based user interface for monitoring markets, managing bots, and visualizing performance.
-*   **Secure and Scalable:** Architected for the cloud, with a secure JWT-based authentication system and a scalable microservices architecture.
+### Getting Started
 
-## Getting Started
+Spin up the entire system in seconds using the included Docker Compose setup.  
+No manual configuration—just deploy and trade.
 
-### For Traders & Quants
+### Live Console Output
 
-The easiest way to get started with Aetherion is to use our hosted cloud platform (coming soon). In the meantime, you can run the platform locally using Docker.
+Check out the action! Below are snapshots of Aetherion in full swing—services running, live BTC price fetching, and real-time trading logs.
 
-### For Developers
+![Docker services running](container_success.png)
 
-Aetherion is open-source and highly extensible. To run a local instance for development and testing:
+![Trading service logs](microservice_logging_success.png)
 
-1.  **Clone the repository:**
-    ```bash
-    git clone https://github.com/rwh9609-bit/multilanguage.git
-    cd multilanguage
-    ```
-
-2.  **Set up your environment:**
-    ```bash
-    cp .env.example .env
-    ```
-    *Edit `.env` to set a strong `AUTH_SECRET`.*
-
-3.  **Build and run with Docker:**
-    ```bash
-    make docker-build
-    AUTH_SECRET=$(openssl rand -hex 32) docker compose up -d
-    ```
-
-4.  **Access the application:**
-    *   **Frontend:** `http://localhost:3000`
-    *   **API (via Envoy):** `https://localhost:8080`
-
-For more detailed instructions on setting up your development environment, see the [Developer Guide](DEVELOPER.md).
-
-## Architecture
-
-Aetherion is built on a modern, microservices-based architecture:
-
-*   **Frontend:** React
-*   **Backend Services:** Go, Rust, Python
-*   **API Gateway:** Envoy Proxy (with gRPC-Web)
-*   **Communication:** gRPC
-
-This polyglot approach allows us to use the best tool for each job, ensuring high performance, reliability, and scalability.
-
-```text
-┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
-│   Web Browser   │────│  Envoy Proxy    │────│   Backend       │
-│   (React App)   │    │   (Port 8080)   │    │   Services      │
-└─────────────────┘    └─────────────────┘    └─────────────────┘
-                              ┌────────────────────────┼────────────────────────┐
-                              │                        │                        │
-                    ┌─────────▼─────────┐    ┌─────────▼─────────┐    ┌─────────▼─────────┐
-                    │   Trading Service │    │   Risk Service    │    │ Strategy Service  │
-                    │      (Go)         │    │     (Rust)        │    │    (Python)       │
-                    └───────────────────┘    └───────────────────┘    └───────────────────┘
-```
-
-## Documentation
-
-*   [User Guide](docs/USER_GUIDE.md)
-*   [API Reference](docs/API.md)
-*   [Deployment Guide](docs/DEPLOYMENT.md)
-*   [Security Guide](docs/SECURITY.md)
-*   [Developer Guide](DEVELOPER.md)
-
-## Contributing
-
-We welcome contributions from the community. Please see our [Developer Guide](DEVELOP-ER.md) for more information on how to get involved.
-
-## License
-
-Aetherion is open source software licensed under the MIT License.
+> **Pro Tip:** If you encounter SSL errors, comment out the `.pem` certs and use the alternate certs in `envoy.yaml`.
