@@ -1,66 +1,94 @@
-import React, { useEffect, useState } from 'react';
-import { Container, Typography, Card, CardContent, List, ListItem, ListItemText, Stack, Chip, Box, LinearProgress } from '@mui/material';
+import React from 'react';
+import { Container, Typography, Card, CardContent, List, ListItem, ListItemText, Stack, Chip, Box } from '@mui/material';
+import { styled } from '@mui/material/styles';
 
-// Simple local mock feed; in production wire to a backend aggregator or RSS ingestor.
-const mockNews = [
-  { id:1, ts: Date.now() - 1000*60*5,  title:'New Bot Service Persistence Layer Added', tag:'Update' },
-  { id:2, ts: Date.now() - 1000*60*35, title:'Momentum Scanner Gains Server Aggregation Endpoint', tag:'Feature' },
-  { id:3, ts: Date.now() - 1000*60*55, title:'Auth Secret Rotation Support Implemented', tag:'Security' },
-  { id:4, ts: Date.now(), title:'Production HTTPS & Security Upgrade Complete', tag:'Security' },
+const newsItems = [
+  {
+    id: 1,
+    date: '2025-08-19',
+    title: 'Aetherion Launches New Website and Rebranding',
+    category: 'Announcement',
+    summary: 'We are thrilled to unveil our new brand identity and website, designed to better reflect our mission to democratize algorithmic trading.',
+  },
+  {
+    id: 2,
+    date: '2025-08-15',
+    title: 'New Feature: Advanced Real-Time Charting',
+    category: 'Product',
+    summary: 'Our new advanced charting tools are now live, providing you with more power to analyze market data and strategy performance.',
+  },
+  {
+    id: 3,
+    date: '2025-08-10',
+    title: 'Aetherion is Now Fully Open Source!',
+    category: 'Community',
+    summary: 'We have officially open-sourced the entire Aetherion platform. We invite developers from around the world to contribute.',
+  },
+  {
+    id: 4,
+    date: '2025-08-05',
+    title: 'Join Our New Discord Community',
+    category: 'Community',
+    summary: 'Connect with other traders, share strategies, and get support from the Aetherion team in our new Discord channel.',
+  },
 ];
 
-const timeAgo = (t) => {
-  const diffM = Math.floor((Date.now() - t) / 60000);
-  if (diffM < 1) return 'just now';
-  if (diffM < 60) return diffM + 'm ago';
-  const h = Math.floor(diffM/60);
-  const m = diffM % 60;
-  return `${h}h${m? ' '+m+'m':''} ago`;
-};
+const NewsCard = styled(Card)(({ theme }) => ({
+  background: 'rgba(255, 255, 255, 0.05)',
+  backdropFilter: 'blur(10px)',
+  border: '1px solid rgba(255, 255, 255, 0.1)',
+  borderRadius: theme.shape.borderRadius * 2,
+  marginBottom: theme.spacing(3),
+}));
 
 const NewsPage = () => {
-  const [items, setItems] = useState([]);
-  const [loading, setLoading] = useState(true);
-  useEffect(()=> {
-    // Simulate async fetch
-    const id = setTimeout(()=> { setItems(mockNews); setLoading(false); }, 400);
-    return () => clearTimeout(id);
-  }, []);
+  const getChipColor = (category) => {
+    switch (category) {
+      case 'Announcement':
+        return 'primary';
+      case 'Product':
+        return 'success';
+      case 'Community':
+        return 'info';
+      default:
+        return 'default';
+    }
+  };
 
   return (
-    <Container maxWidth="md" sx={{ mt:4, mb:8 }}>
-      <Card variant="outlined" sx={{ background:'rgba(255,255,255,0.04)', borderColor:'rgba(255,255,255,0.08)' }}>
-        <CardContent>
-          <Typography variant="h4" fontWeight={700} gutterBottom>Project News</Typography>
-          <Typography variant="body2" color="text.secondary" paragraph>
-            Release notes & milestone highlights. Replace this with a backend news feed or CMS integration.
-          </Typography>
-          {loading && <LinearProgress sx={{ mb:2 }} />}
-          <List dense>
-            {items.map(n => (
-              <ListItem key={n.id} alignItems="flex-start" sx={{ px:0 }}>
-                <ListItemText 
-                  primary={
-                    <Stack direction="row" spacing={1} alignItems="center">
-                      <Typography variant="subtitle1" fontWeight={600}>{n.title}</Typography>
-                      <Chip size="small" label={n.tag} color={n.tag==='Security'? 'warning': n.tag==='Feature' ? 'success' : 'info'} />
-                    </Stack>
-                  }
-                  secondary={
-                    <Box sx={{ mt:0.5 }}>
-                      <Typography variant="caption" color="text.secondary">{timeAgo(n.ts)}</Typography>
-                    </Box>
-                  }
-                />
-              </ListItem>
-            ))}
-            {!loading && !items.length && (
-              <ListItem sx={{ px:0 }}><ListItemText primary={<Typography variant="body2" color="text.secondary">No news yet.</Typography>} /></ListItem>
-            )}
-          </List>
-        </CardContent>
-      </Card>
-    </Container>
+    <Box sx={{ backgroundColor: '#10101a', color: '#fff', py: 8 }}>
+      <Container maxWidth="md">
+        <Typography variant="h3" component="h1" fontWeight={900} gutterBottom textAlign="center">
+          News & Announcements
+        </Typography>
+        <Typography variant="h6" color="text.secondary" textAlign="center" sx={{ mb: 6 }}>
+          Stay up-to-date with the latest news, product updates, and community highlights from Aetherion.
+        </Typography>
+
+        <List>
+          {newsItems.map((item) => (
+            <ListItem key={item.id} sx={{ px: 0 }}>
+              <NewsCard sx={{ width: '100%' }}>
+                <CardContent>
+                  <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 1 }}>
+                    <Typography variant="caption" color="text.secondary">
+                      {item.date}
+                    </Typography>
+                    <Chip label={item.category} color={getChipColor(item.category)} size="small" />
+                  </Stack>
+                  <Typography variant="h6" component="h3" fontWeight={700} gutterBottom>
+                    {item.title}
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    {item.summary}
+                  </Typography>
+                </CardContent>
+              </NewsCard>
+            </ListItem>
+          ))}
+        </List>
+      </Container>
+    </Box>
   );
 };
 
