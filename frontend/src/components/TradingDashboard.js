@@ -4,11 +4,12 @@ import OhlcPriceChart from './OhlcPriceChart';
 import CryptoScanner from './CryptoScanner';
 import ServerMomentum from './ServerMomentum';
 import SymbolManager from './SymbolManager';
+import RecentTrades from './RecentTrades';
 import { listSymbols } from '../services/grpcClient';
 
 console.log('TradingDashboard component loaded');
 
-const TradingDashboard = () => {
+const TradingDashboard = ({ user }) => {
   // Start with empty; hydrate via backend ListSymbols
   const [symbols, setSymbols] = useState([]);
   const [selected, setSelected] = useState('');
@@ -84,6 +85,9 @@ const TradingDashboard = () => {
     </Box>
     <Box>
       <OhlcPriceChart symbol={selected} />
+    </Box>
+    <Box>
+      <RecentTrades user={user} />
     </Box>
   </Box>
       </Box>

@@ -209,9 +209,38 @@ func (s *Strategy) Run(ctx context.Context, server *tradingServer) {
 			switch s.Type {
 			case "MEAN_REVERSION":
 				// Example mean reversion logic
-				// You would typically calculate moving average here
-				// and compare with current price
 				log.Printf("Running mean reversion strategy for %s at price %.2f (threshold: %.2f)", s.Symbol, price, threshold)
+
+				// Simple trading logic
+				if price < threshold {
+					// Buy
+					tradeReq := &pb.TradeRequest{
+						UserId:     s.UserID,
+						StrategyId: s.ID,
+						Symbol:     s.Symbol,
+						Side:       "BUY",
+						Size:       0.01, // Trade size of 0.01 for simplicity
+						Price:      price,
+					}
+					_, err := server.ExecuteTrade(ctx, tradeReq)
+					if err != nil {
+						log.Error().Err(err).Msg("Failed to execute buy trade")
+					}
+				} else {
+					// Sell
+					tradeReq := &pb.TradeRequest{
+						UserId:     s.UserID,
+						StrategyId: s.ID,
+						Symbol:     s.Symbol,
+						Side:       "SELL",
+						Size:       0.01, // Trade size of 0.01 for simplicity
+						Price:      price,
+					}
+					_, err := server.ExecuteTrade(ctx, tradeReq)
+					if err != nil {
+						log.Error().Err(err).Msg("Failed to execute sell trade")
+					}
+				}
 			case "MOMENTUM":
 				// Implement momentum strategy logic
 				log.Printf("Running momentum strategy for %s at price %.2f", s.Symbol, price)
@@ -303,10 +332,8 @@ func (s *tradingServer) StartStrategy(ctx context.Context, req *pb.StrategyReque
 		}, err
 	}
 
-	// Optionally, start strategy logic in a goroutine if needed
-	// go func() {
-	//     // Implement strategy execution logic here if required
-	// }()
+	// Start strategy logic in a goroutine
+	go strategy.Run(context.Background(), s)
 
 	return &pb.StatusResponse{
 		Success: true,
@@ -759,6 +786,34 @@ func (s *tradingServer) ExecuteTrade(ctx context.Context, req *pb.TradeRequest) 
 	}
 
 	return &pb.TradeResponse{Accepted: true, Message: "executed", ExecutedPrice: execPrice, Pnl: trade.PnL}, nil
+}
+
+// GetTradeHistory returns the trade history for a user
+func (s *tradingServer) GetTradeHistory(ctx context.Context, req *pb.TradeHistoryRequest) (*pb.TradeHistoryResponse, error) {
+	userID, ok := getUserIDFromContext(ctx)
+	if !ok {
+		return nil, fmt.Errorf("user ID not found in context")
+	}
+
+	trades, err := s.db.GetTradesByUserID(ctx, userID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get trade history: %w", err)
+	}
+
+	var pbTrades []*pb.Trade
+	for _, trade := range trades {
+		pbTrades = append(pbTrades, &pb.Trade{
+			TradeId:    trade.ID,
+			Symbol:     trade.Symbol,
+			Side:       trade.Side,
+			Quantity:   trade.Quantity,
+			Price:      trade.Price,
+			ExecutedAt: trade.ExecutedAt.Unix(),
+			StrategyId: trade.StrategyID,
+		})
+	}
+
+	return &pb.TradeHistoryResponse{Trades: pbTrades}, nil
 }
 
 // wsMarketDataHandler handles WebSocket connections for market data

@@ -91,6 +91,24 @@ message TradeResponse {
     double pnl = 4; // realized PnL for closing trades (simplified)
 }
 
+message Trade {
+    string trade_id = 1;
+    string symbol = 2;
+    string side = 3;
+    double quantity = 4;
+    double price = 5;
+    int64 executed_at = 6;
+    string strategy_id = 7;
+}
+
+message TradeHistoryRequest {
+    string user_id = 1;
+}
+
+message TradeHistoryResponse {
+    repeated Trade trades = 1;
+}
+
 // OrderBook related messages
 message OrderBookEntry {
     double price = 1;
@@ -188,6 +206,8 @@ service TradingService {
     // Execute a trade (simplified demo endpoint)
     rpc ExecuteTrade(TradeRequest) returns (TradeResponse) {}
 
+    // Get trade history for a user
+    rpc GetTradeHistory(TradeHistoryRequest) returns (TradeHistoryResponse) {}
 }
 
 // Service for performing risk calculations

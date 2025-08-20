@@ -8,7 +8,6 @@ package gen
 
 import (
 	context "context"
-
 	grpc "google.golang.org/grpc"
 	codes "google.golang.org/grpc/codes"
 	status "google.golang.org/grpc/status"
@@ -32,6 +31,7 @@ const (
 	TradingService_ListSymbols_FullMethodName     = "/trading.TradingService/ListSymbols"
 	TradingService_GetMomentum_FullMethodName     = "/trading.TradingService/GetMomentum"
 	TradingService_ExecuteTrade_FullMethodName    = "/trading.TradingService/ExecuteTrade"
+	TradingService_GetTradeHistory_FullMethodName = "/trading.TradingService/GetTradeHistory"
 )
 
 // TradingServiceClient is the client API for TradingService service.
@@ -64,6 +64,8 @@ type TradingServiceClient interface {
 	GetMomentum(ctx context.Context, in *MomentumRequest, opts ...grpc.CallOption) (*MomentumResponse, error)
 	// Execute a trade (simplified demo endpoint)
 	ExecuteTrade(ctx context.Context, in *TradeRequest, opts ...grpc.CallOption) (*TradeResponse, error)
+	// Get trade history for a user
+	GetTradeHistory(ctx context.Context, in *TradeHistoryRequest, opts ...grpc.CallOption) (*TradeHistoryResponse, error)
 }
 
 type tradingServiceClient struct {
@@ -221,6 +223,16 @@ func (c *tradingServiceClient) ExecuteTrade(ctx context.Context, in *TradeReques
 	return out, nil
 }
 
+func (c *tradingServiceClient) GetTradeHistory(ctx context.Context, in *TradeHistoryRequest, opts ...grpc.CallOption) (*TradeHistoryResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(TradeHistoryResponse)
+	err := c.cc.Invoke(ctx, TradingService_GetTradeHistory_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // TradingServiceServer is the server API for TradingService service.
 // All implementations must embed UnimplementedTradingServiceServer
 // for forward compatibility.
@@ -251,6 +263,8 @@ type TradingServiceServer interface {
 	GetMomentum(context.Context, *MomentumRequest) (*MomentumResponse, error)
 	// Execute a trade (simplified demo endpoint)
 	ExecuteTrade(context.Context, *TradeRequest) (*TradeResponse, error)
+	// Get trade history for a user
+	GetTradeHistory(context.Context, *TradeHistoryRequest) (*TradeHistoryResponse, error)
 	mustEmbedUnimplementedTradingServiceServer()
 }
 
@@ -296,6 +310,9 @@ func (UnimplementedTradingServiceServer) GetMomentum(context.Context, *MomentumR
 }
 func (UnimplementedTradingServiceServer) ExecuteTrade(context.Context, *TradeRequest) (*TradeResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ExecuteTrade not implemented")
+}
+func (UnimplementedTradingServiceServer) GetTradeHistory(context.Context, *TradeHistoryRequest) (*TradeHistoryResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetTradeHistory not implemented")
 }
 func (UnimplementedTradingServiceServer) mustEmbedUnimplementedTradingServiceServer() {}
 func (UnimplementedTradingServiceServer) testEmbeddedByValue()                        {}
@@ -513,6 +530,24 @@ func _TradingService_ExecuteTrade_Handler(srv interface{}, ctx context.Context, 
 	return interceptor(ctx, in, info, handler)
 }
 
+func _TradingService_GetTradeHistory_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(TradeHistoryRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(TradingServiceServer).GetTradeHistory(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: TradingService_GetTradeHistory_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(TradingServiceServer).GetTradeHistory(ctx, req.(*TradeHistoryRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // TradingService_ServiceDesc is the grpc.ServiceDesc for TradingService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -555,6 +590,10 @@ var TradingService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ExecuteTrade",
 			Handler:    _TradingService_ExecuteTrade_Handler,
+		},
+		{
+			MethodName: "GetTradeHistory",
+			Handler:    _TradingService_GetTradeHistory_Handler,
 		},
 	},
 	Streams: []grpc.StreamDesc{

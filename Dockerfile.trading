@@ -2,10 +2,19 @@
 # --- Build stage ---
 FROM golang:1.24-alpine AS build
 WORKDIR /app
-COPY go/go.mod go/go.sum ./
+
+# Copy go.mod and go.sum first to leverage Docker cache
+COPY go/go.mod go/go.sum ./go/
+
+# Copy the entire 'go' directory
+COPY go/ ./go/
+
+# Set working directory to the 'go' module
+WORKDIR /app/go
+
 ENV GO111MODULE=on
 RUN go mod download
-COPY go/ .
+
 ENV CGO_ENABLED=0 GOOS=linux GOARCH=amd64
 ARG GIT_COMMIT=unknown
 RUN go build -trimpath -ldflags "-s -w -X main.buildCommit=$GIT_COMMIT" -o trading_service .
@@ -13,7 +22,7 @@ RUN go build -trimpath -ldflags "-s -w -X main.buildCommit=$GIT_COMMIT" -o tradi
 # --- Dev stage for local development ---
 FROM golang:1.24-alpine AS dev
 WORKDIR /app
-COPY go/go.mod go/go.sum ./
+COPY go/go.mod go/go.sum ./ 
 RUN go mod download
 COPY go/ .
 ENV CGO_ENABLED=0 GOOS=linux GOARCH=amd64
