@@ -1,8 +1,10 @@
 FROM python:3.10-slim
-WORKDIR /app/python
-COPY python/requirements.txt /app/python/requirements.txt
-COPY python /app/python
-COPY data /app/python/data
-RUN pip install --no-cache-dir -r requirements.txt
+WORKDIR /app
+COPY . /app/python
+COPY protos /app/protos
+# COPY data /app/python/data
+COPY requirements.txt /app/requirements.txt
+RUN pip install --no-cache-dir -r /app/requirements.txt
+ENV PYTHONPATH=/app:/app/python:/app/protos
 EXPOSE 8000
-CMD ["uvicorn", "app:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["uvicorn", "python.app:app", "--host", "0.0.0.0", "--port", "8000"]

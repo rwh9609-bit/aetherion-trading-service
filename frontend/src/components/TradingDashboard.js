@@ -64,11 +64,15 @@ const TradingDashboard = ({ user, selectedBot }) => {
           <Typography variant="body1"><strong>Status:</strong> {selectedBot.isActive ? 'Running' : 'Stopped'}</Typography>
         </Box>
       )}
-      <Box sx={{ display:'grid', gap:3, gridTemplateColumns: { xs:'1fr' }, alignItems:'start' }}>
-        <Box sx={{ gridColumn:'1 / -1', display:'flex', flexDirection:'column', gap:1 }}>
-          <Box sx={{ display:'flex', alignItems:{ xs:'stretch', sm:'center' }, flexWrap:'wrap', gap:2, justifyContent:'space-between' }}>
-            <Box sx={{ flex:1, minWidth:260 }}>
-              <SymbolManager
+
+    <Box>
+      <RecentTrades user={user} />
+    </Box>
+    <Box sx={{ display:'grid', gap:3, gridTemplateColumns: { xs:'1fr' }, alignItems:'start' }}>
+      <Box sx={{ gridColumn:'1 / -1', display:'flex', flexDirection:'column', gap:1 }}>
+        <Box sx={{ display:'flex', alignItems:{ xs:'stretch', sm:'center' }, flexWrap:'wrap', gap:2, justifyContent:'space-between' }}>
+          <Box sx={{ flex:1, minWidth:260 }}>
+            <SymbolManager
                 symbols={symbols}
                 onAdd={handleAdd}
                 onRemove={handleRemove}
@@ -88,17 +92,14 @@ const TradingDashboard = ({ user, selectedBot }) => {
           </Box>
         </Box>
         <Box sx={{ display:'grid', gap:3, gridTemplateColumns:{ xs:'1fr' }, minWidth:0 }}>
-          <Box>
-            {momentumMode === 'client' && <CryptoScanner symbols={symbols} onSelect={(sym)=> setSelected(sym)} />}
-            {momentumMode === 'server' && <ServerMomentum onSelect={(sym)=> setSelected(sym)} />}
-          </Box>
-          <Box>
-            <OhlcPriceChart symbol={selected} />
-          </Box>
-          <Box>
-            <RecentTrades user={user} />
-          </Box>
-        </Box>
+    <Box>
+      {momentumMode === 'client' && <CryptoScanner symbols={symbols} onSelect={(sym)=> setSelected(sym)} />}
+      {momentumMode === 'server' && <ServerMomentum onSelect={(sym)=> setSelected(sym)} />}
+    </Box>
+    <Box>
+      <OhlcPriceChart symbol={selected} />
+    </Box>
+  </Box>
       </Box>
     </Container>
   );

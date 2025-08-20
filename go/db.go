@@ -112,18 +112,17 @@ func (s *DBService) GetPortfolioByUserID(ctx context.Context, userID string) ([]
 func (s *DBService) SaveStrategy(ctx context.Context, strategy *Strategy) (string, error) {
 	var id string
 	query := `
-		INSERT INTO strategies (id, user_id, name, symbol, type, parameters, is_active, updated_at)
+		INSERT INTO strategies (id, user_id, symbol, type, parameters, is_active, updated_at)
 		VALUES ($1, $2, $3, $4, $5, $6, $7, CURRENT_TIMESTAMP)
 		ON CONFLICT (id) DO UPDATE
-		SET name = EXCLUDED.name,
-			symbol = EXCLUDED.symbol,
+		SET symbol = EXCLUDED.symbol,
 			type = EXCLUDED.type,
 			parameters = EXCLUDED.parameters,
 			is_active = EXCLUDED.is_active,
 			updated_at = CURRENT_TIMESTAMP
 		RETURNING id
 	`
-	err := s.pool.QueryRow(ctx, query, strategy.ID, strategy.UserID, strategy.Name, strategy.Symbol, strategy.Type, strategy.Parameters, strategy.IsActive).Scan(&id)
+	err := s.pool.QueryRow(ctx, query, strategy.ID, strategy.UserID, strategy.Symbol, strategy.StrategyType, strategy.Parameters, strategy.IsActive).Scan(&id)
 	if err != nil {
 		return "", fmt.Errorf("failed to save strategy: %w", err)
 	}
@@ -133,8 +132,8 @@ func (s *DBService) SaveStrategy(ctx context.Context, strategy *Strategy) (strin
 // GetStrategyByID retrieves a strategy by its ID.
 func (s *DBService) GetStrategyByID(ctx context.Context, strategyID string) (*Strategy, error) {
 	var strategy Strategy
-	query := `SELECT id, user_id, name, symbol, type, parameters, is_active, created_at, updated_at FROM strategies WHERE id = $1`
-	err := s.pool.QueryRow(ctx, query, strategyID).Scan(&strategy.ID, &strategy.UserID, &strategy.Name, &strategy.Symbol, &strategy.Type, &strategy.Parameters, &strategy.IsActive, &strategy.CreatedAt, &strategy.UpdatedAt)
+	query := `SELECT id, user_id, symbol, type, parameters, is_active, created_at, updated_at FROM strategies WHERE id = $1`
+	err := s.pool.QueryRow(ctx, query, strategyID).Scan(&strategy.ID, &strategy.UserID, &strategy.Symbol, &strategy.StrategyType, &strategy.Parameters, &strategy.IsActive, &strategy.CreatedAt, &strategy.UpdatedAt)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get strategy by ID: %w", err)
 	}
@@ -144,7 +143,7 @@ func (s *DBService) GetStrategyByID(ctx context.Context, strategyID string) (*St
 // GetStrategiesByUserID retrieves all strategies for a given user.
 func (s *DBService) GetStrategiesByUserID(ctx context.Context, userID string) ([]*Strategy, error) {
 	var strategies []*Strategy
-	query := `SELECT id, user_id, name, symbol, type, parameters, is_active, created_at, updated_at FROM strategies WHERE user_id = $1`
+	query := `SELECT id, user_id, symbol, type, parameters, is_active, created_at, updated_at FROM strategies WHERE user_id = $1`
 	rows, err := s.pool.Query(ctx, query, userID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get strategies by user ID: %w", err)
@@ -153,7 +152,7 @@ func (s *DBService) GetStrategiesByUserID(ctx context.Context, userID string) ([
 
 	for rows.Next() {
 		var strat Strategy
-		if err := rows.Scan(&strat.ID, &strat.UserID, &strat.Name, &strat.Symbol, &strat.Type, &strat.Parameters, &strat.IsActive, &strat.CreatedAt, &strat.UpdatedAt); err != nil {
+		if err := rows.Scan(&strat.ID, &strat.UserID, &strat.Symbol, &strat.StrategyType, &strat.Parameters, &strat.IsActive, &strat.CreatedAt, &strat.UpdatedAt); err != nil {
 			return nil, fmt.Errorf("failed to scan strategy row: %w", err)
 		}
 		strategies = append(strategies, &strat)
@@ -212,18 +211,6 @@ type Portfolio struct {
 	AveragePrice float64
 	CreatedAt    time.Time
 	UpdatedAt    time.Time
-}
-
-type Strategy struct {
-	ID         string
-	UserID     string
-	Name       string
-	Symbol     string
-	Type       string
-	Parameters []byte // JSONB
-	IsActive   bool
-	CreatedAt  time.Time
-	UpdatedAt  time.Time
 }
 
 type Trade struct {

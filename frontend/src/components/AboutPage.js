@@ -21,25 +21,25 @@ const AboutPage = () => {
             About Aetherion
           </Typography>
           <Typography variant="h6" color="text.secondary" sx={{ mb: 4 }}>
-            Let's build the future of trading, together.
+            The engine for serious quants.
           </Typography>
 
           <Grid container spacing={4} justifyContent="center">
             <Grid item xs={12}>
               <Typography variant="h5" component="h2" fontWeight={700} gutterBottom>
-                Our Mission
+                Engineered for Performance
               </Typography>
               <Typography variant="body1" color="text.secondary">
-                We want to make top-tier trading tech available to everyone. We believe that with the right tools, anyone can build powerful trading strategies.
+                Unlike retail-focused platforms, Aetherion is not a simplified tool. It is a professional-grade engine built to handle the most demanding trading strategies. Our **polyglot architecture** leverages the strengths of multiple languages to achieve microsecond-level latency and enterprise-grade reliability.
               </Typography>
             </Grid>
 
             <Grid item xs={12}>
               <Typography variant="h5" component="h2" fontWeight={700} gutterBottom>
-                Our Story
+                Our Core Mission
               </Typography>
               <Typography variant="body1" color="text.secondary">
-                Aetherion started with a simple idea: trading technology should be for everyone. We're a team of traders and engineers who wanted to build a platform that makes it easier for anyone to get into algorithmic trading.
+                Our mission is to empower developers, quantitative analysts, and financial institutions with a customizable, low-latency trading infrastructure. We believe in providing the tools for you to deploy your own proprietary strategies with unparalleled speed, security, and control.
               </Typography>
             </Grid>
           </Grid>
