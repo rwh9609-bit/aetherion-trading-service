@@ -40,6 +40,17 @@ function App() {
   const [showLiveFetchSnackbar, setShowLiveFetchSnackbar] = useState(false);
   const [anchorEl, setAnchorEl] = useState(null);
   const [selectedBot, setSelectedBot] = useState(null); // New state for selected bot
+  
+  // Restore user session from localStorage on app load
+  useEffect(() => {
+    const token = localStorage.getItem('authToken');
+    if (token) {
+      // Optionally decode token to get username, or fetch user info from backend
+      // For now, just set a placeholder user
+      setUser('logged-in');
+      setView('dashboard');
+    }
+  }, []);
 
   const handleMenuClick = (event) => {
     setAnchorEl(event.currentTarget);
