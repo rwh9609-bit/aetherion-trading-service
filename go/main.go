@@ -236,6 +236,7 @@ type tradingServer struct {
 	// in-memory price history for momentum metrics: symbol -> slice of (ts, price)
 	histMu    sync.RWMutex
 	priceHist map[string][]histPoint
+	dbService *DBService
 }
 
 type histPoint struct {
@@ -301,6 +302,27 @@ func (s *tradingServer) StartStrategy(ctx context.Context, req *pb.StrategyReque
 		Message: fmt.Sprintf("Strategy started with ID: %s", strategy.ID),
 		Id:      strategy.ID,
 	}, nil
+}
+
+func (s *tradingServer) GetTradeHistory(ctx context.Context, req *pb.TradeHistoryRequest) (*pb.TradeHistoryResponse, error) {
+	if s.dbService == nil {
+		return nil, fmt.Errorf("trade history unavailable")
+	}
+	trades, err := s.dbService.GetTradesByUserID(ctx, req.UserId)
+	if err != nil {
+		return nil, err
+	}
+
+	// Convert []*Trade to []*pb.Trade
+	pbTrades := make([]*pb.Trade, len(trades))
+	for i, trade := range trades {
+		pbTrades[i] = &pb.Trade{
+			TradeId: trade.ID, StrategyId: trade.StrategyID,
+			Symbol: trade.Symbol, Side: trade.Side, Quantity: trade.Quantity,
+			Price: trade.Price, ExecutedAt: trade.ExecutedAt.UnixNano()}
+	}
+	return &pb.TradeHistoryResponse{Trades: pbTrades}, nil
+
 }
 
 // StopStrategy stops a running strategy
@@ -667,6 +689,23 @@ func (s *tradingServer) ExecuteTrade(ctx context.Context, req *pb.TradeRequest) 
 	if side == "SELL" {
 		pnl = notional * 0.0 // placeholder for realized PnL tracking
 	}
+	// After updating portfolio, record the trade:
+	trade := &Trade{
+		ID:         uuid.New().String(),
+		UserID:     req.UserId,     // Make sure this is set by the bot/user
+		StrategyID: req.StrategyId, // Set by bot if applicable
+		Symbol:     req.Symbol,
+		Side:       req.Side,
+		Quantity:   req.Size,
+		Price:      execPrice,
+		ExecutedAt: time.Now(),
+		PnL:        pnl,
+	}
+	if s.dbService != nil {
+		if err := s.dbService.RecordTrade(ctx, trade); err != nil {
+			log.Error().Err(err).Msg("failed to record trade")
+		}
+	}
 
 	return &pb.TradeResponse{Accepted: true, Message: "executed", ExecutedPrice: execPrice, Pnl: pnl}, nil
 }
@@ -715,13 +754,20 @@ func main() {
 		)),
 	)
 
+	// Initialize DBService
+	dbService, err := NewDBService(cfg.PostgresDSN)
+	if err != nil {
+		log.Fatal().Err(err).Msg("failed to initialize DBService")
+	}
+
 	// Create and register our trading service
 	tradingService := newTradingServer()
+	tradingService.dbService = dbService
 	pb.RegisterTradingServiceServer(grpcServer, tradingService)
 
 	// Bot service (in-memory)
 	reg := newBotRegistry()
-	botSvc := newBotServiceServer(reg, tradingService)
+	botSvc := newBotServiceServer(reg, tradingService, dbService)
 	pb.RegisterBotServiceServer(grpcServer, botSvc)
 
 	// Market data feed (dynamic)

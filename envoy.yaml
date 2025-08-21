@@ -26,6 +26,7 @@ static_resources:
                     - exact: "http://localhost:3000"
                     - exact: "https://aetherion.cloud"
                     - exact: "https://www.aetherion.cloud"
+                    - exact: "https://api.aetherion.cloud"
                     - exact: "http://www.aetherion.cloud"
                     - safe_regex: { google_re2: {}, regex: '^https://app\.aetherion\.cloud$'}
                   allow_methods: GET, PUT, DELETE, POST, OPTIONS

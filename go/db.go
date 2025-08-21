@@ -7,6 +7,7 @@ import (
 
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/rs/zerolog/log"
+	pb "github.com/rwh9609-bit/multilanguage/go/gen"
 )
 
 // DBService provides methods for interacting with the PostgreSQL database.
@@ -43,7 +44,17 @@ func (s *DBService) Close() {
 	log.Info().Msg("Database connection pool closed.")
 }
 
-// --- User Management ---
+// --- Bot Management ---
+func (s *DBService) CreateBot(ctx context.Context, bot *pb.BotConfig) (string, error) {
+	var id string
+	query := `INSERT INTO bots (id, user_id, name, symbol, strategy, parameters, is_active) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id`
+	err := s.pool.QueryRow(ctx, query, bot.BotId, bot.UserId, bot.Name, bot.Symbol, bot.Strategy, bot.Parameters, bot.IsActive).Scan(&id)
+	if err != nil {
+		log.Error().Err(err).Msg("Failed to create bot")
+		return "", fmt.Errorf("failed to create bot: %w", err)
+	}
+	return id, nil
+}
 
 // CreateUser inserts a new user into the database.
 func (s *DBService) CreateUser(ctx context.Context, username, passwordHash string) (string, error) {

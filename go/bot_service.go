@@ -31,6 +31,7 @@ func newBotRegistry() *botRegistry {
 		defer cancel()
 		conn, err := pgx.Connect(ctx, dsn)
 		if err == nil {
+			log.Printf("bot registry postgres connect ok")
 			_, err2 := conn.Exec(ctx, `CREATE TABLE IF NOT EXISTS bots (
                 id TEXT PRIMARY KEY,
                 name TEXT NOT NULL,
@@ -41,6 +42,7 @@ func newBotRegistry() *botRegistry {
                 created_at TIMESTAMPTZ DEFAULT now()
             )`)
 			if err2 == nil {
+				log.Printf("bot pg table created")
 				r.pg = conn
 				r.loadFromPg(ctx)
 				return r
@@ -50,6 +52,8 @@ func newBotRegistry() *botRegistry {
 		} else {
 			log.Printf("bot registry postgres connect failed: %v", err)
 		}
+	} else {
+		log.Printf("bot registry postgres dsn not set, using file storage")
 	}
 	dir := "data"
 	_ = os.MkdirAll(dir, 0o755)
@@ -75,7 +79,8 @@ func (r *botRegistry) loadFromPg(ctx context.Context) {
 		}
 		m := map[string]string{}
 		_ = json.Unmarshal(paramsBytes, &m)
-		r.bots[id] = &pb.BotConfig{BotId: id, Name: name, Symbol: symbol, Strategy: strategy, Parameters: m, IsActive: active}
+		// Need to get real UserId for this.
+		r.bots[id] = &pb.BotConfig{BotId: id, Name: name, Symbol: symbol, Strategy: strategy, Parameters: m, IsActive: active, UserId: "", CreatedAtUnixMs: created}
 	}
 }
 
@@ -131,21 +136,43 @@ func (r *botRegistry) persist() {
 // BotServiceServer implementation
 type botServiceServer struct {
 	pb.UnimplementedBotServiceServer
-	reg     *botRegistry
-	trading *tradingServer
+	reg      *botRegistry
+	trading  *tradingServer
+	dbclient *DBService
 }
 
-func newBotServiceServer(reg *botRegistry, trading *tradingServer) *botServiceServer {
-	return &botServiceServer{reg: reg, trading: trading}
+func newBotServiceServer(reg *botRegistry, trading *tradingServer, dbclient *DBService) *botServiceServer {
+	return &botServiceServer{reg: reg, trading: trading, dbclient: dbclient}
 }
 
 func (s *botServiceServer) CreateBot(ctx context.Context, req *pb.CreateBotRequest) (*pb.StatusResponse, error) {
 	if req.GetName() == "" || req.GetSymbol() == "" || req.GetStrategy() == "" {
+		log.Printf("[CreateBot] Missing required fields: Name=%s, Symbol=%s, Strategy=%s", req.GetName(), req.GetSymbol(), req.GetStrategy())
 		return &pb.StatusResponse{Success: false, Message: "name, symbol, strategy required"}, nil
 	}
 	// Log incoming CreateBot request for debugging
 	log.Printf("[CreateBot] Received request: Name=%s, Symbol=%s, Strategy=%s, Parameters=%v", req.GetName(), req.GetSymbol(), req.GetStrategy(), req.GetParameters())
+
 	id := uuid.New().String()
+
+	// Add entry to the database
+	if s.dbclient != nil {
+		_, err := s.dbclient.CreateBot(ctx, &pb.BotConfig{
+			BotId: id,
+			// UserId:     req.GetUserId(), // Removed because GetUserId does not exist
+			Name:       req.GetName(),
+			Symbol:     req.GetSymbol(),
+			Strategy:   req.GetStrategy(),
+			Parameters: req.GetParameters(),
+			IsActive:   false,
+		})
+		log.Printf("[CreateBot] Added bot to database with ID: %s", id)
+		if err != nil {
+			log.Printf("[CreateBot] Error adding bot to database: %v", err)
+			return &pb.StatusResponse{Success: false, Message: err.Error()}, nil
+		}
+	}
+
 	bot := &pb.BotConfig{BotId: id, Name: req.GetName(), Symbol: req.GetSymbol(), Strategy: req.GetStrategy(), Parameters: req.GetParameters(), IsActive: false}
 	s.reg.mu.Lock()
 	s.reg.bots[id] = bot

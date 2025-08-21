@@ -231,6 +231,7 @@ message BotConfig {
     bool is_active = 5;
     int64 created_at_unix_ms = 6;
     string name = 7;
+    string user_id = 8; // <-- Add this line
 }
 
 // Request to create a new trading bot.
