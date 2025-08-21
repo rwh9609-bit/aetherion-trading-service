@@ -23,7 +23,10 @@ import (
 	"github.com/rs/zerolog/log"
 	pb "github.com/rwh9609-bit/multilanguage/go/gen"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/keepalive"
+	"google.golang.org/grpc/reflection"
+	"google.golang.org/grpc/status"
 )
 
 // timeoutUnary enforces a per-request timeout if parent has none.
@@ -155,7 +158,7 @@ func GetCoinbasePrice(symbol string) (float64, error) {
 	if err != nil {
 		return 0, fmt.Errorf("failed to parse price string to float: %w", err)
 	}
-
+	log.Printf("Fetched price for %s: %.2f", symbol, price)
 	return price, nil
 }
 
@@ -223,7 +226,7 @@ func (s *Strategy) Run(ctx context.Context, server *tradingServer) {
 
 // server implements the TradingService
 type tradingServer struct {
-	pb.UnimplementedTradingServiceServer
+	pb.TradingServiceServer
 	orderBooks    map[string]*OrderBookManager // symbol -> order book
 	portfolios    map[string]*pb.Portfolio     // account -> portfolio
 	activeSymbols map[string]bool              // currently tracked symbols
@@ -278,6 +281,7 @@ func (s *tradingServer) GetPrice(ctx context.Context, req *pb.Tick) (*pb.Tick, e
 // StartStrategy is a standard RPC call
 func (s *tradingServer) StartStrategy(ctx context.Context, req *pb.StrategyRequest) (*pb.StatusResponse, error) {
 	// Create a new strategy instance
+	log.Printf("[Go Server] Starting strategy for %s with parameters: %v", req.Symbol, req.Parameters)
 	strategy := &Strategy{
 		ID:           uuid.New().String(),
 		Symbol:       req.Symbol,
@@ -308,8 +312,13 @@ func (s *tradingServer) GetTradeHistory(ctx context.Context, req *pb.TradeHistor
 	if s.dbService == nil {
 		return nil, fmt.Errorf("trade history unavailable")
 	}
-	trades, err := s.dbService.GetTradesByUserID(ctx, req.UserId)
+	userID := req.GetUserId()
+	if userID == "" {
+		return nil, status.Error(codes.InvalidArgument, "user_id is required")
+	}
+	trades, err := s.dbService.GetTradesByUserID(ctx, userID)
 	if err != nil {
+		log.Error().Err(err).Msg("Failed to get trade history")
 		return nil, err
 	}
 
@@ -419,6 +428,7 @@ func (s *tradingServer) StreamOrderBook(req *pb.OrderBookRequest, stream pb.Trad
 			}
 
 			if err := stream.Send(orderBook); err != nil {
+				log.Printf("Error sending order book update: %v", err)
 				return err
 			}
 		}
@@ -447,6 +457,7 @@ func (s *tradingServer) SubscribeTicks(req *pb.StrategyRequest, stream pb.Tradin
 			TimestampNs: time.Now().UnixNano(),
 		}
 		if err := stream.Send(tick); err != nil {
+			log.Printf("Error sending tick: %v", err)
 			return err
 		}
 		time.Sleep(100 * time.Millisecond) // Send ticks every 100ms
@@ -598,6 +609,7 @@ func (s *tradingServer) AddSymbol(ctx context.Context, req *pb.SymbolRequest) (*
 		return &pb.StatusResponse{Success: false, Message: "feed not initialized"}, nil
 	}
 	if err := s.feed.EnsureSymbol(sym); err != nil {
+		log.Printf("Error ensuring symbol in feed: %v", err)
 		return &pb.StatusResponse{Success: false, Message: err.Error()}, nil
 	}
 	return &pb.StatusResponse{Success: true, Message: "symbol added"}, nil
@@ -613,6 +625,7 @@ func (s *tradingServer) RemoveSymbol(ctx context.Context, req *pb.SymbolRequest)
 		return &pb.StatusResponse{Success: false, Message: "feed not initialized"}, nil
 	}
 	if err := s.feed.RemoveSymbol(sym); err != nil {
+		log.Printf("Error removing symbol from feed: %v", err)
 		return &pb.StatusResponse{Success: false, Message: err.Error()}, nil
 	}
 	return &pb.StatusResponse{Success: true, Message: "symbol removed"}, nil
@@ -647,6 +660,7 @@ func (s *tradingServer) ExecuteTrade(ctx context.Context, req *pb.TradeRequest) 
 	if execPrice <= 0 {
 		tick, err := s.GetPrice(ctx, &pb.Tick{Symbol: req.Symbol})
 		if err != nil {
+			log.Printf("Error getting price for symbol %s: %v", req.Symbol, err)
 			return &pb.TradeResponse{Accepted: false, Message: "price unavailable"}, nil
 		}
 		execPrice = tick.Price
@@ -769,6 +783,8 @@ func main() {
 	reg := newBotRegistry()
 	botSvc := newBotServiceServer(reg, tradingService, dbService)
 	pb.RegisterBotServiceServer(grpcServer, botSvc)
+
+	reflection.Register(grpcServer) // Register reflection service for gRPC CLI tools
 
 	// Market data feed (dynamic)
 	feedSymbols := append([]string{}, cfg.DefaultSymbols...)
