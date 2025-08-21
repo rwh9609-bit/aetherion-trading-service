@@ -19,11 +19,13 @@ type DBService struct {
 func NewDBService(connStr string) (*DBService, error) {
 	config, err := pgxpool.ParseConfig(connStr)
 	if err != nil {
+		log.Error().Err(err).Msg("Failed to parse DB connection string")
 		return nil, fmt.Errorf("failed to parse DB connection string: %w", err)
 	}
 
 	pool, err := pgxpool.NewWithConfig(context.Background(), config)
 	if err != nil {
+		log.Error().Err(err).Msg("Failed to create DB connection pool")
 		return nil, fmt.Errorf("failed to create DB connection pool: %w", err)
 	}
 
@@ -53,6 +55,7 @@ func (s *DBService) CreateBot(ctx context.Context, bot *pb.BotConfig) (string, e
 		log.Error().Err(err).Msg("Failed to create bot")
 		return "", fmt.Errorf("failed to create bot: %w", err)
 	}
+	log.Info().Str("bot_id", id).Msg("Bot created successfully")
 	return id, nil
 }
 
@@ -62,6 +65,7 @@ func (s *DBService) CreateUser(ctx context.Context, username, passwordHash strin
 	query := `INSERT INTO users (username, password_hash) VALUES ($1, $2) RETURNING id`
 	err := s.pool.QueryRow(ctx, query, username, passwordHash).Scan(&id)
 	if err != nil {
+		log.Error().Err(err).Msg("Failed to create user")
 		return "", fmt.Errorf("failed to create user: %w", err)
 	}
 	return id, nil
@@ -73,6 +77,7 @@ func (s *DBService) GetUserByUsername(ctx context.Context, username string) (*Us
 	query := `SELECT id, username, password_hash, created_at FROM users WHERE username = $1`
 	err := s.pool.QueryRow(ctx, query, username).Scan(&user.ID, &user.Username, &user.PasswordHash, &user.CreatedAt)
 	if err != nil {
+		log.Error().Err(err).Msg("Failed to get user by username")
 		return nil, fmt.Errorf("failed to get user by username: %w", err)
 	}
 	return &user, nil
@@ -92,6 +97,7 @@ func (s *DBService) SavePortfolio(ctx context.Context, portfolio *Portfolio) err
 	`
 	_, err := s.pool.Exec(ctx, query, portfolio.ID, portfolio.UserID, portfolio.Symbol, portfolio.Quantity, portfolio.AveragePrice)
 	if err != nil {
+		log.Error().Err(err).Msg("Failed to save portfolio")
 		return fmt.Errorf("failed to save portfolio: %w", err)
 	}
 	return nil
@@ -103,6 +109,7 @@ func (s *DBService) GetPortfolioByUserID(ctx context.Context, userID string) ([]
 	query := `SELECT id, user_id, symbol, quantity, average_price, created_at, updated_at FROM portfolios WHERE user_id = $1`
 	rows, err := s.pool.Query(ctx, query, userID)
 	if err != nil {
+		log.Error().Err(err).Msg("Failed to get portfolio by user ID")
 		return nil, fmt.Errorf("failed to get portfolio by user ID: %w", err)
 	}
 	defer rows.Close()
@@ -110,6 +117,7 @@ func (s *DBService) GetPortfolioByUserID(ctx context.Context, userID string) ([]
 	for rows.Next() {
 		var p Portfolio
 		if err := rows.Scan(&p.ID, &p.UserID, &p.Symbol, &p.Quantity, &p.AveragePrice, &p.CreatedAt, &p.UpdatedAt); err != nil {
+			log.Error().Err(err).Msg("Failed to scan portfolio row")
 			return nil, fmt.Errorf("failed to scan portfolio row: %w", err)
 		}
 		portfolios = append(portfolios, &p)
@@ -135,6 +143,7 @@ func (s *DBService) SaveStrategy(ctx context.Context, strategy *Strategy) (strin
 	`
 	err := s.pool.QueryRow(ctx, query, strategy.ID, strategy.UserID, strategy.Symbol, strategy.StrategyType, strategy.Parameters, strategy.IsActive).Scan(&id)
 	if err != nil {
+		log.Error().Err(err).Msg("Failed to save strategy")
 		return "", fmt.Errorf("failed to save strategy: %w", err)
 	}
 	return id, nil
@@ -146,6 +155,7 @@ func (s *DBService) GetStrategyByID(ctx context.Context, strategyID string) (*St
 	query := `SELECT id, user_id, symbol, type, parameters, is_active, created_at, updated_at FROM strategies WHERE id = $1`
 	err := s.pool.QueryRow(ctx, query, strategyID).Scan(&strategy.ID, &strategy.UserID, &strategy.Symbol, &strategy.StrategyType, &strategy.Parameters, &strategy.IsActive, &strategy.CreatedAt, &strategy.UpdatedAt)
 	if err != nil {
+		log.Error().Err(err).Msg("Failed to get strategy by ID")
 		return nil, fmt.Errorf("failed to get strategy by ID: %w", err)
 	}
 	return &strategy, nil
@@ -157,6 +167,7 @@ func (s *DBService) GetStrategiesByUserID(ctx context.Context, userID string) ([
 	query := `SELECT id, user_id, symbol, type, parameters, is_active, created_at, updated_at FROM strategies WHERE user_id = $1`
 	rows, err := s.pool.Query(ctx, query, userID)
 	if err != nil {
+		log.Error().Err(err).Msg("Failed to get strategies by user ID")
 		return nil, fmt.Errorf("failed to get strategies by user ID: %w", err)
 	}
 	defer rows.Close()
@@ -164,6 +175,7 @@ func (s *DBService) GetStrategiesByUserID(ctx context.Context, userID string) ([
 	for rows.Next() {
 		var strat Strategy
 		if err := rows.Scan(&strat.ID, &strat.UserID, &strat.Symbol, &strat.StrategyType, &strat.Parameters, &strat.IsActive, &strat.CreatedAt, &strat.UpdatedAt); err != nil {
+			log.Error().Err(err).Msg("Failed to scan strategy row")
 			return nil, fmt.Errorf("failed to scan strategy row: %w", err)
 		}
 		strategies = append(strategies, &strat)
@@ -181,6 +193,7 @@ func (s *DBService) RecordTrade(ctx context.Context, trade *Trade) error {
 	`
 	_, err := s.pool.Exec(ctx, query, trade.ID, trade.UserID, trade.StrategyID, trade.Symbol, trade.Side, trade.Quantity, trade.Price, trade.PnL)
 	if err != nil {
+		log.Error().Err(err).Msg("Failed to record trade")
 		return fmt.Errorf("failed to record trade: %w", err)
 	}
 	return nil
@@ -188,10 +201,14 @@ func (s *DBService) RecordTrade(ctx context.Context, trade *Trade) error {
 
 // GetTradesByUserID retrieves trade history for a user.
 func (s *DBService) GetTradesByUserID(ctx context.Context, userID string) ([]*Trade, error) {
+	if userID == "" {
+		return nil, fmt.Errorf("userID cannot be empty")
+	}
 	var trades []*Trade
 	query := `SELECT id, user_id, strategy_id, symbol, side, quantity, price, executed_at, pnl FROM trades WHERE user_id = $1 ORDER BY executed_at DESC`
 	rows, err := s.pool.Query(ctx, query, userID)
 	if err != nil {
+		log.Error().Err(err).Msg("Failed to get trades by user ID")
 		return nil, fmt.Errorf("failed to get trades by user ID: %w", err)
 	}
 	defer rows.Close()
@@ -199,6 +216,7 @@ func (s *DBService) GetTradesByUserID(ctx context.Context, userID string) ([]*Tr
 	for rows.Next() {
 		var t Trade
 		if err := rows.Scan(&t.ID, &t.UserID, &t.StrategyID, &t.Symbol, &t.Side, &t.Quantity, &t.Price, &t.ExecutedAt, &t.PnL); err != nil {
+			log.Error().Err(err).Msg("Failed to scan trade row")
 			return nil, fmt.Errorf("failed to scan trade row: %w", err)
 		}
 		trades = append(trades, &t)

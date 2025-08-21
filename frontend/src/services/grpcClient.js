@@ -16,6 +16,7 @@ import {
 // Priority: explicit env var -> same-origin (production) -> localhost dev fallback.
 // Set REACT_APP_GRPC_HOST in production (e.g. https://app.aetherion.cloud or https://api.aetherion.cloud).
 let resolvedHost = process.env.REACT_APP_GRPC_HOST;
+console.log('Resolved gRPC host:', resolvedHost);
 if (!resolvedHost && typeof window !== 'undefined') {
   const loc = window.location;
   // Dev localhost

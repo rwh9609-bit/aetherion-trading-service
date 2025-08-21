@@ -33,13 +33,15 @@ func newBotRegistry() *botRegistry {
 		if err == nil {
 			log.Printf("bot registry postgres connect ok")
 			_, err2 := conn.Exec(ctx, `CREATE TABLE IF NOT EXISTS bots (
-                id TEXT PRIMARY KEY,
-                name TEXT NOT NULL,
-                symbol TEXT NOT NULL,
-                strategy TEXT NOT NULL,
-                parameters JSONB DEFAULT '{}'::jsonb,
-                active BOOLEAN NOT NULL DEFAULT false,
-                created_at TIMESTAMPTZ DEFAULT now()
+				id TEXT PRIMARY KEY,
+				user_id TEXT NOT NULL,
+				name TEXT NOT NULL,
+				symbol TEXT NOT NULL,
+				strategy TEXT NOT NULL,
+				parameters JSONB NOT NULL,
+				is_active BOOLEAN DEFAULT TRUE,
+				created_at TIMESTAMPTZ DEFAULT now(),
+				updated_at TIMESTAMPTZ DEFAULT now()
             )`)
 			if err2 == nil {
 				log.Printf("bot pg table created")
@@ -63,24 +65,26 @@ func newBotRegistry() *botRegistry {
 }
 
 func (r *botRegistry) loadFromPg(ctx context.Context) {
-	rows, err := r.pg.Query(ctx, `SELECT id,name,symbol,strategy,parameters,active,extract(epoch from created_at)::bigint FROM bots`)
+	rows, err := r.pg.Query(ctx, `SELECT id, user_id, name, symbol, strategy, parameters, is_active, extract(epoch from created_at)::bigint FROM bots`)
 	if err != nil {
 		log.Printf("bot load pg err: %v", err)
 		return
 	}
+	log.Printf("bot load pg ok")
 	defer rows.Close()
 	for rows.Next() {
-		var id, name, symbol, strategy string
+		var id, userID, name, symbol, strategy string
 		var paramsBytes []byte
 		var active bool
 		var created int64
-		if err := rows.Scan(&id, &name, &symbol, &strategy, &paramsBytes, &active, &created); err != nil {
+		if err := rows.Scan(&id, &userID, &name, &symbol, &strategy, &paramsBytes, &active, &created); err != nil {
+			log.Printf("bot load pg scan err: %v", err)
 			continue
 		}
 		m := map[string]string{}
 		_ = json.Unmarshal(paramsBytes, &m)
 		// Need to get real UserId for this.
-		r.bots[id] = &pb.BotConfig{BotId: id, Name: name, Symbol: symbol, Strategy: strategy, Parameters: m, IsActive: active, UserId: "", CreatedAtUnixMs: created}
+		r.bots[id] = &pb.BotConfig{BotId: id, Name: name, Symbol: symbol, Strategy: strategy, Parameters: m, IsActive: active, UserId: userID, CreatedAtUnixMs: created}
 	}
 }
 
@@ -105,12 +109,23 @@ func (r *botRegistry) persist() {
 	if r.pg != nil {
 		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 		defer cancel()
+		log.Printf("persisting %d bots to pg", len(r.bots))
 		for _, b := range r.bots {
 			paramsJSON, _ := json.Marshal(b.Parameters)
-			_, err := r.pg.Exec(ctx, `INSERT INTO bots (id,name,symbol,strategy,parameters,active,created_at)
-                VALUES ($1,$2,$3,$4,$5,$6,to_timestamp($7))
-                ON CONFLICT (id) DO UPDATE SET name=EXCLUDED.name,symbol=EXCLUDED.symbol,strategy=EXCLUDED.strategy,parameters=EXCLUDED.parameters,active=EXCLUDED.active`,
-				b.BotId, b.Name, b.Symbol, b.Strategy, string(paramsJSON), b.IsActive)
+			log.Printf("persisting bot %s to pg", b.BotId)
+			// Provide created_at and updated_at as Unix timestamps
+			created := b.CreatedAtUnixMs / 1000 // convert ms to seconds
+			updated := time.Now().Unix()        // current time as updated_at
+			_, err := r.pg.Exec(ctx, `INSERT INTO bots (id, user_id, name, symbol, strategy, parameters, is_active, created_at, updated_at)
+                VALUES ($1,$2,$3,$4,$5,$6,$7,to_timestamp($8),to_timestamp($9))
+                ON CONFLICT (id) DO UPDATE SET
+                    name=EXCLUDED.name,
+                    symbol=EXCLUDED.symbol,
+                    strategy=EXCLUDED.strategy,
+                    parameters=EXCLUDED.parameters,
+                    is_active=EXCLUDED.is_active,
+                    updated_at=EXCLUDED.updated_at`,
+				b.BotId, b.UserId, b.Name, b.Symbol, b.Strategy, string(paramsJSON), b.IsActive, created, updated)
 			if err != nil && !strings.Contains(err.Error(), "duplicate") {
 				log.Printf("bot upsert err: %v", err)
 			}
@@ -135,35 +150,47 @@ func (r *botRegistry) persist() {
 
 // BotServiceServer implementation
 type botServiceServer struct {
-	pb.UnimplementedBotServiceServer
+	pb.BotServiceServer
 	reg      *botRegistry
 	trading  *tradingServer
 	dbclient *DBService
 }
 
 func newBotServiceServer(reg *botRegistry, trading *tradingServer, dbclient *DBService) *botServiceServer {
+	log.Printf("Creating BotServiceServer with registry at %s", reg.path)
 	return &botServiceServer{reg: reg, trading: trading, dbclient: dbclient}
 }
 
 func (s *botServiceServer) CreateBot(ctx context.Context, req *pb.CreateBotRequest) (*pb.StatusResponse, error) {
+	log.Printf("[CreateBot] Handler entered")
 	if req.GetName() == "" || req.GetSymbol() == "" || req.GetStrategy() == "" {
 		log.Printf("[CreateBot] Missing required fields: Name=%s, Symbol=%s, Strategy=%s", req.GetName(), req.GetSymbol(), req.GetStrategy())
 		return &pb.StatusResponse{Success: false, Message: "name, symbol, strategy required"}, nil
 	}
-	// Log incoming CreateBot request for debugging
-	log.Printf("[CreateBot] Received request: Name=%s, Symbol=%s, Strategy=%s, Parameters=%v", req.GetName(), req.GetSymbol(), req.GetStrategy(), req.GetParameters())
+	log.Printf("[CreateBot] Received request: Name=%s, Symbol=%s, Strategy=%s, Parameters=%v, UserId=%s", req.GetName(), req.GetSymbol(), req.GetStrategy(), req.GetParameters(), ctx.Value("user_id"))
 
 	id := uuid.New().String()
+	userID, ok := ctx.Value("user_id").(string)
+	if !ok || userID == "" {
+		log.Printf("[CreateBot] user_id missing from context")
+		return &pb.StatusResponse{Success: false, Message: "auth required"}, nil
+	}
+	log.Printf("[CreateBot] Generated new bot ID: %s for user: %s", id, userID)
+
+	params := req.GetParameters()
+	if params == nil {
+		params = map[string]string{}
+	}
 
 	// Add entry to the database
 	if s.dbclient != nil {
 		_, err := s.dbclient.CreateBot(ctx, &pb.BotConfig{
-			BotId: id,
-			// UserId:     req.GetUserId(), // Removed because GetUserId does not exist
+			BotId:      id,
+			UserId:     userID,
 			Name:       req.GetName(),
 			Symbol:     req.GetSymbol(),
 			Strategy:   req.GetStrategy(),
-			Parameters: req.GetParameters(),
+			Parameters: params,
 			IsActive:   false,
 		})
 		log.Printf("[CreateBot] Added bot to database with ID: %s", id)
@@ -173,7 +200,7 @@ func (s *botServiceServer) CreateBot(ctx context.Context, req *pb.CreateBotReque
 		}
 	}
 
-	bot := &pb.BotConfig{BotId: id, Name: req.GetName(), Symbol: req.GetSymbol(), Strategy: req.GetStrategy(), Parameters: req.GetParameters(), IsActive: false}
+	bot := &pb.BotConfig{BotId: id, Name: req.GetName(), Symbol: req.GetSymbol(), Strategy: req.GetStrategy(), Parameters: params, IsActive: false}
 	s.reg.mu.Lock()
 	s.reg.bots[id] = bot
 	s.reg.mu.Unlock()
@@ -182,6 +209,7 @@ func (s *botServiceServer) CreateBot(ctx context.Context, req *pb.CreateBotReque
 }
 
 func (s *botServiceServer) ListBots(ctx context.Context, _ *pb.Empty) (*pb.BotList, error) {
+	log.Printf("[ListBots] Received request to list bots")
 	out := &pb.BotList{}
 	s.reg.mu.RLock()
 	for _, b := range s.reg.bots {

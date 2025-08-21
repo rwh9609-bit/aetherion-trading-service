@@ -50,6 +50,16 @@ class TradingOrchestrator:
             'exp': int(time.time()) + 3600  # 1 hour expiry
         }
         return jwt.encode(claims, self.auth_secret, algorithm='HS256')
+    
+    def fetch_trade_history(self, trading_stub, bot_id, metadata):
+        try:
+            history_req = trading_api_pb2.TradeHistoryRequest(user_id=bot_id)
+            history_resp = trading_stub.GetTradeHistory(history_req, metadata=metadata)
+            print(f"Trade history for bot {bot_id}:")
+            for trade in history_resp.trades:
+                print(f"  {trade.trade_id}: {trade.side} {trade.quantity} {trade.symbol} @ {trade.price} on {datetime.fromtimestamp(trade.executed_at)}")
+        except grpc.RpcError as e:
+            print(f"Error fetching trade history for bot {bot_id}: {e.details()}")
 
     def run(self):
         """Main orchestrator loop: fetch bots and execute trades for each bot."""
@@ -69,7 +79,8 @@ class TradingOrchestrator:
                     # 1. Fetch all bots from Go backend
                     bot_stub = trading_api_pb2_grpc.BotServiceStub(trading_channel)
                     bot_list = bot_stub.ListBots(trading_api_pb2.Empty(), metadata=metadata)
-                    print(f"[DEBUG] Bot list: {bot_list}")
+                    # This is spammy.
+                    # print(f"[DEBUG] Bot list: {bot_list}")
                     for bot in bot_list.bots:
                         print(f"[Orchestrator] Processing bot: {bot.name} ({bot.bot_id})")
                         # 2. Fetch current price for bot's symbol
@@ -117,7 +128,10 @@ class TradingOrchestrator:
                                     print(f"Trade blocked for bot {bot.name}: VaR {var_response.value_at_risk:.2f} over limit")
                             except grpc.RpcError as e:
                                 print(f"Error calculating VaR for bot {bot.name}: {e.details()}")
-                    time.sleep(60)
+                            
+                    # After trading logic, fetch trade history:
+                    self.fetch_trade_history(trading_stub, bot.bot_id, metadata)
+                    time.sleep(20)
                 except Exception as e:
                     print(f"Error in orchestrator loop: {str(e)}")
                     time.sleep(60)

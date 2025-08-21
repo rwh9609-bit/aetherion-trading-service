@@ -24,6 +24,8 @@ func corsMiddleware() *cors.Cors {
 		origins = []string{
 			"http://localhost:3000",
 			"https://app.aetherion.cloud",
+			"https://www.aetherion.cloud",
+			"https://api.aetherion.cloud",
 		}
 	}
 	return cors.New(cors.Options{

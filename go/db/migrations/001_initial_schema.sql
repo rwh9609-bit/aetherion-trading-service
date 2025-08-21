@@ -2,6 +2,7 @@ DROP TABLE IF EXISTS trades CASCADE;
 DROP TABLE IF EXISTS strategies CASCADE;
 DROP TABLE IF EXISTS portfolios CASCADE;
 DROP TABLE IF EXISTS users CASCADE;
+DROP TABLE IF EXISTS bots CASCADE;
 
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
@@ -13,12 +14,12 @@ CREATE TABLE IF NOT EXISTS users (
 );
 
 CREATE TABLE IF NOT EXISTS bots (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    id TEXT PRIMARY KEY,
+    user_id TEXT NOT NULL,
     name TEXT NOT NULL,
     symbol TEXT NOT NULL,
-    strategy TEXT NOT NULL, -- e.g., 'mean_reversion', 'momentum'
-    parameters JSONB NOT NULL, -- e.g., {"lookback": 14, "threshold": 0.05}
+    strategy TEXT NOT NULL,
+    parameters JSONB NOT NULL,
     is_active BOOLEAN DEFAULT TRUE,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP

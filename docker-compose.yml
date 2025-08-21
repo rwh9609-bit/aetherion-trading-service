@@ -48,8 +48,8 @@ services:
       interval: 5s
       timeout: 5s
       retries: 5
-    expose:
-      - "5432"
+    ports:
+      - "5432:5432"
   backend:
     build:
       context: ./python
@@ -77,6 +77,7 @@ services:
     ports:
       - "443:443"
       - "80:80"
+      - "8080:8080"   # <-- Add this line for gRPC
     restart: unless-stopped
     environment:
       - ENVOY_UID=1337
@@ -85,7 +86,8 @@ services:
       context: .
       dockerfile: Dockerfile.frontend
       args:
-        REACT_APP_GRPC_HOST: https://api.aetherion.cloud
+        # REACT_APP_GRPC_HOST: https://api.aetherion.cloud
+        REACT_APP_GRPC_HOST: http://localhost:8080
     ports:
       - "3000:80"
     depends_on:

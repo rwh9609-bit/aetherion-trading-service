@@ -26,6 +26,9 @@ type userStore interface {
 	GetUserHash(ctx context.Context, username string) (string, error)
 }
 
+// context key for user hash
+type ctxKeyUserHash struct{}
+
 // memUserStore implements userStore in-memory
 type memUserStore struct{ users map[string]string }
 
@@ -143,94 +146,72 @@ func (a *authServer) Login(ctx context.Context, req *pb.AuthRequest) (*pb.AuthRe
 	}
 	exp := time.Now().Add(1 * time.Hour)
 	claims := jwt.MapClaims{"sub": req.Username, "exp": exp.Unix()}
+
+	// Create the token
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+
+	// Sign the token
 	signed, err := token.SignedString(a.secret)
+
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "token signing failed: %v", err)
 	}
+	log.Printf("[Login] Generated JWT token for user: %s", req.Username)
 	return &pb.AuthResponse{Success: true, Message: "ok", Token: signed, ExpiresAtUnix: exp.Unix()}, nil
 }
 
-// authUnaryInterceptor enforces JWT auth for all non-auth unary RPCs.
 func authUnaryInterceptor(secret []byte) grpc.UnaryServerInterceptor {
 	return func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
 		if os.Getenv("AUTH_DISABLED") == "1" {
+			log.Println("Auth disabled, skipping interceptor")
 			return handler(ctx, req)
 		}
 		if info.FullMethod == "/trading.AuthService/Login" || info.FullMethod == "/trading.AuthService/Register" {
+			log.Println("AuthService method, skipping interceptor")
 			return handler(ctx, req)
 		}
 		if info.FullMethod == "/trading.TradingService/GetPrice" {
+			log.Println("TradingService GetPrice method, skipping interceptor")
 			return handler(ctx, req)
 		}
 		md, ok := metadata.FromIncomingContext(ctx)
 		if !ok {
+			log.Println("Missing metadata in context")
 			return nil, status.Error(codes.Unauthenticated, "missing metadata")
 		}
 		vals := md.Get("authorization")
 		if len(vals) == 0 {
+			log.Println("Missing authorization header")
 			return nil, status.Error(codes.Unauthenticated, "missing authorization header")
 		}
 		tokenStr := vals[0]
 		if len(tokenStr) > 7 && (tokenStr[:7] == "Bearer " || tokenStr[:7] == "bearer ") {
 			tokenStr = tokenStr[7:]
 		}
-		_, err := jwt.Parse(tokenStr, func(t *jwt.Token) (interface{}, error) {
+		token, err := jwt.Parse(tokenStr, func(t *jwt.Token) (interface{}, error) {
 			if _, ok := t.Method.(*jwt.SigningMethodHMAC); !ok {
+				log.Println("Unexpected signing method")
 				return nil, fmt.Errorf("unexpected signing method")
 			}
 			return secret, nil
 		})
 		if err != nil {
+			log.Printf("Error parsing token: %v", err)
 			return nil, status.Error(codes.Unauthenticated, "invalid token")
 		}
+		claims, ok := token.Claims.(jwt.MapClaims)
+		if !ok || !token.Valid {
+			log.Println("Invalid JWT claims")
+			return nil, status.Error(codes.Unauthenticated, "invalid token claims")
+		}
+		sub, ok := claims["sub"].(string)
+		if !ok || sub == "" {
+			log.Println("Missing sub claim in JWT")
+			return nil, status.Error(codes.Unauthenticated, "missing sub claim")
+		}
+		ctx = context.WithValue(ctx, "user_id", sub)
 		return handler(ctx, req)
 	}
 }
 
-// authUnaryInterceptorWithFallback allows validating tokens against current secret AND optional previous secret for key rotation
-func authUnaryInterceptorWithFallback(primary, previous []byte) grpc.UnaryServerInterceptor {
-	return func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
-		if os.Getenv("AUTH_DISABLED") == "1" {
-			return handler(ctx, req)
-		}
-		if info.FullMethod == "/trading.AuthService/Login" || info.FullMethod == "/trading.AuthService/Register" {
-			return handler(ctx, req)
-		}
-		if info.FullMethod == "/trading.TradingService/GetPrice" {
-			return handler(ctx, req)
-		}
-		md, ok := metadata.FromIncomingContext(ctx)
-		if !ok {
-			return nil, status.Error(codes.Unauthenticated, "missing metadata")
-		}
-		vals := md.Get("authorization")
-		if len(vals) == 0 {
-			return nil, status.Error(codes.Unauthenticated, "missing authorization header")
-		}
-		tokenStr := vals[0]
-		if len(tokenStr) > 7 && (tokenStr[:7] == "Bearer " || tokenStr[:7] == "bearer ") {
-			tokenStr = tokenStr[7:]
-		}
-		parseWith := func(secret []byte) error {
-			_, err := jwt.Parse(tokenStr, func(t *jwt.Token) (interface{}, error) {
-				if _, ok := t.Method.(*jwt.SigningMethodHMAC); !ok {
-					return nil, fmt.Errorf("unexpected signing method")
-				}
-				return secret, nil
-			})
-			return err
-		}
-		if err := parseWith(primary); err != nil {
-			if len(previous) > 0 {
-				if err2 := parseWith(previous); err2 != nil {
-					return nil, status.Error(codes.Unauthenticated, "invalid token")
-				}
-			} else {
-				return nil, status.Error(codes.Unauthenticated, "invalid token")
-			}
-		}
-		return handler(ctx, req)
-	}
-
-}
+// Removed unused function authUnaryInterceptorWithFallback to fix compile error (U1000)
