@@ -3,6 +3,7 @@ set -x
 
 PROTO_DIR=protos
 GO_GEN_DIR=go/gen
+mkdir -p "$GO_GEN_DIR"   # <-- Add this line
 
 ls -l $PROTO_DIR
 

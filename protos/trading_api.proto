@@ -155,6 +155,7 @@ message MomentumResponse {
 message RegisterRequest {
     string username = 1;
     string password = 2; // Plaintext over TLS; will be hashed server-side
+    string email = 3;
 }
 
 // Request to login
@@ -216,10 +217,21 @@ service RiskService {
     rpc CalculateVaR(VaRRequest) returns (VaRResponse) {}
 }
 
+message GetUserRequest {
+  string username = 1;
+}
+
+message UserInfo {
+  string username = 1;
+  string email = 2;
+  int64 created_at_unix = 3;
+}
+
 // Service for authentication
 service AuthService {
     rpc Register(RegisterRequest) returns (AuthResponse) {}
     rpc Login(AuthRequest) returns (AuthResponse) {}
+    rpc GetUser(GetUserRequest) returns (UserInfo);
 }
 
 // Represents the configuration and status of a trading bot.

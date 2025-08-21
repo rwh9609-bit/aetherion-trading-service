@@ -725,6 +725,11 @@ class AuthServiceStub(object):
                 request_serializer=trading__api__pb2.AuthRequest.SerializeToString,
                 response_deserializer=trading__api__pb2.AuthResponse.FromString,
                 _registered_method=True)
+        self.GetUser = channel.unary_unary(
+                '/trading.AuthService/GetUser',
+                request_serializer=trading__api__pb2.GetUserRequest.SerializeToString,
+                response_deserializer=trading__api__pb2.UserInfo.FromString,
+                _registered_method=True)
 
 
 class AuthServiceServicer(object):
@@ -743,6 +748,12 @@ class AuthServiceServicer(object):
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
+    def GetUser(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
 
 def add_AuthServiceServicer_to_server(servicer, server):
     rpc_method_handlers = {
@@ -755,6 +766,11 @@ def add_AuthServiceServicer_to_server(servicer, server):
                     servicer.Login,
                     request_deserializer=trading__api__pb2.AuthRequest.FromString,
                     response_serializer=trading__api__pb2.AuthResponse.SerializeToString,
+            ),
+            'GetUser': grpc.unary_unary_rpc_method_handler(
+                    servicer.GetUser,
+                    request_deserializer=trading__api__pb2.GetUserRequest.FromString,
+                    response_serializer=trading__api__pb2.UserInfo.SerializeToString,
             ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
@@ -812,6 +828,33 @@ class AuthService(object):
             '/trading.AuthService/Login',
             trading__api__pb2.AuthRequest.SerializeToString,
             trading__api__pb2.AuthResponse.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def GetUser(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/trading.AuthService/GetUser',
+            trading__api__pb2.GetUserRequest.SerializeToString,
+            trading__api__pb2.UserInfo.FromString,
             options,
             channel_credentials,
             insecure,

@@ -75,10 +75,11 @@ const createMetadata = () => {
 export { createMetadata };
 
 // Auth helper calls
-export const registerUser = async (username, password) => {
+export const registerUser = async (username, email, password) => {
   return new Promise((resolve, reject) => {
     const req = new RegisterRequest();
     req.setUsername(username);
+    req.setEmail(email);
     req.setPassword(password);
     authClient.register(req, createMetadata(), (err, resp) => {
       if (err) return resolve({ success:false, message: err.message });

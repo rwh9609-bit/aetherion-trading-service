@@ -1,19 +1,20 @@
 import React, { useState } from 'react';
 import { Card, CardContent, TextField, Button, Typography, Alert, Box, Tabs, Tab, InputAdornment, IconButton } from '@mui/material';
-import { Visibility, VisibilityOff } from '@mui/icons-material'; // Import icons
+import { Visibility, VisibilityOff } from '@mui/icons-material';
 import { loginUser, registerUser } from '../services/grpcClient';
 
 const Login = ({ onAuth, onBack }) => {
   const [mode, setMode] = useState('login');
   const [username, setUsername] = useState('');
+  const [email, setEmail] = useState(''); // <-- Add email state
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [passwordError, setPasswordError] = useState(false);
-  const [showPassword, setShowPassword] = useState(false); // New state for password visibility
-  const MIN_PASSWORD_LENGTH = 8; // Consistent with backend
+  const [showPassword, setShowPassword] = useState(false);
+  const MIN_PASSWORD_LENGTH = 8;
 
-  const handleClickShowPassword = () => setShowPassword((show) => !show); // New handler
+  const handleClickShowPassword = () => setShowPassword((show) => !show);
   const handleMouseDownPassword = (event) => {
     event.preventDefault();
   };
@@ -21,23 +22,30 @@ const Login = ({ onAuth, onBack }) => {
   const submit = async (e) => {
     e.preventDefault();
     setError(null);
-    setPasswordError(false); // Reset password error
+    setPasswordError(false);
 
     if (mode === 'register' && password.length < MIN_PASSWORD_LENGTH) {
       setPasswordError(true);
       setError(`Password must be at least ${MIN_PASSWORD_LENGTH} characters long.`);
       return;
     }
+    if (mode === 'register' && !email) {
+      setError('Email is required.');
+      return;
+    }
 
     setLoading(true);
     try {
-      const fn = mode === 'login' ? loginUser : registerUser;
-      const res = await fn(username, password);
+      let res;
+      if (mode === 'login') {
+        res = await loginUser(username, password);
+      } else {
+        res = await registerUser(username, email, password); // <-- Pass email
+      }
       if (!res.success) {
         setError(res.message || 'Authentication failed');
       } else {
         if (mode === 'register') {
-          // Auto-login after register
           const loginRes = await loginUser(username, password);
           if (!loginRes.success) {
             setError(loginRes.message || 'Auto-login failed');
@@ -72,15 +80,24 @@ const Login = ({ onAuth, onBack }) => {
         {error && <Alert severity="error" sx={{ mb:2 }}>{error}</Alert>}
         <Box component="form" onSubmit={submit} sx={{ display:'flex', flexDirection:'column', gap:2 }}>
           <TextField label="Username" value={username} onChange={e=>setUsername(e.target.value)} required autoFocus />
+          {mode === 'register' && (
+            <TextField
+              label="Email"
+              type="email"
+              value={email}
+              onChange={e=>setEmail(e.target.value)}
+              required
+            />
+          )}
           <TextField
             label="Password"
-            type={showPassword ? 'text' : 'password'} // Dynamic type
+            type={showPassword ? 'text' : 'password'}
             value={password}
             onChange={e=>setPassword(e.target.value)}
             required
             error={passwordError}
             helperText={passwordError ? `Password must be at least ${MIN_PASSWORD_LENGTH} characters long.` : ''}
-            InputProps={{ // InputProps for adornment
+            InputProps={{
               endAdornment: (
                 <InputAdornment position="end">
                   <IconButton
