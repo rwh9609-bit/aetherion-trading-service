@@ -59,16 +59,22 @@ function App() {
   const handleMenuClose = () => {
     setAnchorEl(null);
   };
+  const handleSelectBot = (botConfig) => {
+  setSelectedBot(botConfig);
+  localStorage.setItem('selectedBot', JSON.stringify(botConfig)); // Save to localStorage
+  setView('dashboard');
+  };
+
+  useEffect(() => {
+    const savedBot = localStorage.getItem('selectedBot');
+    if (savedBot) {
+      setSelectedBot(JSON.parse(savedBot));
+    }
+  }, []);
 
   const handleMenuItemClick = (view) => {
     setView(view);
     handleMenuClose();
-  };
-
-  const handleSelectBot = (botConfig) => {
-    setSelectedBot(botConfig);
-    // Optionally navigate to a specific view after selection, e.g., dashboard
-    setView('dashboard');
   };
 
   useEffect(()=> {
