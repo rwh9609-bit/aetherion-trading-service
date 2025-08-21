@@ -68,14 +68,15 @@ class TradingOrchestrator:
         with grpc.insecure_channel(self.go_service_addr) as trading_channel, \
             grpc.insecure_channel(self.rust_service_addr) as risk_channel:
             trading_stub = trading_api_pb2_grpc.TradingServiceStub(trading_channel)
-            risk_stub = trading_api_pb2_grpc.RiskServiceStub(risk_channel)
-            token = self._generate_jwt()
-            metadata = []
-            if token:
-                metadata.append(('authorization', f'Bearer {token}'))
-            print(f"[DEBUG] gRPC metadata: {metadata}")
+            risk_stub = trading_api_pb2_grpc.RiskServiceStub(risk_channel)  
             while True:
                 try:
+                    token = self._generate_jwt()  # <-- Move here
+                    metadata = []
+                    if token:
+                        metadata.append(('authorization', f'Bearer {token}'))
+                    print(f"[DEBUG] gRPC metadata: {metadata}")
+
                     # 1. Fetch all bots from Go backend
                     bot_stub = trading_api_pb2_grpc.BotServiceStub(trading_channel)
                     bot_list = bot_stub.ListBots(trading_api_pb2.Empty(), metadata=metadata)
@@ -102,10 +103,10 @@ class TradingOrchestrator:
                             try:
                                 var_response = risk_stub.CalculateVaR(var_request, metadata=metadata)
                                 print(f"VaR response: {var_response.value_at_risk}")
-                                risk_ok = (
-                                    var_response.value_at_risk is not None and
-                                    var_response.value_at_risk <= (self.account_value * 0.02)
-                                )
+                                if var_response.value_at_risk is not None:
+                                    risk_ok = float(var_response.value_at_risk) <= (self.account_value * 0.02)
+                                else:
+                                    risk_ok = False
                                 print(f"Risk check: VaR {var_response.value_at_risk:.2f}, OK: {risk_ok}")
                                 if risk_ok:
                                     trade_request = trading_api_pb2.TradeRequest(
