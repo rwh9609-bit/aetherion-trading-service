@@ -45,6 +45,7 @@ const Login = ({ onAuth, onBack }) => {
       if (!res.success) {
         setError(res.message || 'Authentication failed');
       } else {
+        let token;
         if (mode === 'register') {
           const loginRes = await loginUser(username, password);
           if (!loginRes.success) {
@@ -52,7 +53,12 @@ const Login = ({ onAuth, onBack }) => {
             setLoading(false);
             return;
           }
+          token = loginRes.token;
+        } else {
+          token = res.token;
         }
+        // Store token in localStorage
+        localStorage.setItem('authToken', token);
         onAuth(username);
       }
     } catch (err) {
