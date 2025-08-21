@@ -105,9 +105,9 @@ const handleSubmit = async () => {
           </Stack>
         </CardContent>
       </Card>
-      <Typography variant="caption" color="text.secondary" display="block" sx={{ mt:2 }}>
-        Creates an in-memory bot (not persisted). Start/Stop from Bots list.
-      </Typography>
+    <Typography variant="caption" color="text.secondary" display="block" sx={{ mt:2 }}>
+      Bots are persisted in the backend and available for start/stop from the Bots list.
+    </Typography>
     </Container>
   );
 };

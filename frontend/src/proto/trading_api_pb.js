@@ -5578,7 +5578,8 @@ strategy: jspb.Message.getFieldWithDefault(msg, 3, ""),
 parametersMap: (f = msg.getParametersMap()) ? f.toObject(includeInstance, undefined) : [],
 isActive: jspb.Message.getBooleanFieldWithDefault(msg, 5, false),
 createdAtUnixMs: jspb.Message.getFieldWithDefault(msg, 6, 0),
-name: jspb.Message.getFieldWithDefault(msg, 7, "")
+name: jspb.Message.getFieldWithDefault(msg, 7, ""),
+userId: jspb.Message.getFieldWithDefault(msg, 8, "")
   };
 
   if (includeInstance) {
@@ -5644,6 +5645,10 @@ proto.trading.BotConfig.deserializeBinaryFromReader = function(msg, reader) {
     case 7:
       var value = /** @type {string} */ (reader.readString());
       msg.setName(value);
+      break;
+    case 8:
+      var value = /** @type {string} */ (reader.readString());
+      msg.setUserId(value);
       break;
     default:
       reader.skipField();
@@ -5717,6 +5722,13 @@ proto.trading.BotConfig.serializeBinaryToWriter = function(message, writer) {
   if (f.length > 0) {
     writer.writeString(
       7,
+      f
+    );
+  }
+  f = message.getUserId();
+  if (f.length > 0) {
+    writer.writeString(
+      8,
       f
     );
   }
@@ -5851,6 +5863,24 @@ proto.trading.BotConfig.prototype.getName = function() {
  */
 proto.trading.BotConfig.prototype.setName = function(value) {
   return jspb.Message.setProto3StringField(this, 7, value);
+};
+
+
+/**
+ * optional string user_id = 8;
+ * @return {string}
+ */
+proto.trading.BotConfig.prototype.getUserId = function() {
+  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 8, ""));
+};
+
+
+/**
+ * @param {string} value
+ * @return {!proto.trading.BotConfig} returns this
+ */
+proto.trading.BotConfig.prototype.setUserId = function(value) {
+  return jspb.Message.setProto3StringField(this, 8, value);
 };
 
 
