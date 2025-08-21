@@ -21,23 +21,38 @@ import (
 
 // authServer implements the AuthService defined in protobufs.
 // NOTE: In-memory user store & unsalted SHA-256 hashing for demo purposes only.
+// Extend userStore interface
 type userStore interface {
-	CreateUser(ctx context.Context, username, pwHash string) error
+	CreateUser(ctx context.Context, username, email, pwHash string) error
 	GetUserHash(ctx context.Context, username string) (string, error)
+	GetUser(ctx context.Context, username string) (*pb.UserInfo, error)
 }
 
 // context key for user hash
 type ctxKeyUserHash struct{}
 
 // memUserStore implements userStore in-memory
-type memUserStore struct{ users map[string]string }
+type memUserStore struct {
+	users map[string]struct {
+		Email string
+		Hash  string
+	}
+}
 
-func newMemUserStore() *memUserStore { return &memUserStore{users: make(map[string]string)} }
-func (m *memUserStore) CreateUser(_ context.Context, u, h string) error {
+func newMemUserStore() *memUserStore {
+	return &memUserStore{users: make(map[string]struct {
+		Email string
+		Hash  string
+	})}
+}
+func (m *memUserStore) CreateUser(_ context.Context, u, email, h string) error {
 	if _, ok := m.users[u]; ok {
 		return fmt.Errorf("exists")
 	}
-	m.users[u] = h
+	m.users[u] = struct {
+		Email string
+		Hash  string
+	}{Email: email, Hash: h}
 	return nil
 }
 func (m *memUserStore) GetUserHash(_ context.Context, u string) (string, error) {
@@ -45,7 +60,7 @@ func (m *memUserStore) GetUserHash(_ context.Context, u string) (string, error) 
 	if !ok {
 		return "", fmt.Errorf("notfound")
 	}
-	return v, nil
+	return v.Hash, nil
 }
 
 // pgUserStore implements userStore with Postgres
@@ -58,8 +73,10 @@ func newPgUserStore(ctx context.Context, dsn string) (*pgUserStore, error) {
 	}
 	// ensure table
 	_, err = conn.Exec(ctx, `CREATE TABLE IF NOT EXISTS users (
-        username TEXT PRIMARY KEY,
-        pw_hash TEXT NOT NULL,
+        id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+        username TEXT UNIQUE NOT NULL,
+        email TEXT,
+        password_hash TEXT NOT NULL,
         created_at TIMESTAMPTZ DEFAULT now()
     )`)
 	if err != nil {
@@ -68,8 +85,8 @@ func newPgUserStore(ctx context.Context, dsn string) (*pgUserStore, error) {
 	}
 	return &pgUserStore{db: conn}, nil
 }
-func (p *pgUserStore) CreateUser(ctx context.Context, u, h string) error {
-	_, err := p.db.Exec(ctx, `INSERT INTO users (username, pw_hash) VALUES ($1,$2)`, u, h)
+func (p *pgUserStore) CreateUser(ctx context.Context, u, email, h string) error {
+	_, err := p.db.Exec(ctx, `INSERT INTO users (username, email, password_hash) VALUES ($1,$2,$3)`, u, email, h)
 	if err != nil {
 		if strings.Contains(err.Error(), "duplicate") {
 			return fmt.Errorf("exists")
@@ -80,11 +97,39 @@ func (p *pgUserStore) CreateUser(ctx context.Context, u, h string) error {
 }
 func (p *pgUserStore) GetUserHash(ctx context.Context, u string) (string, error) {
 	var h string
-	err := p.db.QueryRow(ctx, `SELECT pw_hash FROM users WHERE username=$1`, u).Scan(&h)
+	err := p.db.QueryRow(ctx, `SELECT password_hash FROM users WHERE username=$1`, u).Scan(&h)
 	if err != nil {
 		return "", fmt.Errorf("notfound")
 	}
 	return h, nil
+}
+
+// Implement GetUser for memUserStore
+func (m *memUserStore) GetUser(_ context.Context, username string) (*pb.UserInfo, error) {
+	v, ok := m.users[username]
+	if !ok {
+		return nil, fmt.Errorf("notfound")
+	}
+	return &pb.UserInfo{
+		Username:      username,
+		Email:         v.Email,
+		CreatedAtUnix: time.Now().Unix(), // Demo: use current time
+	}, nil
+}
+
+// Implement GetUser for pgUserStore
+func (p *pgUserStore) GetUser(ctx context.Context, username string) (*pb.UserInfo, error) {
+	var email string
+	var createdAt time.Time
+	err := p.db.QueryRow(ctx, `SELECT email, created_at FROM users WHERE username=$1`, username).Scan(&email, &createdAt)
+	if err != nil {
+		return nil, fmt.Errorf("notfound")
+	}
+	return &pb.UserInfo{
+		Username:      username,
+		Email:         email,
+		CreatedAtUnix: createdAt.Unix(),
+	}, nil
 }
 
 type authServer struct {
@@ -127,10 +172,11 @@ func verifyPassword(hashed, pw string) bool {
 }
 
 func (a *authServer) Register(ctx context.Context, req *pb.RegisterRequest) (*pb.AuthResponse, error) {
-	if req.GetUsername() == "" || req.GetPassword() == "" {
-		return &pb.AuthResponse{Success: false, Message: "username and password required"}, nil
+	if req.GetUsername() == "" || req.GetPassword() == "" || req.GetEmail() == "" {
+		return &pb.AuthResponse{Success: false, Message: "username, password, and email required"}, nil
 	}
-	if err := a.store.CreateUser(ctx, req.Username, hashPassword(req.Password)); err != nil {
+	// Pass email to CreateUser
+	if err := a.store.CreateUser(ctx, req.Username, req.Email, hashPassword(req.Password)); err != nil {
 		if err.Error() == "exists" {
 			return &pb.AuthResponse{Success: false, Message: "user exists"}, nil
 		}
@@ -158,6 +204,15 @@ func (a *authServer) Login(ctx context.Context, req *pb.AuthRequest) (*pb.AuthRe
 	}
 	log.Printf("[Login] Generated JWT token for user: %s", req.Username)
 	return &pb.AuthResponse{Success: true, Message: "ok", Token: signed, ExpiresAtUnix: exp.Unix()}, nil
+}
+
+// Add GetUser handler to authServer
+func (a *authServer) GetUser(ctx context.Context, req *pb.GetUserRequest) (*pb.UserInfo, error) {
+	user, err := a.store.GetUser(ctx, req.Username)
+	if err != nil {
+		return nil, status.Error(codes.NotFound, "user not found")
+	}
+	return user, nil
 }
 
 func authUnaryInterceptor(secret []byte) grpc.UnaryServerInterceptor {

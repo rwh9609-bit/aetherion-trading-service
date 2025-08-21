@@ -1140,6 +1140,67 @@ proto.trading.AuthServicePromiseClient.prototype.login =
 
 
 /**
+ * @const
+ * @type {!grpc.web.MethodDescriptor<
+ *   !proto.trading.GetUserRequest,
+ *   !proto.trading.UserInfo>}
+ */
+const methodDescriptor_AuthService_GetUser = new grpc.web.MethodDescriptor(
+  '/trading.AuthService/GetUser',
+  grpc.web.MethodType.UNARY,
+  proto.trading.GetUserRequest,
+  proto.trading.UserInfo,
+  /**
+   * @param {!proto.trading.GetUserRequest} request
+   * @return {!Uint8Array}
+   */
+  function(request) {
+    return request.serializeBinary();
+  },
+  proto.trading.UserInfo.deserializeBinary
+);
+
+
+/**
+ * @param {!proto.trading.GetUserRequest} request The
+ *     request proto
+ * @param {?Object<string, string>} metadata User defined
+ *     call metadata
+ * @param {function(?grpc.web.RpcError, ?proto.trading.UserInfo)}
+ *     callback The callback function(error, response)
+ * @return {!grpc.web.ClientReadableStream<!proto.trading.UserInfo>|undefined}
+ *     The XHR Node Readable Stream
+ */
+proto.trading.AuthServiceClient.prototype.getUser =
+    function(request, metadata, callback) {
+  return this.client_.rpcCall(this.hostname_ +
+      '/trading.AuthService/GetUser',
+      request,
+      metadata || {},
+      methodDescriptor_AuthService_GetUser,
+      callback);
+};
+
+
+/**
+ * @param {!proto.trading.GetUserRequest} request The
+ *     request proto
+ * @param {?Object<string, string>=} metadata User defined
+ *     call metadata
+ * @return {!Promise<!proto.trading.UserInfo>}
+ *     Promise that resolves to the response
+ */
+proto.trading.AuthServicePromiseClient.prototype.getUser =
+    function(request, metadata) {
+  return this.client_.unaryCall(this.hostname_ +
+      '/trading.AuthService/GetUser',
+      request,
+      metadata || {},
+      methodDescriptor_AuthService_GetUser);
+};
+
+
+/**
  * @param {string} hostname
  * @param {?Object} credentials
  * @param {?grpc.web.ClientOptions} options

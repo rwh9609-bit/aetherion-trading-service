@@ -59,6 +59,15 @@ func (s *DBService) CreateBot(ctx context.Context, bot *pb.BotConfig) (string, e
 	return id, nil
 }
 
+// --- User Management ---
+
+// Postgres implementation
+func (p *pgUserStore) UpdateUser(ctx context.Context, user *User) error {
+	// Example: update password hash
+	_, err := p.db.Exec(ctx, `UPDATE users SET password_hash=$2 WHERE username=$1`, user.Username, user.PasswordHash)
+	return err
+}
+
 // CreateUser inserts a new user into the database.
 func (s *DBService) CreateUser(ctx context.Context, username, passwordHash string) (string, error) {
 	var id string
@@ -74,8 +83,8 @@ func (s *DBService) CreateUser(ctx context.Context, username, passwordHash strin
 // GetUserByUsername retrieves a user by their username.
 func (s *DBService) GetUserByUsername(ctx context.Context, username string) (*User, error) {
 	var user User
-	query := `SELECT id, username, password_hash, created_at FROM users WHERE username = $1`
-	err := s.pool.QueryRow(ctx, query, username).Scan(&user.ID, &user.Username, &user.PasswordHash, &user.CreatedAt)
+	query := `SELECT id, username, email, password_hash, created_at FROM users WHERE username = $1`
+	err := s.pool.QueryRow(ctx, query, username).Scan(&user.ID, &user.Username, &user.Email, &user.PasswordHash, &user.CreatedAt)
 	if err != nil {
 		log.Error().Err(err).Msg("Failed to get user by username")
 		return nil, fmt.Errorf("failed to get user by username: %w", err)
@@ -228,6 +237,7 @@ func (s *DBService) GetTradesByUserID(ctx context.Context, userID string) ([]*Tr
 type User struct {
 	ID           string
 	Username     string
+	Email        string
 	PasswordHash string
 	CreatedAt    time.Time
 }
