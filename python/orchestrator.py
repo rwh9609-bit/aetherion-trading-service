@@ -103,8 +103,8 @@ class TradingOrchestrator:
                             try:
                                 var_response = risk_stub.CalculateVaR(var_request, metadata=metadata)
                                 print(f"VaR response: {var_response.value_at_risk}")
-                                if var_response.value_at_risk is not None:
-                                    risk_ok = float(var_response.value_at_risk) <= (self.account_value * 0.02)
+                                if var_response.value_at_risk is not None and bot.account_value is not None:
+                                    risk_ok = float(var_response.value_at_risk) <= (bot.account_value * 0.02)
                                 else:
                                     risk_ok = False
                                 print(f"Risk check: VaR {var_response.value_at_risk:.2f}, OK: {risk_ok}")
