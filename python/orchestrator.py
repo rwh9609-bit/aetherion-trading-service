@@ -6,6 +6,7 @@ import sys
 import json
 import time
 import jwt
+import uuid
 from datetime import datetime
 from strategies.mean_reversion import MeanReversionStrategy, MeanReversionParams
 from fetch_binance import fetch_binance_price
@@ -132,6 +133,7 @@ class TradingOrchestrator:
                                     risk_ok = False
                                 print(f"Risk check: VaR {var_response.value_at_risk:.2f}, OK: {risk_ok}")
                                 if risk_ok:
+                                    strategy_id = getattr(bot, "strategy_id", None) 
                                     if not strategy_id or strategy_id == "":
                                         print(f"[WARNING] Strategy ID is missing for bot {bot.name}, generating a new one.")
                                         # Generate a random UUID if missing

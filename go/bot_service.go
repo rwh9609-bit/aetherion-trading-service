@@ -172,6 +172,13 @@ func (s *botServiceServer) DeleteBot(ctx context.Context, req *pb.BotIdRequest) 
 		log.Printf("[DeleteBot] Bot with ID %s not found", req.GetBotId())
 		return &pb.StatusResponse{Success: false, Message: "not found"}, nil
 	}
+	// Delete from database if dbclient is available
+	if s.dbclient != nil {
+		if err := s.dbclient.DeleteBot(ctx, req.GetBotId()); err != nil {
+			log.Printf("[DeleteBot] Failed to delete bot from DB: %v", err)
+			return &pb.StatusResponse{Success: false, Message: "db delete failed"}, nil
+		}
+	}
 	delete(s.reg.bots, req.GetBotId())
 	s.reg.persist()
 	log.Printf("[DeleteBot] Bot %s deleted", bot.Name)
