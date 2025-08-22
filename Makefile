@@ -43,6 +43,8 @@ setup:
 	@cd $(FRONTEND_DIR) && npm install --legacy-peer-deps >/dev/null 2>&1 || npm install >/dev/null 2>&1
 	@cd $(RUST_SERVICE_DIR) && cargo fetch
 	@cd $(GO_DIR) && go mod tidy
+	@mkdir -p $(GO_DIR)/gen
+	@mkdir -p $(PYTHON_DIR)/protos
 	@echo "$(GREEN)Setup complete.$(RESET)"
 
 ## Generate JWT token for orchestrator authentication
@@ -119,11 +121,12 @@ restart: stop build run ## Rebuild & restart local services
 clean:
 	@echo "Cleaning..."
 	-rm -rf $(GO_DIR)/bin/trading_service
-	-rm -rf $(GO_DIR)/gen
-	-rm -rf $(PYTHON_DIR)/protos
+	-rm -rf $(GO_DIR)/gen/*
+	-rm -rf $(PYTHON_DIR)/protos/*
 	-find $(PYTHON_DIR) -type d -name "__pycache__" -exec rm -r {} +
 	-rm -rf $(RUST_SERVICE_DIR)/target
 	-rm -rf $(FRONTEND_DIR)/build
+	-rm -rf $(FRONTEND_DIR)/src/proto/*
 	@echo "$(GREEN)Clean complete.$(RESET)"
 
 ## Local single service helpers

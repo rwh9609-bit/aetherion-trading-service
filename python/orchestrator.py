@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import os
 import grpc
+import pandas as pd
 import sys
 import json
 import time
@@ -14,11 +15,18 @@ from protos import trading_api_pb2, trading_api_pb2_grpc
 script_dir = os.path.dirname(__file__)
 protos_path = os.path.join(script_dir, "protos")
 
+def load_backfill_prices(csv_path, lookback_period):
+    df = pd.read_csv(csv_path)
+    prices = df['price'].tolist()  # <-- fix: use 'price' instead of 'close'
+    return prices[-lookback_period:]
+
 class TradingOrchestrator:
     def __init__(self):
         self.go_service_addr = os.environ.get('GO_SERVICE_ADDR', 'localhost:50051')
         self.rust_service_addr = os.environ.get('RUST_SERVICE_ADDR', 'localhost:50052')
-        self.account_value = float(os.environ.get('INITIAL_ACCOUNT_VALUE', '10000.0'))
+        # extract account value
+        # this is what actually sets bot's account value (initially) from docker compose. It's then overriden by bot_service.go.
+        self.account_value = float(os.environ.get('INITIAL_ACCOUNT_VALUE', '1000000.0'))
         self.auth_secret = os.environ.get('AUTH_SECRET', None)
         if self.auth_secret:
             masked_secret = self.auth_secret[:4] + '...' + self.auth_secret[-4:] if len(self.auth_secret) > 8 else '***'
@@ -26,15 +34,16 @@ class TradingOrchestrator:
         else:
             print("[DEBUG] AUTH_SECRET not set.")
         # Initialize strategy
+        backfill_prices = load_backfill_prices("data/BTCUSD_1min.csv", 20)
         params = MeanReversionParams(
             lookback_period=20,
-            entry_std_dev=2.0,
+            entry_std_dev=1.0,
             exit_std_dev=0.5,
             max_position_size=0.1,
             stop_loss_pct=0.02,
             risk_per_trade_pct=0.01
         )
-        self.strategy = MeanReversionStrategy(params)
+        self.strategy = MeanReversionStrategy(params, backfill_prices=backfill_prices)
         self.orchestrator_user_id = os.environ.get('ORCHESTRATOR_USER_ID')
         print(f"[DEBUG] Using orchestrator_user_id: {self.orchestrator_user_id}")
         if not self.orchestrator_user_id:
@@ -83,38 +92,57 @@ class TradingOrchestrator:
                     # This is spammy.
                     # print(f"[DEBUG] Bot list: {bot_list}")
                     for bot in bot_list.bots:
+                        if not getattr(bot, "is_active", False):
+                            print(f"[Orchestrator] Skipping inactive bot: {bot.name} ({bot.bot_id})")
+                            pass  # Skip inactive bots
+                        print(f"[Orchestrator] Processing bot: {bot.name} ({bot.bot_id})")
                         print(f"[Orchestrator] Processing bot: {bot.name} ({bot.bot_id})")
                         # 2. Fetch current price for bot's symbol
                         price = fetch_binance_price(bot.symbol.replace("-", ""))
                         print(f"Current price for {bot.symbol}: ${price:,.2f}")
                         # 3. Generate trading signal (replace with bot-specific strategy)
                         # For demo, use mean reversion for all
-                        signal = self.strategy.generate_signal(price, self.account_value)
+                        signal = self.strategy.generate_signal(price, bot.account_value)
+                        print(f"[DEBUG] Signal details: {signal}")
+                        if signal['action'] == 'hold':
+                            print(f"[INFO] No trade signal for bot {bot.name}: zscore={signal.get('zscore')}, price={price}, reason=Hold action")
+                        elif signal['size'] == 0:
+                            print(f"[INFO] Signal size is zero for bot {bot.name}: zscore={signal.get('zscore')}, price={price}, reason=Zero size")
+                        else:
+                            print(f"[INFO] Trade signal for bot {bot.name}: action={signal['action']}, size={signal['size']}, stop_loss={signal.get('stop_loss')}")
+
                         if signal['action'] != 'hold' and signal['size'] > 0:
                             print(f"Generated signal for bot {bot.name}: {json.dumps(signal)}")
                             positions_map = {bot.symbol: signal['size'] if signal['action']=='buy' else -signal['size']}
                             portfolio = trading_api_pb2.Portfolio(positions=positions_map, total_value_usd=self.account_value)
+                            print(f"[DEBUG] VaR request: positions={positions_map}, total_value_usd={self.account_value}")
                             var_request = trading_api_pb2.VaRRequest(
                                 current_portfolio=portfolio,
                                 risk_model="monte_carlo",
                                 confidence_level=0.95,
                                 horizon_days=1
                             )
+                            print(f"Calculating VaR for bot {bot.name} with portfolio: {portfolio}")
                             try:
                                 var_response = risk_stub.CalculateVaR(var_request, metadata=metadata)
-                                print(f"VaR response: {var_response.value_at_risk}")
+                                print(f"[DEBUG] VaR response: {var_response.value_at_risk}")
                                 if var_response.value_at_risk is not None and bot.account_value is not None:
-                                    risk_ok = float(var_response.value_at_risk) <= (bot.account_value * 0.02)
+                                    risk_ok = float(var_response.value_at_risk) <= (bot.account_value * 0.10)
                                 else:
                                     risk_ok = False
                                 print(f"Risk check: VaR {var_response.value_at_risk:.2f}, OK: {risk_ok}")
                                 if risk_ok:
+                                    if not strategy_id or strategy_id == "":
+                                        print(f"[WARNING] Strategy ID is missing for bot {bot.name}, generating a new one.")
+                                        # Generate a random UUID if missing
+                                        strategy_id = str(uuid.uuid4())
                                     trade_request = trading_api_pb2.TradeRequest(
                                         symbol=bot.symbol,
                                         side=signal['action'].upper(),
                                         size=float(signal['size']),
                                         price=float(price),
-                                        user_id=bot.bot_id
+                                        user_id=bot.bot_id,
+                                        strategy_id=strategy_id
                                     )
                                     try:
                                         trade_response = trading_stub.ExecuteTrade(trade_request, metadata=metadata)
@@ -129,7 +157,8 @@ class TradingOrchestrator:
                                     print(f"Trade blocked for bot {bot.name}: VaR {var_response.value_at_risk:.2f} over limit")
                             except grpc.RpcError as e:
                                 print(f"Error calculating VaR for bot {bot.name}: {e.details()}")
-                            
+                        # Add logging for trade execution
+
                     # After trading logic, fetch trade history:
                     self.fetch_trade_history(trading_stub, bot.bot_id, metadata)
                     time.sleep(20)

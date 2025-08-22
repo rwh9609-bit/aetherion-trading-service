@@ -908,6 +908,7 @@ var AuthService_ServiceDesc = grpc.ServiceDesc{
 
 const (
 	BotService_CreateBot_FullMethodName    = "/trading.BotService/CreateBot"
+	BotService_DeleteBot_FullMethodName    = "/trading.BotService/DeleteBot"
 	BotService_ListBots_FullMethodName     = "/trading.BotService/ListBots"
 	BotService_StartBot_FullMethodName     = "/trading.BotService/StartBot"
 	BotService_StopBot_FullMethodName      = "/trading.BotService/StopBot"
@@ -921,6 +922,7 @@ const (
 // BotService provides a focused interface for bot lifecycle operations.
 type BotServiceClient interface {
 	CreateBot(ctx context.Context, in *CreateBotRequest, opts ...grpc.CallOption) (*StatusResponse, error)
+	DeleteBot(ctx context.Context, in *BotIdRequest, opts ...grpc.CallOption) (*StatusResponse, error)
 	ListBots(ctx context.Context, in *Empty, opts ...grpc.CallOption) (*BotList, error)
 	StartBot(ctx context.Context, in *BotIdRequest, opts ...grpc.CallOption) (*StatusResponse, error)
 	StopBot(ctx context.Context, in *BotIdRequest, opts ...grpc.CallOption) (*StatusResponse, error)
@@ -939,6 +941,16 @@ func (c *botServiceClient) CreateBot(ctx context.Context, in *CreateBotRequest, 
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(StatusResponse)
 	err := c.cc.Invoke(ctx, BotService_CreateBot_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *botServiceClient) DeleteBot(ctx context.Context, in *BotIdRequest, opts ...grpc.CallOption) (*StatusResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(StatusResponse)
+	err := c.cc.Invoke(ctx, BotService_DeleteBot_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -992,6 +1004,7 @@ func (c *botServiceClient) GetBotStatus(ctx context.Context, in *BotIdRequest, o
 // BotService provides a focused interface for bot lifecycle operations.
 type BotServiceServer interface {
 	CreateBot(context.Context, *CreateBotRequest) (*StatusResponse, error)
+	DeleteBot(context.Context, *BotIdRequest) (*StatusResponse, error)
 	ListBots(context.Context, *Empty) (*BotList, error)
 	StartBot(context.Context, *BotIdRequest) (*StatusResponse, error)
 	StopBot(context.Context, *BotIdRequest) (*StatusResponse, error)
@@ -1008,6 +1021,9 @@ type UnimplementedBotServiceServer struct{}
 
 func (UnimplementedBotServiceServer) CreateBot(context.Context, *CreateBotRequest) (*StatusResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CreateBot not implemented")
+}
+func (UnimplementedBotServiceServer) DeleteBot(context.Context, *BotIdRequest) (*StatusResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method DeleteBot not implemented")
 }
 func (UnimplementedBotServiceServer) ListBots(context.Context, *Empty) (*BotList, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ListBots not implemented")
@@ -1056,6 +1072,24 @@ func _BotService_CreateBot_Handler(srv interface{}, ctx context.Context, dec fun
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(BotServiceServer).CreateBot(ctx, req.(*CreateBotRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _BotService_DeleteBot_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(BotIdRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(BotServiceServer).DeleteBot(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: BotService_DeleteBot_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(BotServiceServer).DeleteBot(ctx, req.(*BotIdRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -1142,6 +1176,10 @@ var BotService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "CreateBot",
 			Handler:    _BotService_CreateBot_Handler,
+		},
+		{
+			MethodName: "DeleteBot",
+			Handler:    _BotService_DeleteBot_Handler,
 		},
 		{
 			MethodName: "ListBots",

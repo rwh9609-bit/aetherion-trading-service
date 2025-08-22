@@ -223,7 +223,8 @@ export const fetchRiskMetrics = async () => {
     const portfolio = new Portfolio();
     const positionsMap = portfolio.getPositionsMap();
     positionsMap.set('BTC-USD', 0.5);
-    portfolio.setTotalValueUsd(100000);
+    // use the account_value of BotConfig and maybe UserConfig 
+    portfolio.setTotalValueUsd(10000009);
     
     request.setCurrentPortfolio(portfolio);
     request.setRiskModel('monte_carlo');
@@ -450,6 +451,18 @@ export const getBotStatus = async (id) => {
   const req = new BotIdRequest(); req.setBotId(id); // Corrected setter
   return new Promise((resolve, reject) => {
     botClient.getBotStatus(req, createMetadata(), (err, resp) => {
+      if (err) return reject(err);
+      resolve(resp.toObject());
+    });
+  });
+};
+
+export const deleteBot = async (id) => {
+  const { BotIdRequest } = await import('../proto/trading_api_pb.js');
+  const req = new BotIdRequest();
+  req.setBotId(id);
+  return new Promise((resolve, reject) => {
+    botClient.deleteBot(req, createMetadata(), (err, resp) => {
       if (err) return reject(err);
       resolve(resp.toObject());
     });

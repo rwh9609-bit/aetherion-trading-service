@@ -49,8 +49,8 @@ func (s *DBService) Close() {
 // --- Bot Management ---
 func (s *DBService) CreateBot(ctx context.Context, bot *pb.BotConfig) (string, error) {
 	var id string
-	query := `INSERT INTO bots (id, user_id, name, symbol, strategy, parameters, is_active) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id`
-	err := s.pool.QueryRow(ctx, query, bot.BotId, bot.UserId, bot.Name, bot.Symbol, bot.Strategy, bot.Parameters, bot.IsActive).Scan(&id)
+	query := `INSERT INTO bots (id, user_id, name, symbol, strategy, parameters, is_active, account_value) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id`
+	err := s.pool.QueryRow(ctx, query, bot.BotId, bot.UserId, bot.Name, bot.Symbol, bot.Strategy, bot.Parameters, bot.IsActive, bot.AccountValue).Scan(&id)
 	if err != nil {
 		log.Error().Err(err).Msg("Failed to create bot")
 		return "", fmt.Errorf("failed to create bot: %w", err)

@@ -360,7 +360,7 @@ func (s *tradingServer) GetPortfolio(ctx context.Context, req *pb.PortfolioReque
 				"BTC": 1.5,
 				"USD": 50000.0,
 			},
-			TotalValueUsd: 100000.0,
+			TotalValueUsd: 10000005.0,
 		}
 		s.mu.Lock()
 		s.portfolios[req.AccountId] = portfolio
@@ -670,7 +670,7 @@ func (s *tradingServer) ExecuteTrade(ctx context.Context, req *pb.TradeRequest) 
 	s.mu.Lock()
 	portfolio, exists := s.portfolios[accountID]
 	if !exists {
-		portfolio = &pb.Portfolio{Positions: map[string]float64{"USD": 100000}}
+		portfolio = &pb.Portfolio{Positions: map[string]float64{"USD": 10000004}}
 		s.portfolios[accountID] = portfolio
 	}
 	// Initialize symbol position if absent
