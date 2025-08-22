@@ -1612,7 +1612,6 @@ func (x *UserInfo) GetCreatedAtUnix() int64 {
 	return 0
 }
 
-// Represents the configuration and status of a trading bot.
 type BotConfig struct {
 	state           protoimpl.MessageState `protogen:"open.v1"`
 	BotId           string                 `protobuf:"bytes,1,opt,name=bot_id,json=botId,proto3" json:"bot_id,omitempty"`
@@ -1622,7 +1621,8 @@ type BotConfig struct {
 	IsActive        bool                   `protobuf:"varint,5,opt,name=is_active,json=isActive,proto3" json:"is_active,omitempty"`
 	CreatedAtUnixMs int64                  `protobuf:"varint,6,opt,name=created_at_unix_ms,json=createdAtUnixMs,proto3" json:"created_at_unix_ms,omitempty"`
 	Name            string                 `protobuf:"bytes,7,opt,name=name,proto3" json:"name,omitempty"`
-	UserId          string                 `protobuf:"bytes,8,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"` // <-- Add this line
+	UserId          string                 `protobuf:"bytes,8,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+	AccountValue    float64                `protobuf:"fixed64,9,opt,name=account_value,json=accountValue,proto3" json:"account_value,omitempty"` // <-- Add this line
 	unknownFields   protoimpl.UnknownFields
 	sizeCache       protoimpl.SizeCache
 }
@@ -1711,6 +1711,13 @@ func (x *BotConfig) GetUserId() string {
 		return x.UserId
 	}
 	return ""
+}
+
+func (x *BotConfig) GetAccountValue() float64 {
+	if x != nil {
+		return x.AccountValue
+	}
+	return 0
 }
 
 // Request to create a new trading bot.
@@ -2000,7 +2007,7 @@ const file_trading_api_proto_rawDesc = "" +
 	"\bUserInfo\x12\x1a\n" +
 	"\busername\x18\x01 \x01(\tR\busername\x12\x14\n" +
 	"\x05email\x18\x02 \x01(\tR\x05email\x12&\n" +
-	"\x0fcreated_at_unix\x18\x03 \x01(\x03R\rcreatedAtUnix\"\xd0\x02\n" +
+	"\x0fcreated_at_unix\x18\x03 \x01(\x03R\rcreatedAtUnix\"\xf5\x02\n" +
 	"\tBotConfig\x12\x15\n" +
 	"\x06bot_id\x18\x01 \x01(\tR\x05botId\x12\x16\n" +
 	"\x06symbol\x18\x02 \x01(\tR\x06symbol\x12\x1a\n" +
@@ -2011,7 +2018,8 @@ const file_trading_api_proto_rawDesc = "" +
 	"\tis_active\x18\x05 \x01(\bR\bisActive\x12+\n" +
 	"\x12created_at_unix_ms\x18\x06 \x01(\x03R\x0fcreatedAtUnixMs\x12\x12\n" +
 	"\x04name\x18\a \x01(\tR\x04name\x12\x17\n" +
-	"\auser_id\x18\b \x01(\tR\x06userId\x1a=\n" +
+	"\auser_id\x18\b \x01(\tR\x06userId\x12#\n" +
+	"\raccount_value\x18\t \x01(\x01R\faccountValue\x1a=\n" +
 	"\x0fParametersEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
 	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\xe4\x01\n" +

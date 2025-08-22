@@ -11,7 +11,8 @@ const defaultConfig = {
   exitStd: 0.5,
   maxPos: 0.1,
   stopLossPct: 0.02,
-  riskPerTradePct: 0.01
+  riskPerTradePct: 0.01,
+  accountValue: 1000012 // Default account value, can be overridden by backend
 };
 
 const strategies = [
@@ -43,9 +44,10 @@ const handleSubmit = async () => {
       name: cfg.name,
       symbol: cfg.symbol,
       strategy: cfg.strategy,
-      parameters: params
+      parameters: params,
+      account_value: Number(cfg.accountValue) // <-- Add this line
     });
-    const resp = await createBot({ name: cfg.name, symbol: cfg.symbol, strategy: cfg.strategy, parameters: params });
+    const resp = await createBot({ name: cfg.name, symbol: cfg.symbol, strategy: cfg.strategy, parameters: params, account_value: Number(cfg.accountValue) });
     console.log('[DevelopBotPage] createBot response:', resp);
     if (resp.success) {
       setAlert({ type:'success', msg: `Bot created (id=${resp.id})` });
@@ -72,6 +74,14 @@ const handleSubmit = async () => {
           <Stack spacing={2}>
             <TextField label="Bot Name" value={cfg.name} onChange={setField('name')} fullWidth required />
             <TextField label="Symbol" value={cfg.symbol} onChange={setField('symbol')} fullWidth />
+            <TextField
+              type="number"
+              label="Account Value (USD)"
+              value={cfg.accountValue}
+              onChange={setField('accountValue')}
+              fullWidth
+              inputProps={{ min: 0, step: 100 }}
+            />
             <FormControl fullWidth>
               <InputLabel>Strategy</InputLabel>
               <Select value={cfg.strategy} label="Strategy" onChange={setField('strategy')}>

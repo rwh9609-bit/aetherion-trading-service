@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Container, Box, Typography, Card, CardContent, Button, Stack, Dialog, DialogTitle, DialogContent, DialogActions, Chip, CircularProgress, Alert } from '@mui/material';
-import { listBots, startBot, stopBot, getBotStatus } from '../services/grpcClient';
+import { listBots, startBot, stopBot, getBotStatus, deleteBot } from '../services/grpcClient'; // <-- import deleteBot
 
 const statusColor = (active) => active ? 'success.main' : 'text.secondary';
 
@@ -10,6 +10,7 @@ const BotsPage = ({ onNavigate, onSelectBot, selectedBot }) => {
   const [error, setError] = useState(null);
   const [viewBot, setViewBot] = useState(null);
   const [actionBusy, setActionBusy] = useState(null);
+  const [alert, setAlert] = useState(null); // <-- add alert state
 
   const refresh = async () => {
     try {
@@ -29,6 +30,19 @@ const BotsPage = ({ onNavigate, onSelectBot, selectedBot }) => {
   const handleStart = async (id) => { setActionBusy(id); try { await startBot(id); await refresh(); } finally { setActionBusy(null); } };
   const handleStop = async (id) => { setActionBusy(id); try { await stopBot(id); await refresh(); } finally { setActionBusy(null); } };
   const handleView = async (bot) => { try { const status = await getBotStatus(bot.botId); setViewBot(status); } catch { setViewBot(bot); } };
+  const handleDelete = async (id) => {
+    if (!window.confirm('Delete this bot?')) return;
+    setActionBusy(id);
+    try {
+      await deleteBot(id);
+      setAlert({ type: 'success', msg: 'Bot deleted' });
+      await refresh();
+    } catch (e) {
+      setAlert({ type: 'error', msg: e.message || 'Failed to delete bot' });
+    } finally {
+      setActionBusy(null);
+    }
+  };
 
   return (
     <Container maxWidth="lg" sx={{ mt:4, mb:4 }}>
@@ -36,6 +50,7 @@ const BotsPage = ({ onNavigate, onSelectBot, selectedBot }) => {
         <Typography variant="h5" fontWeight={600}>Bots</Typography>
         <Button variant="contained" size="small" onClick={()=> onNavigate && onNavigate('developBot')}>Develop Bot</Button>
       </Stack>
+      {alert && <Alert severity={alert.type} sx={{ mb:2 }} onClose={()=>setAlert(null)}>{alert.msg}</Alert>}
       {error && <Alert severity="error" sx={{ mb:2 }}>{error}</Alert>}
       <Box sx={{ display:'grid', gap:2, gridTemplateColumns:{ xs:'1fr', sm:'1fr 1fr', md:'1fr 1fr 1fr' } }}>
         {bots.map(bot => (
@@ -68,6 +83,15 @@ const BotsPage = ({ onNavigate, onSelectBot, selectedBot }) => {
                   onClick={() => onSelectBot(bot)}
                 >
                   {selectedBot && selectedBot.botId === bot.botId ? "Selected" : "Select"}
+                </Button>
+                <Button
+                  size="small"
+                  color="error"
+                  variant="outlined"
+                  disabled={actionBusy===bot.botId}
+                  onClick={() => handleDelete(bot.botId)}
+                >
+                  Delete
                 </Button>
               </Stack>
             </CardContent>

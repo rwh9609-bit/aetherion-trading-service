@@ -1612,7 +1612,6 @@ func (x *UserInfo) GetCreatedAtUnix() int64 {
 	return 0
 }
 
-// Represents the configuration and status of a trading bot.
 type BotConfig struct {
 	state           protoimpl.MessageState `protogen:"open.v1"`
 	BotId           string                 `protobuf:"bytes,1,opt,name=bot_id,json=botId,proto3" json:"bot_id,omitempty"`
@@ -1622,7 +1621,8 @@ type BotConfig struct {
 	IsActive        bool                   `protobuf:"varint,5,opt,name=is_active,json=isActive,proto3" json:"is_active,omitempty"`
 	CreatedAtUnixMs int64                  `protobuf:"varint,6,opt,name=created_at_unix_ms,json=createdAtUnixMs,proto3" json:"created_at_unix_ms,omitempty"`
 	Name            string                 `protobuf:"bytes,7,opt,name=name,proto3" json:"name,omitempty"`
-	UserId          string                 `protobuf:"bytes,8,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"` // <-- Add this line
+	UserId          string                 `protobuf:"bytes,8,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+	AccountValue    float64                `protobuf:"fixed64,9,opt,name=account_value,json=accountValue,proto3" json:"account_value,omitempty"` // <-- Add this line
 	unknownFields   protoimpl.UnknownFields
 	sizeCache       protoimpl.SizeCache
 }
@@ -1711,6 +1711,13 @@ func (x *BotConfig) GetUserId() string {
 		return x.UserId
 	}
 	return ""
+}
+
+func (x *BotConfig) GetAccountValue() float64 {
+	if x != nil {
+		return x.AccountValue
+	}
+	return 0
 }
 
 // Request to create a new trading bot.
@@ -2000,7 +2007,7 @@ const file_trading_api_proto_rawDesc = "" +
 	"\bUserInfo\x12\x1a\n" +
 	"\busername\x18\x01 \x01(\tR\busername\x12\x14\n" +
 	"\x05email\x18\x02 \x01(\tR\x05email\x12&\n" +
-	"\x0fcreated_at_unix\x18\x03 \x01(\x03R\rcreatedAtUnix\"\xd0\x02\n" +
+	"\x0fcreated_at_unix\x18\x03 \x01(\x03R\rcreatedAtUnix\"\xf5\x02\n" +
 	"\tBotConfig\x12\x15\n" +
 	"\x06bot_id\x18\x01 \x01(\tR\x05botId\x12\x16\n" +
 	"\x06symbol\x18\x02 \x01(\tR\x06symbol\x12\x1a\n" +
@@ -2011,7 +2018,8 @@ const file_trading_api_proto_rawDesc = "" +
 	"\tis_active\x18\x05 \x01(\bR\bisActive\x12+\n" +
 	"\x12created_at_unix_ms\x18\x06 \x01(\x03R\x0fcreatedAtUnixMs\x12\x12\n" +
 	"\x04name\x18\a \x01(\tR\x04name\x12\x17\n" +
-	"\auser_id\x18\b \x01(\tR\x06userId\x1a=\n" +
+	"\auser_id\x18\b \x01(\tR\x06userId\x12#\n" +
+	"\raccount_value\x18\t \x01(\x01R\faccountValue\x1a=\n" +
 	"\x0fParametersEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
 	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\xe4\x01\n" +
@@ -2048,10 +2056,11 @@ const file_trading_api_proto_rawDesc = "" +
 	"\vAuthService\x12=\n" +
 	"\bRegister\x12\x18.trading.RegisterRequest\x1a\x15.trading.AuthResponse\"\x00\x126\n" +
 	"\x05Login\x12\x14.trading.AuthRequest\x1a\x15.trading.AuthResponse\"\x00\x125\n" +
-	"\aGetUser\x12\x17.trading.GetUserRequest\x1a\x11.trading.UserInfo2\xb7\x02\n" +
+	"\aGetUser\x12\x17.trading.GetUserRequest\x1a\x11.trading.UserInfo2\xf6\x02\n" +
 	"\n" +
 	"BotService\x12A\n" +
-	"\tCreateBot\x12\x19.trading.CreateBotRequest\x1a\x17.trading.StatusResponse\"\x00\x12.\n" +
+	"\tCreateBot\x12\x19.trading.CreateBotRequest\x1a\x17.trading.StatusResponse\"\x00\x12=\n" +
+	"\tDeleteBot\x12\x15.trading.BotIdRequest\x1a\x17.trading.StatusResponse\"\x00\x12.\n" +
 	"\bListBots\x12\x0e.trading.Empty\x1a\x10.trading.BotList\"\x00\x12<\n" +
 	"\bStartBot\x12\x15.trading.BotIdRequest\x1a\x17.trading.StatusResponse\"\x00\x12;\n" +
 	"\aStopBot\x12\x15.trading.BotIdRequest\x1a\x17.trading.StatusResponse\"\x00\x12;\n" +
@@ -2136,34 +2145,36 @@ var file_trading_api_proto_depIdxs = []int32{
 	23, // 25: trading.AuthService.Login:input_type -> trading.AuthRequest
 	25, // 26: trading.AuthService.GetUser:input_type -> trading.GetUserRequest
 	28, // 27: trading.BotService.CreateBot:input_type -> trading.CreateBotRequest
-	3,  // 28: trading.BotService.ListBots:input_type -> trading.Empty
-	29, // 29: trading.BotService.StartBot:input_type -> trading.BotIdRequest
-	29, // 30: trading.BotService.StopBot:input_type -> trading.BotIdRequest
-	29, // 31: trading.BotService.GetBotStatus:input_type -> trading.BotIdRequest
-	17, // 32: trading.TradingService.StreamOrderBook:output_type -> trading.OrderBook
-	0,  // 33: trading.TradingService.GetPrice:output_type -> trading.Tick
-	6,  // 34: trading.TradingService.StartStrategy:output_type -> trading.StatusResponse
-	6,  // 35: trading.TradingService.StopStrategy:output_type -> trading.StatusResponse
-	8,  // 36: trading.TradingService.GetPortfolio:output_type -> trading.Portfolio
-	0,  // 37: trading.TradingService.SubscribeTicks:output_type -> trading.Tick
-	0,  // 38: trading.TradingService.StreamPrice:output_type -> trading.Tick
-	6,  // 39: trading.TradingService.AddSymbol:output_type -> trading.StatusResponse
-	6,  // 40: trading.TradingService.RemoveSymbol:output_type -> trading.StatusResponse
-	4,  // 41: trading.TradingService.ListSymbols:output_type -> trading.SymbolList
-	21, // 42: trading.TradingService.GetMomentum:output_type -> trading.MomentumResponse
-	12, // 43: trading.TradingService.ExecuteTrade:output_type -> trading.TradeResponse
-	15, // 44: trading.TradingService.GetTradeHistory:output_type -> trading.TradeHistoryResponse
-	10, // 45: trading.RiskService.CalculateVaR:output_type -> trading.VaRResponse
-	24, // 46: trading.AuthService.Register:output_type -> trading.AuthResponse
-	24, // 47: trading.AuthService.Login:output_type -> trading.AuthResponse
-	26, // 48: trading.AuthService.GetUser:output_type -> trading.UserInfo
-	6,  // 49: trading.BotService.CreateBot:output_type -> trading.StatusResponse
-	30, // 50: trading.BotService.ListBots:output_type -> trading.BotList
-	6,  // 51: trading.BotService.StartBot:output_type -> trading.StatusResponse
-	6,  // 52: trading.BotService.StopBot:output_type -> trading.StatusResponse
-	27, // 53: trading.BotService.GetBotStatus:output_type -> trading.BotConfig
-	32, // [32:54] is the sub-list for method output_type
-	10, // [10:32] is the sub-list for method input_type
+	29, // 28: trading.BotService.DeleteBot:input_type -> trading.BotIdRequest
+	3,  // 29: trading.BotService.ListBots:input_type -> trading.Empty
+	29, // 30: trading.BotService.StartBot:input_type -> trading.BotIdRequest
+	29, // 31: trading.BotService.StopBot:input_type -> trading.BotIdRequest
+	29, // 32: trading.BotService.GetBotStatus:input_type -> trading.BotIdRequest
+	17, // 33: trading.TradingService.StreamOrderBook:output_type -> trading.OrderBook
+	0,  // 34: trading.TradingService.GetPrice:output_type -> trading.Tick
+	6,  // 35: trading.TradingService.StartStrategy:output_type -> trading.StatusResponse
+	6,  // 36: trading.TradingService.StopStrategy:output_type -> trading.StatusResponse
+	8,  // 37: trading.TradingService.GetPortfolio:output_type -> trading.Portfolio
+	0,  // 38: trading.TradingService.SubscribeTicks:output_type -> trading.Tick
+	0,  // 39: trading.TradingService.StreamPrice:output_type -> trading.Tick
+	6,  // 40: trading.TradingService.AddSymbol:output_type -> trading.StatusResponse
+	6,  // 41: trading.TradingService.RemoveSymbol:output_type -> trading.StatusResponse
+	4,  // 42: trading.TradingService.ListSymbols:output_type -> trading.SymbolList
+	21, // 43: trading.TradingService.GetMomentum:output_type -> trading.MomentumResponse
+	12, // 44: trading.TradingService.ExecuteTrade:output_type -> trading.TradeResponse
+	15, // 45: trading.TradingService.GetTradeHistory:output_type -> trading.TradeHistoryResponse
+	10, // 46: trading.RiskService.CalculateVaR:output_type -> trading.VaRResponse
+	24, // 47: trading.AuthService.Register:output_type -> trading.AuthResponse
+	24, // 48: trading.AuthService.Login:output_type -> trading.AuthResponse
+	26, // 49: trading.AuthService.GetUser:output_type -> trading.UserInfo
+	6,  // 50: trading.BotService.CreateBot:output_type -> trading.StatusResponse
+	6,  // 51: trading.BotService.DeleteBot:output_type -> trading.StatusResponse
+	30, // 52: trading.BotService.ListBots:output_type -> trading.BotList
+	6,  // 53: trading.BotService.StartBot:output_type -> trading.StatusResponse
+	6,  // 54: trading.BotService.StopBot:output_type -> trading.StatusResponse
+	27, // 55: trading.BotService.GetBotStatus:output_type -> trading.BotConfig
+	33, // [33:56] is the sub-list for method output_type
+	10, // [10:33] is the sub-list for method input_type
 	10, // [10:10] is the sub-list for extension type_name
 	10, // [10:10] is the sub-list for extension extendee
 	0,  // [0:10] is the sub-list for field type_name

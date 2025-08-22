@@ -41,7 +41,8 @@ func newBotRegistry() *botRegistry {
 				parameters JSONB NOT NULL,
 				is_active BOOLEAN DEFAULT TRUE,
 				created_at TIMESTAMPTZ DEFAULT now(),
-				updated_at TIMESTAMPTZ DEFAULT now()
+				updated_at TIMESTAMPTZ DEFAULT now(),
+				account_value NUMERIC(20, 8) DEFAULT 1000008
             )`)
 			if err2 == nil {
 				log.Printf("bot pg table created")
@@ -84,7 +85,8 @@ func (r *botRegistry) loadFromPg(ctx context.Context) {
 		m := map[string]string{}
 		_ = json.Unmarshal(paramsBytes, &m)
 		// Need to get real UserId for this.
-		r.bots[id] = &pb.BotConfig{BotId: id, Name: name, Symbol: symbol, Strategy: strategy, Parameters: m, IsActive: active, UserId: userID, CreatedAtUnixMs: created}
+		// This is what actually sets bot's account value. Initially it seems to be docker compose.
+		r.bots[id] = &pb.BotConfig{BotId: id, Name: name, Symbol: symbol, Strategy: strategy, Parameters: m, IsActive: active, UserId: userID, CreatedAtUnixMs: created, AccountValue: 1000007}
 	}
 }
 
@@ -116,16 +118,17 @@ func (r *botRegistry) persist() {
 			// Provide created_at and updated_at as Unix timestamps
 			created := b.CreatedAtUnixMs / 1000 // convert ms to seconds
 			updated := time.Now().Unix()        // current time as updated_at
-			_, err := r.pg.Exec(ctx, `INSERT INTO bots (id, user_id, name, symbol, strategy, parameters, is_active, created_at, updated_at)
-                VALUES ($1,$2,$3,$4,$5,$6,$7,to_timestamp($8),to_timestamp($9))
+			_, err := r.pg.Exec(ctx, `INSERT INTO bots (id, user_id, name, symbol, strategy, parameters, is_active, created_at, updated_at, account_value)
+                VALUES ($1,$2,$3,$4,$5,$6,$7,to_timestamp($8),to_timestamp($9), $10)
                 ON CONFLICT (id) DO UPDATE SET
                     name=EXCLUDED.name,
                     symbol=EXCLUDED.symbol,
                     strategy=EXCLUDED.strategy,
                     parameters=EXCLUDED.parameters,
                     is_active=EXCLUDED.is_active,
-                    updated_at=EXCLUDED.updated_at`,
-				b.BotId, b.UserId, b.Name, b.Symbol, b.Strategy, string(paramsJSON), b.IsActive, created, updated)
+                    updated_at=EXCLUDED.updated_at,
+					account_value=EXCLUDED.account_value`,
+				b.BotId, b.UserId, b.Name, b.Symbol, b.Strategy, string(paramsJSON), b.IsActive, created, updated, b.AccountValue)
 			if err != nil && !strings.Contains(err.Error(), "duplicate") {
 				log.Printf("bot upsert err: %v", err)
 			}
@@ -160,6 +163,20 @@ func newBotServiceServer(reg *botRegistry, trading *tradingServer, dbclient *DBS
 	log.Printf("Creating BotServiceServer with registry at %s", reg.path)
 	return &botServiceServer{reg: reg, trading: trading, dbclient: dbclient}
 }
+func (s *botServiceServer) DeleteBot(ctx context.Context, req *pb.BotIdRequest) (*pb.StatusResponse, error) {
+	log.Printf("[DeleteBot] Received request for bot ID: %s", req.GetBotId())
+	s.reg.mu.Lock()
+	defer s.reg.mu.Unlock()
+	bot, ok := s.reg.bots[req.GetBotId()]
+	if !ok {
+		log.Printf("[DeleteBot] Bot with ID %s not found", req.GetBotId())
+		return &pb.StatusResponse{Success: false, Message: "not found"}, nil
+	}
+	delete(s.reg.bots, req.GetBotId())
+	s.reg.persist()
+	log.Printf("[DeleteBot] Bot %s deleted", bot.Name)
+	return &pb.StatusResponse{Success: true, Message: "bot deleted"}, nil
+}
 
 func (s *botServiceServer) CreateBot(ctx context.Context, req *pb.CreateBotRequest) (*pb.StatusResponse, error) {
 	log.Printf("[CreateBot] Handler entered")
@@ -185,13 +202,15 @@ func (s *botServiceServer) CreateBot(ctx context.Context, req *pb.CreateBotReque
 	// Add entry to the database
 	if s.dbclient != nil {
 		_, err := s.dbclient.CreateBot(ctx, &pb.BotConfig{
-			BotId:      id,
-			UserId:     userID,
-			Name:       req.GetName(),
-			Symbol:     req.GetSymbol(),
-			Strategy:   req.GetStrategy(),
-			Parameters: params,
-			IsActive:   false,
+			BotId:           id,
+			UserId:          userID,
+			Name:            req.GetName(),
+			Symbol:          req.GetSymbol(),
+			Strategy:        req.GetStrategy(),
+			Parameters:      params,
+			IsActive:        false,
+			CreatedAtUnixMs: time.Now().UnixMilli(),
+			AccountValue:    1000006,
 		})
 		log.Printf("[CreateBot] Added bot to database with ID: %s", id)
 		if err != nil {

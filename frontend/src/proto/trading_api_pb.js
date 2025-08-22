@@ -5973,7 +5973,8 @@ parametersMap: (f = msg.getParametersMap()) ? f.toObject(includeInstance, undefi
 isActive: jspb.Message.getBooleanFieldWithDefault(msg, 5, false),
 createdAtUnixMs: jspb.Message.getFieldWithDefault(msg, 6, 0),
 name: jspb.Message.getFieldWithDefault(msg, 7, ""),
-userId: jspb.Message.getFieldWithDefault(msg, 8, "")
+userId: jspb.Message.getFieldWithDefault(msg, 8, ""),
+accountValue: jspb.Message.getFloatingPointFieldWithDefault(msg, 9, 0.0)
   };
 
   if (includeInstance) {
@@ -6043,6 +6044,10 @@ proto.trading.BotConfig.deserializeBinaryFromReader = function(msg, reader) {
     case 8:
       var value = /** @type {string} */ (reader.readString());
       msg.setUserId(value);
+      break;
+    case 9:
+      var value = /** @type {number} */ (reader.readDouble());
+      msg.setAccountValue(value);
       break;
     default:
       reader.skipField();
@@ -6123,6 +6128,13 @@ proto.trading.BotConfig.serializeBinaryToWriter = function(message, writer) {
   if (f.length > 0) {
     writer.writeString(
       8,
+      f
+    );
+  }
+  f = message.getAccountValue();
+  if (f !== 0.0) {
+    writer.writeDouble(
+      9,
       f
     );
   }
@@ -6275,6 +6287,24 @@ proto.trading.BotConfig.prototype.getUserId = function() {
  */
 proto.trading.BotConfig.prototype.setUserId = function(value) {
   return jspb.Message.setProto3StringField(this, 8, value);
+};
+
+
+/**
+ * optional double account_value = 9;
+ * @return {number}
+ */
+proto.trading.BotConfig.prototype.getAccountValue = function() {
+  return /** @type {number} */ (jspb.Message.getFloatingPointFieldWithDefault(this, 9, 0.0));
+};
+
+
+/**
+ * @param {number} value
+ * @return {!proto.trading.BotConfig} returns this
+ */
+proto.trading.BotConfig.prototype.setAccountValue = function(value) {
+  return jspb.Message.setProto3FloatField(this, 9, value);
 };
 
 

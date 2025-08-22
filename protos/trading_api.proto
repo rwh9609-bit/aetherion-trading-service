@@ -234,7 +234,6 @@ service AuthService {
     rpc GetUser(GetUserRequest) returns (UserInfo);
 }
 
-// Represents the configuration and status of a trading bot.
 message BotConfig {
     string bot_id = 1;
     string symbol = 2;
@@ -243,7 +242,8 @@ message BotConfig {
     bool is_active = 5;
     int64 created_at_unix_ms = 6;
     string name = 7;
-    string user_id = 8; // <-- Add this line
+    string user_id = 8;
+    double account_value = 9; // <-- Add this line
 }
 
 // Request to create a new trading bot.
@@ -268,6 +268,7 @@ message BotList {
 // BotService provides a focused interface for bot lifecycle operations.
 service BotService {
   rpc CreateBot(CreateBotRequest) returns (StatusResponse) {}
+  rpc DeleteBot(BotIdRequest) returns (StatusResponse) {}
   rpc ListBots(Empty) returns (BotList) {}
   rpc StartBot(BotIdRequest) returns (StatusResponse) {}
   rpc StopBot(BotIdRequest) returns (StatusResponse) {}

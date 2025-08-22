@@ -881,6 +881,11 @@ class BotServiceStub(object):
                 request_serializer=trading__api__pb2.CreateBotRequest.SerializeToString,
                 response_deserializer=trading__api__pb2.StatusResponse.FromString,
                 _registered_method=True)
+        self.DeleteBot = channel.unary_unary(
+                '/trading.BotService/DeleteBot',
+                request_serializer=trading__api__pb2.BotIdRequest.SerializeToString,
+                response_deserializer=trading__api__pb2.StatusResponse.FromString,
+                _registered_method=True)
         self.ListBots = channel.unary_unary(
                 '/trading.BotService/ListBots',
                 request_serializer=trading__api__pb2.Empty.SerializeToString,
@@ -908,6 +913,12 @@ class BotServiceServicer(object):
     """
 
     def CreateBot(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def DeleteBot(self, request, context):
         """Missing associated documentation comment in .proto file."""
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
@@ -943,6 +954,11 @@ def add_BotServiceServicer_to_server(servicer, server):
             'CreateBot': grpc.unary_unary_rpc_method_handler(
                     servicer.CreateBot,
                     request_deserializer=trading__api__pb2.CreateBotRequest.FromString,
+                    response_serializer=trading__api__pb2.StatusResponse.SerializeToString,
+            ),
+            'DeleteBot': grpc.unary_unary_rpc_method_handler(
+                    servicer.DeleteBot,
+                    request_deserializer=trading__api__pb2.BotIdRequest.FromString,
                     response_serializer=trading__api__pb2.StatusResponse.SerializeToString,
             ),
             'ListBots': grpc.unary_unary_rpc_method_handler(
@@ -993,6 +1009,33 @@ class BotService(object):
             target,
             '/trading.BotService/CreateBot',
             trading__api__pb2.CreateBotRequest.SerializeToString,
+            trading__api__pb2.StatusResponse.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def DeleteBot(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/trading.BotService/DeleteBot',
+            trading__api__pb2.BotIdRequest.SerializeToString,
             trading__api__pb2.StatusResponse.FromString,
             options,
             channel_credentials,
