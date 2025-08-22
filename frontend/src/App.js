@@ -161,7 +161,6 @@ function App() {
                         <MenuItem onClick={() => handleMenuItemClick('operations')}>Operations</MenuItem>
                       </Menu>
                       <Button color="inherit" onClick={()=>setView('bots')} sx={{ mr:1 }}>Bots</Button>
-                      <Button color="inherit" onClick={()=>setView('developBot')} sx={{ mr:1 }}>Develop Bot</Button>
                       <Button color="inherit" onClick={()=> { setUser(null); setView('landing'); }}>Logout</Button>
                     </>
                   ) : (
