@@ -381,6 +381,17 @@ export const streamPrice = (symbol, onData, onError) => {
   };
 };
 
+export const handleGrpcError = (err, setUser, setView) => {
+  // gRPC Unauthenticated error code is 16
+  if (err && (err.code === 16 || err.message?.toLowerCase().includes('unauthenticated') || err.message?.toLowerCase().includes('invalid token'))) {
+    localStorage.removeItem('authToken');
+    if (setUser) setUser(null);
+    if (setView) setView('login'); // or 'landing'
+    return true; // handled
+  }
+  return false; // not handled
+};
+
 // --- Bot Service Helpers ---
 export const createBot = async ({ name, symbol, strategy, parameters, userId }) => {
   const { CreateBotRequest } = await import('../proto/trading_api_grpc_web_pb.js');
