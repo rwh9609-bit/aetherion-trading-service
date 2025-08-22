@@ -59,6 +59,18 @@ func (s *DBService) CreateBot(ctx context.Context, bot *pb.BotConfig) (string, e
 	return id, nil
 }
 
+// DeleteBot permanently removes a bot from the database.
+func (s *DBService) DeleteBot(ctx context.Context, botID string) error {
+	query := `DELETE FROM bots WHERE id = $1`
+	_, err := s.pool.Exec(ctx, query, botID)
+	if err != nil {
+		log.Error().Err(err).Str("bot_id", botID).Msg("Failed to delete bot")
+		return fmt.Errorf("failed to delete bot: %w", err)
+	}
+	log.Info().Str("bot_id", botID).Msg("Bot deleted successfully")
+	return nil
+}
+
 // --- User Management ---
 
 // Postgres implementation
