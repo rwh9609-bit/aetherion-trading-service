@@ -198,7 +198,7 @@ function App() {
           )}
           {user && view === 'dashboard' && (
             <div style={{ padding: '24px' }}>
-              <TradingDashboard user={user} selectedBot={selectedBot} />
+              <TradingDashboard user={user} selectedBot={selectedBot} setUser={setUser} setView={setView} />
             </div>
           )}
           {user && view === 'backtest' && (

@@ -22,6 +22,7 @@ class MeanReversionStrategy:
         
     def calculate_zscore(self, price: float) -> float:
         """Calculate z-score of current price relative to lookback period."""
+        print(f"Calculating z-score for price: {price}")
         self.prices.append(price)
         if len(self.prices) > self.params.lookback_period:
             self.prices.pop(0)
@@ -37,6 +38,7 @@ class MeanReversionStrategy:
         
     def calculate_position_size(self, price: float, account_value: float) -> float:
         """Calculate position size based on risk parameters."""
+        print(f"Calculating position size for price: {price}, account value: {account_value}")
         risk_amount = account_value * self.params.risk_per_trade_pct
         stop_loss_amount = price * self.params.stop_loss_pct
         
@@ -48,6 +50,7 @@ class MeanReversionStrategy:
         
     def on_tick(self, tick: Dict) -> Optional[Dict]:
         """Process a market tick and decide action (buy/sell/hold) as a dictionary."""
+        print(f"Processing tick: {tick}")
         price = tick.get('price')
         account_value = tick.get('account_value', 10000)
         if price is None:
@@ -88,6 +91,7 @@ class MeanReversionStrategy:
         
     def generate_signal(self, price: float, account_value: float) -> Dict[str, any]:
         """Generate trading signal based on mean reversion strategy."""
+        print(f"Current price: {price}, Account value: {account_value}")
         zscore = self.calculate_zscore(price)
         
         signal = {

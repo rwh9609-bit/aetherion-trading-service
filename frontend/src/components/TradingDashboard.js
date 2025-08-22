@@ -5,11 +5,11 @@ import CryptoScanner from './CryptoScanner';
 import ServerMomentum from './ServerMomentum';
 import SymbolManager from './SymbolManager';
 import RecentTrades from './RecentTrades';
-import { listSymbols } from '../services/grpcClient';
+import { listSymbols, handleGrpcError } from '../services/grpcClient';
 
 console.log('TradingDashboard component loaded');
 
-const TradingDashboard = ({ user, selectedBot }) => {
+const TradingDashboard = ({ user, selectedBot, setUser, setView }) => {
   // Start with empty; hydrate via backend ListSymbols
   const [symbols, setSymbols] = useState([]);
   const [selected, setSelected] = useState('');
@@ -22,18 +22,19 @@ const TradingDashboard = ({ user, selectedBot }) => {
     (async () => {
       try {
         setLoading(true); setLoadError(null);
-        const resp = await listSymbols(); // { symbolsList: [...] }
+        const resp = await listSymbols();
         if (cancelled) return;
         const fetched = resp.symbolsList || [];
         setSymbols(fetched);
         if (fetched.length) {
-          // Preserve existing selection if still valid; otherwise pick first
-            setSelected(prev => (prev && fetched.includes(prev)) ? prev : fetched[0]);
+          setSelected(prev => (prev && fetched.includes(prev)) ? prev : fetched[0]);
         }
       } catch (e) {
         if (!cancelled) {
           console.error('Failed to load symbols:', e);
           setLoadError(e.message || 'Failed to load symbols');
+          // Optionally handle gRPC errors here:
+          handleGrpcError(e, setUser, setView);
           // Fallback defaults if backend call fails
           const fallback = ['BTC-USD','ETH-USD','SOL-USD','ILV-USD'];
           setSymbols(fallback);
@@ -44,7 +45,8 @@ const TradingDashboard = ({ user, selectedBot }) => {
       }
     })();
     return () => { cancelled = true; };
-  }, []);
+  }, [setUser, setView]);
+
   const handleAdd = (s) => { setSymbols(prev => [...prev, s]); setSelected(s); };
   const handleRemove = (s) => {
     setSymbols(prev => prev.filter(x => x !== s));
@@ -53,6 +55,7 @@ const TradingDashboard = ({ user, selectedBot }) => {
       if (remaining.length) setSelected(remaining[0]);
     }
   };
+
   return (
     <Container maxWidth={false} sx={{ mt:4, mb:4 }}>
       {selectedBot && (
@@ -65,14 +68,14 @@ const TradingDashboard = ({ user, selectedBot }) => {
         </Box>
       )}
 
-    <Box>
-      <RecentTrades user={user} />
-    </Box>
-    <Box sx={{ display:'grid', gap:3, gridTemplateColumns: { xs:'1fr' }, alignItems:'start' }}>
-      <Box sx={{ gridColumn:'1 / -1', display:'flex', flexDirection:'column', gap:1 }}>
-        <Box sx={{ display:'flex', alignItems:{ xs:'stretch', sm:'center' }, flexWrap:'wrap', gap:2, justifyContent:'space-between' }}>
-          <Box sx={{ flex:1, minWidth:260 }}>
-            <SymbolManager
+      <Box>
+        <RecentTrades user={user} />
+      </Box>
+      <Box sx={{ display:'grid', gap:3, gridTemplateColumns: { xs:'1fr' }, alignItems:'start' }}>
+        <Box sx={{ gridColumn:'1 / -1', display:'flex', flexDirection:'column', gap:1 }}>
+          <Box sx={{ display:'flex', alignItems:{ xs:'stretch', sm:'center' }, flexWrap:'wrap', gap:2, justifyContent:'space-between' }}>
+            <Box sx={{ flex:1, minWidth:260 }}>
+              <SymbolManager
                 symbols={symbols}
                 onAdd={handleAdd}
                 onRemove={handleRemove}
@@ -92,14 +95,14 @@ const TradingDashboard = ({ user, selectedBot }) => {
           </Box>
         </Box>
         <Box sx={{ display:'grid', gap:3, gridTemplateColumns:{ xs:'1fr' }, minWidth:0 }}>
-    <Box>
-      {momentumMode === 'client' && <CryptoScanner symbols={symbols} onSelect={(sym)=> setSelected(sym)} />}
-      {momentumMode === 'server' && <ServerMomentum onSelect={(sym)=> setSelected(sym)} />}
-    </Box>
-    <Box>
-      <OhlcPriceChart symbol={selected} />
-    </Box>
-  </Box>
+          <Box>
+            {momentumMode === 'client' && <CryptoScanner symbols={symbols} onSelect={(sym)=> setSelected(sym)} />}
+            {momentumMode === 'server' && <ServerMomentum onSelect={(sym)=> setSelected(sym)} />}
+          </Box>
+          <Box>
+            <OhlcPriceChart symbol={selected} />
+          </Box>
+        </Box>
       </Box>
     </Container>
   );
