@@ -35,20 +35,6 @@ const AboutPage = () => {
                     </Card>
                 </Container>
             </Box>
-            <Box sx={{ textAlign: 'center', mt: 4, mb: 2 }}>
-                <Typography variant="body2">
-                    Aetherion is proudly <strong>open source</strong>!&nbsp;
-                    <Link
-                        href="https://github.com/rwh9609-bit/aetherion-trading-service"
-                        target="_blank"
-                        rel="noopener"
-                        color="secondary"
-                        underline="hover"
-                    >
-                        ⭐ Star us on GitHub
-                    </Link>
-                </Typography>
-            </Box>
         </>
     );
 };
