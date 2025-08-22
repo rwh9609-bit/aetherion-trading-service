@@ -11,6 +11,7 @@ import (
 	pb "github.com/rwh9609-bit/multilanguage/go/gen"
 
 	"github.com/golang-jwt/jwt/v5"
+	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	"golang.org/x/crypto/bcrypt"
 	"google.golang.org/grpc"
@@ -63,6 +64,16 @@ func (m *memUserStore) GetUserHash(_ context.Context, u string) (string, error) 
 	return v.Hash, nil
 }
 
+// Add GetUserByUsername to pgUserStore
+func (p *pgUserStore) GetUserByUsername(ctx context.Context, username string) (string, error) {
+	var id string
+	err := p.db.QueryRow(ctx, `SELECT id FROM users WHERE username=$1`, username).Scan(&id)
+	if err != nil {
+		return "", fmt.Errorf("notfound")
+	}
+	return id, nil
+}
+
 // pgUserStore implements userStore with Postgres
 type pgUserStore struct{ db *pgx.Conn }
 
@@ -85,8 +96,11 @@ func newPgUserStore(ctx context.Context, dsn string) (*pgUserStore, error) {
 	}
 	return &pgUserStore{db: conn}, nil
 }
-func (p *pgUserStore) CreateUser(ctx context.Context, u, email, h string) error {
-	_, err := p.db.Exec(ctx, `INSERT INTO users (username, email, password_hash) VALUES ($1,$2,$3)`, u, email, h)
+
+// Update CreateUser to use UUID
+func (p *pgUserStore) CreateUser(ctx context.Context, username, email, pwHash string) error {
+	id := uuid.New().String()
+	_, err := p.db.Exec(ctx, `INSERT INTO users (id, username, email, password_hash) VALUES ($1,$2,$3,$4)`, id, username, email, pwHash)
 	if err != nil {
 		if strings.Contains(err.Error(), "duplicate") {
 			return fmt.Errorf("exists")
@@ -171,34 +185,50 @@ func verifyPassword(hashed, pw string) bool {
 	return bcrypt.CompareHashAndPassword([]byte(hashed), []byte(pw)) == nil
 }
 
+// In Register, after creating user, get their UUID and use it in JWT
 func (a *authServer) Register(ctx context.Context, req *pb.RegisterRequest) (*pb.AuthResponse, error) {
 	if req.GetUsername() == "" || req.GetPassword() == "" || req.GetEmail() == "" {
 		return &pb.AuthResponse{Success: false, Message: "username, password, and email required"}, nil
 	}
-	// Pass email to CreateUser
 	if err := a.store.CreateUser(ctx, req.Username, req.Email, hashPassword(req.Password)); err != nil {
 		if err.Error() == "exists" {
 			return &pb.AuthResponse{Success: false, Message: "user exists"}, nil
 		}
 		return &pb.AuthResponse{Success: false, Message: err.Error()}, nil
 	}
-	return &pb.AuthResponse{Success: true, Message: "registered"}, nil
+	// Get UUID for JWT
+	var userID string
+	if pgStore, ok := a.store.(*pgUserStore); ok {
+		userID, _ = pgStore.GetUserByUsername(ctx, req.Username)
+	} else {
+		userID = req.Username // fallback for mem store
+	}
+	exp := time.Now().Add(1 * time.Hour)
+	claims := jwt.MapClaims{"sub": userID, "exp": exp.Unix()}
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	signed, err := token.SignedString(a.secret)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "token signing failed: %v", err)
+	}
+	return &pb.AuthResponse{Success: true, Message: "registered", Token: signed, ExpiresAtUnix: exp.Unix()}, nil
 }
 
+// In Login, get UUID by username and use it in JWT
 func (a *authServer) Login(ctx context.Context, req *pb.AuthRequest) (*pb.AuthResponse, error) {
 	stored, err := a.store.GetUserHash(ctx, req.Username)
 	if err != nil || !verifyPassword(stored, req.Password) {
 		return &pb.AuthResponse{Success: false, Message: "invalid credentials"}, nil
 	}
+	var userID string
+	if pgStore, ok := a.store.(*pgUserStore); ok {
+		userID, _ = pgStore.GetUserByUsername(ctx, req.Username)
+	} else {
+		userID = req.Username // fallback for mem store
+	}
 	exp := time.Now().Add(1 * time.Hour)
-	claims := jwt.MapClaims{"sub": req.Username, "exp": exp.Unix()}
-
-	// Create the token
+	claims := jwt.MapClaims{"sub": userID, "exp": exp.Unix()}
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-
-	// Sign the token
 	signed, err := token.SignedString(a.secret)
-
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "token signing failed: %v", err)
 	}

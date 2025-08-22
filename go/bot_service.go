@@ -199,6 +199,21 @@ func (s *botServiceServer) CreateBot(ctx context.Context, req *pb.CreateBotReque
 		log.Printf("[CreateBot] user_id missing from context")
 		return &pb.StatusResponse{Success: false, Message: "auth required"}, nil
 	}
+	// Validate userID is a UUID
+	if _, err := uuid.Parse(userID); err != nil {
+		log.Printf("[CreateBot] user_id is not a valid UUID: %s", userID)
+		return &pb.StatusResponse{Success: false, Message: "user_id must be a valid UUID"}, nil
+	}
+
+	// Ensure user exists in DB
+	if s.dbclient != nil {
+		err := s.dbclient.EnsureUserExists(ctx, userID, userID)
+		if err != nil {
+			log.Printf("[CreateBot] Failed to ensure user exists: %v", err)
+			return &pb.StatusResponse{Success: false, Message: "user_id does not exist and could not be created"}, nil
+		}
+	}
+
 	log.Printf("[CreateBot] Generated new bot ID: %s for user: %s", id, userID)
 
 	params := req.GetParameters()

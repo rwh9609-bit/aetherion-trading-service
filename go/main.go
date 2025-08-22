@@ -655,6 +655,10 @@ func (s *tradingServer) ExecuteTrade(ctx context.Context, req *pb.TradeRequest) 
 	if side != "BUY" && side != "SELL" {
 		return &pb.TradeResponse{Accepted: false, Message: "side must be BUY or SELL"}, nil
 	}
+	// Validate user ID is a UUID
+	if _, err := uuid.Parse(req.UserId); err != nil {
+		return &pb.TradeResponse{Accepted: false, Message: "user_id must be a valid UUID"}, nil
+	}
 	// Get reference price (use provided price if >0 else fetch current)
 	execPrice := req.Price
 	if execPrice <= 0 {
