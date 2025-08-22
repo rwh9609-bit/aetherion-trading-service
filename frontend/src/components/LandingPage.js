@@ -1,9 +1,9 @@
 import React from 'react';
-import { Box, Typography, Button, Container, Grid, Card, CardContent, Avatar } from '@mui/material';
+import { Box, Typography, Button, Container, Grid, Card, CardContent, Avatar, Chip } from '@mui/material';
 import { styled } from '@mui/material/styles';
-import { ArrowForward, BarChart, Code, Security } from '@mui/icons-material';
+import { ArrowForward, Language, Hub, Security } from '@mui/icons-material';
 
-// Custom styled components
+// Custom styled components (unchanged)
 const HeroSection = styled(Box)(({ theme }) => ({
   background: 'linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)',
   minHeight: '90vh',
@@ -16,15 +16,19 @@ const HeroSection = styled(Box)(({ theme }) => ({
 }));
 
 const FeatureCard = styled(Card)(({ theme }) => ({
-  background: 'rgba(255, 255, 255, 0.05)',
+  background: 'rgba(255, 255, 255, 0.07)',
   backdropFilter: 'blur(10px)',
-  border: '1px solid rgba(255, 255, 255, 0.1)',
+  border: '1px solid rgba(255, 255, 255, 0.12)',
   borderRadius: theme.shape.borderRadius * 2,
   height: '100%',
-  transition: 'transform 0.3s ease, box-shadow 0.3s ease',
+  minHeight: 260,
+  display: 'flex',
+  flexDirection: 'column',
+  justifyContent: 'center',
+  transition: 'transform 0.3s, box-shadow 0.3s',
   '&:hover': {
-    transform: 'translateY(-5px)',
-    boxShadow: '0 10px 20px rgba(0, 0, 0, 0.2)',
+    transform: 'translateY(-7px) scale(1.03)',
+    boxShadow: '0 12px 24px rgba(0,0,0,0.25)',
   },
 }));
 
@@ -32,22 +36,41 @@ const Section = styled(Box)(({ theme }) => ({
   padding: theme.spacing(10, 2),
 }));
 
+const LanguageChips = styled(Box)(({ theme }) => ({
+  display: 'flex',
+  justifyContent: 'center',
+  gap: theme.spacing(2),
+  flexWrap: 'wrap',
+  marginBottom: theme.spacing(3),
+}));
+
 const LandingPage = ({ onGetStarted }) => {
+  const languages = [
+    { label: 'Rust', color: '#dea584' },
+    { label: 'Go', color: '#00ADD8' },
+    { label: 'Python', color: '#3776AB' },
+    { label: 'C++', color: '#00599C' },
+    { label: 'TypeScript', color: '#3178C6' },
+    { label: 'Java', color: '#b07219' },
+    { label: 'Kotlin', color: '#7F52FF' },
+    { label: 'Node.js', color: '#68A063' },
+  ];
+
   const features = [
     {
-      icon: <BarChart fontSize="large" sx={{ color: '#6EE7B7' }} />,
-      title: 'Real-Time Analytics',
-      description: 'Monitor markets and strategy performance with live data streams and advanced charting tools.',
+      icon: <Language fontSize="large" sx={{ color: '#6EE7B7' }} />,
+      title: 'Performance Without Compromise',
+      description: 'Leverage a polyglot architecture with services in Rust and C++ for critical performance, Go for concurrent operations, and Python for rapid strategy development.',
     },
     {
-      icon: <Code fontSize="large" sx={{ color: '#3B82F6' }} />,
-      title: 'Automated Strategies',
-      description: 'Build, backtest, and deploy your own automated trading bots using our flexible and powerful framework.',
+      icon: <Hub fontSize="large" sx={{ color: '#3B82F6' }} />,
+      title: 'Institutional-Grade Infrastructure',
+      description: 'Run your strategies on a battle-tested engine built for reliability and low-latency execution, ensuring your trades are handled with precision.',
     },
     {
       icon: <Security fontSize="large" sx={{ color: '#9333EA' }} />,
-      title: 'Institutional-Grade Security',
-      description: 'Trade with confidence thanks to our robust, secure, and scalable cloud-native architecture.',
+      title: 'Integrated Risk Management',
+      description: 'Aetherion’s dedicated risk service provides real-time portfolio analysis and control, giving you confidence and capital protection at every step.',
     },
   ];
 
@@ -57,11 +80,28 @@ const LandingPage = ({ onGetStarted }) => {
       <HeroSection>
         <Container maxWidth="md">
           <Typography variant="h2" component="h1" fontWeight={900} gutterBottom>
-            The Future of Algorithmic Trading is Here.
+            The Algorithmic Trading Platform Built for Scale.
           </Typography>
           <Typography variant="h5" color="text.secondary" sx={{ mb: 4 }}>
-            Aetherion provides the tools, data, and infrastructure for you to build and deploy world-class trading strategies.
+            Aetherion delivers the speed, security, and flexibility required by today's most demanding quantitative strategies.
           </Typography>
+          <LanguageChips>
+            {languages.map(lang => (
+              <Chip
+                key={lang.label}
+                label={lang.label}
+                sx={{
+                  bgcolor: lang.color,
+                  color: '#fff',
+                  fontWeight: 700,
+                  fontSize: '1rem',
+                  px: 2,
+                  py: 1,
+                  boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
+                }}
+              />
+            ))}
+          </LanguageChips>
           <Button
             variant="contained"
             size="large"
@@ -75,9 +115,10 @@ const LandingPage = ({ onGetStarted }) => {
               fontSize: '1.1rem',
               py: 1.5,
               px: 4,
+              mt: 2,
             }}
           >
-            Start Building
+            Request a Demo
           </Button>
         </Container>
       </HeroSection>
@@ -111,7 +152,7 @@ const LandingPage = ({ onGetStarted }) => {
       <Box component="footer" sx={{ py: 6, backgroundColor: 'rgba(0,0,0,0.5)', borderTop: '1px solid rgba(255, 255, 255, 0.1)' }}>
         <Container maxWidth="lg">
           <Typography variant="body2" textAlign="center" color="text.secondary">
-            © 2025 Aetherion. All rights reserved.
+            © 2025 Aetherion. All Rights Reserved.
           </Typography>
         </Container>
       </Box>
