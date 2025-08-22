@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/rs/zerolog/log"
 	pb "github.com/rwh9609-bit/multilanguage/go/gen"
@@ -80,11 +81,11 @@ func (p *pgUserStore) UpdateUser(ctx context.Context, user *User) error {
 	return err
 }
 
-// CreateUser inserts a new user into the database.
+// CreateUser inserts a new user into the database using a UUID for the user ID.
 func (s *DBService) CreateUser(ctx context.Context, username, passwordHash string) (string, error) {
-	var id string
-	query := `INSERT INTO users (username, password_hash) VALUES ($1, $2) RETURNING id`
-	err := s.pool.QueryRow(ctx, query, username, passwordHash).Scan(&id)
+	id := uuid.New().String()
+	query := `INSERT INTO users (id, username, password_hash) VALUES ($1, $2, $3) RETURNING id`
+	err := s.pool.QueryRow(ctx, query, id, username, passwordHash).Scan(&id)
 	if err != nil {
 		log.Error().Err(err).Msg("Failed to create user")
 		return "", fmt.Errorf("failed to create user: %w", err)
@@ -102,6 +103,40 @@ func (s *DBService) GetUserByUsername(ctx context.Context, username string) (*Us
 		return nil, fmt.Errorf("failed to get user by username: %w", err)
 	}
 	return &user, nil
+}
+
+// GetUserByID retrieves a user by their ID.
+func (s *DBService) GetUserByID(ctx context.Context, userID string) (*User, error) {
+	var user User
+	query := `SELECT id, username, email, password_hash, created_at FROM users WHERE id = $1`
+	err := s.pool.QueryRow(ctx, query, userID).Scan(&user.ID, &user.Username, &user.Email, &user.PasswordHash, &user.CreatedAt)
+	if err != nil {
+		log.Error().Err(err).Msg("Failed to get user by ID")
+		return nil, fmt.Errorf("failed to get user by ID: %w", err)
+	}
+	return &user, nil
+}
+
+// EnsureUserExists checks if a user exists by ID, and creates a placeholder if not.
+// You may want to improve this to set a real username/email if available.
+func (s *DBService) EnsureUserExists(ctx context.Context, userID, username string) error {
+	user, err := s.GetUserByID(ctx, userID)
+	if err == nil && user != nil {
+		return nil // User exists
+	}
+	// Create placeholder user if missing
+	placeholderUsername := username
+	if placeholderUsername == "" {
+		placeholderUsername = "user_" + userID
+	}
+	placeholderPassword := "placeholder" // You may want to hash this
+	query := `INSERT INTO users (id, username, password_hash) VALUES ($1, $2, $3)`
+	_, err = s.pool.Exec(ctx, query, userID, placeholderUsername, placeholderPassword)
+	if err != nil {
+		return fmt.Errorf("failed to create placeholder user: %w", err)
+	}
+	log.Info().Str("user_id", userID).Msg("Created placeholder user for bot/trade")
+	return nil
 }
 
 // --- Portfolio Management ---

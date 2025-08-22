@@ -95,7 +95,7 @@ class TradingOrchestrator:
                     for bot in bot_list.bots:
                         if not getattr(bot, "is_active", False):
                             print(f"[Orchestrator] Skipping inactive bot: {bot.name} ({bot.bot_id})")
-                            pass  # Skip inactive bots
+                            continue  # Skip inactive bots
                         print(f"[Orchestrator] Processing bot: {bot.name} ({bot.bot_id})")
                         print(f"[Orchestrator] Processing bot: {bot.name} ({bot.bot_id})")
                         # 2. Fetch current price for bot's symbol
@@ -161,9 +161,11 @@ class TradingOrchestrator:
                                 print(f"Error calculating VaR for bot {bot.name}: {e.details()}")
                         # Add logging for trade execution
 
-                    # After trading logic, fetch trade history:
-                    self.fetch_trade_history(trading_stub, bot.bot_id, metadata)
+                        # After trading logic, fetch trade history:
+                        self.fetch_trade_history(trading_stub, bot.bot_id, metadata)
+
                     time.sleep(20)
+
                 except Exception as e:
                     print(f"Error in orchestrator loop: {str(e)}")
                     time.sleep(60)
