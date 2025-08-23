@@ -1,4 +1,4 @@
-version: "3.9"
+# version: "3.9"
 services:
   risk:
     build:
@@ -17,9 +17,9 @@ services:
       - AUTH_SECRET=${AUTH_SECRET}
       - CORS_ALLOWED_ORIGINS=${CORS_ALLOWED_ORIGINS:-http://localhost:3000,https://app.aetherion.cloud, https://api.aetherion.cloud, https://www.aetherion.cloud}
       - AUTH_PREVIOUS_SECRET=${AUTH_PREVIOUS_SECRET:-}
-      - DEFAULT_SYMBOLS=${DEFAULT_SYMBOLS}
-      - LOG_LEVEL=${LOG_LEVEL}
-      - REQUEST_TIMEOUT=${REQUEST_TIMEOUT}
+      # - DEFAULT_SYMBOLS=${DEFAULT_SYMBOLS}
+      # - LOG_LEVEL=${LOG_LEVEL}
+      # - REQUEST_TIMEOUT=${REQUEST_TIMEOUT}
       - POSTGRES_DSN=postgres://user:password@postgres:5432/aetherion?sslmode=disable
     depends_on:
       - risk

@@ -9,6 +9,7 @@ import (
 type Strategy struct {
 	ID           string
 	UserID       string
+	BotId        string
 	Symbol       string
 	StrategyType string
 	Parameters   map[string]string

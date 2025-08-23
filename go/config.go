@@ -54,7 +54,7 @@ func loadConfig() (*AppConfig, error) {
 	// Symbols (comma-separated)
 	rawSyms := os.Getenv("DEFAULT_SYMBOLS")
 	if rawSyms == "" {
-		cfg.DefaultSymbols = []string{"BTC-USD", "ETH-USD", "SOL-USD", "ILV-USD"}
+		cfg.DefaultSymbols = []string{"BTC-USD", "ETH-USD", "XRP-USD", "BNB-USD", "SOL-USD", "ADA-USD", "DOGE-USD", "TRX-USD", "LINK-USD", "DOT-USD", "MATIC-USD", "TON-USD", "SHIB-USD", "DAI-USD", "BCH-USD", "LTC-USD", "NEAR-USD"}
 	} else {
 		parts := strings.Split(rawSyms, ",")
 		for _, p := range parts {
@@ -63,7 +63,10 @@ func loadConfig() (*AppConfig, error) {
 			}
 		}
 		if len(cfg.DefaultSymbols) == 0 {
-			cfg.DefaultSymbols = []string{"BTC-USD", "ETH-USD", "SOL-USD", "ILV-USD"}
+			cfg.DefaultSymbols = []string{"BTC-USD", "ETH-USD", "XRP-USD", "BNB-USD", "SOL-USD",
+				"ADA-USD", "DOGE-USD", "TRX-USD", "LINK-USD",
+				"DOT-USD", "MATIC-USD", "TON-USD", "SHIB-USD", "DAI-USD", "BCH-USD",
+				"LTC-USD", "NEAR-USD"}
 		}
 	}
 	return cfg, cfg.validate()

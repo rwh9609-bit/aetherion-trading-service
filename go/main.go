@@ -27,6 +27,7 @@ import (
 	"google.golang.org/grpc/keepalive"
 	"google.golang.org/grpc/reflection"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 // timeoutUnary enforces a per-request timeout if parent has none.
@@ -123,6 +124,61 @@ type CoinbasePriceResponse struct {
 	Data struct {
 		Amount string `json:"amount"`
 	}
+}
+
+// --- BotServiceServer implementation ---
+type botServiceServer struct {
+	pb.BotServiceServer
+	reg      *botRegistry
+	trading  *tradingServer
+	dbclient *DBService
+}
+
+func newBotServiceServer(reg *botRegistry, trading *tradingServer, dbclient *DBService) *botServiceServer {
+	log.Printf("Creating BotServiceServer with registry at %s", reg.path)
+	return &botServiceServer{reg: reg, trading: trading, dbclient: dbclient}
+}
+
+func (s *botServiceServer) CreateBot(ctx context.Context, req *pb.CreateBotRequest) (*pb.StatusResponse, error) {
+	log.Printf("[CreateBot] Handler entered")
+	if req.GetName() == "" || len(req.GetSymbols()) == 0 || req.GetStrategyName() == "" {
+		return &pb.StatusResponse{Success: false, Message: "name, symbols, strategy_name required"}, nil
+	}
+	userID, ok := ctx.Value("user_id").(string)
+	if !ok || userID == "" {
+		return &pb.StatusResponse{Success: false, Message: "auth required"}, nil
+	}
+	id := uuid.New().String()
+	now := timestamppb.Now()
+	bot := &pb.Bot{
+		Id:                  id,
+		UserId:              userID,
+		Name:                req.GetName(),
+		Description:         req.GetDescription(),
+		Symbols:             req.GetSymbols(),
+		StrategyName:        req.GetStrategyName(),
+		StrategyParameters:  req.GetStrategyParameters(),
+		InitialAccountValue: req.GetInitialAccountValue(),
+		CurrentAccountValue: req.GetInitialAccountValue(),
+		IsActive:            false,
+		IsLive:              req.GetIsLive(),
+		CreatedAt:           now,
+		UpdatedAt:           now,
+	}
+	// Persist to DB
+	if s.dbclient != nil {
+		_, err := s.dbclient.CreateBot(ctx, bot)
+		if err != nil {
+			log.Printf("[CreateBot] Error adding bot to database: %v", err)
+			return &pb.StatusResponse{Success: false, Message: err.Error()}, nil
+		}
+	}
+	// Add to registry (in-memory)
+	s.reg.mu.Lock()
+	s.reg.bots[id] = bot
+	s.reg.mu.Unlock()
+	s.reg.persist()
+	return &pb.StatusResponse{Success: true, Message: "bot created", Id: id}, nil
 }
 
 // Function to fetch price from Coinbase REST API
@@ -278,45 +334,15 @@ func (s *tradingServer) GetPrice(ctx context.Context, req *pb.Tick) (*pb.Tick, e
 	return &pb.Tick{Symbol: req.Symbol, Price: price, TimestampNs: time.Now().UnixNano()}, nil
 }
 
-// StartStrategy is a standard RPC call
-func (s *tradingServer) StartStrategy(ctx context.Context, req *pb.StrategyRequest) (*pb.StatusResponse, error) {
-	// Create a new strategy instance
-	log.Printf("[Go Server] Starting strategy for %s with parameters: %v", req.Symbol, req.Parameters)
-	strategy := &Strategy{
-		ID:           uuid.New().String(),
-		Symbol:       req.Symbol,
-		StrategyType: req.Parameters["type"],
-		Parameters:   req.Parameters,
-		IsActive:     true,
-		CreatedAt:    time.Now(),
-	}
-
-	// Store the strategy in the server's strategies map
-	s.mu.Lock()
-	s.strategies[strategy.ID] = strategy
-	s.mu.Unlock()
-
-	// Start strategy-specific processing in a goroutine
-	go func() {
-		strategy.Run(ctx, s)
-	}()
-
-	return &pb.StatusResponse{
-		Success: true,
-		Message: fmt.Sprintf("Strategy started with ID: %s", strategy.ID),
-		Id:      strategy.ID,
-	}, nil
-}
-
 func (s *tradingServer) GetTradeHistory(ctx context.Context, req *pb.TradeHistoryRequest) (*pb.TradeHistoryResponse, error) {
 	if s.dbService == nil {
 		return nil, fmt.Errorf("trade history unavailable")
 	}
-	userID := req.GetUserId()
-	if userID == "" {
-		return nil, status.Error(codes.InvalidArgument, "user_id is required")
+	botId := req.BotId
+	if botId == "" {
+		return nil, status.Error(codes.InvalidArgument, "bot_id is required")
 	}
-	trades, err := s.dbService.GetTradesByUserID(ctx, userID)
+	trades, err := s.dbService.GetTradesByBotID(ctx, botId)
 	if err != nil {
 		log.Error().Err(err).Msg("Failed to get trade history")
 		return nil, err
@@ -326,23 +352,17 @@ func (s *tradingServer) GetTradeHistory(ctx context.Context, req *pb.TradeHistor
 	pbTrades := make([]*pb.Trade, len(trades))
 	for i, trade := range trades {
 		pbTrades[i] = &pb.Trade{
-			TradeId: trade.ID, StrategyId: trade.StrategyID,
-			Symbol: trade.Symbol, Side: trade.Side, Quantity: trade.Quantity,
-			Price: trade.Price, ExecutedAt: trade.ExecutedAt.UnixNano()}
+			TradeId:    trade.ID,
+			StrategyId: trade.StrategyID,
+			Symbol:     trade.Symbol,
+			Side:       trade.Side,
+			Quantity:   trade.Quantity,
+			Price:      trade.Price,
+			ExecutedAt: trade.ExecutedAt.UnixNano(),
+		}
 	}
 	return &pb.TradeHistoryResponse{Trades: pbTrades}, nil
 
-}
-
-// StopStrategy stops a running strategy
-func (s *tradingServer) StopStrategy(ctx context.Context, req *pb.StrategyRequest) (*pb.StatusResponse, error) {
-	fmt.Printf("[Go Server] Stopping strategy %s for %s\n", req.StrategyId, req.Symbol)
-
-	s.mu.Lock()
-	delete(s.activeSymbols, req.Symbol)
-	s.mu.Unlock()
-
-	return &pb.StatusResponse{Success: true, Message: "Strategy stopped"}, nil
 }
 
 // --- Bot Management RPCs ---
@@ -350,7 +370,7 @@ func (s *tradingServer) StopStrategy(ctx context.Context, req *pb.StrategyReques
 // GetPortfolio returns the current portfolio status
 func (s *tradingServer) GetPortfolio(ctx context.Context, req *pb.PortfolioRequest) (*pb.Portfolio, error) {
 	s.mu.RLock()
-	portfolio, exists := s.portfolios[req.AccountId]
+	portfolio, exists := s.portfolios[req.BotId]
 	s.mu.RUnlock()
 
 	if !exists {
@@ -363,7 +383,7 @@ func (s *tradingServer) GetPortfolio(ctx context.Context, req *pb.PortfolioReque
 			TotalValueUsd: 10000005.0,
 		}
 		s.mu.Lock()
-		s.portfolios[req.AccountId] = portfolio
+		s.portfolios[req.BotId] = portfolio
 		s.mu.Unlock()
 	}
 
@@ -432,35 +452,6 @@ func (s *tradingServer) StreamOrderBook(req *pb.OrderBookRequest, stream pb.Trad
 				return err
 			}
 		}
-	}
-}
-
-// SubscribeTicks is a server-streaming RPC
-func (s *tradingServer) SubscribeTicks(req *pb.StrategyRequest, stream pb.TradingService_SubscribeTicksServer) error {
-	fmt.Printf("[Go Server] Client subscribed to ticks for %s\n", req.Symbol)
-	// In a real app, this would connect to an exchange feed.
-	// Here, we fetch real price from Coinbase.
-	for {
-		// Coinbase uses symbol format like BTC-USD
-		coinbaseSymbol := req.Symbol
-
-		price, err := GetCoinbasePrice(coinbaseSymbol)
-		if err != nil {
-			log.Printf("Error fetching price for %s: %v", coinbaseSymbol, err)
-			time.Sleep(1 * time.Second) // Wait before retrying
-			continue
-		}
-
-		tick := &pb.Tick{
-			Symbol:      req.Symbol,
-			Price:       price, // Use the fetched real price
-			TimestampNs: time.Now().UnixNano(),
-		}
-		if err := stream.Send(tick); err != nil {
-			log.Printf("Error sending tick: %v", err)
-			return err
-		}
-		time.Sleep(100 * time.Millisecond) // Send ticks every 100ms
 	}
 }
 
@@ -792,6 +783,7 @@ func main() {
 
 	// Market data feed (dynamic)
 	feedSymbols := append([]string{}, cfg.DefaultSymbols...)
+	log.Info().Strs("symbols", feedSymbols).Msg("initializing market data feed")
 	feed := NewCoinbaseFeed(tradingService.eventBus, func(sym string, price float64) {
 		tradingService.priceMu.Lock()
 		tradingService.lastPrices[sym] = price

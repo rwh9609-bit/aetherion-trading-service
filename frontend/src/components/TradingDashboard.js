@@ -36,7 +36,12 @@ const TradingDashboard = ({ user, selectedBot, setUser, setView }) => {
           // Optionally handle gRPC errors here:
           handleGrpcError(e, setUser, setView);
           // Fallback defaults if backend call fails
-          const fallback = ['BTC-USD','ETH-USD','SOL-USD','ILV-USD'];
+          const fallback = [
+  'BTC-USD', 'ETH-USD', 'XRP-USD', 'BNB-USD', 'SOL-USD',  'ADA-USD', 'DOGE-USD', 
+  'TRX-USD', 'LINK-USD',
+  'DOT-USD', 'MATIC-USD', 'TON-USD', 'SHIB-USD', 'DAI-USD', 'BCH-USD',
+  'LTC-USD', 'NEAR-USD'
+];
           setSymbols(fallback);
           setSelected(fallback[0]);
         }
@@ -62,45 +67,32 @@ const TradingDashboard = ({ user, selectedBot, setUser, setView }) => {
         <Box sx={{ mb: 3, p: 2, border: '1px solid rgba(255,255,255,0.1)', borderRadius: 1 }}>
           <Typography variant="h6" gutterBottom>Selected Bot:</Typography>
           <Typography variant="body1"><strong>Name:</strong> {selectedBot.name}</Typography>
-          <Typography variant="body1"><strong>Symbol:</strong> {selectedBot.symbol}</Typography>
           <Typography variant="body1"><strong>Strategy:</strong> {selectedBot.strategy}</Typography>
           <Typography variant="body1"><strong>Status:</strong> {selectedBot.isActive ? 'Running' : 'Stopped'}</Typography>
         </Box>
       )}
 
       <Box>
-        <RecentTrades user={user} />
+        {selectedBot && selectedBot.id
+          ? (
+              <>
+                {console.log('Rendering RecentTrades for bot:', selectedBot)}
+                <RecentTrades bot={selectedBot} />
+              </>
+            )
+          : (
+              <>
+                {console.log('No bot selected, showing message')}
+                <Typography sx={{ p: 2 }}>No bot selected.</Typography>
+              </>
+            )
+        }
       </Box>
       <Box sx={{ display:'grid', gap:3, gridTemplateColumns: { xs:'1fr' }, alignItems:'start' }}>
-        <Box sx={{ gridColumn:'1 / -1', display:'flex', flexDirection:'column', gap:1 }}>
-          <Box sx={{ display:'flex', alignItems:{ xs:'stretch', sm:'center' }, flexWrap:'wrap', gap:2, justifyContent:'space-between' }}>
-            <Box sx={{ flex:1, minWidth:260 }}>
-              <SymbolManager
-                symbols={symbols}
-                onAdd={handleAdd}
-                onRemove={handleRemove}
-                selected={selected}
-                onSelect={setSelected}
-                disabled={loading}
-                loadError={loadError}
-              />
-            </Box>
-            <Box sx={{ display:'flex', alignItems:'center', gap:1 }}>
-              <Typography variant="subtitle2" sx={{ fontWeight:600 }}>Momentum:</Typography>
-              <ToggleButtonGroup size="small" exclusive value={momentumMode} onChange={(e,v)=> v && setMomentumMode(v)}>
-                <ToggleButton value="client">Live</ToggleButton>
-                <ToggleButton value="server">Server</ToggleButton>
-              </ToggleButtonGroup>
-            </Box>
-          </Box>
-        </Box>
+
         <Box sx={{ display:'grid', gap:3, gridTemplateColumns:{ xs:'1fr' }, minWidth:0 }}>
-          <Box>
+          <Box sx={{ height: '600px' }}>
             {momentumMode === 'client' && <CryptoScanner symbols={symbols} onSelect={(sym)=> setSelected(sym)} />}
-            {momentumMode === 'server' && <ServerMomentum onSelect={(sym)=> setSelected(sym)} />}
-          </Box>
-          <Box>
-            <OhlcPriceChart symbol={selected} />
           </Box>
         </Box>
       </Box>
