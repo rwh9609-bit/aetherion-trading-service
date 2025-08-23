@@ -8,13 +8,11 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
-	"math"
 	"net"
 	"net/http"
 	"os"
 	"os/signal"
 	"strconv"
-	"sync"
 	"syscall"
 	"time"
 
@@ -23,10 +21,8 @@ import (
 	"github.com/rs/zerolog/log"
 	pb "github.com/rwh9609-bit/multilanguage/go/gen"
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/keepalive"
 	"google.golang.org/grpc/reflection"
-	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
@@ -87,35 +83,30 @@ func (ob *OrderBookManager) AddAsk(price, size float64) {
 	defer ob.Mu.Unlock()
 	heap.Push(ob.Asks, PriceLevel{Price: price, Size: size})
 }
-
-func (ob *OrderBookManager) GetTopLevels(numLevels int) ([]*pb.OrderBookEntry, []*pb.OrderBookEntry) {
+func (ob *OrderBookManager) GetTopLevels(numLevels int) ([]OrderBookEntry, []OrderBookEntry) {
 	ob.Mu.RLock()
 	defer ob.Mu.RUnlock()
 
-	bids := make([]*pb.OrderBookEntry, 0, numLevels)
-	asks := make([]*pb.OrderBookEntry, 0, numLevels)
+	bids := make([]OrderBookEntry, 0, numLevels)
+	asks := make([]OrderBookEntry, 0, numLevels)
 
 	now := time.Now().UnixMilli()
-	// Get top bids
 	for i := 0; i < numLevels && i < len(*ob.Bids); i++ {
 		bid := (*ob.Bids)[i]
-		bids = append(bids, &pb.OrderBookEntry{
+		bids = append(bids, OrderBookEntry{
 			Price:     bid.Price,
 			Size:      bid.Size,
 			Timestamp: now,
 		})
 	}
-
-	// Get top asks
 	for i := 0; i < numLevels && i < len(*ob.Asks); i++ {
 		ask := (*ob.Asks)[i]
-		asks = append(asks, &pb.OrderBookEntry{
+		asks = append(asks, OrderBookEntry{
 			Price:     ask.Price,
 			Size:      ask.Size,
 			Timestamp: now,
 		})
 	}
-
 	return bids, asks
 }
 
@@ -130,13 +121,12 @@ type CoinbasePriceResponse struct {
 type botServiceServer struct {
 	pb.BotServiceServer
 	reg      *botRegistry
-	trading  *tradingServer
 	dbclient *DBService
 }
 
-func newBotServiceServer(reg *botRegistry, trading *tradingServer, dbclient *DBService) *botServiceServer {
+func newBotServiceServer(reg *botRegistry, dbclient *DBService) *botServiceServer {
 	log.Printf("Creating BotServiceServer with registry at %s", reg.path)
-	return &botServiceServer{reg: reg, trading: trading, dbclient: dbclient}
+	return &botServiceServer{reg: reg, dbclient: dbclient}
 }
 
 func (s *botServiceServer) CreateBot(ctx context.Context, req *pb.CreateBotRequest) (*pb.StatusResponse, error) {
@@ -231,7 +221,7 @@ type OrderBookEntry struct {
 	Timestamp int64 // Unix epoch milliseconds
 }
 
-func (s *Strategy) Run(ctx context.Context, server *tradingServer) {
+func (s *Strategy) Run(ctx context.Context) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
@@ -280,443 +270,9 @@ func (s *Strategy) Run(ctx context.Context, server *tradingServer) {
 	}
 }
 
-// server implements the TradingService
-type tradingServer struct {
-	pb.TradingServiceServer
-	orderBooks    map[string]*OrderBookManager // symbol -> order book
-	portfolios    map[string]*pb.Portfolio     // account -> portfolio
-	activeSymbols map[string]bool              // currently tracked symbols
-	strategies    map[string]*Strategy         // active strategies
-	mu            sync.RWMutex                 // protects concurrent access
-	eventBus      *EventBus
-	lastPrices    map[string]float64
-	priceMu       sync.RWMutex
-	feed          *CoinbaseFeed // market data feed controller (injected)
-	// in-memory price history for momentum metrics: symbol -> slice of (ts, price)
-	histMu    sync.RWMutex
-	priceHist map[string][]histPoint
-	dbService *DBService
-}
-
 type histPoint struct {
 	ts    time.Time
 	price float64
-}
-
-func newTradingServer() *tradingServer {
-	return &tradingServer{
-		orderBooks:    make(map[string]*OrderBookManager),
-		portfolios:    make(map[string]*pb.Portfolio),
-		activeSymbols: make(map[string]bool),
-		strategies:    make(map[string]*Strategy),
-		eventBus:      NewEventBus(),
-		lastPrices:    make(map[string]float64),
-		priceHist:     make(map[string][]histPoint),
-	}
-}
-
-// GetPrice returns the current price for a symbol
-func (s *tradingServer) GetPrice(ctx context.Context, req *pb.Tick) (*pb.Tick, error) {
-	// Use cached websocket price if present
-	s.priceMu.RLock()
-	price, ok := s.lastPrices[req.Symbol]
-	s.priceMu.RUnlock()
-	if !ok {
-		p, err := GetCoinbasePrice(req.Symbol)
-		if err != nil {
-			return nil, fmt.Errorf("failed to get price: %w", err)
-		}
-		price = p
-		s.priceMu.Lock()
-		s.lastPrices[req.Symbol] = price
-		s.priceMu.Unlock()
-	}
-	return &pb.Tick{Symbol: req.Symbol, Price: price, TimestampNs: time.Now().UnixNano()}, nil
-}
-
-func (s *tradingServer) GetTradeHistory(ctx context.Context, req *pb.TradeHistoryRequest) (*pb.TradeHistoryResponse, error) {
-	if s.dbService == nil {
-		return nil, fmt.Errorf("trade history unavailable")
-	}
-	botId := req.BotId
-	if botId == "" {
-		return nil, status.Error(codes.InvalidArgument, "bot_id is required")
-	}
-	trades, err := s.dbService.GetTradesByBotID(ctx, botId)
-	if err != nil {
-		log.Error().Err(err).Msg("Failed to get trade history")
-		return nil, err
-	}
-
-	// Convert []*Trade to []*pb.Trade
-	pbTrades := make([]*pb.Trade, len(trades))
-	for i, trade := range trades {
-		pbTrades[i] = &pb.Trade{
-			TradeId:    trade.ID,
-			StrategyId: trade.StrategyID,
-			Symbol:     trade.Symbol,
-			Side:       trade.Side,
-			Quantity:   trade.Quantity,
-			Price:      trade.Price,
-			ExecutedAt: trade.ExecutedAt.UnixNano(),
-		}
-	}
-	return &pb.TradeHistoryResponse{Trades: pbTrades}, nil
-
-}
-
-// --- Bot Management RPCs ---
-
-// GetPortfolio returns the current portfolio status
-func (s *tradingServer) GetPortfolio(ctx context.Context, req *pb.PortfolioRequest) (*pb.Portfolio, error) {
-	s.mu.RLock()
-	portfolio, exists := s.portfolios[req.BotId]
-	s.mu.RUnlock()
-
-	if !exists {
-		// Create a new portfolio with some mock data
-		portfolio = &pb.Portfolio{
-			Positions: map[string]float64{
-				"BTC": 1.5,
-				"USD": 50000.0,
-			},
-			TotalValueUsd: 10000005.0,
-		}
-		s.mu.Lock()
-		s.portfolios[req.BotId] = portfolio
-		s.mu.Unlock()
-	}
-
-	return portfolio, nil
-}
-
-// StreamOrderBook streams order book updates
-func (s *tradingServer) StreamOrderBook(req *pb.OrderBookRequest, stream pb.TradingService_StreamOrderBookServer) error {
-	symbol := req.Symbol
-
-	s.mu.Lock()
-	if _, exists := s.orderBooks[symbol]; !exists {
-		s.orderBooks[symbol] = NewOrderBookManager()
-	}
-	manager := s.orderBooks[symbol]
-	s.mu.Unlock()
-
-	ticker := time.NewTicker(100 * time.Millisecond)
-	defer ticker.Stop()
-
-	for {
-		select {
-		case <-stream.Context().Done():
-			return nil
-		case <-ticker.C:
-			// Get the current price to simulate order book around it
-			price, err := GetCoinbasePrice(symbol)
-			if err != nil {
-				log.Printf("Error getting price for %s: %v", symbol, err)
-				continue
-			}
-
-			// Simulate some orders around the current price
-			manager.AddBid(price-10, 1.2)
-			manager.AddBid(price-20, 2.5)
-			manager.AddBid(price-30, 3.0)
-			manager.AddAsk(price+10, 1.0)
-			manager.AddAsk(price+20, 2.0)
-			manager.AddAsk(price+30, 1.5)
-
-			bids, asks := manager.GetTopLevels(10)
-
-			// Convert to protobuf message
-			orderBook := &pb.OrderBook{
-				Symbol: symbol,
-				Bids:   make([]*pb.OrderBookEntry, len(bids)),
-				Asks:   make([]*pb.OrderBookEntry, len(asks)),
-			}
-
-			for i, bid := range bids {
-				orderBook.Bids[i] = &pb.OrderBookEntry{
-					Price: bid.Price,
-					Size:  bid.Size,
-				}
-			}
-
-			for i, ask := range asks {
-				orderBook.Asks[i] = &pb.OrderBookEntry{
-					Price: ask.Price,
-					Size:  ask.Size,
-				}
-			}
-
-			if err := stream.Send(orderBook); err != nil {
-				log.Printf("Error sending order book update: %v", err)
-				return err
-			}
-		}
-	}
-}
-
-// StreamPrice streams cached websocket-derived ticks via internal event bus (low latency)
-func (s *tradingServer) StreamPrice(req *pb.TickStreamRequest, stream pb.TradingService_StreamPriceServer) error {
-	// Immediate send of last known price if we have it
-	if req.Symbol != "" {
-		s.priceMu.RLock()
-		p, ok := s.lastPrices[req.Symbol]
-		s.priceMu.RUnlock()
-		if ok {
-			_ = stream.Send(&pb.Tick{Symbol: req.Symbol, Price: p, TimestampNs: time.Now().UnixNano()})
-		}
-	}
-	id, ch := s.eventBus.Subscribe(256)
-	defer s.eventBus.Unsubscribe(id)
-	for {
-		select {
-		case <-stream.Context().Done():
-			return nil
-		case evt := <-ch:
-			if evt.Type != EventPriceTick {
-				continue
-			}
-			tick := evt.Data.(PriceTick)
-			if req.Symbol != "" && tick.Symbol != req.Symbol {
-				continue
-			}
-			if err := stream.Send(&pb.Tick{Symbol: tick.Symbol, Price: tick.Price, TimestampNs: tick.Ts.UnixNano()}); err != nil {
-				return err
-			}
-			// record into history for momentum metrics
-			s.histMu.Lock()
-			hp := histPoint{ts: tick.Ts, price: tick.Price}
-			arr := append(s.priceHist[tick.Symbol], hp)
-			// drop entries older than 6 minutes to bound memory
-			cutoff := time.Now().Add(-6 * time.Minute)
-			idx := 0
-			for i := len(arr) - 1; i >= 0; i-- {
-				if arr[i].ts.Before(cutoff) {
-					idx = i + 1
-					break
-				}
-			}
-			if idx > 0 {
-				arr = arr[idx:]
-			}
-			s.priceHist[tick.Symbol] = arr
-			s.histMu.Unlock()
-		}
-	}
-}
-
-// GetMomentum aggregates short-term momentum metrics server-side similar to frontend scanner
-func (s *tradingServer) GetMomentum(ctx context.Context, req *pb.MomentumRequest) (*pb.MomentumResponse, error) {
-	// determine symbol set
-	symbols := req.GetSymbols()
-	if len(symbols) == 0 {
-		s.priceMu.RLock()
-		for sym := range s.lastPrices {
-			symbols = append(symbols, sym)
-		}
-		s.priceMu.RUnlock()
-	}
-	now := time.Now()
-	oneMin := now.Add(-1 * time.Minute)
-	fiveMin := now.Add(-5 * time.Minute)
-	result := &pb.MomentumResponse{GeneratedAtUnixMs: now.UnixMilli()}
-	s.histMu.RLock()
-	defer s.histMu.RUnlock()
-	for _, sym := range symbols {
-		hist := s.priceHist[sym]
-		if len(hist) < 2 {
-			continue
-		}
-		var price5mSet bool
-		var price5m, price1m, last float64
-		var have1m bool
-		var logRets []float64
-		prev := hist[0].price
-		for _, pt := range hist {
-			if !price5mSet && !pt.ts.Before(fiveMin) {
-				price5m = pt.price
-				price5mSet = true
-			}
-			if !have1m && !pt.ts.Before(oneMin) {
-				price1m = pt.price
-				have1m = true
-			}
-			if pt.price > 0 && prev > 0 {
-				logRets = append(logRets, math.Log(pt.price/prev))
-			}
-			prev = pt.price
-			last = pt.price
-		}
-		if !price5mSet {
-			price5m = hist[0].price
-		}
-		if !have1m {
-			price1m = price5m
-		}
-		if price5m == 0 || price1m == 0 {
-			continue
-		}
-		pct1m := ((last - price1m) / price1m) * 100
-		pct5m := ((last - price5m) / price5m) * 100
-		if len(logRets) < 2 {
-			continue
-		}
-		mean := 0.0
-		for _, v := range logRets {
-			mean += v
-		}
-		mean /= float64(len(logRets))
-		varVar := 0.0
-		for _, v := range logRets {
-			d := v - mean
-			varVar += d * d
-		}
-		varVar /= float64(len(logRets))
-		vol := math.Sqrt(varVar) * math.Sqrt((60*60*24)/(5*60))
-		score := pct1m*0.7 + pct5m*0.3 - (vol*100)*0.5
-		result.Metrics = append(result.Metrics, &pb.MomentumMetric{Symbol: sym, LastPrice: last, PctChange_1M: pct1m, PctChange_5M: pct5m, Volatility: vol, MomentumScore: score})
-	}
-	// simple sort descending by score
-	if len(result.Metrics) > 1 {
-		// insertion sort (few symbols typical)
-		for i := 1; i < len(result.Metrics); i++ {
-			j := i
-			for j > 0 && result.Metrics[j-1].MomentumScore < result.Metrics[j].MomentumScore {
-				result.Metrics[j-1], result.Metrics[j] = result.Metrics[j], result.Metrics[j-1]
-				j--
-			}
-		}
-	}
-	return result, nil
-}
-
-// AddSymbol adds a symbol to the dynamic websocket feed
-func (s *tradingServer) AddSymbol(ctx context.Context, req *pb.SymbolRequest) (*pb.StatusResponse, error) {
-	sym := req.Symbol
-	if sym == "" {
-		return &pb.StatusResponse{Success: false, Message: "symbol required"}, nil
-	}
-	if s.feed == nil {
-		return &pb.StatusResponse{Success: false, Message: "feed not initialized"}, nil
-	}
-	if err := s.feed.EnsureSymbol(sym); err != nil {
-		log.Printf("Error ensuring symbol in feed: %v", err)
-		return &pb.StatusResponse{Success: false, Message: err.Error()}, nil
-	}
-	return &pb.StatusResponse{Success: true, Message: "symbol added"}, nil
-}
-
-// RemoveSymbol removes a symbol from the dynamic websocket feed
-func (s *tradingServer) RemoveSymbol(ctx context.Context, req *pb.SymbolRequest) (*pb.StatusResponse, error) {
-	sym := req.Symbol
-	if sym == "" {
-		return &pb.StatusResponse{Success: false, Message: "symbol required"}, nil
-	}
-	if s.feed == nil {
-		return &pb.StatusResponse{Success: false, Message: "feed not initialized"}, nil
-	}
-	if err := s.feed.RemoveSymbol(sym); err != nil {
-		log.Printf("Error removing symbol from feed: %v", err)
-		return &pb.StatusResponse{Success: false, Message: err.Error()}, nil
-	}
-	return &pb.StatusResponse{Success: true, Message: "symbol removed"}, nil
-}
-
-// ListSymbols returns current subscribed symbols (from feed internal state)
-func (s *tradingServer) ListSymbols(ctx context.Context, _ *pb.Empty) (*pb.SymbolList, error) {
-	if s.feed == nil {
-		return &pb.SymbolList{Symbols: []string{}}, nil
-	}
-	s.feed.mu.Lock()
-	symbols := make([]string, 0, len(s.feed.subscribed))
-	for sym := range s.feed.subscribed {
-		symbols = append(symbols, sym)
-	}
-	s.feed.mu.Unlock()
-	return &pb.SymbolList{Symbols: symbols}, nil
-}
-
-// Add to tradingServer methods
-func (s *tradingServer) ExecuteTrade(ctx context.Context, req *pb.TradeRequest) (*pb.TradeResponse, error) {
-	// Basic validation
-	if req.Symbol == "" || req.Size <= 0 {
-		return &pb.TradeResponse{Accepted: false, Message: "invalid trade parameters"}, nil
-	}
-	side := req.Side
-	if side != "BUY" && side != "SELL" {
-		return &pb.TradeResponse{Accepted: false, Message: "side must be BUY or SELL"}, nil
-	}
-	// Validate user ID is a UUID
-	if _, err := uuid.Parse(req.UserId); err != nil {
-		return &pb.TradeResponse{Accepted: false, Message: "user_id must be a valid UUID"}, nil
-	}
-	// Get reference price (use provided price if >0 else fetch current)
-	execPrice := req.Price
-	if execPrice <= 0 {
-		tick, err := s.GetPrice(ctx, &pb.Tick{Symbol: req.Symbol})
-		if err != nil {
-			log.Printf("Error getting price for symbol %s: %v", req.Symbol, err)
-			return &pb.TradeResponse{Accepted: false, Message: "price unavailable"}, nil
-		}
-		execPrice = tick.Price
-	}
-
-	accountID := "default"
-	s.mu.Lock()
-	portfolio, exists := s.portfolios[accountID]
-	if !exists {
-		portfolio = &pb.Portfolio{Positions: map[string]float64{"USD": 10000004}}
-		s.portfolios[accountID] = portfolio
-	}
-	// Initialize symbol position if absent
-	if _, ok := portfolio.Positions[req.Symbol]; !ok {
-		portfolio.Positions[req.Symbol] = 0
-	}
-	// Simple cash/position update (no fees, slippage)
-	qty := req.Size
-	notional := qty * execPrice
-	if side == "BUY" {
-		// Ensure sufficient USD
-		if portfolio.Positions["USD"] < notional {
-			s.mu.Unlock()
-			return &pb.TradeResponse{Accepted: false, Message: "insufficient USD balance"}, nil
-		}
-		portfolio.Positions[req.Symbol] += qty
-		portfolio.Positions["USD"] -= notional
-	} else { // SELL
-		if portfolio.Positions[req.Symbol] < qty {
-			s.mu.Unlock()
-			return &pb.TradeResponse{Accepted: false, Message: "insufficient position"}, nil
-		}
-		portfolio.Positions[req.Symbol] -= qty
-		portfolio.Positions["USD"] += notional
-	}
-	s.mu.Unlock()
-
-	// PnL simplified: positive for SELL, negative for BUY relative to notional (placeholder)
-	pnl := 0.0
-	if side == "SELL" {
-		pnl = notional * 0.0 // placeholder for realized PnL tracking
-	}
-	// After updating portfolio, record the trade:
-	trade := &Trade{
-		ID:         uuid.New().String(),
-		UserID:     req.UserId,     // Make sure this is set by the bot/user
-		StrategyID: req.StrategyId, // Set by bot if applicable
-		Symbol:     req.Symbol,
-		Side:       req.Side,
-		Quantity:   req.Size,
-		Price:      execPrice,
-		ExecutedAt: time.Now(),
-		PnL:        pnl,
-	}
-	if s.dbService != nil {
-		if err := s.dbService.RecordTrade(ctx, trade); err != nil {
-			log.Error().Err(err).Msg("failed to record trade")
-		}
-	}
-
-	return &pb.TradeResponse{Accepted: true, Message: "executed", ExecutedPrice: execPrice, Pnl: pnl}, nil
 }
 
 func main() {
@@ -769,49 +325,20 @@ func main() {
 		log.Fatal().Err(err).Msg("failed to initialize DBService")
 	}
 
-	// Create and register our trading service
-	tradingService := newTradingServer()
-	tradingService.dbService = dbService
-	pb.RegisterTradingServiceServer(grpcServer, tradingService)
-
 	// Bot service (in-memory)
 	reg := newBotRegistry()
-	botSvc := newBotServiceServer(reg, tradingService, dbService)
+	botSvc := newBotServiceServer(reg, dbService)
 	pb.RegisterBotServiceServer(grpcServer, botSvc)
+
+	// Auth service
+	authSvc := newAuthServer(secret)
+	pb.RegisterAuthServiceServer(grpcServer, authSvc)
 
 	reflection.Register(grpcServer) // Register reflection service for gRPC CLI tools
 
 	// Market data feed (dynamic)
 	feedSymbols := append([]string{}, cfg.DefaultSymbols...)
 	log.Info().Strs("symbols", feedSymbols).Msg("initializing market data feed")
-	feed := NewCoinbaseFeed(tradingService.eventBus, func(sym string, price float64) {
-		tradingService.priceMu.Lock()
-		tradingService.lastPrices[sym] = price
-		tradingService.priceMu.Unlock()
-		// record history for momentum metrics (store recent <=6m)
-		tradingService.histMu.Lock()
-		arr := append(tradingService.priceHist[sym], histPoint{ts: time.Now(), price: price})
-		cutoff := time.Now().Add(-6 * time.Minute)
-		idx := 0
-		for i := len(arr) - 1; i >= 0; i-- {
-			if arr[i].ts.Before(cutoff) {
-				idx = i + 1
-				break
-			}
-		}
-		if idx > 0 {
-			arr = arr[idx:]
-		}
-		tradingService.priceHist[sym] = arr
-		tradingService.histMu.Unlock()
-	})
-	feed.Start(feedSymbols)
-	log.Info().Strs("symbols", feedSymbols).Msg("market data feed started")
-	tradingService.feed = feed
-
-	// Auth service
-	authSvc := newAuthServer(secret)
-	pb.RegisterAuthServiceServer(grpcServer, authSvc)
 
 	// Lightweight HTTP health endpoint (separate listener) for container health checks
 	go func(addr string) {
@@ -851,8 +378,6 @@ func main() {
 	}
 
 	// Graceful stop
-	feed.Stop()
-	log.Info().Msg("market data feed stopped")
 	grpcServer.GracefulStop()
 	log.Info().Msg("gRPC server stopped")
 }

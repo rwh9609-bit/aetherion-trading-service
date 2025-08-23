@@ -1,14 +1,39 @@
 
 # --- Build stage ---
 FROM golang:1.24-alpine AS build
+
+# Install build tools: git (for go modules), protobuf-dev (for protoc)
+RUN apk add --no-cache git protobuf-dev build-base
+
+# Install Go protobuf plugins
+RUN go install google.golang.org/protobuf/cmd/protoc-gen-go@v1.34
+RUN go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@v1.3
+
+# Set up PATH to include Go bin directory
+ENV PATH="/root/go/bin:${PATH}"
+
 WORKDIR /app
+
+# Copy module files and source code first
 COPY go/go.mod go/go.sum ./
-ENV GO111MODULE=on
 RUN go mod download
 COPY go/ .
+
+# Now, copy protos and generate the Go files, placing them in the correct 'gen' directory
+COPY protos/ ./protos/
+RUN protoc -I. -Iprotos \
+    --go_out=. --go_opt=paths=source_relative \
+    --go-grpc_out=. --go-grpc_opt=paths=source_relative \
+    protos/trading_api.proto && \
+    mkdir -p gen && \
+    mv protos/trading_api.pb.go gen/ && \
+    mv protos/trading_api_grpc.pb.go gen/
+
 ENV CGO_ENABLED=0 GOOS=linux GOARCH=amd64
 ARG GIT_COMMIT=unknown
+# The build command now works because the 'gen' directory is present and populated
 RUN go build -trimpath -ldflags "-s -w -X main.buildCommit=$GIT_COMMIT" -o trading_service .
+
 
 # --- Dev stage for local development ---
 FROM golang:1.24-alpine AS dev

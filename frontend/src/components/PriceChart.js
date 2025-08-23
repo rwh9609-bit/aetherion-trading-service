@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Box, Card, CardContent, Typography, CircularProgress, Chip, Stack, Tooltip } from '@mui/material';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, Legend, ResponsiveContainer } from 'recharts';
-import { fetchPrice, streamPrice } from '../services/grpcClient';
 
 // Renders a streaming price chart for the currently selected symbol.
 // If the incoming symbol prop is empty/undefined we fall back to the first
@@ -25,23 +24,6 @@ const PriceChart = ({ symbol }) => {
     setError(null);
     let cleanup;
     receivedFirstTickRef.current = false;
-    cleanup = streamPrice(activeSymbol, (tick) => {
-      receivedFirstTickRef.current = true;
-      setStreamState('live');
-      setPriceData(prevData => {
-        const newData = [...prevData, {
-          time: new Date(tick.timestamp || Date.now()).toLocaleTimeString(),
-          price: tick.price
-        }];
-        return newData.slice(-50);
-      });
-      setLoading(false);
-    }, (errMsg) => {
-      console.error('Price stream error:', errMsg);
-      setError(errMsg);
-      setStreamState('error');
-      setLoading(false);
-    });
     // Seed immediate snapshot so the user sees the symbol change instantly.
     // Still keep a small fallback window in case stream is slow.
     (async () => {

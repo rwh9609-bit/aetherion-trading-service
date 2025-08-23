@@ -53,6 +53,11 @@ class AuthServiceStub(object):
                 request_serializer=trading__api__pb2.GetUserRequest.SerializeToString,
                 response_deserializer=trading__api__pb2.UserInfo.FromString,
                 _registered_method=True)
+        self.RefreshToken = channel.unary_unary(
+                '/aetherion.AuthService/RefreshToken',
+                request_serializer=trading__api__pb2.RefreshTokenRequest.SerializeToString,
+                response_deserializer=trading__api__pb2.AuthResponse.FromString,
+                _registered_method=True)
 
 
 class AuthServiceServicer(object):
@@ -80,6 +85,12 @@ class AuthServiceServicer(object):
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
+    def RefreshToken(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
 
 def add_AuthServiceServicer_to_server(servicer, server):
     rpc_method_handlers = {
@@ -97,6 +108,11 @@ def add_AuthServiceServicer_to_server(servicer, server):
                     servicer.GetUser,
                     request_deserializer=trading__api__pb2.GetUserRequest.FromString,
                     response_serializer=trading__api__pb2.UserInfo.SerializeToString,
+            ),
+            'RefreshToken': grpc.unary_unary_rpc_method_handler(
+                    servicer.RefreshToken,
+                    request_deserializer=trading__api__pb2.RefreshTokenRequest.FromString,
+                    response_serializer=trading__api__pb2.AuthResponse.SerializeToString,
             ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
@@ -194,6 +210,33 @@ class AuthService(object):
             metadata,
             _registered_method=True)
 
+    @staticmethod
+    def RefreshToken(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/aetherion.AuthService/RefreshToken',
+            trading__api__pb2.RefreshTokenRequest.SerializeToString,
+            trading__api__pb2.AuthResponse.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
 
 class BotServiceStub(object):
     """=================================================================
@@ -242,6 +285,11 @@ class BotServiceStub(object):
                 '/aetherion.BotService/StopBot',
                 request_serializer=trading__api__pb2.BotIdRequest.SerializeToString,
                 response_deserializer=trading__api__pb2.StatusResponse.FromString,
+                _registered_method=True)
+        self.StreamBotStatus = channel.unary_stream(
+                '/aetherion.BotService/StreamBotStatus',
+                request_serializer=trading__api__pb2.BotIdRequest.SerializeToString,
+                response_deserializer=trading__api__pb2.Bot.FromString,
                 _registered_method=True)
 
 
@@ -294,6 +342,12 @@ class BotServiceServicer(object):
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
+    def StreamBotStatus(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
 
 def add_BotServiceServicer_to_server(servicer, server):
     rpc_method_handlers = {
@@ -331,6 +385,11 @@ def add_BotServiceServicer_to_server(servicer, server):
                     servicer.StopBot,
                     request_deserializer=trading__api__pb2.BotIdRequest.FromString,
                     response_serializer=trading__api__pb2.StatusResponse.SerializeToString,
+            ),
+            'StreamBotStatus': grpc.unary_stream_rpc_method_handler(
+                    servicer.StreamBotStatus,
+                    request_deserializer=trading__api__pb2.BotIdRequest.FromString,
+                    response_serializer=trading__api__pb2.Bot.SerializeToString,
             ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
@@ -536,13 +595,39 @@ class BotService(object):
             metadata,
             _registered_method=True)
 
+    @staticmethod
+    def StreamBotStatus(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_stream(
+            request,
+            target,
+            '/aetherion.BotService/StreamBotStatus',
+            trading__api__pb2.BotIdRequest.SerializeToString,
+            trading__api__pb2.Bot.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
 
 class OrderServiceStub(object):
     """=================================================================
-    ORDER & TRADE SERVICE (REPLACES TradingService)
+    ORDER & TRADE SERVICE
     =================================================================
 
-    CHANGED: This service now correctly models the order lifecycle.
     """
 
     def __init__(self, channel):
@@ -575,36 +660,31 @@ class OrderServiceStub(object):
 
 class OrderServiceServicer(object):
     """=================================================================
-    ORDER & TRADE SERVICE (REPLACES TradingService)
+    ORDER & TRADE SERVICE
     =================================================================
 
-    CHANGED: This service now correctly models the order lifecycle.
     """
 
     def CreateOrder(self, request, context):
-        """Create a new order (intent to trade)
-        """
+        """Missing associated documentation comment in .proto file."""
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
     def CancelOrder(self, request, context):
-        """Cancel a pending or partially filled order
-        """
+        """Missing associated documentation comment in .proto file."""
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
     def GetOrder(self, request, context):
-        """Get the status and details of a specific order
-        """
+        """Missing associated documentation comment in .proto file."""
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
     def GetTradeHistory(self, request, context):
-        """Get trade history for a bot
-        """
+        """Missing associated documentation comment in .proto file."""
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
@@ -642,10 +722,9 @@ def add_OrderServiceServicer_to_server(servicer, server):
  # This class is part of an EXPERIMENTAL API.
 class OrderService(object):
     """=================================================================
-    ORDER & TRADE SERVICE (REPLACES TradingService)
+    ORDER & TRADE SERVICE
     =================================================================
 
-    CHANGED: This service now correctly models the order lifecycle.
     """
 
     @staticmethod
@@ -762,7 +841,6 @@ class PortfolioServiceStub(object):
     PORTFOLIO & PERFORMANCE SERVICE
     =================================================================
 
-    ADDED: A new service to handle portfolio and performance data.
     """
 
     def __init__(self, channel):
@@ -773,6 +851,11 @@ class PortfolioServiceStub(object):
         """
         self.GetPortfolio = channel.unary_unary(
                 '/aetherion.PortfolioService/GetPortfolio',
+                request_serializer=trading__api__pb2.PortfolioRequest.SerializeToString,
+                response_deserializer=trading__api__pb2.PortfolioResponse.FromString,
+                _registered_method=True)
+        self.StreamPortfolio = channel.unary_stream(
+                '/aetherion.PortfolioService/StreamPortfolio',
                 request_serializer=trading__api__pb2.PortfolioRequest.SerializeToString,
                 response_deserializer=trading__api__pb2.PortfolioResponse.FromString,
                 _registered_method=True)
@@ -788,19 +871,22 @@ class PortfolioServiceServicer(object):
     PORTFOLIO & PERFORMANCE SERVICE
     =================================================================
 
-    ADDED: A new service to handle portfolio and performance data.
     """
 
     def GetPortfolio(self, request, context):
-        """Gets the current portfolio status for a bot
-        """
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def StreamPortfolio(self, request, context):
+        """Missing associated documentation comment in .proto file."""
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
     def GetPerformanceHistory(self, request, context):
-        """Gets historical performance snapshots for charting
-        """
+        """Missing associated documentation comment in .proto file."""
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
@@ -810,6 +896,11 @@ def add_PortfolioServiceServicer_to_server(servicer, server):
     rpc_method_handlers = {
             'GetPortfolio': grpc.unary_unary_rpc_method_handler(
                     servicer.GetPortfolio,
+                    request_deserializer=trading__api__pb2.PortfolioRequest.FromString,
+                    response_serializer=trading__api__pb2.PortfolioResponse.SerializeToString,
+            ),
+            'StreamPortfolio': grpc.unary_stream_rpc_method_handler(
+                    servicer.StreamPortfolio,
                     request_deserializer=trading__api__pb2.PortfolioRequest.FromString,
                     response_serializer=trading__api__pb2.PortfolioResponse.SerializeToString,
             ),
@@ -831,7 +922,6 @@ class PortfolioService(object):
     PORTFOLIO & PERFORMANCE SERVICE
     =================================================================
 
-    ADDED: A new service to handle portfolio and performance data.
     """
 
     @staticmethod
@@ -862,6 +952,33 @@ class PortfolioService(object):
             _registered_method=True)
 
     @staticmethod
+    def StreamPortfolio(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_stream(
+            request,
+            target,
+            '/aetherion.PortfolioService/StreamPortfolio',
+            trading__api__pb2.PortfolioRequest.SerializeToString,
+            trading__api__pb2.PortfolioResponse.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
     def GetPerformanceHistory(request,
             target,
             options=(),
@@ -878,6 +995,90 @@ class PortfolioService(object):
             '/aetherion.PortfolioService/GetPerformanceHistory',
             trading__api__pb2.PerformanceHistoryRequest.SerializeToString,
             trading__api__pb2.PerformanceHistoryResponse.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+
+class RiskServiceStub(object):
+    """=================================================================
+    RISK SERVICE
+    =================================================================
+
+    """
+
+    def __init__(self, channel):
+        """Constructor.
+
+        Args:
+            channel: A grpc.Channel.
+        """
+        self.CalculateVaR = channel.unary_unary(
+                '/aetherion.RiskService/CalculateVaR',
+                request_serializer=trading__api__pb2.VaRRequest.SerializeToString,
+                response_deserializer=trading__api__pb2.VaRResponse.FromString,
+                _registered_method=True)
+
+
+class RiskServiceServicer(object):
+    """=================================================================
+    RISK SERVICE
+    =================================================================
+
+    """
+
+    def CalculateVaR(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+
+def add_RiskServiceServicer_to_server(servicer, server):
+    rpc_method_handlers = {
+            'CalculateVaR': grpc.unary_unary_rpc_method_handler(
+                    servicer.CalculateVaR,
+                    request_deserializer=trading__api__pb2.VaRRequest.FromString,
+                    response_serializer=trading__api__pb2.VaRResponse.SerializeToString,
+            ),
+    }
+    generic_handler = grpc.method_handlers_generic_handler(
+            'aetherion.RiskService', rpc_method_handlers)
+    server.add_generic_rpc_handlers((generic_handler,))
+    server.add_registered_method_handlers('aetherion.RiskService', rpc_method_handlers)
+
+
+ # This class is part of an EXPERIMENTAL API.
+class RiskService(object):
+    """=================================================================
+    RISK SERVICE
+    =================================================================
+
+    """
+
+    @staticmethod
+    def CalculateVaR(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/aetherion.RiskService/CalculateVaR',
+            trading__api__pb2.VaRRequest.SerializeToString,
+            trading__api__pb2.VaRResponse.FromString,
             options,
             channel_credentials,
             insecure,

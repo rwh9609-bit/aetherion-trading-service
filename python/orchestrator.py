@@ -75,10 +75,10 @@ class TradingOrchestrator:
         }
         return jwt.encode(claims, self.auth_secret, algorithm='HS256')
     
-    def fetch_trade_history(self, trading_stub, bot_id, metadata):
+    def fetch_trade_history(self, order_stub, bot_id, metadata):
         try:
             history_req = trading_api_pb2.TradeHistoryRequest(user_id=bot_id)
-            history_resp = trading_stub.GetTradeHistory(history_req, metadata=metadata)
+            history_resp = order_stub.GetTradeHistory(history_req, metadata=metadata)
             print(f"Trade history for bot {bot_id}:")
             for trade in history_resp.trades:
                 print(f"  {trade.trade_id}: {trade.side} {trade.quantity} {trade.symbol} @ {trade.price} on {datetime.fromtimestamp(trade.executed_at)}")
@@ -90,8 +90,8 @@ class TradingOrchestrator:
         print(f"Connecting to Go service at {self.go_service_addr}")
         print(f"Connecting to Rust service at {self.rust_service_addr}")
         with grpc.insecure_channel(self.go_service_addr) as trading_channel, \
-            grpc.insecure_channel(self.rust_service_addr) as risk_channel:
-            trading_stub = trading_api_pb2_grpc.TradingServiceStub(trading_channel)
+            grpc.insecure_channel(self.rust_service_addr) as risk_channel: 
+            order_stub = trading_api_pb2_grpc.OrderServiceStub(trading_channel)
             risk_stub = trading_api_pb2_grpc.RiskServiceStub(risk_channel)  
             while True:
                 try:
@@ -178,7 +178,7 @@ class TradingOrchestrator:
                                             strategy_id=strategy_id
                                         )
                                         try:
-                                            trade_response = trading_stub.ExecuteTrade(trade_request, metadata=metadata)
+                                            trade_response = order_stub.ExecuteTrade(trade_request, metadata=metadata)
                                             print(f"Trade executed for bot {bot.name} @ {trade_response.executed_price:.2f}: {trade_response.message}")
                                             print(f"Signal: {json.dumps(signal)}  VaR: {var_response.value_at_risk:.2f}")
                                             if hasattr(trade_response, 'pnl'):
@@ -193,7 +193,7 @@ class TradingOrchestrator:
                         # Add logging for trade execution
 
                         # After trading logic, fetch trade history:
-                        self.fetch_trade_history(trading_stub, bot.bot_id, metadata)
+                        self.fetch_trade_history(order_stub, bot.bot_id, metadata)
 
                     time.sleep(20)
 
