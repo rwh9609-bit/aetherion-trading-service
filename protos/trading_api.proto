@@ -4,7 +4,7 @@ package aetherion;
 
 import "google/protobuf/timestamp.proto";
 
-option go_package = "github.com/rwh9609-bit/aetherion-trading-service/gen";
+option go_package = "package/gen";
 
 // =================================================================
 // COMMON & UTILITY MESSAGES
