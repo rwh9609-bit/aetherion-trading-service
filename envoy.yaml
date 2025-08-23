@@ -36,24 +36,24 @@ static_resources:
                   max_age: "86400"
                   allow_credentials: false
                 routes:
-                  - match: { prefix: "/trading.TradingService/" }
+                  - match: { prefix: "/aetherion.OrderService/" }
                     route:
-                      cluster: trading_service
+                      cluster: aetherion
                       timeout: 0s
                       max_stream_duration: { grpc_timeout_header_max: 0s }
-                  - match: { prefix: "/trading.AuthService/" }
+                  - match: { prefix: "/aetherion.AuthService/" }
                     route:
-                      cluster: trading_service
+                      cluster: aetherion
                       timeout: 0s
                       max_stream_duration: { grpc_timeout_header_max: 0s }
-                  - match: { prefix: "/trading.BotService/" }
+                  - match: { prefix: "/aetherion.BotService/" }
                     route:
-                      cluster: trading_service
+                      cluster: aetherion
                       timeout: 0s
                       max_stream_duration: { grpc_timeout_header_max: 0s }
-                  - match: { prefix: "/trading.RiskService/" }
+                  - match: { prefix: "/aetherion.RiskService/" }
                     route:
-                      cluster: risk_service
+                      cluster: aetherion
                       timeout: 0s
                       max_stream_duration: { grpc_timeout_header_max: 0s }
                   - match: { prefix: "/healthz" }
@@ -137,24 +137,24 @@ static_resources:
                       - header: { key: Content-Security-Policy, value: "default-src 'self'; connect-src 'self' https://api.aetherion.cloud http://localhost:8080; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; frame-ancestors 'none';" }
                         append_action: OVERWRITE_IF_EXISTS_OR_ADD
                     routes:
-                      - match: { prefix: "/trading.TradingService/" }
+                      - match: { prefix: "/aetherion.OrderService/" }
                         route:
-                          cluster: trading_service
+                          cluster: aetherion
                           timeout: 0s
                           max_stream_duration: { grpc_timeout_header_max: 0s }
-                      - match: { prefix: "/trading.RiskService/" }
+                      - match: { prefix: "/aetherion.RiskService/" }
                         route:
-                          cluster: risk_service
+                          cluster: aetherion
                           timeout: 0s
                           max_stream_duration: { grpc_timeout_header_max: 0s }
-                      - match: { prefix: "/trading.AuthService/" }
+                      - match: { prefix: "/aetherion.AuthService/" }
                         route:
-                          cluster: trading_service
+                          cluster: aetherion
                           timeout: 0s
                           max_stream_duration: { grpc_timeout_header_max: 0s }
-                      - match: { prefix: "/trading.BotService/" }
+                      - match: { prefix: "/aetherion.BotService/" }
                         route:
-                          cluster: trading_service
+                          cluster: aetherion
                           timeout: 0s
                           max_stream_duration: { grpc_timeout_header_max: 0s }
                       - match: { prefix: "/healthz" }
@@ -168,9 +168,9 @@ static_resources:
                   - name: root_domain_passthrough
                     domains: ["aetherion.cloud"]
                     routes:
-                      - match: { prefix: "/trading." }
+                      - match: { prefix: "/aetherion." }
                         route:
-                          cluster: trading_service
+                          cluster: aetherion
                           timeout: 0s
                           max_stream_duration: { grpc_timeout_header_max: 0s }
                       - match: { prefix: "/healthz" }
@@ -213,16 +213,16 @@ static_resources:
                   typed_config:
                     "@type": type.googleapis.com/envoy.extensions.filters.http.router.v3.Router
   clusters:
-    - name: trading_service
+    - name: aetherion
       connect_timeout: 0.5s
       type: STRICT_DNS
       lb_policy: ROUND_ROBIN
       http2_protocol_options: {}
       load_assignment:
-        cluster_name: trading_service
+        cluster_name: aetherion
         endpoints:
           - lb_endpoints:
-              - endpoint: { address: { socket_address: { address: trading, port_value: 50051 } } }
+              - endpoint: { address: { socket_address: { address: aetherion, port_value: 50051 } } }
       health_checks:
         - timeout: 1s
           interval: 10s
@@ -249,6 +249,7 @@ static_resources:
       connect_timeout: 0.5s
       type: STRICT_DNS
       lb_policy: ROUND_ROBIN
+      http2_protocol_options: {}
       load_assignment:
         cluster_name: frontend
         endpoints:
@@ -262,6 +263,7 @@ static_resources:
       connect_timeout: 0.5s
       type: STRICT_DNS
       lb_policy: ROUND_ROBIN
+      http2_protocol_options: {}
       load_assignment:
         cluster_name: acme_challenge
         endpoints:

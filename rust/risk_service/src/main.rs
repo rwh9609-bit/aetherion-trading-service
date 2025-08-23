@@ -5,10 +5,12 @@ use tonic::{transport::Server, Request, Response, Status};
 use chrono;
 use trading_api::risk_service_server::RiskServiceServer;
 use trading_api::{VaRRequest, VaRResponse};
+use std::collections::HashMap;
+use prost_types::Timestamp;
 
 // Import generated protobuf code
 pub mod trading_api {
-    tonic::include_proto!("trading");
+    tonic::include_proto!("aetherion");
 }
 
 mod risk_calculator;
@@ -27,36 +29,39 @@ impl Default for MyRiskService {
         }
     }
 }
-
 #[tonic::async_trait]
 impl trading_api::risk_service_server::RiskService for MyRiskService {
-    async fn calculate_va_r(
-        &self,
-        request: Request<VaRRequest>,
+    async fn calculate_va_r(&self, request: Request<VaRRequest>,
     ) -> Result<Response<VaRResponse>, Status> {
         let req = request.into_inner();
         let portfolio = req.current_portfolio.ok_or_else(|| {
             Status::invalid_argument("Portfolio is required")
         })?;
 
-        // Convert positions to HashMap
-        let positions = portfolio.positions.clone();
-        let total_value = portfolio.total_value_usd;
+        // Convert positions to HashMap<String, f64>
+        let positions_map: HashMap<String, f64> = portfolio.positions
+            .iter()
+            .map(|pos| {
+                let qty = pos.quantity.as_ref().map(|v| v.units as f64 + v.nanos as f64 / 1_000_000_000.0).unwrap_or(0.0);
+                (pos.symbol.clone(), qty)
+            })
+            .collect();
 
-    // Use provided confidence level & horizon (defaults if zero)
-    let confidence = if req.confidence_level > 0.0 { req.confidence_level } else { 0.95 };
-    let _horizon = if req.horizon_days > 0.0 { req.horizon_days } else { 1.0 }; // Placeholder for scaling
+        // Get total portfolio value as f64
+        let total_value = portfolio.total_portfolio_value.as_ref()
+            .map(|v| v.units as f64 + v.nanos as f64 / 1_000_000_000.0)
+            .unwrap_or(0.0);
+
+        // Use provided confidence level & horizon (defaults if zero)
+        let confidence = if req.confidence_level > 0.0 { req.confidence_level } else { 0.95 };
+        let _horizon = if req.horizon_days > 0.0 { req.horizon_days } else { 1.0 };
+
         let mut calc = self.calculator.lock().map_err(|_| {
             Status::internal("Failed to acquire calculator lock")
         })?;
 
-        // Add latest price change if available
-        if let Some(price_change) = portfolio.last_price_change {
-            let _ = price_change;
-        }
-
         // --- Begin extended metrics logic ---
-        let assets: Vec<String> = positions.keys().cloned().collect();
+        let assets: Vec<String> = positions_map.keys().cloned().collect();
         let n = assets.len();
         let min_len = assets.iter().map(|a| calc.asset_returns.get(a).map(|v| v.len()).unwrap_or(0)).min().unwrap_or(0);
         let mut returns_matrix = nalgebra::DMatrix::zeros(min_len, n);
@@ -99,10 +104,19 @@ impl trading_api::risk_service_server::RiskService for MyRiskService {
             corr
         };
         let volatility_per_asset: Vec<f64> = (0..ncols).map(|i| cov_matrix[(i, i)].abs().sqrt()).collect();
-        let last_update = chrono::Utc::now().to_rfc3339();
-        let var = calc.calculate_var(&positions, total_value, confidence);
+        let now = chrono::Utc::now();
+        let last_update = Some(Timestamp {
+            seconds: now.timestamp(),
+            nanos: now.timestamp_subsec_nanos() as i32,
+        });
+
+        let var = calc.calculate_var(&positions_map, total_value, confidence);
+        let var_decimal = trading_api::DecimalValue {
+            units: var.trunc() as i64,
+            nanos: ((var.fract()) * 1_000_000_000.0) as i32,
+        };
         let response = VaRResponse {
-            value_at_risk: var,
+            value_at_risk: Some(var_decimal),
             asset_names: assets,
             correlation_matrix,
             volatility_per_asset,
@@ -112,6 +126,8 @@ impl trading_api::risk_service_server::RiskService for MyRiskService {
         Ok(Response::new(response))
     }
 }
+
+// --- MAIN ---
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -131,26 +147,40 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     Ok(())
 }
 
+// --- TESTS ---
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::collections::HashMap;
+    use trading_api::{PortfolioPosition, PortfolioResponse, DecimalValue};
 
     #[tokio::test]
     async fn test_var_respects_confidence_level() {
         let service = MyRiskService::default();
         {
             let mut calc = service.calculator.lock().unwrap();
-            // Use inject_asset_history for test data injection if needed
             calc.inject_asset_history("BTC-USD", &[100.0, 101.0, 99.5, 101.5, 102.7, 101.2]);
         }
-        let mut positions = HashMap::new();
-        positions.insert("BTC-USD".to_string(), 1.0);
-        let portfolio = trading_api::Portfolio { positions, total_value_usd: 10_000.0, last_price_change: None };
+        let positions = vec![
+            PortfolioPosition {
+                symbol: "BTC-USD".to_string(),
+                quantity: Some(DecimalValue { units: 1, nanos: 0 }),
+                average_price: None,
+                market_value: None,
+                unrealized_pnl: None,
+                exposure_pct: None,
+            }
+        ];
+        let portfolio = PortfolioResponse {
+            bot_id: "test-bot".to_string(),
+            positions,
+            total_portfolio_value: Some(DecimalValue { units: 10_000, nanos: 0 }),
+            cash_balance: None,
+            updated_at: None,
+        };
         let req_low = VaRRequest { current_portfolio: Some(portfolio.clone()), risk_model: "monte_carlo".to_string(), confidence_level: 0.90, horizon_days: 1.0 };
         let req_high = VaRRequest { current_portfolio: Some(portfolio), risk_model: "monte_carlo".to_string(), confidence_level: 0.99, horizon_days: 1.0 };
         let resp_low = service.calculate_va_r(tonic::Request::new(req_low)).await.unwrap().into_inner();
         let resp_high = service.calculate_va_r(tonic::Request::new(req_high)).await.unwrap().into_inner();
-        assert!(resp_high.value_at_risk >= resp_low.value_at_risk, "higher confidence should not reduce VaR");
+        assert!(resp_high.value_at_risk.as_ref().unwrap().units >= resp_low.value_at_risk.as_ref().unwrap().units, "higher confidence should not reduce VaR");
     }
 }
