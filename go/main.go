@@ -1,7 +1,6 @@
 package main
 
 import (
-	"container/heap"
 	"context"
 	"crypto/rand"
 	"encoding/hex"
@@ -52,62 +51,6 @@ func chainUnary(interceptors ...grpc.UnaryServerInterceptor) grpc.UnaryServerInt
 		}
 		return wrapped(ctx, req)
 	}
-}
-
-// PriceLevel & OrderBookSide definitions are in orderbook.go, but we reassert interface methods here
-func (h OrderBookSide) Len() int           { return len(h) }
-func (h OrderBookSide) Less(i, j int) bool { return h[i].Price < h[j].Price }
-func (h OrderBookSide) Swap(i, j int)      { h[i], h[j] = h[j], h[i] }
-func (h *OrderBookSide) Push(x interface{}) {
-	*h = append(*h, x.(PriceLevel))
-}
-
-func (h *OrderBookSide) Pop() interface{} {
-	old := *h
-	n := len(old)
-	x := old[n-1]
-	*h = old[0 : n-1]
-	return x
-}
-
-// OrderBookManager is defined in orderbook.go
-
-func (ob *OrderBookManager) AddBid(price, size float64) {
-	ob.Mu.Lock()
-	defer ob.Mu.Unlock()
-	heap.Push(ob.Bids, PriceLevel{Price: price, Size: size})
-}
-
-func (ob *OrderBookManager) AddAsk(price, size float64) {
-	ob.Mu.Lock()
-	defer ob.Mu.Unlock()
-	heap.Push(ob.Asks, PriceLevel{Price: price, Size: size})
-}
-func (ob *OrderBookManager) GetTopLevels(numLevels int) ([]OrderBookEntry, []OrderBookEntry) {
-	ob.Mu.RLock()
-	defer ob.Mu.RUnlock()
-
-	bids := make([]OrderBookEntry, 0, numLevels)
-	asks := make([]OrderBookEntry, 0, numLevels)
-
-	now := time.Now().UnixMilli()
-	for i := 0; i < numLevels && i < len(*ob.Bids); i++ {
-		bid := (*ob.Bids)[i]
-		bids = append(bids, OrderBookEntry{
-			Price:     bid.Price,
-			Size:      bid.Size,
-			Timestamp: now,
-		})
-	}
-	for i := 0; i < numLevels && i < len(*ob.Asks); i++ {
-		ask := (*ob.Asks)[i]
-		asks = append(asks, OrderBookEntry{
-			Price:     ask.Price,
-			Size:      ask.Size,
-			Timestamp: now,
-		})
-	}
-	return bids, asks
 }
 
 // Define a struct to unmarshal the JSON response from Coinbase
@@ -206,19 +149,6 @@ func GetCoinbasePrice(symbol string) (float64, error) {
 	}
 	log.Printf("Fetched price for %s: %.2f", symbol, price)
 	return price, nil
-}
-
-// OrderBook represents a market's order book
-type OrderBook struct {
-	Bids []OrderBookEntry
-	Asks []OrderBookEntry
-}
-
-// OrderBookEntry represents a single order in the book
-type OrderBookEntry struct {
-	Price     float64
-	Size      float64
-	Timestamp int64 // Unix epoch milliseconds
 }
 
 func (s *Strategy) Run(ctx context.Context) {
