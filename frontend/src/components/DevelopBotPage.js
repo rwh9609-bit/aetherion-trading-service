@@ -1,10 +1,17 @@
 import React, { useState } from 'react';
-import { Container, Box, Typography, TextField, Card, CardContent, Button, Stack, MenuItem, Select, InputLabel, FormControl, Divider, Alert } from '@mui/material';
+import { Container, Box, Typography, TextField, Card, CardContent, Button, Stack, MenuItem, Select, InputLabel, FormControl, Divider, Alert, FormLabel } from '@mui/material';
 import { createBot } from '../services/grpcClient';
+
+const symbols = [
+  'BTC-USD', 'ETH-USD', 'XRP-USD', 'BNB-USD', 'SOL-USD',  'ADA-USD', 'DOGE-USD', 
+  'TRX-USD', 'LINK-USD',
+  'DOT-USD', 'MATIC-USD', 'TON-USD', 'SHIB-USD', 'DAI-USD', 'BCH-USD',
+  'LTC-USD', 'NEAR-USD'
+];
 
 const defaultConfig = {
   name: '',
-  symbol: 'BTC-USD',
+  symbol: [],
   strategy: 'MEAN_REVERSION',
   lookback: 20,
   entryStd: 2.0,
@@ -22,44 +29,55 @@ const strategies = [
   { value: 'CUSTOM', label: 'Custom (Python)' }
 ];
 
-const DevelopBotPage = ({ onNavigate }) => {
+const DevelopBotPage = ({ onNavigate, userId }) => {
   const [cfg, setCfg] = useState(defaultConfig);
   const [submitting, setSubmitting] = useState(false);
   const [alert, setAlert] = useState(null);
 
   const setField = (field) => (e) => setCfg(prev => ({ ...prev, [field]: e.target.value }));
 
-const handleSubmit = async () => {
-  setSubmitting(true); setAlert(null);
-  try {
-    const params = {
-      lookback: String(cfg.lookback),
-      entryStd: String(cfg.entryStd),
-      exitStd: String(cfg.exitStd),
-      maxPos: String(cfg.maxPos),
-      stopLossPct: String(cfg.stopLossPct),
-      riskPerTradePct: String(cfg.riskPerTradePct)
-    };
-    console.log('[DevelopBotPage] createBot request:', {
-      name: cfg.name,
-      symbol: cfg.symbol,
-      strategy: cfg.strategy,
-      parameters: params,
-      account_value: Number(cfg.accountValue) // <-- Add this line
+  const toggleSymbol = (symbol) => {
+    setCfg(prev => {
+      const newSymbols = prev.symbol.includes(symbol)
+        ? prev.symbol.filter(s => s !== symbol)
+        : [...prev.symbol, symbol];
+      return { ...prev, symbol: newSymbols };
     });
-    const resp = await createBot({ name: cfg.name, symbol: cfg.symbol, strategy: cfg.strategy, parameters: params, account_value: Number(cfg.accountValue) });
-    console.log('[DevelopBotPage] createBot response:', resp);
-    if (resp.success) {
-      setAlert({ type:'success', msg: `Bot created (id=${resp.id})` });
-      setTimeout(()=> onNavigate && onNavigate('bots'), 900);
-    } else {
-      setAlert({ type:'error', msg: resp.message || 'Failed to create bot' });
-    }
-  } catch (e) {
-    console.error('[DevelopBotPage] createBot error:', e);
-    setAlert({ type:'error', msg: e.message || 'Failed to submit' });
-  } finally { setSubmitting(false); }
-};
+  };
+
+  const handleSubmit = async () => {
+    setSubmitting(true); setAlert(null);
+    try {
+      const params = {
+        lookback: String(cfg.lookback),
+        entryStd: String(cfg.entryStd),
+        exitStd: String(cfg.exitStd),
+        maxPos: String(cfg.maxPos),
+        stopLossPct: String(cfg.stopLossPct),
+        riskPerTradePct: String(cfg.riskPerTradePct)
+      };
+      const symbolString = cfg.symbol.join(',');
+      console.log('[DevelopBotPage] createBot request:', {
+        name: cfg.name,
+        symbol: symbolString,
+        strategy: cfg.strategy,
+        parameters: params,
+        account_value: Number(cfg.accountValue),
+        user_id: userId
+      });
+      const resp = await createBot({ name: cfg.name, symbol: symbolString, strategy: cfg.strategy, parameters: params, account_value: Number(cfg.accountValue), user_id: userId });
+      console.log('[DevelopBotPage] createBot response:', resp);
+      if (resp.success) {
+        setAlert({ type:'success', msg: `Bot created (id=${resp.id})` });
+        setTimeout(()=> onNavigate && onNavigate('bots'), 900);
+      } else {
+        setAlert({ type:'error', msg: resp.message || 'Failed to create bot' });
+      }
+    } catch (e) {
+      console.error('[DevelopBotPage] createBot error:', e);
+      setAlert({ type:'error', msg: e.message || 'Failed to submit' });
+    } finally { setSubmitting(false); }
+  };
 
   return (
     <Container maxWidth="md" sx={{ mt:4, mb:6 }}>
@@ -73,7 +91,21 @@ const handleSubmit = async () => {
           {alert && <Alert severity={alert.type} sx={{ mb:2 }} onClose={()=>setAlert(null)}>{alert.msg}</Alert>}
           <Stack spacing={2}>
             <TextField label="Bot Name" value={cfg.name} onChange={setField('name')} fullWidth required />
-            <TextField label="Symbol" value={cfg.symbol} onChange={setField('symbol')} fullWidth />
+            <FormControl component="fieldset" fullWidth>
+              <FormLabel component="legend" sx={{ mb: 1, typography: 'subtitle2', fontWeight: 600 }}>Symbols</FormLabel>
+              <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+                {symbols.map((symbol) => (
+                  <Button
+                    key={symbol}
+                    variant={cfg.symbol.includes(symbol) ? 'contained' : 'outlined'}
+                    onClick={() => toggleSymbol(symbol)}
+                    size="small"
+                  >
+                    {symbol}
+                  </Button>
+                ))}
+              </Box>
+            </FormControl>
             <TextField
               type="number"
               label="Account Value (USD)"
@@ -108,7 +140,7 @@ const handleSubmit = async () => {
               <TextField type="number" label="Risk / Trade %" value={cfg.riskPerTradePct} onChange={setField('riskPerTradePct')} fullWidth />
             </Stack>
             <Box>
-              <Button variant="contained" onClick={handleSubmit} disabled={submitting || !cfg.name}>
+              <Button variant="contained" onClick={handleSubmit} disabled={submitting || !cfg.name || cfg.symbol.length === 0}>
                 {submitting ? 'Submitting...' : 'Submit'}
               </Button>
             </Box>

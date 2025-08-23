@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Card, CardContent, Stack, Typography, Chip, Tooltip, Fade, ToggleButton, ToggleButtonGroup, LinearProgress, Box } from '@mui/material';
-import { fetchPrice, streamPrice } from '../services/grpcClient';
+import { fetchPrice, streamPrice, addSymbol, removeSymbol } from '../services/grpcClient';
 
 const BAR_INTERVAL_MS = 5000;
 const HISTORY_WINDOW_MS = 30 * 60 * 1000;
@@ -18,143 +18,157 @@ const OhlcPriceChart = ({ symbol }) => {
   const receivedRef = useRef(false);
   const containerRef = useRef(null);
   const [dims, setDims] = useState({ w: 0, h: 0 });
+  const prevSymbolRef = useRef();
 
-    useEffect(() => {
-      if (!containerRef.current) return;
-      const ro = new ResizeObserver(() => {
-        const { clientWidth, clientHeight } = containerRef.current;
-        setDims({ w: clientWidth, h: clientHeight });
+  useEffect(() => {
+    if (!containerRef.current) return;
+    const ro = new ResizeObserver(() => {
+      const { clientWidth, clientHeight } = containerRef.current;
+      setDims({ w: clientWidth, h: clientHeight });
+    });
+    ro.observe(containerRef.current);
+    setDims({ w: containerRef.current.clientWidth, h: containerRef.current.clientHeight });
+    return () => ro.disconnect();
+  }, []);
+
+  useEffect(() => {
+    setAnimKey(k => k + 1);
+    setBars([]);
+    setStreamState('connecting');
+    setLoading(true);
+    receivedRef.current = false;
+    let cancelled = false;
+    let cleanup;
+
+    // Add the selected symbol to backend feed
+    addSymbol(activeSymbol).catch(err => {
+      console.error('Failed to add symbol to backend feed:', err);
+    });
+
+    // Remove previous symbol from backend feed (if any)
+    if (prevSymbolRef.current && prevSymbolRef.current !== activeSymbol) {
+      removeSymbol(prevSymbolRef.current).catch(err => {
+        console.error('Failed to remove previous symbol from backend feed:', err);
       });
-      ro.observe(containerRef.current);
-      setDims({ w: containerRef.current.clientWidth, h: containerRef.current.clientHeight });
-      return () => ro.disconnect();
-    }, []);
+    }
+    prevSymbolRef.current = activeSymbol;
 
-    useEffect(() => {
-      setAnimKey(k => k + 1);
-      setBars([]);
-      setStreamState('connecting');
-      setLoading(true);
-      receivedRef.current = false;
-      let cancelled = false;
-      let cleanup;
+    const upsert = (price, ts) => {
+      const bucket = Math.floor(ts / BAR_INTERVAL_MS) * BAR_INTERVAL_MS;
+      setBars(prev => {
+        const arr = [...prev];
+        let last = arr[arr.length - 1];
+        if (!last || last.bucket !== bucket) {
+          last = { bucket, open: price, high: price, low: price, close: price };
+          arr.push(last);
+        } else {
+          last.high = Math.max(last.high, price);
+          last.low = Math.min(last.low, price);
+          last.close = price;
+        }
+        const cutoff = Date.now() - HISTORY_WINDOW_MS;
+        while (arr.length && arr[0].bucket < cutoff) arr.shift();
+        return arr;
+      });
+    };
 
-      const upsert = (price, ts) => {
-        const bucket = Math.floor(ts / BAR_INTERVAL_MS) * BAR_INTERVAL_MS;
-        setBars(prev => {
-          const arr = [...prev];
-          let last = arr[arr.length - 1];
-          if (!last || last.bucket !== bucket) {
-            last = { bucket, open: price, high: price, low: price, close: price };
-            arr.push(last);
-          } else {
-            last.high = Math.max(last.high, price);
-            last.low = Math.min(last.low, price);
-            last.close = price;
+    // Seed with one REST snapshot (retry once if it fails) so user sees price instantly
+    (async () => {
+      const attemptFetch = async (retry=false) => {
+        try {
+          const snap = await fetchPrice(activeSymbol);
+          if (!cancelled && snap && typeof snap.price === 'number') {
+            upsert(snap.price, Date.now());
+            if (streamStateRef.current === 'connecting') setStreamState('live');
+            setLoading(false);
+            return true;
           }
-          const cutoff = Date.now() - HISTORY_WINDOW_MS;
-          while (arr.length && arr[0].bucket < cutoff) arr.shift();
-          return arr;
-        });
+        } catch (e) {
+          if (!retry) return false; // give up after retry
+        }
+        return false;
       };
-
-      // Seed with one REST snapshot (retry once if it fails) so user sees price instantly
-  (async () => {
-        const attemptFetch = async (retry=false) => {
-          try {
-            const snap = await fetchPrice(activeSymbol);
-            if (!cancelled && snap && typeof snap.price === 'number') {
-              upsert(snap.price, Date.now());
-              if (streamStateRef.current === 'connecting') setStreamState('live');
-              setLoading(false);
-              return true;
-            }
-          } catch (e) {
-            if (!retry) return false; // give up after retry
-          }
-          return false;
-        };
-        const ok = await attemptFetch(false);
-        if (!ok) {
-          // retry after short delay
-          setTimeout(() => {
-            attemptFetch(true);
-          }, 1200);
-        }
-      })();
-
-      cleanup = streamPrice(activeSymbol, tick => {
-        if (cancelled) return;
-        upsert(tick.price, Date.now());
-        if (!receivedRef.current) {
-          receivedRef.current = true;
-          setStreamState('live');
-          setLoading(false);
-        }
-      }, err => {
-        if (cancelled) return;
-        console.error('Price stream error', err);
-        setStreamState('error');
-        setLoading(false);
-      });
-
-      return () => { cancelled = true; cleanup && cleanup(); };
-    }, [activeSymbol]);
-
-    // Fallback: if bars exist but still marked connecting after a grace period, promote to live.
-    useEffect(() => {
-      if (streamStateRef.current !== 'connecting') return;
-      if (!bars.length) return; // nothing yet
-      const id = setTimeout(() => {
-        if (streamStateRef.current === 'connecting' && bars.length) {
-          setStreamState('live');
-          setLoading(false);
-        }
-      }, 2500);
-      return () => clearTimeout(id);
-    }, [bars.length]);
-
-    const renderStatusChip = () => {
-      let color = 'default', label = '';
-      switch (streamState) {
-        case 'connecting': color = 'info'; label = 'Connecting'; break;
-        case 'live': color = 'success'; label = 'Live'; break;
-        case 'error': color = 'error'; label = 'Error'; break;
-        default: label = streamState;
+      const ok = await attemptFetch(false);
+      if (!ok) {
+        // retry after short delay
+        setTimeout(() => {
+          attemptFetch(true);
+        }, 1200);
       }
-      const chip = <Chip size="small" color={color} label={label} />;
-      if (streamState === 'connecting') return <Tooltip title="Waiting for ticks">{chip}</Tooltip>;
-      if (streamState === 'error') return <Tooltip title="Stream error">{chip}</Tooltip>;
-      return chip;
-    };
+    })();
 
-    // Compute scale
-    const lows = bars.map(b => b.low);
-    const highs = bars.map(b => b.high);
-    const minY = lows.length ? Math.min(...lows) : 0;
-    const maxY = highs.length ? Math.max(...highs) : 1;
-    const pad = (maxY - minY) * 0.05 || 0.5;
-    const yMin = minY - pad;
-    const yMax = maxY + pad;
-    const scaleY = (val) => {
-      if (yMax === yMin) return dims.h / 2;
-      return (1 - (val - yMin) / (yMax - yMin)) * (dims.h - 20) + 10; // padding top/bot
-    };
+    cleanup = streamPrice(activeSymbol, tick => {
+      if (cancelled) return;
+      upsert(tick.price, Date.now());
+      if (!receivedRef.current) {
+        receivedRef.current = true;
+        setStreamState('live');
+        setLoading(false);
+      }
+    }, err => {
+      if (cancelled) return;
+      console.error('Price stream error', err);
+      setStreamState('error');
+      setLoading(false);
+    });
 
-    // X layout
-    const visible = bars.slice(-Math.max(MIN_BARS, bars.length));
-    const cw = dims.w;
-    const barWidth = visible.length ? Math.max(4, Math.min(16, cw / visible.length * 0.6)) : 6;
-    const gap = visible.length ? (cw - barWidth * visible.length) / (visible.length + 1) : 0;
+    return () => { cancelled = true; cleanup && cleanup(); };
+  }, [activeSymbol]);
 
-    const linePath = () => {
-      if (!visible.length) return '';
-      return visible.map((b, i) => {
-        const x = gap + barWidth / 2 + i * (barWidth + gap);
-        const y = scaleY(b.close);
-        return `${i === 0 ? 'M' : 'L'}${x},${y}`;
-      }).join(' ');
-    };
+  // Fallback: if bars exist but still marked connecting after a grace period, promote to live.
+  useEffect(() => {
+    if (streamStateRef.current !== 'connecting') return;
+    if (!bars.length) return; // nothing yet
+    const id = setTimeout(() => {
+      if (streamStateRef.current === 'connecting' && bars.length) {
+        setStreamState('live');
+        setLoading(false);
+      }
+    }, 2500);
+    return () => clearTimeout(id);
+  }, [bars.length]);
+
+  const renderStatusChip = () => {
+    let color = 'default', label = '';
+    switch (streamState) {
+      case 'connecting': color = 'info'; label = 'Connecting'; break;
+      case 'live': color = 'success'; label = 'Live'; break;
+      case 'error': color = 'error'; label = 'Error'; break;
+      default: label = streamState;
+    }
+    const chip = <Chip size="small" color={color} label={label} />;
+    if (streamState === 'connecting') return <Tooltip title="Waiting for ticks">{chip}</Tooltip>;
+    if (streamState === 'error') return <Tooltip title="Stream error">{chip}</Tooltip>;
+    return chip;
+  };
+
+  // Compute scale
+  const lows = bars.map(b => b.low);
+  const highs = bars.map(b => b.high);
+  const minY = lows.length ? Math.min(...lows) : 0;
+  const maxY = highs.length ? Math.max(...highs) : 1;
+  const pad = (maxY - minY) * 0.05 || 0.5;
+  const yMin = minY - pad;
+  const yMax = maxY + pad;
+  const scaleY = (val) => {
+    if (yMax === yMin) return dims.h / 2;
+    return (1 - (val - yMin) / (yMax - yMin)) * (dims.h - 20) + 10; // padding top/bot
+  };
+
+  // X layout
+  const visible = bars.slice(-Math.max(MIN_BARS, bars.length));
+  const cw = dims.w;
+  const barWidth = visible.length ? Math.max(4, Math.min(16, cw / visible.length * 0.6)) : 6;
+  const gap = visible.length ? (cw - barWidth * visible.length) / (visible.length + 1) : 0;
+
+  const linePath = () => {
+    if (!visible.length) return '';
+    return visible.map((b, i) => {
+      const x = gap + barWidth / 2 + i * (barWidth + gap);
+      const y = scaleY(b.close);
+      return `${i === 0 ? 'M' : 'L'}${x},${y}`;
+    }).join(' ');
+  };
 
   return (
     <Card sx={{ minWidth: 0 }}>

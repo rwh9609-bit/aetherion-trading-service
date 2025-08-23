@@ -197,6 +197,8 @@ func (f *CoinbaseFeed) connectAndServe() error {
 	for s := range f.subscribed {
 		subs = append(subs, s)
 	}
+	log.Printf("[CoinbaseFeed] Subscribing to symbols: %v", subs)
+
 	f.mu.Unlock()
 	// initial subscribe
 	if len(subs) > 0 {
