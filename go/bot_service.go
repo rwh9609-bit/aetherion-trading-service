@@ -10,6 +10,8 @@ import (
 	"time"
 
 	pb "github.com/rwh9609-bit/multilanguage/go/gen"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/jackc/pgx/v5"
