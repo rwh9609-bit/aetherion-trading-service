@@ -35,6 +35,14 @@ def format_symbol_for_exchange(symbol, exchange):
         return symbol
     return symbol
 
+def float_to_decimal(f_val):
+    """Converts a float to a DecimalValue protobuf message."""
+    if f_val is None:
+        return None
+    units = int(f_val)
+    nanos = int((f_val - units) * 1_000_000_000)
+    return trading_api_pb2.DecimalValue(units=units, nanos=nanos)
+
 class TradingOrchestrator:
     def __init__(self):
         self.go_service_addr = os.environ.get('GO_SERVICE_ADDR', 'localhost:50051')
@@ -45,7 +53,7 @@ class TradingOrchestrator:
         self.auth_secret = os.environ.get('AUTH_SECRET', None)
         if self.auth_secret:
             masked_secret = self.auth_secret[:4] + '...' + self.auth_secret[-4:] if len(self.auth_secret) > 8 else '***'
-            print(f"[DEBUG] AUTH_SECRET loaded: {masked_secret}")
+            # print(f"[DEBUG] AUTH_SECRET loaded: {masked_secret}")
         else:
             print("[DEBUG] AUTH_SECRET not set.")
         # Initialize strategy
@@ -60,7 +68,7 @@ class TradingOrchestrator:
         )
         self.strategy = MeanReversionStrategy(params, backfill_prices=backfill_prices)
         self.orchestrator_user_id = os.environ.get('ORCHESTRATOR_USER_ID')
-        print(f"[DEBUG] Using orchestrator_user_id: {self.orchestrator_user_id}")
+        # print(f"[DEBUG] Using orchestrator_user_id: {self.orchestrator_user_id}")
         if not self.orchestrator_user_id:
             print("Error: ORCHESTRATOR_USER_ID environment variable not set.")
             exit(1)
@@ -99,11 +107,12 @@ class TradingOrchestrator:
                     metadata = []
                     if token:
                         metadata.append(('authorization', f'Bearer {token}'))
-                    print(f"[DEBUG] gRPC metadata: {metadata}")
+                    # print(f"[DEBUG] gRPC metadata: {metadata}")
 
                     # 1. Fetch all bots from Go backend
                     bot_stub = trading_api_pb2_grpc.BotServiceStub(trading_channel)
-                    bot_list = bot_stub.ListBots(trading_api_pb2.Empty(), metadata=metadata)
+                    list_bots_req = trading_api_pb2.ListBotsRequest(user_id=self.orchestrator_user_id)
+                    bot_list = bot_stub.ListBots(list_bots_req, metadata=metadata)
                     # This is spammy.
                     # print(f"[DEBUG] Bot list: {bot_list}")
                     for bot in bot_list.bots:
@@ -164,28 +173,19 @@ class TradingOrchestrator:
                                         risk_ok = False
                                     print(f"Risk check: VaR {var_response.value_at_risk:.2f}, OK: {risk_ok}")
                                     if risk_ok:
-                                        strategy_id = getattr(bot, "strategy_id", None) 
-                                        if not strategy_id or strategy_id == "":
-                                            print(f"[WARNING] Strategy ID is missing for bot {bot.name}, generating a new one.")
-                                            # Generate a random UUID if missing
-                                            strategy_id = str(uuid.uuid4())
-                                        trade_request = trading_api_pb2.TradeRequest(
-                                            symbol=bot.symbol,
-                                            side=signal['action'].upper(),
-                                            size=float(signal['size']),
-                                            price=float(price),
-                                            user_id=bot.bot_id,
-                                            strategy_id=strategy_id
+                                        order_side = trading_api_pb2.BUY if signal['action'].upper() == 'BUY' else trading_api_pb2.SELL
+                                        order_request = trading_api_pb2.CreateOrderRequest(
+                                            bot_id=bot.id,
+                                            symbol=bot.symbols[0], # Assuming one symbol per bot for now
+                                            side=order_side,
+                                            type=trading_api_pb2.MARKET,
+                                            quantity=float_to_decimal(float(signal['size']))
                                         )
                                         try:
-                                            trade_response = order_stub.ExecuteTrade(trade_request, metadata=metadata)
-                                            print(f"Trade executed for bot {bot.name} @ {trade_response.executed_price:.2f}: {trade_response.message}")
-                                            print(f"Signal: {json.dumps(signal)}  VaR: {var_response.value_at_risk:.2f}")
-                                            if hasattr(trade_response, 'pnl'):
-                                                self.account_value += float(trade_response.pnl)
-                                                print(f"Account value: ${self.account_value:,.2f}")
+                                            order_response = order_stub.CreateOrder(order_request, metadata=metadata)
+                                            print(f"Order created for bot {bot.name}: Order ID {order_response.id}, Status {order_response.status}")
                                         except grpc.RpcError as e:
-                                            print(f"Error executing trade for bot {bot.name}: {e.details()}")
+                                            print(f"Error creating order for bot {bot.name}: {e.details()}")
                                     else:
                                         print(f"Trade blocked for bot {bot.name}: VaR {var_response.value_at_risk:.2f} over limit")
                                 except grpc.RpcError as e:
@@ -208,6 +208,7 @@ if __name__ == "__main__":
         orchestrator.run()
     except KeyboardInterrupt:
         print("\nOrchestrator shutdown.")
+        
 # Example: Run a backtest programmatically
 from backtest_engine import BacktestEngine, load_historical_data
 from strategies.mean_reversion import MeanReversionStrategy, MeanReversionParams

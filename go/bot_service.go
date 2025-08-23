@@ -245,7 +245,7 @@ func (s *botServiceServer) GetBotStatus(ctx context.Context, req *pb.BotIdReques
 	bot, ok := s.reg.bots[req.GetBotId()]
 	s.reg.mu.RUnlock()
 	if !ok {
-		return &pb.Bot{}, nil
+		return nil, status.Error(codes.NotFound, "bot not found")
 	}
 	return bot, nil
 }
