@@ -788,6 +788,9 @@ func main() {
 	authSvc := newAuthServer(secret)
 	pb.RegisterAuthServiceServer(grpcServer, authSvc)
 
+	orderSvc := newOrderServiceServer(dbService)
+	pb.RegisterOrderServiceServer(grpcServer, orderSvc)
+
 	reflection.Register(grpcServer) // Register reflection service for gRPC CLI tools
 
 	// Market data feed (dynamic)
