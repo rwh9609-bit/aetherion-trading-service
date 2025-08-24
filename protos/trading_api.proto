@@ -4,58 +4,174 @@ package trading;
 
 option go_package = "github.com/rwh9609-bit/multilanguage/go/gen";
 
-// Represents a single market data tick
-message Tick {
-    string symbol = 1;
-    double price = 2;
-    int64 timestamp_ns = 3; // Nanosecond precision timestamp
-}
+// =================================================================
+// COMMON & UTILITY MESSAGES
+// =================================================================
 
-// Request to stream live price ticks (optional symbol filter; empty = all subscribed symbols server supports)
-message TickStreamRequest {
-    string symbol = 1;
-}
-
-// Generic symbol request for add/remove symbol operations
-message SymbolRequest {
-    string symbol = 1;
-}
-
-// Empty request placeholder
 message Empty {}
 
-// Response listing active market data symbols
-message SymbolList {
-    repeated string symbols = 1;
-}
-
-message StrategyRequest {
-    string strategy_id = 1;
-    string symbol = 2;
-    map<string, string> parameters = 3;
-    string user_id = 4; // <-- Add this line
-}
-
-// Generic response for operations
 message StatusResponse {
     bool success = 1;
     string message = 2;
     string id = 3; // optional identifier (e.g., strategy/bot id)
 }
 
-// Request to get portfolio status
+// =================================================================
+// PORTFOLIO & PERFORMANCE SERVICE
+// =================================================================
+
 message PortfolioRequest {
     string account_id = 1;
 }
 
-// Response with portfolio details
-// Portfolio snapshot at a point in time
 message Portfolio {
     map<string, double> positions = 1;  // Map of symbol to quantity
     double total_value_usd = 2;
     optional double last_price_change = 3;  // Last observed price change percentage
 }
 
+// =================================================================
+// ORDER & TRADE SERVICE
+// =================================================================
+
+message OrderBook {
+    repeated OrderBookEntry bids = 1;
+    repeated OrderBookEntry asks = 2;
+    string symbol = 3;
+}
+
+message OrderBookEntry {
+    double price = 1;
+    double size = 2;
+    int64 timestamp = 3; // Unix epoch milliseconds
+}
+
+message OrderBookRequest {
+    string symbol = 1;
+}
+
+message Trade {
+    string trade_id = 1;
+    string symbol = 2;
+    string side = 3;
+    double quantity = 4;
+    double price = 5;
+    int64 executed_at = 6;
+    string strategy_id = 7;
+}
+
+message TradeRequest {
+    string symbol = 1;
+    string side = 2;
+    double size = 3;
+    double price = 4;
+    string strategy_id = 5;
+    string user_id = 6; // <-- Add this line
+}
+
+message TradeResponse {
+    bool accepted = 1;
+    string message = 2;
+    double executed_price = 3;
+    double pnl = 4; // realized PnL for closing trades (simplified)
+}
+
+message TradeHistoryRequest {
+    string user_id = 1;
+}
+
+message TradeHistoryResponse {
+    repeated Trade trades = 1;
+}
+
+// =================================================================
+// AUTH & USER SERVICE
+// =================================================================
+ 
+service AuthService {
+    rpc Register(RegisterRequest) returns (AuthResponse) {}
+    rpc Login(AuthRequest) returns (AuthResponse) {}
+    rpc GetUser(GetUserRequest) returns (UserInfo);
+}
+
+message AuthRequest {
+    string username = 1;
+    string password = 2;
+}
+
+message AuthResponse {
+    bool success = 1;
+    string message = 2;
+    string token = 3;           // JWT bearer token
+    int64 expires_at_unix = 4;   // Expiration timestamp (seconds since epoch)
+}
+
+message GetUserRequest {
+  string username = 1;
+}
+
+message RegisterRequest {
+    string username = 1;
+    string password = 2; // Plaintext over TLS; will be hashed server-side
+    string email = 3;
+}
+
+message UserInfo {
+  string username = 1;
+  string email = 2;
+  int64 created_at_unix = 3;
+}
+
+// =================================================================
+// BOT MANAGEMENT SERVICE
+// =================================================================
+
+// BotService provides a focused interface for bot lifecycle operations.
+service BotService {
+  rpc CreateBot(CreateBotRequest) returns (StatusResponse) {}
+  rpc DeleteBot(BotIdRequest) returns (StatusResponse) {}
+  rpc ListBots(Empty) returns (BotList) {}
+  rpc StartBot(BotIdRequest) returns (StatusResponse) {}
+  rpc StopBot(BotIdRequest) returns (StatusResponse) {}
+  rpc GetBotStatus(BotIdRequest) returns (BotConfig) {}
+}
+
+message BotConfig {
+    string bot_id = 1;
+    string symbol = 2;
+    string strategy = 3;
+    map<string, string> parameters = 4;
+    bool is_active = 5;
+    int64 created_at_unix_ms = 6;
+    string name = 7;
+    string user_id = 8;
+    double account_value = 9; // <-- Add this line
+}
+ 
+message CreateBotRequest {
+    string symbol = 1;
+    string strategy = 2;
+    map<string, string> parameters = 3;
+    string name = 4;
+}
+ 
+message BotIdRequest {
+    string bot_id = 1;
+}
+ 
+message BotList {
+    repeated BotConfig bots = 1;
+}
+
+// =================================================================
+// RISK SERVICE
+// =================================================================
+
+// Service for performing risk calculations
+service RiskService {
+    // Calculates the Value at Risk for a given portfolio
+    rpc CalculateVaR(VaRRequest) returns (VaRResponse) {}
+}
 
 // Request to calculate Value at Risk (VaR)
 message VaRRequest {
@@ -75,102 +191,9 @@ message VaRResponse {
     string last_update = 6;
 }
 
-message TradeRequest {
-    string symbol = 1;
-    string side = 2;
-    double size = 3;
-    double price = 4;
-    string strategy_id = 5;
-    string user_id = 6; // <-- Add this line
-}
-
-message TradeResponse {
-    bool accepted = 1;
-    string message = 2;
-    double executed_price = 3;
-    double pnl = 4; // realized PnL for closing trades (simplified)
-}
-
-message Trade {
-    string trade_id = 1;
-    string symbol = 2;
-    string side = 3;
-    double quantity = 4;
-    double price = 5;
-    int64 executed_at = 6;
-    string strategy_id = 7;
-}
-
-message TradeHistoryRequest {
-    string user_id = 1;
-}
-
-message TradeHistoryResponse {
-    repeated Trade trades = 1;
-}
-
-// OrderBook related messages
-message OrderBookEntry {
-    double price = 1;
-    double size = 2;
-    int64 timestamp = 3; // Unix epoch milliseconds
-}
-
-message OrderBook {
-    repeated OrderBookEntry bids = 1;
-    repeated OrderBookEntry asks = 2;
-    string symbol = 3;
-}
-
-message OrderBookRequest {
-    string symbol = 1;
-}
-
-// --- Momentum Scanner (server-side aggregation) ---
-// Request momentum metrics for specified symbols. If symbols empty, server returns all tracked symbols.
-message MomentumRequest {
-    repeated string symbols = 1; // optional filter list
-}
-
-// Per-symbol momentum & volatility metrics (short-term heuristic)
-message MomentumMetric {
-    string symbol = 1;
-    double last_price = 2;
-    double pct_change_1m = 3; // percentage change over ~1 minute
-    double pct_change_5m = 4; // percentage change over ~5 minutes
-    double volatility = 5;    // standard deviation of log returns (annualized approximation)
-    double momentum_score = 6; // composite score (weighted changes - volatility penalty)
-}
-
-message MomentumResponse {
-    repeated MomentumMetric metrics = 1;
-    int64 generated_at_unix_ms = 2;
-}
-
-// --- Bot / Strategy Management ---
-// Canonical bot configuration & runtime status
-
-// --- Authentication & User Management ---
-// Request to register a new user
-message RegisterRequest {
-    string username = 1;
-    string password = 2; // Plaintext over TLS; will be hashed server-side
-    string email = 3;
-}
-
-// Request to login
-message AuthRequest {
-    string username = 1;
-    string password = 2;
-}
-
-// Response containing JWT token
-message AuthResponse {
-    bool success = 1;
-    string message = 2;
-    string token = 3;           // JWT bearer token
-    int64 expires_at_unix = 4;   // Expiration timestamp (seconds since epoch)
-}
+// ==================================================================
+// Misc.
+// ==================================================================
 
 // Service definition
 service TradingService {
@@ -211,66 +234,51 @@ service TradingService {
     rpc GetTradeHistory(TradeHistoryRequest) returns (TradeHistoryResponse) {}
 }
 
-// Service for performing risk calculations
-service RiskService {
-    // Calculates the Value at Risk for a given portfolio
-    rpc CalculateVaR(VaRRequest) returns (VaRResponse) {}
+// Request momentum metrics for specified symbols. If symbols empty, server returns all tracked symbols.
+message MomentumRequest {
+    repeated string symbols = 1; // optional filter list
 }
 
-message GetUserRequest {
-  string username = 1;
-}
-
-message UserInfo {
-  string username = 1;
-  string email = 2;
-  int64 created_at_unix = 3;
-}
-
-// Service for authentication
-service AuthService {
-    rpc Register(RegisterRequest) returns (AuthResponse) {}
-    rpc Login(AuthRequest) returns (AuthResponse) {}
-    rpc GetUser(GetUserRequest) returns (UserInfo);
-}
-
-message BotConfig {
-    string bot_id = 1;
-    string symbol = 2;
-    string strategy = 3;
-    map<string, string> parameters = 4;
-    bool is_active = 5;
-    int64 created_at_unix_ms = 6;
-    string name = 7;
-    string user_id = 8;
-    double account_value = 9; // <-- Add this line
-}
-
-// Request to create a new trading bot.
-message CreateBotRequest {
+// Per-symbol momentum & volatility metrics (short-term heuristic)
+message MomentumMetric {
     string symbol = 1;
-    string strategy = 2;
+    double last_price = 2;
+    double pct_change_1m = 3; // percentage change over ~1 minute
+    double pct_change_5m = 4; // percentage change over ~5 minutes
+    double volatility = 5;    // standard deviation of log returns (annualized approximation)
+    double momentum_score = 6; // composite score (weighted changes - volatility penalty)
+}
+
+message MomentumResponse {
+    repeated MomentumMetric metrics = 1;
+    int64 generated_at_unix_ms = 2;
+}
+
+// Represents a single market data tick
+message Tick {
+    string symbol = 1;
+    double price = 2;
+    int64 timestamp_ns = 3; // Nanosecond precision timestamp
+}
+
+// Request to stream live price ticks (optional symbol filter; empty = all subscribed symbols server supports)
+message TickStreamRequest {
+    string symbol = 1;
+}
+
+// Generic symbol request for add/remove symbol operations
+message SymbolRequest {
+    string symbol = 1;
+}
+
+// Response listing active market data symbols
+message SymbolList {
+    repeated string symbols = 1;
+}
+
+message StrategyRequest {
+    string strategy_id = 1;
+    string symbol = 2;
     map<string, string> parameters = 3;
-    string name = 4;
-}
-
-// Request based on a bot's unique ID.
-message BotIdRequest {
-    string bot_id = 1;
-}
-
-// Response containing a list of all configured bots.
-message BotList {
-    repeated BotConfig bots = 1;
-}
-
-
-// BotService provides a focused interface for bot lifecycle operations.
-service BotService {
-  rpc CreateBot(CreateBotRequest) returns (StatusResponse) {}
-  rpc DeleteBot(BotIdRequest) returns (StatusResponse) {}
-  rpc ListBots(Empty) returns (BotList) {}
-  rpc StartBot(BotIdRequest) returns (StatusResponse) {}
-  rpc StopBot(BotIdRequest) returns (StatusResponse) {}
-  rpc GetBotStatus(BotIdRequest) returns (BotConfig) {}
+    string user_id = 4; // <-- Add this line
 }
