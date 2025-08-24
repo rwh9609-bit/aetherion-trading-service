@@ -24,6 +24,38 @@ message StatusResponse {
     string id = 3; // optional identifier (e.g., strategy/bot id)
 }
 
+message Pagination {
+    int32 limit = 1;
+    int32 offset = 2;
+}
+
+// =================================================================
+// ENUMS
+// =================================================================
+
+enum OrderSide {
+    ORDER_SIDE_UNSPECIFIED = 0;
+    BUY = 1;
+    SELL = 2;
+}
+
+enum OrderType {
+    ORDER_TYPE_UNSPECIFIED = 0;
+    MARKET = 1;
+    LIMIT = 2;
+    STOP = 3;
+}
+
+enum OrderStatus {
+    ORDER_STATUS_UNSPECIFIED = 0;
+    NEW = 1;
+    SUBMITTED = 2;
+    PARTIALLY_FILLED = 3;
+    FILLED = 4;
+    CANCELED = 5;
+    REJECTED = 6;
+}
+
 // =================================================================
 // PORTFOLIO & PERFORMANCE SERVICE
 // =================================================================
