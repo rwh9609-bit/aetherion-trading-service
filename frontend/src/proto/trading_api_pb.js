@@ -1937,7 +1937,8 @@ side: jspb.Message.getFieldWithDefault(msg, 3, ""),
 quantity: jspb.Message.getFloatingPointFieldWithDefault(msg, 4, 0.0),
 price: jspb.Message.getFloatingPointFieldWithDefault(msg, 5, 0.0),
 executedAt: jspb.Message.getFieldWithDefault(msg, 6, 0),
-strategyId: jspb.Message.getFieldWithDefault(msg, 7, "")
+strategyId: jspb.Message.getFieldWithDefault(msg, 7, ""),
+botId: jspb.Message.getFieldWithDefault(msg, 8, "")
   };
 
   if (includeInstance) {
@@ -2001,6 +2002,10 @@ proto.trading.Trade.deserializeBinaryFromReader = function(msg, reader) {
     case 7:
       var value = /** @type {string} */ (reader.readString());
       msg.setStrategyId(value);
+      break;
+    case 8:
+      var value = /** @type {string} */ (reader.readString());
+      msg.setBotId(value);
       break;
     default:
       reader.skipField();
@@ -2077,6 +2082,13 @@ proto.trading.Trade.serializeBinaryToWriter = function(message, writer) {
   if (f.length > 0) {
     writer.writeString(
       7,
+      f
+    );
+  }
+  f = message.getBotId();
+  if (f.length > 0) {
+    writer.writeString(
+      8,
       f
     );
   }
@@ -2209,6 +2221,24 @@ proto.trading.Trade.prototype.setStrategyId = function(value) {
 };
 
 
+/**
+ * optional string bot_id = 8;
+ * @return {string}
+ */
+proto.trading.Trade.prototype.getBotId = function() {
+  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 8, ""));
+};
+
+
+/**
+ * @param {string} value
+ * @return {!proto.trading.Trade} returns this
+ */
+proto.trading.Trade.prototype.setBotId = function(value) {
+  return jspb.Message.setProto3StringField(this, 8, value);
+};
+
+
 
 
 
@@ -2246,7 +2276,8 @@ side: jspb.Message.getFieldWithDefault(msg, 2, ""),
 size: jspb.Message.getFloatingPointFieldWithDefault(msg, 3, 0.0),
 price: jspb.Message.getFloatingPointFieldWithDefault(msg, 4, 0.0),
 strategyId: jspb.Message.getFieldWithDefault(msg, 5, ""),
-userId: jspb.Message.getFieldWithDefault(msg, 6, "")
+userId: jspb.Message.getFieldWithDefault(msg, 6, ""),
+botId: jspb.Message.getFieldWithDefault(msg, 7, "")
   };
 
   if (includeInstance) {
@@ -2306,6 +2337,10 @@ proto.trading.TradeRequest.deserializeBinaryFromReader = function(msg, reader) {
     case 6:
       var value = /** @type {string} */ (reader.readString());
       msg.setUserId(value);
+      break;
+    case 7:
+      var value = /** @type {string} */ (reader.readString());
+      msg.setBotId(value);
       break;
     default:
       reader.skipField();
@@ -2375,6 +2410,13 @@ proto.trading.TradeRequest.serializeBinaryToWriter = function(message, writer) {
   if (f.length > 0) {
     writer.writeString(
       6,
+      f
+    );
+  }
+  f = message.getBotId();
+  if (f.length > 0) {
+    writer.writeString(
+      7,
       f
     );
   }
@@ -2486,6 +2528,24 @@ proto.trading.TradeRequest.prototype.getUserId = function() {
  */
 proto.trading.TradeRequest.prototype.setUserId = function(value) {
   return jspb.Message.setProto3StringField(this, 6, value);
+};
+
+
+/**
+ * optional string bot_id = 7;
+ * @return {string}
+ */
+proto.trading.TradeRequest.prototype.getBotId = function() {
+  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 7, ""));
+};
+
+
+/**
+ * @param {string} value
+ * @return {!proto.trading.TradeRequest} returns this
+ */
+proto.trading.TradeRequest.prototype.setBotId = function(value) {
+  return jspb.Message.setProto3StringField(this, 7, value);
 };
 
 
@@ -2741,7 +2801,8 @@ proto.trading.TradeHistoryRequest.prototype.toObject = function(opt_includeInsta
  */
 proto.trading.TradeHistoryRequest.toObject = function(includeInstance, msg) {
   var f, obj = {
-userId: jspb.Message.getFieldWithDefault(msg, 1, "")
+userId: jspb.Message.getFieldWithDefault(msg, 1, ""),
+botId: jspb.Message.getFieldWithDefault(msg, 2, "")
   };
 
   if (includeInstance) {
@@ -2782,6 +2843,10 @@ proto.trading.TradeHistoryRequest.deserializeBinaryFromReader = function(msg, re
       var value = /** @type {string} */ (reader.readString());
       msg.setUserId(value);
       break;
+    case 2:
+      var value = /** @type {string} */ (reader.readString());
+      msg.setBotId(value);
+      break;
     default:
       reader.skipField();
       break;
@@ -2818,6 +2883,13 @@ proto.trading.TradeHistoryRequest.serializeBinaryToWriter = function(message, wr
       f
     );
   }
+  f = message.getBotId();
+  if (f.length > 0) {
+    writer.writeString(
+      2,
+      f
+    );
+  }
 };
 
 
@@ -2836,6 +2908,24 @@ proto.trading.TradeHistoryRequest.prototype.getUserId = function() {
  */
 proto.trading.TradeHistoryRequest.prototype.setUserId = function(value) {
   return jspb.Message.setProto3StringField(this, 1, value);
+};
+
+
+/**
+ * optional string bot_id = 2;
+ * @return {string}
+ */
+proto.trading.TradeHistoryRequest.prototype.getBotId = function() {
+  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 2, ""));
+};
+
+
+/**
+ * @param {string} value
+ * @return {!proto.trading.TradeHistoryRequest} returns this
+ */
+proto.trading.TradeHistoryRequest.prototype.setBotId = function(value) {
+  return jspb.Message.setProto3StringField(this, 2, value);
 };
 
 

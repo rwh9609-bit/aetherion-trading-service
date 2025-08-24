@@ -308,29 +308,56 @@ func (s *tradingServer) StartStrategy(ctx context.Context, req *pb.StrategyReque
 	}, nil
 }
 
+// Service level RPC
 func (s *tradingServer) GetTradeHistory(ctx context.Context, req *pb.TradeHistoryRequest) (*pb.TradeHistoryResponse, error) {
 	if s.dbService == nil {
 		return nil, fmt.Errorf("trade history unavailable")
 	}
+
+	// Extract user ID from context (set by auth interceptor)
 	userID := req.GetUserId()
-	if userID == "" {
-		return nil, status.Error(codes.InvalidArgument, "user_id is required")
-	}
-	trades, err := s.dbService.GetTradesByUserID(ctx, userID)
-	if err != nil {
-		log.Error().Err(err).Msg("Failed to get trade history")
-		return nil, err
+
+	// Extract bot ID from request
+	botID := req.GetBotId()
+
+	// Validate request
+	if userID == "" && botID == "" {
+		return nil, status.Error(codes.InvalidArgument, "user_id or bot_id are required")
 	}
 
-	// Convert []*Trade to []*pb.Trade
-	pbTrades := make([]*pb.Trade, len(trades))
-	for i, trade := range trades {
-		pbTrades[i] = &pb.Trade{
-			TradeId: trade.ID, StrategyId: trade.StrategyID,
-			Symbol: trade.Symbol, Side: trade.Side, Quantity: trade.Quantity,
-			Price: trade.Price, ExecutedAt: trade.ExecutedAt.UnixNano()}
+	if botID != "" {
+		trades, err := s.dbService.GetTradesByBotID(ctx, botID)
+		if err != nil {
+			log.Error().Err(err).Msg("Failed to get trade history")
+			return nil, err
+		}
+
+		// Convert []*Trade to []*pb.Trade
+		pbTrades := make([]*pb.Trade, len(trades))
+		for i, trade := range trades {
+			pbTrades[i] = &pb.Trade{
+				TradeId: trade.ID, StrategyId: trade.BotID,
+				Symbol: trade.Symbol, Side: trade.Side, Quantity: trade.Quantity,
+				Price: trade.Price, ExecutedAt: trade.ExecutedAt.UnixNano()}
+		}
+		return &pb.TradeHistoryResponse{Trades: pbTrades}, nil
+	} else {
+		trades, err := s.dbService.GetTradesByUserID(ctx, userID)
+		if err != nil {
+			log.Error().Err(err).Msg("Failed to get trade history")
+			return nil, err
+		}
+
+		// Convert []*Trade to []*pb.Trade
+		pbTrades := make([]*pb.Trade, len(trades))
+		for i, trade := range trades {
+			pbTrades[i] = &pb.Trade{
+				TradeId: trade.ID, BotId: trade.BotID,
+				Symbol: trade.Symbol, Side: trade.Side, Quantity: trade.Quantity,
+				Price: trade.Price, ExecutedAt: trade.ExecutedAt.UnixNano()}
+		}
+		return &pb.TradeHistoryResponse{Trades: pbTrades}, nil
 	}
-	return &pb.TradeHistoryResponse{Trades: pbTrades}, nil
 
 }
 
@@ -344,8 +371,6 @@ func (s *tradingServer) StopStrategy(ctx context.Context, req *pb.StrategyReques
 
 	return &pb.StatusResponse{Success: true, Message: "Strategy stopped"}, nil
 }
-
-// --- Bot Management RPCs ---
 
 // GetPortfolio returns the current portfolio status
 func (s *tradingServer) GetPortfolio(ctx context.Context, req *pb.PortfolioRequest) (*pb.Portfolio, error) {
@@ -710,8 +735,8 @@ func (s *tradingServer) ExecuteTrade(ctx context.Context, req *pb.TradeRequest) 
 	// After updating portfolio, record the trade:
 	trade := &Trade{
 		ID:         uuid.New().String(),
-		UserID:     req.UserId,     // Make sure this is set by the bot/user
-		StrategyID: req.StrategyId, // Set by bot if applicable
+		UserID:     req.UserId, // Make sure this is set by the bot/user
+		BotID:      req.BotId,  // Set by bot if applicable
 		Symbol:     req.Symbol,
 		Side:       req.Side,
 		Quantity:   req.Size,

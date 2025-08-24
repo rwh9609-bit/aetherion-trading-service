@@ -58,6 +58,7 @@ message Trade {
     double price = 5;
     int64 executed_at = 6;
     string strategy_id = 7;
+    string bot_id = 8;
 }
 
 message TradeRequest {
@@ -66,7 +67,8 @@ message TradeRequest {
     double size = 3;
     double price = 4;
     string strategy_id = 5;
-    string user_id = 6; // <-- Add this line
+    string user_id = 6;
+    string bot_id = 7;
 }
 
 message TradeResponse {
@@ -78,6 +80,7 @@ message TradeResponse {
 
 message TradeHistoryRequest {
     string user_id = 1;
+    string bot_id = 2;
 }
 
 message TradeHistoryResponse {

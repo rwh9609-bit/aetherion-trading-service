@@ -394,6 +394,7 @@ type Trade struct {
 	Price         float64                `protobuf:"fixed64,5,opt,name=price,proto3" json:"price,omitempty"`
 	ExecutedAt    int64                  `protobuf:"varint,6,opt,name=executed_at,json=executedAt,proto3" json:"executed_at,omitempty"`
 	StrategyId    string                 `protobuf:"bytes,7,opt,name=strategy_id,json=strategyId,proto3" json:"strategy_id,omitempty"`
+	BotId         string                 `protobuf:"bytes,8,opt,name=bot_id,json=botId,proto3" json:"bot_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -477,6 +478,13 @@ func (x *Trade) GetStrategyId() string {
 	return ""
 }
 
+func (x *Trade) GetBotId() string {
+	if x != nil {
+		return x.BotId
+	}
+	return ""
+}
+
 type TradeRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Symbol        string                 `protobuf:"bytes,1,opt,name=symbol,proto3" json:"symbol,omitempty"`
@@ -484,7 +492,8 @@ type TradeRequest struct {
 	Size          float64                `protobuf:"fixed64,3,opt,name=size,proto3" json:"size,omitempty"`
 	Price         float64                `protobuf:"fixed64,4,opt,name=price,proto3" json:"price,omitempty"`
 	StrategyId    string                 `protobuf:"bytes,5,opt,name=strategy_id,json=strategyId,proto3" json:"strategy_id,omitempty"`
-	UserId        string                 `protobuf:"bytes,6,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"` // <-- Add this line
+	UserId        string                 `protobuf:"bytes,6,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+	BotId         string                 `protobuf:"bytes,7,opt,name=bot_id,json=botId,proto3" json:"bot_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -561,6 +570,13 @@ func (x *TradeRequest) GetUserId() string {
 	return ""
 }
 
+func (x *TradeRequest) GetBotId() string {
+	if x != nil {
+		return x.BotId
+	}
+	return ""
+}
+
 type TradeResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Accepted      bool                   `protobuf:"varint,1,opt,name=accepted,proto3" json:"accepted,omitempty"`
@@ -632,6 +648,7 @@ func (x *TradeResponse) GetPnl() float64 {
 type TradeHistoryRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	UserId        string                 `protobuf:"bytes,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+	BotId         string                 `protobuf:"bytes,2,opt,name=bot_id,json=botId,proto3" json:"bot_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -669,6 +686,13 @@ func (*TradeHistoryRequest) Descriptor() ([]byte, []int) {
 func (x *TradeHistoryRequest) GetUserId() string {
 	if x != nil {
 		return x.UserId
+	}
+	return ""
+}
+
+func (x *TradeHistoryRequest) GetBotId() string {
+	if x != nil {
+		return x.BotId
 	}
 	return ""
 }
@@ -1895,7 +1919,7 @@ const file_trading_api_proto_rawDesc = "" +
 	"\x04size\x18\x02 \x01(\x01R\x04size\x12\x1c\n" +
 	"\ttimestamp\x18\x03 \x01(\x03R\ttimestamp\"*\n" +
 	"\x10OrderBookRequest\x12\x16\n" +
-	"\x06symbol\x18\x01 \x01(\tR\x06symbol\"\xc2\x01\n" +
+	"\x06symbol\x18\x01 \x01(\tR\x06symbol\"\xd9\x01\n" +
 	"\x05Trade\x12\x19\n" +
 	"\btrade_id\x18\x01 \x01(\tR\atradeId\x12\x16\n" +
 	"\x06symbol\x18\x02 \x01(\tR\x06symbol\x12\x12\n" +
@@ -1905,7 +1929,8 @@ const file_trading_api_proto_rawDesc = "" +
 	"\vexecuted_at\x18\x06 \x01(\x03R\n" +
 	"executedAt\x12\x1f\n" +
 	"\vstrategy_id\x18\a \x01(\tR\n" +
-	"strategyId\"\x9e\x01\n" +
+	"strategyId\x12\x15\n" +
+	"\x06bot_id\x18\b \x01(\tR\x05botId\"\xb5\x01\n" +
 	"\fTradeRequest\x12\x16\n" +
 	"\x06symbol\x18\x01 \x01(\tR\x06symbol\x12\x12\n" +
 	"\x04side\x18\x02 \x01(\tR\x04side\x12\x12\n" +
@@ -1913,14 +1938,16 @@ const file_trading_api_proto_rawDesc = "" +
 	"\x05price\x18\x04 \x01(\x01R\x05price\x12\x1f\n" +
 	"\vstrategy_id\x18\x05 \x01(\tR\n" +
 	"strategyId\x12\x17\n" +
-	"\auser_id\x18\x06 \x01(\tR\x06userId\"~\n" +
+	"\auser_id\x18\x06 \x01(\tR\x06userId\x12\x15\n" +
+	"\x06bot_id\x18\a \x01(\tR\x05botId\"~\n" +
 	"\rTradeResponse\x12\x1a\n" +
 	"\baccepted\x18\x01 \x01(\bR\baccepted\x12\x18\n" +
 	"\amessage\x18\x02 \x01(\tR\amessage\x12%\n" +
 	"\x0eexecuted_price\x18\x03 \x01(\x01R\rexecutedPrice\x12\x10\n" +
-	"\x03pnl\x18\x04 \x01(\x01R\x03pnl\".\n" +
+	"\x03pnl\x18\x04 \x01(\x01R\x03pnl\"E\n" +
 	"\x13TradeHistoryRequest\x12\x17\n" +
-	"\auser_id\x18\x01 \x01(\tR\x06userId\">\n" +
+	"\auser_id\x18\x01 \x01(\tR\x06userId\x12\x15\n" +
+	"\x06bot_id\x18\x02 \x01(\tR\x05botId\">\n" +
 	"\x14TradeHistoryResponse\x12&\n" +
 	"\x06trades\x18\x01 \x03(\v2\x0e.trading.TradeR\x06trades\"E\n" +
 	"\vAuthRequest\x12\x1a\n" +

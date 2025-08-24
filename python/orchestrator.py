@@ -61,15 +61,15 @@ class TradingOrchestrator:
         }
         return jwt.encode(claims, self.auth_secret, algorithm='HS256')
     
-    def fetch_trade_history(self, trading_stub, bot_id, metadata):
-        try:
-            history_req = trading_api_pb2.TradeHistoryRequest(user_id=bot_id)
-            history_resp = trading_stub.GetTradeHistory(history_req, metadata=metadata)
-            print(f"Trade history for bot {bot_id}:")
-            for trade in history_resp.trades:
-                print(f"  {trade.trade_id}: {trade.side} {trade.quantity} {trade.symbol} @ {trade.price} on {datetime.fromtimestamp(trade.executed_at)}")
-        except grpc.RpcError as e:
-            print(f"Error fetching trade history for bot {bot_id}: {e.details()}")
+    # def fetch_trade_history(self, trading_stub, bot_id, metadata):
+    #     try:
+    #         history_req = trading_api_pb2.TradeHistoryRequest(user_id, bot_id)
+    #         history_resp = trading_stub.GetTradeHistory(history_req, metadata=metadata)
+    #         print(f"Trade history for bot {bot_id}:")
+    #         for trade in history_resp.trades:
+    #             print(f"  {trade.trade_id}: {trade.side} {trade.quantity} {trade.symbol} @ {trade.price} on {datetime.fromtimestamp(trade.executed_at)}")
+    #     except grpc.RpcError as e:
+    #         print(f"Error fetching trade history for bot {bot_id}: {e.details()}")
 
     def run(self):
         """Main orchestrator loop: fetch bots and execute trades for each bot."""
@@ -143,7 +143,8 @@ class TradingOrchestrator:
                                         side=signal['action'].upper(),
                                         size=float(signal['size']),
                                         price=float(price),
-                                        user_id=bot.bot_id,
+                                        user_id=bot.user_id,
+                                        bot_id=bot.bot_id,
                                         strategy_id=strategy_id
                                     )
                                     try:
@@ -162,7 +163,7 @@ class TradingOrchestrator:
                         # Add logging for trade execution
 
                         # After trading logic, fetch trade history:
-                        self.fetch_trade_history(trading_stub, bot.bot_id, metadata)
+                        # self.fetch_trade_history(trading_stub, bot.bot_id, metadata)
 
                     time.sleep(20)
 
