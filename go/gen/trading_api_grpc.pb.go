@@ -19,6 +19,588 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
+	AuthService_Register_FullMethodName = "/trading.AuthService/Register"
+	AuthService_Login_FullMethodName    = "/trading.AuthService/Login"
+	AuthService_GetUser_FullMethodName  = "/trading.AuthService/GetUser"
+)
+
+// AuthServiceClient is the client API for AuthService service.
+//
+// For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
+type AuthServiceClient interface {
+	Register(ctx context.Context, in *RegisterRequest, opts ...grpc.CallOption) (*AuthResponse, error)
+	Login(ctx context.Context, in *AuthRequest, opts ...grpc.CallOption) (*AuthResponse, error)
+	GetUser(ctx context.Context, in *GetUserRequest, opts ...grpc.CallOption) (*UserInfo, error)
+}
+
+type authServiceClient struct {
+	cc grpc.ClientConnInterface
+}
+
+func NewAuthServiceClient(cc grpc.ClientConnInterface) AuthServiceClient {
+	return &authServiceClient{cc}
+}
+
+func (c *authServiceClient) Register(ctx context.Context, in *RegisterRequest, opts ...grpc.CallOption) (*AuthResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(AuthResponse)
+	err := c.cc.Invoke(ctx, AuthService_Register_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *authServiceClient) Login(ctx context.Context, in *AuthRequest, opts ...grpc.CallOption) (*AuthResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(AuthResponse)
+	err := c.cc.Invoke(ctx, AuthService_Login_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *authServiceClient) GetUser(ctx context.Context, in *GetUserRequest, opts ...grpc.CallOption) (*UserInfo, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(UserInfo)
+	err := c.cc.Invoke(ctx, AuthService_GetUser_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+// AuthServiceServer is the server API for AuthService service.
+// All implementations must embed UnimplementedAuthServiceServer
+// for forward compatibility.
+type AuthServiceServer interface {
+	Register(context.Context, *RegisterRequest) (*AuthResponse, error)
+	Login(context.Context, *AuthRequest) (*AuthResponse, error)
+	GetUser(context.Context, *GetUserRequest) (*UserInfo, error)
+	mustEmbedUnimplementedAuthServiceServer()
+}
+
+// UnimplementedAuthServiceServer must be embedded to have
+// forward compatible implementations.
+//
+// NOTE: this should be embedded by value instead of pointer to avoid a nil
+// pointer dereference when methods are called.
+type UnimplementedAuthServiceServer struct{}
+
+func (UnimplementedAuthServiceServer) Register(context.Context, *RegisterRequest) (*AuthResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Register not implemented")
+}
+func (UnimplementedAuthServiceServer) Login(context.Context, *AuthRequest) (*AuthResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Login not implemented")
+}
+func (UnimplementedAuthServiceServer) GetUser(context.Context, *GetUserRequest) (*UserInfo, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetUser not implemented")
+}
+func (UnimplementedAuthServiceServer) mustEmbedUnimplementedAuthServiceServer() {}
+func (UnimplementedAuthServiceServer) testEmbeddedByValue()                     {}
+
+// UnsafeAuthServiceServer may be embedded to opt out of forward compatibility for this service.
+// Use of this interface is not recommended, as added methods to AuthServiceServer will
+// result in compilation errors.
+type UnsafeAuthServiceServer interface {
+	mustEmbedUnimplementedAuthServiceServer()
+}
+
+func RegisterAuthServiceServer(s grpc.ServiceRegistrar, srv AuthServiceServer) {
+	// If the following call pancis, it indicates UnimplementedAuthServiceServer was
+	// embedded by pointer and is nil.  This will cause panics if an
+	// unimplemented method is ever invoked, so we test this at initialization
+	// time to prevent it from happening at runtime later due to I/O.
+	if t, ok := srv.(interface{ testEmbeddedByValue() }); ok {
+		t.testEmbeddedByValue()
+	}
+	s.RegisterService(&AuthService_ServiceDesc, srv)
+}
+
+func _AuthService_Register_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(RegisterRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AuthServiceServer).Register(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AuthService_Register_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AuthServiceServer).Register(ctx, req.(*RegisterRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _AuthService_Login_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(AuthRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AuthServiceServer).Login(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AuthService_Login_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AuthServiceServer).Login(ctx, req.(*AuthRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _AuthService_GetUser_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetUserRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AuthServiceServer).GetUser(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AuthService_GetUser_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AuthServiceServer).GetUser(ctx, req.(*GetUserRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+// AuthService_ServiceDesc is the grpc.ServiceDesc for AuthService service.
+// It's only intended for direct use with grpc.RegisterService,
+// and not to be introspected or modified (even as a copy)
+var AuthService_ServiceDesc = grpc.ServiceDesc{
+	ServiceName: "trading.AuthService",
+	HandlerType: (*AuthServiceServer)(nil),
+	Methods: []grpc.MethodDesc{
+		{
+			MethodName: "Register",
+			Handler:    _AuthService_Register_Handler,
+		},
+		{
+			MethodName: "Login",
+			Handler:    _AuthService_Login_Handler,
+		},
+		{
+			MethodName: "GetUser",
+			Handler:    _AuthService_GetUser_Handler,
+		},
+	},
+	Streams:  []grpc.StreamDesc{},
+	Metadata: "trading_api.proto",
+}
+
+const (
+	BotService_CreateBot_FullMethodName    = "/trading.BotService/CreateBot"
+	BotService_DeleteBot_FullMethodName    = "/trading.BotService/DeleteBot"
+	BotService_ListBots_FullMethodName     = "/trading.BotService/ListBots"
+	BotService_StartBot_FullMethodName     = "/trading.BotService/StartBot"
+	BotService_StopBot_FullMethodName      = "/trading.BotService/StopBot"
+	BotService_GetBotStatus_FullMethodName = "/trading.BotService/GetBotStatus"
+)
+
+// BotServiceClient is the client API for BotService service.
+//
+// For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
+//
+// BotService provides a focused interface for bot lifecycle operations.
+type BotServiceClient interface {
+	CreateBot(ctx context.Context, in *CreateBotRequest, opts ...grpc.CallOption) (*StatusResponse, error)
+	DeleteBot(ctx context.Context, in *BotIdRequest, opts ...grpc.CallOption) (*StatusResponse, error)
+	ListBots(ctx context.Context, in *Empty, opts ...grpc.CallOption) (*BotList, error)
+	StartBot(ctx context.Context, in *BotIdRequest, opts ...grpc.CallOption) (*StatusResponse, error)
+	StopBot(ctx context.Context, in *BotIdRequest, opts ...grpc.CallOption) (*StatusResponse, error)
+	GetBotStatus(ctx context.Context, in *BotIdRequest, opts ...grpc.CallOption) (*BotConfig, error)
+}
+
+type botServiceClient struct {
+	cc grpc.ClientConnInterface
+}
+
+func NewBotServiceClient(cc grpc.ClientConnInterface) BotServiceClient {
+	return &botServiceClient{cc}
+}
+
+func (c *botServiceClient) CreateBot(ctx context.Context, in *CreateBotRequest, opts ...grpc.CallOption) (*StatusResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(StatusResponse)
+	err := c.cc.Invoke(ctx, BotService_CreateBot_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *botServiceClient) DeleteBot(ctx context.Context, in *BotIdRequest, opts ...grpc.CallOption) (*StatusResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(StatusResponse)
+	err := c.cc.Invoke(ctx, BotService_DeleteBot_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *botServiceClient) ListBots(ctx context.Context, in *Empty, opts ...grpc.CallOption) (*BotList, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(BotList)
+	err := c.cc.Invoke(ctx, BotService_ListBots_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *botServiceClient) StartBot(ctx context.Context, in *BotIdRequest, opts ...grpc.CallOption) (*StatusResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(StatusResponse)
+	err := c.cc.Invoke(ctx, BotService_StartBot_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *botServiceClient) StopBot(ctx context.Context, in *BotIdRequest, opts ...grpc.CallOption) (*StatusResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(StatusResponse)
+	err := c.cc.Invoke(ctx, BotService_StopBot_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *botServiceClient) GetBotStatus(ctx context.Context, in *BotIdRequest, opts ...grpc.CallOption) (*BotConfig, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(BotConfig)
+	err := c.cc.Invoke(ctx, BotService_GetBotStatus_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+// BotServiceServer is the server API for BotService service.
+// All implementations must embed UnimplementedBotServiceServer
+// for forward compatibility.
+//
+// BotService provides a focused interface for bot lifecycle operations.
+type BotServiceServer interface {
+	CreateBot(context.Context, *CreateBotRequest) (*StatusResponse, error)
+	DeleteBot(context.Context, *BotIdRequest) (*StatusResponse, error)
+	ListBots(context.Context, *Empty) (*BotList, error)
+	StartBot(context.Context, *BotIdRequest) (*StatusResponse, error)
+	StopBot(context.Context, *BotIdRequest) (*StatusResponse, error)
+	GetBotStatus(context.Context, *BotIdRequest) (*BotConfig, error)
+	mustEmbedUnimplementedBotServiceServer()
+}
+
+// UnimplementedBotServiceServer must be embedded to have
+// forward compatible implementations.
+//
+// NOTE: this should be embedded by value instead of pointer to avoid a nil
+// pointer dereference when methods are called.
+type UnimplementedBotServiceServer struct{}
+
+func (UnimplementedBotServiceServer) CreateBot(context.Context, *CreateBotRequest) (*StatusResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CreateBot not implemented")
+}
+func (UnimplementedBotServiceServer) DeleteBot(context.Context, *BotIdRequest) (*StatusResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method DeleteBot not implemented")
+}
+func (UnimplementedBotServiceServer) ListBots(context.Context, *Empty) (*BotList, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ListBots not implemented")
+}
+func (UnimplementedBotServiceServer) StartBot(context.Context, *BotIdRequest) (*StatusResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method StartBot not implemented")
+}
+func (UnimplementedBotServiceServer) StopBot(context.Context, *BotIdRequest) (*StatusResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method StopBot not implemented")
+}
+func (UnimplementedBotServiceServer) GetBotStatus(context.Context, *BotIdRequest) (*BotConfig, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetBotStatus not implemented")
+}
+func (UnimplementedBotServiceServer) mustEmbedUnimplementedBotServiceServer() {}
+func (UnimplementedBotServiceServer) testEmbeddedByValue()                    {}
+
+// UnsafeBotServiceServer may be embedded to opt out of forward compatibility for this service.
+// Use of this interface is not recommended, as added methods to BotServiceServer will
+// result in compilation errors.
+type UnsafeBotServiceServer interface {
+	mustEmbedUnimplementedBotServiceServer()
+}
+
+func RegisterBotServiceServer(s grpc.ServiceRegistrar, srv BotServiceServer) {
+	// If the following call pancis, it indicates UnimplementedBotServiceServer was
+	// embedded by pointer and is nil.  This will cause panics if an
+	// unimplemented method is ever invoked, so we test this at initialization
+	// time to prevent it from happening at runtime later due to I/O.
+	if t, ok := srv.(interface{ testEmbeddedByValue() }); ok {
+		t.testEmbeddedByValue()
+	}
+	s.RegisterService(&BotService_ServiceDesc, srv)
+}
+
+func _BotService_CreateBot_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CreateBotRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(BotServiceServer).CreateBot(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: BotService_CreateBot_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(BotServiceServer).CreateBot(ctx, req.(*CreateBotRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _BotService_DeleteBot_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(BotIdRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(BotServiceServer).DeleteBot(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: BotService_DeleteBot_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(BotServiceServer).DeleteBot(ctx, req.(*BotIdRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _BotService_ListBots_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(Empty)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(BotServiceServer).ListBots(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: BotService_ListBots_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(BotServiceServer).ListBots(ctx, req.(*Empty))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _BotService_StartBot_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(BotIdRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(BotServiceServer).StartBot(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: BotService_StartBot_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(BotServiceServer).StartBot(ctx, req.(*BotIdRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _BotService_StopBot_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(BotIdRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(BotServiceServer).StopBot(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: BotService_StopBot_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(BotServiceServer).StopBot(ctx, req.(*BotIdRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _BotService_GetBotStatus_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(BotIdRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(BotServiceServer).GetBotStatus(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: BotService_GetBotStatus_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(BotServiceServer).GetBotStatus(ctx, req.(*BotIdRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+// BotService_ServiceDesc is the grpc.ServiceDesc for BotService service.
+// It's only intended for direct use with grpc.RegisterService,
+// and not to be introspected or modified (even as a copy)
+var BotService_ServiceDesc = grpc.ServiceDesc{
+	ServiceName: "trading.BotService",
+	HandlerType: (*BotServiceServer)(nil),
+	Methods: []grpc.MethodDesc{
+		{
+			MethodName: "CreateBot",
+			Handler:    _BotService_CreateBot_Handler,
+		},
+		{
+			MethodName: "DeleteBot",
+			Handler:    _BotService_DeleteBot_Handler,
+		},
+		{
+			MethodName: "ListBots",
+			Handler:    _BotService_ListBots_Handler,
+		},
+		{
+			MethodName: "StartBot",
+			Handler:    _BotService_StartBot_Handler,
+		},
+		{
+			MethodName: "StopBot",
+			Handler:    _BotService_StopBot_Handler,
+		},
+		{
+			MethodName: "GetBotStatus",
+			Handler:    _BotService_GetBotStatus_Handler,
+		},
+	},
+	Streams:  []grpc.StreamDesc{},
+	Metadata: "trading_api.proto",
+}
+
+const (
+	RiskService_CalculateVaR_FullMethodName = "/trading.RiskService/CalculateVaR"
+)
+
+// RiskServiceClient is the client API for RiskService service.
+//
+// For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
+//
+// Service for performing risk calculations
+type RiskServiceClient interface {
+	// Calculates the Value at Risk for a given portfolio
+	CalculateVaR(ctx context.Context, in *VaRRequest, opts ...grpc.CallOption) (*VaRResponse, error)
+}
+
+type riskServiceClient struct {
+	cc grpc.ClientConnInterface
+}
+
+func NewRiskServiceClient(cc grpc.ClientConnInterface) RiskServiceClient {
+	return &riskServiceClient{cc}
+}
+
+func (c *riskServiceClient) CalculateVaR(ctx context.Context, in *VaRRequest, opts ...grpc.CallOption) (*VaRResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(VaRResponse)
+	err := c.cc.Invoke(ctx, RiskService_CalculateVaR_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+// RiskServiceServer is the server API for RiskService service.
+// All implementations must embed UnimplementedRiskServiceServer
+// for forward compatibility.
+//
+// Service for performing risk calculations
+type RiskServiceServer interface {
+	// Calculates the Value at Risk for a given portfolio
+	CalculateVaR(context.Context, *VaRRequest) (*VaRResponse, error)
+	mustEmbedUnimplementedRiskServiceServer()
+}
+
+// UnimplementedRiskServiceServer must be embedded to have
+// forward compatible implementations.
+//
+// NOTE: this should be embedded by value instead of pointer to avoid a nil
+// pointer dereference when methods are called.
+type UnimplementedRiskServiceServer struct{}
+
+func (UnimplementedRiskServiceServer) CalculateVaR(context.Context, *VaRRequest) (*VaRResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CalculateVaR not implemented")
+}
+func (UnimplementedRiskServiceServer) mustEmbedUnimplementedRiskServiceServer() {}
+func (UnimplementedRiskServiceServer) testEmbeddedByValue()                     {}
+
+// UnsafeRiskServiceServer may be embedded to opt out of forward compatibility for this service.
+// Use of this interface is not recommended, as added methods to RiskServiceServer will
+// result in compilation errors.
+type UnsafeRiskServiceServer interface {
+	mustEmbedUnimplementedRiskServiceServer()
+}
+
+func RegisterRiskServiceServer(s grpc.ServiceRegistrar, srv RiskServiceServer) {
+	// If the following call pancis, it indicates UnimplementedRiskServiceServer was
+	// embedded by pointer and is nil.  This will cause panics if an
+	// unimplemented method is ever invoked, so we test this at initialization
+	// time to prevent it from happening at runtime later due to I/O.
+	if t, ok := srv.(interface{ testEmbeddedByValue() }); ok {
+		t.testEmbeddedByValue()
+	}
+	s.RegisterService(&RiskService_ServiceDesc, srv)
+}
+
+func _RiskService_CalculateVaR_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(VaRRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(RiskServiceServer).CalculateVaR(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: RiskService_CalculateVaR_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(RiskServiceServer).CalculateVaR(ctx, req.(*VaRRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+// RiskService_ServiceDesc is the grpc.ServiceDesc for RiskService service.
+// It's only intended for direct use with grpc.RegisterService,
+// and not to be introspected or modified (even as a copy)
+var RiskService_ServiceDesc = grpc.ServiceDesc{
+	ServiceName: "trading.RiskService",
+	HandlerType: (*RiskServiceServer)(nil),
+	Methods: []grpc.MethodDesc{
+		{
+			MethodName: "CalculateVaR",
+			Handler:    _RiskService_CalculateVaR_Handler,
+		},
+	},
+	Streams:  []grpc.StreamDesc{},
+	Metadata: "trading_api.proto",
+}
+
+const (
 	TradingService_StreamOrderBook_FullMethodName = "/trading.TradingService/StreamOrderBook"
 	TradingService_GetPrice_FullMethodName        = "/trading.TradingService/GetPrice"
 	TradingService_StartStrategy_FullMethodName   = "/trading.TradingService/StartStrategy"
@@ -613,591 +1195,5 @@ var TradingService_ServiceDesc = grpc.ServiceDesc{
 			ServerStreams: true,
 		},
 	},
-	Metadata: "trading_api.proto",
-}
-
-const (
-	RiskService_CalculateVaR_FullMethodName = "/trading.RiskService/CalculateVaR"
-)
-
-// RiskServiceClient is the client API for RiskService service.
-//
-// For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
-//
-// Service for performing risk calculations
-type RiskServiceClient interface {
-	// Calculates the Value at Risk for a given portfolio
-	CalculateVaR(ctx context.Context, in *VaRRequest, opts ...grpc.CallOption) (*VaRResponse, error)
-}
-
-type riskServiceClient struct {
-	cc grpc.ClientConnInterface
-}
-
-func NewRiskServiceClient(cc grpc.ClientConnInterface) RiskServiceClient {
-	return &riskServiceClient{cc}
-}
-
-func (c *riskServiceClient) CalculateVaR(ctx context.Context, in *VaRRequest, opts ...grpc.CallOption) (*VaRResponse, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(VaRResponse)
-	err := c.cc.Invoke(ctx, RiskService_CalculateVaR_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-// RiskServiceServer is the server API for RiskService service.
-// All implementations must embed UnimplementedRiskServiceServer
-// for forward compatibility.
-//
-// Service for performing risk calculations
-type RiskServiceServer interface {
-	// Calculates the Value at Risk for a given portfolio
-	CalculateVaR(context.Context, *VaRRequest) (*VaRResponse, error)
-	mustEmbedUnimplementedRiskServiceServer()
-}
-
-// UnimplementedRiskServiceServer must be embedded to have
-// forward compatible implementations.
-//
-// NOTE: this should be embedded by value instead of pointer to avoid a nil
-// pointer dereference when methods are called.
-type UnimplementedRiskServiceServer struct{}
-
-func (UnimplementedRiskServiceServer) CalculateVaR(context.Context, *VaRRequest) (*VaRResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method CalculateVaR not implemented")
-}
-func (UnimplementedRiskServiceServer) mustEmbedUnimplementedRiskServiceServer() {}
-func (UnimplementedRiskServiceServer) testEmbeddedByValue()                     {}
-
-// UnsafeRiskServiceServer may be embedded to opt out of forward compatibility for this service.
-// Use of this interface is not recommended, as added methods to RiskServiceServer will
-// result in compilation errors.
-type UnsafeRiskServiceServer interface {
-	mustEmbedUnimplementedRiskServiceServer()
-}
-
-func RegisterRiskServiceServer(s grpc.ServiceRegistrar, srv RiskServiceServer) {
-	// If the following call pancis, it indicates UnimplementedRiskServiceServer was
-	// embedded by pointer and is nil.  This will cause panics if an
-	// unimplemented method is ever invoked, so we test this at initialization
-	// time to prevent it from happening at runtime later due to I/O.
-	if t, ok := srv.(interface{ testEmbeddedByValue() }); ok {
-		t.testEmbeddedByValue()
-	}
-	s.RegisterService(&RiskService_ServiceDesc, srv)
-}
-
-func _RiskService_CalculateVaR_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(VaRRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(RiskServiceServer).CalculateVaR(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: RiskService_CalculateVaR_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(RiskServiceServer).CalculateVaR(ctx, req.(*VaRRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-// RiskService_ServiceDesc is the grpc.ServiceDesc for RiskService service.
-// It's only intended for direct use with grpc.RegisterService,
-// and not to be introspected or modified (even as a copy)
-var RiskService_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "trading.RiskService",
-	HandlerType: (*RiskServiceServer)(nil),
-	Methods: []grpc.MethodDesc{
-		{
-			MethodName: "CalculateVaR",
-			Handler:    _RiskService_CalculateVaR_Handler,
-		},
-	},
-	Streams:  []grpc.StreamDesc{},
-	Metadata: "trading_api.proto",
-}
-
-const (
-	AuthService_Register_FullMethodName = "/trading.AuthService/Register"
-	AuthService_Login_FullMethodName    = "/trading.AuthService/Login"
-	AuthService_GetUser_FullMethodName  = "/trading.AuthService/GetUser"
-)
-
-// AuthServiceClient is the client API for AuthService service.
-//
-// For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
-//
-// Service for authentication
-type AuthServiceClient interface {
-	Register(ctx context.Context, in *RegisterRequest, opts ...grpc.CallOption) (*AuthResponse, error)
-	Login(ctx context.Context, in *AuthRequest, opts ...grpc.CallOption) (*AuthResponse, error)
-	GetUser(ctx context.Context, in *GetUserRequest, opts ...grpc.CallOption) (*UserInfo, error)
-}
-
-type authServiceClient struct {
-	cc grpc.ClientConnInterface
-}
-
-func NewAuthServiceClient(cc grpc.ClientConnInterface) AuthServiceClient {
-	return &authServiceClient{cc}
-}
-
-func (c *authServiceClient) Register(ctx context.Context, in *RegisterRequest, opts ...grpc.CallOption) (*AuthResponse, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(AuthResponse)
-	err := c.cc.Invoke(ctx, AuthService_Register_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *authServiceClient) Login(ctx context.Context, in *AuthRequest, opts ...grpc.CallOption) (*AuthResponse, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(AuthResponse)
-	err := c.cc.Invoke(ctx, AuthService_Login_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *authServiceClient) GetUser(ctx context.Context, in *GetUserRequest, opts ...grpc.CallOption) (*UserInfo, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(UserInfo)
-	err := c.cc.Invoke(ctx, AuthService_GetUser_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-// AuthServiceServer is the server API for AuthService service.
-// All implementations must embed UnimplementedAuthServiceServer
-// for forward compatibility.
-//
-// Service for authentication
-type AuthServiceServer interface {
-	Register(context.Context, *RegisterRequest) (*AuthResponse, error)
-	Login(context.Context, *AuthRequest) (*AuthResponse, error)
-	GetUser(context.Context, *GetUserRequest) (*UserInfo, error)
-	mustEmbedUnimplementedAuthServiceServer()
-}
-
-// UnimplementedAuthServiceServer must be embedded to have
-// forward compatible implementations.
-//
-// NOTE: this should be embedded by value instead of pointer to avoid a nil
-// pointer dereference when methods are called.
-type UnimplementedAuthServiceServer struct{}
-
-func (UnimplementedAuthServiceServer) Register(context.Context, *RegisterRequest) (*AuthResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method Register not implemented")
-}
-func (UnimplementedAuthServiceServer) Login(context.Context, *AuthRequest) (*AuthResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method Login not implemented")
-}
-func (UnimplementedAuthServiceServer) GetUser(context.Context, *GetUserRequest) (*UserInfo, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetUser not implemented")
-}
-func (UnimplementedAuthServiceServer) mustEmbedUnimplementedAuthServiceServer() {}
-func (UnimplementedAuthServiceServer) testEmbeddedByValue()                     {}
-
-// UnsafeAuthServiceServer may be embedded to opt out of forward compatibility for this service.
-// Use of this interface is not recommended, as added methods to AuthServiceServer will
-// result in compilation errors.
-type UnsafeAuthServiceServer interface {
-	mustEmbedUnimplementedAuthServiceServer()
-}
-
-func RegisterAuthServiceServer(s grpc.ServiceRegistrar, srv AuthServiceServer) {
-	// If the following call pancis, it indicates UnimplementedAuthServiceServer was
-	// embedded by pointer and is nil.  This will cause panics if an
-	// unimplemented method is ever invoked, so we test this at initialization
-	// time to prevent it from happening at runtime later due to I/O.
-	if t, ok := srv.(interface{ testEmbeddedByValue() }); ok {
-		t.testEmbeddedByValue()
-	}
-	s.RegisterService(&AuthService_ServiceDesc, srv)
-}
-
-func _AuthService_Register_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(RegisterRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(AuthServiceServer).Register(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: AuthService_Register_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(AuthServiceServer).Register(ctx, req.(*RegisterRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _AuthService_Login_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(AuthRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(AuthServiceServer).Login(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: AuthService_Login_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(AuthServiceServer).Login(ctx, req.(*AuthRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _AuthService_GetUser_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(GetUserRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(AuthServiceServer).GetUser(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: AuthService_GetUser_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(AuthServiceServer).GetUser(ctx, req.(*GetUserRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-// AuthService_ServiceDesc is the grpc.ServiceDesc for AuthService service.
-// It's only intended for direct use with grpc.RegisterService,
-// and not to be introspected or modified (even as a copy)
-var AuthService_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "trading.AuthService",
-	HandlerType: (*AuthServiceServer)(nil),
-	Methods: []grpc.MethodDesc{
-		{
-			MethodName: "Register",
-			Handler:    _AuthService_Register_Handler,
-		},
-		{
-			MethodName: "Login",
-			Handler:    _AuthService_Login_Handler,
-		},
-		{
-			MethodName: "GetUser",
-			Handler:    _AuthService_GetUser_Handler,
-		},
-	},
-	Streams:  []grpc.StreamDesc{},
-	Metadata: "trading_api.proto",
-}
-
-const (
-	BotService_CreateBot_FullMethodName    = "/trading.BotService/CreateBot"
-	BotService_DeleteBot_FullMethodName    = "/trading.BotService/DeleteBot"
-	BotService_ListBots_FullMethodName     = "/trading.BotService/ListBots"
-	BotService_StartBot_FullMethodName     = "/trading.BotService/StartBot"
-	BotService_StopBot_FullMethodName      = "/trading.BotService/StopBot"
-	BotService_GetBotStatus_FullMethodName = "/trading.BotService/GetBotStatus"
-)
-
-// BotServiceClient is the client API for BotService service.
-//
-// For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
-//
-// BotService provides a focused interface for bot lifecycle operations.
-type BotServiceClient interface {
-	CreateBot(ctx context.Context, in *CreateBotRequest, opts ...grpc.CallOption) (*StatusResponse, error)
-	DeleteBot(ctx context.Context, in *BotIdRequest, opts ...grpc.CallOption) (*StatusResponse, error)
-	ListBots(ctx context.Context, in *Empty, opts ...grpc.CallOption) (*BotList, error)
-	StartBot(ctx context.Context, in *BotIdRequest, opts ...grpc.CallOption) (*StatusResponse, error)
-	StopBot(ctx context.Context, in *BotIdRequest, opts ...grpc.CallOption) (*StatusResponse, error)
-	GetBotStatus(ctx context.Context, in *BotIdRequest, opts ...grpc.CallOption) (*BotConfig, error)
-}
-
-type botServiceClient struct {
-	cc grpc.ClientConnInterface
-}
-
-func NewBotServiceClient(cc grpc.ClientConnInterface) BotServiceClient {
-	return &botServiceClient{cc}
-}
-
-func (c *botServiceClient) CreateBot(ctx context.Context, in *CreateBotRequest, opts ...grpc.CallOption) (*StatusResponse, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(StatusResponse)
-	err := c.cc.Invoke(ctx, BotService_CreateBot_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *botServiceClient) DeleteBot(ctx context.Context, in *BotIdRequest, opts ...grpc.CallOption) (*StatusResponse, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(StatusResponse)
-	err := c.cc.Invoke(ctx, BotService_DeleteBot_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *botServiceClient) ListBots(ctx context.Context, in *Empty, opts ...grpc.CallOption) (*BotList, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(BotList)
-	err := c.cc.Invoke(ctx, BotService_ListBots_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *botServiceClient) StartBot(ctx context.Context, in *BotIdRequest, opts ...grpc.CallOption) (*StatusResponse, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(StatusResponse)
-	err := c.cc.Invoke(ctx, BotService_StartBot_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *botServiceClient) StopBot(ctx context.Context, in *BotIdRequest, opts ...grpc.CallOption) (*StatusResponse, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(StatusResponse)
-	err := c.cc.Invoke(ctx, BotService_StopBot_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *botServiceClient) GetBotStatus(ctx context.Context, in *BotIdRequest, opts ...grpc.CallOption) (*BotConfig, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(BotConfig)
-	err := c.cc.Invoke(ctx, BotService_GetBotStatus_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-// BotServiceServer is the server API for BotService service.
-// All implementations must embed UnimplementedBotServiceServer
-// for forward compatibility.
-//
-// BotService provides a focused interface for bot lifecycle operations.
-type BotServiceServer interface {
-	CreateBot(context.Context, *CreateBotRequest) (*StatusResponse, error)
-	DeleteBot(context.Context, *BotIdRequest) (*StatusResponse, error)
-	ListBots(context.Context, *Empty) (*BotList, error)
-	StartBot(context.Context, *BotIdRequest) (*StatusResponse, error)
-	StopBot(context.Context, *BotIdRequest) (*StatusResponse, error)
-	GetBotStatus(context.Context, *BotIdRequest) (*BotConfig, error)
-	mustEmbedUnimplementedBotServiceServer()
-}
-
-// UnimplementedBotServiceServer must be embedded to have
-// forward compatible implementations.
-//
-// NOTE: this should be embedded by value instead of pointer to avoid a nil
-// pointer dereference when methods are called.
-type UnimplementedBotServiceServer struct{}
-
-func (UnimplementedBotServiceServer) CreateBot(context.Context, *CreateBotRequest) (*StatusResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method CreateBot not implemented")
-}
-func (UnimplementedBotServiceServer) DeleteBot(context.Context, *BotIdRequest) (*StatusResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method DeleteBot not implemented")
-}
-func (UnimplementedBotServiceServer) ListBots(context.Context, *Empty) (*BotList, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method ListBots not implemented")
-}
-func (UnimplementedBotServiceServer) StartBot(context.Context, *BotIdRequest) (*StatusResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method StartBot not implemented")
-}
-func (UnimplementedBotServiceServer) StopBot(context.Context, *BotIdRequest) (*StatusResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method StopBot not implemented")
-}
-func (UnimplementedBotServiceServer) GetBotStatus(context.Context, *BotIdRequest) (*BotConfig, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetBotStatus not implemented")
-}
-func (UnimplementedBotServiceServer) mustEmbedUnimplementedBotServiceServer() {}
-func (UnimplementedBotServiceServer) testEmbeddedByValue()                    {}
-
-// UnsafeBotServiceServer may be embedded to opt out of forward compatibility for this service.
-// Use of this interface is not recommended, as added methods to BotServiceServer will
-// result in compilation errors.
-type UnsafeBotServiceServer interface {
-	mustEmbedUnimplementedBotServiceServer()
-}
-
-func RegisterBotServiceServer(s grpc.ServiceRegistrar, srv BotServiceServer) {
-	// If the following call pancis, it indicates UnimplementedBotServiceServer was
-	// embedded by pointer and is nil.  This will cause panics if an
-	// unimplemented method is ever invoked, so we test this at initialization
-	// time to prevent it from happening at runtime later due to I/O.
-	if t, ok := srv.(interface{ testEmbeddedByValue() }); ok {
-		t.testEmbeddedByValue()
-	}
-	s.RegisterService(&BotService_ServiceDesc, srv)
-}
-
-func _BotService_CreateBot_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(CreateBotRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(BotServiceServer).CreateBot(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: BotService_CreateBot_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(BotServiceServer).CreateBot(ctx, req.(*CreateBotRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _BotService_DeleteBot_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(BotIdRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(BotServiceServer).DeleteBot(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: BotService_DeleteBot_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(BotServiceServer).DeleteBot(ctx, req.(*BotIdRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _BotService_ListBots_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(Empty)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(BotServiceServer).ListBots(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: BotService_ListBots_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(BotServiceServer).ListBots(ctx, req.(*Empty))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _BotService_StartBot_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(BotIdRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(BotServiceServer).StartBot(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: BotService_StartBot_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(BotServiceServer).StartBot(ctx, req.(*BotIdRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _BotService_StopBot_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(BotIdRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(BotServiceServer).StopBot(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: BotService_StopBot_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(BotServiceServer).StopBot(ctx, req.(*BotIdRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _BotService_GetBotStatus_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(BotIdRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(BotServiceServer).GetBotStatus(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: BotService_GetBotStatus_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(BotServiceServer).GetBotStatus(ctx, req.(*BotIdRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-// BotService_ServiceDesc is the grpc.ServiceDesc for BotService service.
-// It's only intended for direct use with grpc.RegisterService,
-// and not to be introspected or modified (even as a copy)
-var BotService_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "trading.BotService",
-	HandlerType: (*BotServiceServer)(nil),
-	Methods: []grpc.MethodDesc{
-		{
-			MethodName: "CreateBot",
-			Handler:    _BotService_CreateBot_Handler,
-		},
-		{
-			MethodName: "DeleteBot",
-			Handler:    _BotService_DeleteBot_Handler,
-		},
-		{
-			MethodName: "ListBots",
-			Handler:    _BotService_ListBots_Handler,
-		},
-		{
-			MethodName: "StartBot",
-			Handler:    _BotService_StartBot_Handler,
-		},
-		{
-			MethodName: "StopBot",
-			Handler:    _BotService_StopBot_Handler,
-		},
-		{
-			MethodName: "GetBotStatus",
-			Handler:    _BotService_GetBotStatus_Handler,
-		},
-	},
-	Streams:  []grpc.StreamDesc{},
 	Metadata: "trading_api.proto",
 }
