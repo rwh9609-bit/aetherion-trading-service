@@ -19,6 +19,150 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
+	PortfolioService_StreamPortfolio_FullMethodName       = "/trading.PortfolioService/StreamPortfolio"
+	PortfolioService_GetPerformanceHistory_FullMethodName = "/trading.PortfolioService/GetPerformanceHistory"
+)
+
+// PortfolioServiceClient is the client API for PortfolioService service.
+//
+// For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
+type PortfolioServiceClient interface {
+	StreamPortfolio(ctx context.Context, in *PortfolioRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[PortfolioResponse], error)
+	GetPerformanceHistory(ctx context.Context, in *PerformanceHistoryRequest, opts ...grpc.CallOption) (*PerformanceHistoryResponse, error)
+}
+
+type portfolioServiceClient struct {
+	cc grpc.ClientConnInterface
+}
+
+func NewPortfolioServiceClient(cc grpc.ClientConnInterface) PortfolioServiceClient {
+	return &portfolioServiceClient{cc}
+}
+
+func (c *portfolioServiceClient) StreamPortfolio(ctx context.Context, in *PortfolioRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[PortfolioResponse], error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	stream, err := c.cc.NewStream(ctx, &PortfolioService_ServiceDesc.Streams[0], PortfolioService_StreamPortfolio_FullMethodName, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	x := &grpc.GenericClientStream[PortfolioRequest, PortfolioResponse]{ClientStream: stream}
+	if err := x.ClientStream.SendMsg(in); err != nil {
+		return nil, err
+	}
+	if err := x.ClientStream.CloseSend(); err != nil {
+		return nil, err
+	}
+	return x, nil
+}
+
+// This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
+type PortfolioService_StreamPortfolioClient = grpc.ServerStreamingClient[PortfolioResponse]
+
+func (c *portfolioServiceClient) GetPerformanceHistory(ctx context.Context, in *PerformanceHistoryRequest, opts ...grpc.CallOption) (*PerformanceHistoryResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(PerformanceHistoryResponse)
+	err := c.cc.Invoke(ctx, PortfolioService_GetPerformanceHistory_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+// PortfolioServiceServer is the server API for PortfolioService service.
+// All implementations must embed UnimplementedPortfolioServiceServer
+// for forward compatibility.
+type PortfolioServiceServer interface {
+	StreamPortfolio(*PortfolioRequest, grpc.ServerStreamingServer[PortfolioResponse]) error
+	GetPerformanceHistory(context.Context, *PerformanceHistoryRequest) (*PerformanceHistoryResponse, error)
+	mustEmbedUnimplementedPortfolioServiceServer()
+}
+
+// UnimplementedPortfolioServiceServer must be embedded to have
+// forward compatible implementations.
+//
+// NOTE: this should be embedded by value instead of pointer to avoid a nil
+// pointer dereference when methods are called.
+type UnimplementedPortfolioServiceServer struct{}
+
+func (UnimplementedPortfolioServiceServer) StreamPortfolio(*PortfolioRequest, grpc.ServerStreamingServer[PortfolioResponse]) error {
+	return status.Errorf(codes.Unimplemented, "method StreamPortfolio not implemented")
+}
+func (UnimplementedPortfolioServiceServer) GetPerformanceHistory(context.Context, *PerformanceHistoryRequest) (*PerformanceHistoryResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetPerformanceHistory not implemented")
+}
+func (UnimplementedPortfolioServiceServer) mustEmbedUnimplementedPortfolioServiceServer() {}
+func (UnimplementedPortfolioServiceServer) testEmbeddedByValue()                          {}
+
+// UnsafePortfolioServiceServer may be embedded to opt out of forward compatibility for this service.
+// Use of this interface is not recommended, as added methods to PortfolioServiceServer will
+// result in compilation errors.
+type UnsafePortfolioServiceServer interface {
+	mustEmbedUnimplementedPortfolioServiceServer()
+}
+
+func RegisterPortfolioServiceServer(s grpc.ServiceRegistrar, srv PortfolioServiceServer) {
+	// If the following call pancis, it indicates UnimplementedPortfolioServiceServer was
+	// embedded by pointer and is nil.  This will cause panics if an
+	// unimplemented method is ever invoked, so we test this at initialization
+	// time to prevent it from happening at runtime later due to I/O.
+	if t, ok := srv.(interface{ testEmbeddedByValue() }); ok {
+		t.testEmbeddedByValue()
+	}
+	s.RegisterService(&PortfolioService_ServiceDesc, srv)
+}
+
+func _PortfolioService_StreamPortfolio_Handler(srv interface{}, stream grpc.ServerStream) error {
+	m := new(PortfolioRequest)
+	if err := stream.RecvMsg(m); err != nil {
+		return err
+	}
+	return srv.(PortfolioServiceServer).StreamPortfolio(m, &grpc.GenericServerStream[PortfolioRequest, PortfolioResponse]{ServerStream: stream})
+}
+
+// This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
+type PortfolioService_StreamPortfolioServer = grpc.ServerStreamingServer[PortfolioResponse]
+
+func _PortfolioService_GetPerformanceHistory_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(PerformanceHistoryRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(PortfolioServiceServer).GetPerformanceHistory(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: PortfolioService_GetPerformanceHistory_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(PortfolioServiceServer).GetPerformanceHistory(ctx, req.(*PerformanceHistoryRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+// PortfolioService_ServiceDesc is the grpc.ServiceDesc for PortfolioService service.
+// It's only intended for direct use with grpc.RegisterService,
+// and not to be introspected or modified (even as a copy)
+var PortfolioService_ServiceDesc = grpc.ServiceDesc{
+	ServiceName: "trading.PortfolioService",
+	HandlerType: (*PortfolioServiceServer)(nil),
+	Methods: []grpc.MethodDesc{
+		{
+			MethodName: "GetPerformanceHistory",
+			Handler:    _PortfolioService_GetPerformanceHistory_Handler,
+		},
+	},
+	Streams: []grpc.StreamDesc{
+		{
+			StreamName:    "StreamPortfolio",
+			Handler:       _PortfolioService_StreamPortfolio_Handler,
+			ServerStreams: true,
+		},
+	},
+	Metadata: "trading_api.proto",
+}
+
+const (
 	AuthService_Register_FullMethodName = "/trading.AuthService/Register"
 	AuthService_Login_FullMethodName    = "/trading.AuthService/Login"
 	AuthService_GetUser_FullMethodName  = "/trading.AuthService/GetUser"
@@ -630,8 +774,7 @@ type TradingServiceClient interface {
 	StartStrategy(ctx context.Context, in *StrategyRequest, opts ...grpc.CallOption) (*StatusResponse, error)
 	// Stop a trading strategy
 	StopStrategy(ctx context.Context, in *StrategyRequest, opts ...grpc.CallOption) (*StatusResponse, error)
-	// Gets the current portfolio status
-	GetPortfolio(ctx context.Context, in *PortfolioRequest, opts ...grpc.CallOption) (*Portfolio, error)
+	GetPortfolio(ctx context.Context, in *PortfolioRequest, opts ...grpc.CallOption) (*PortfolioResponse, error)
 	// Subscribes to a real-time feed of market data
 	SubscribeTicks(ctx context.Context, in *StrategyRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[Tick], error)
 	// Streams live ticks from internal event bus (websocket sourced)
@@ -707,9 +850,9 @@ func (c *tradingServiceClient) StopStrategy(ctx context.Context, in *StrategyReq
 	return out, nil
 }
 
-func (c *tradingServiceClient) GetPortfolio(ctx context.Context, in *PortfolioRequest, opts ...grpc.CallOption) (*Portfolio, error) {
+func (c *tradingServiceClient) GetPortfolio(ctx context.Context, in *PortfolioRequest, opts ...grpc.CallOption) (*PortfolioResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(Portfolio)
+	out := new(PortfolioResponse)
 	err := c.cc.Invoke(ctx, TradingService_GetPortfolio_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
@@ -829,8 +972,7 @@ type TradingServiceServer interface {
 	StartStrategy(context.Context, *StrategyRequest) (*StatusResponse, error)
 	// Stop a trading strategy
 	StopStrategy(context.Context, *StrategyRequest) (*StatusResponse, error)
-	// Gets the current portfolio status
-	GetPortfolio(context.Context, *PortfolioRequest) (*Portfolio, error)
+	GetPortfolio(context.Context, *PortfolioRequest) (*PortfolioResponse, error)
 	// Subscribes to a real-time feed of market data
 	SubscribeTicks(*StrategyRequest, grpc.ServerStreamingServer[Tick]) error
 	// Streams live ticks from internal event bus (websocket sourced)
@@ -869,7 +1011,7 @@ func (UnimplementedTradingServiceServer) StartStrategy(context.Context, *Strateg
 func (UnimplementedTradingServiceServer) StopStrategy(context.Context, *StrategyRequest) (*StatusResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method StopStrategy not implemented")
 }
-func (UnimplementedTradingServiceServer) GetPortfolio(context.Context, *PortfolioRequest) (*Portfolio, error) {
+func (UnimplementedTradingServiceServer) GetPortfolio(context.Context, *PortfolioRequest) (*PortfolioResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetPortfolio not implemented")
 }
 func (UnimplementedTradingServiceServer) SubscribeTicks(*StrategyRequest, grpc.ServerStreamingServer[Tick]) error {

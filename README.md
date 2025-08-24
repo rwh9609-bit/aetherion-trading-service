@@ -1,36 +1,51 @@
 # Aetherion Trading Service
 
-Aetherion is a next-generation, multi-language trading platform engineered for speed, flexibility, and reliability. Built on a cutting-edge microservices architecture, it harnesses the power of Docker for seamless containerization and orchestration—making deployment, scaling, and upgrades effortless.
+Aetherion is a cutting-edge, multi-language trading platform meticulously engineered for unparalleled speed, flexibility, and reliability. Built upon a robust microservices architecture, it leverages Docker for seamless containerization and orchestration, ensuring effortless deployment, scaling, and upgrades.
 
-### Key Features
-- **Real-Time Market Data:** Instantly fetch live cryptocurrency prices (e.g., BTC from Coinbase) for lightning-fast trading decisions.
-- **Polyglot Microservices:** Each service is crafted in the best language for the job—Rust for risk analytics, Go for trading logic, Python for orchestration, and more.
-- **Service Mesh Magic:** Envoy powers secure, high-performance service-to-service communication.
-- **Modern Frontend & Backend:** A sleek web interface for traders, backed by robust backend logic.
-- **Intelligent Orchestration:** The orchestrator coordinates complex trading operations and strategies with ease.
-- **Persistent Data:** All trades and analytics are safely stored in a PostgreSQL database.
+## Key Features
 
-### Architecture Overview
-Aetherion is composed of specialized microservices, each with a unique mission:
-- `multilanguage-backend`: The brains of the operation.
-- `multilanguage-frontend`: The trader’s command center.
-- `multilanguage-orchestrator`: The master coordinator for trading strategies.
-- `multilanguage-trading`: Executes trades with precision.
-- `multilanguage-risk`: Rust-powered risk management for peace of mind.
-- `multilanguage-envoy`: The high-speed service mesh proxy.
-- `multilanguage-postgres`: Reliable, scalable data storage.
+*   **Real-Time Market Data:** Instantaneous fetching of live cryptocurrency prices (e.g., BTC from Coinbase) to empower rapid, informed trading decisions.
+*   **Polyglot Microservices:** Each service is meticulously crafted in the optimal language for its domain, ensuring peak performance and maintainability. For instance, Rust is employed for high-performance risk analytics, Go for core trading logic, and Python for intelligent orchestration.
+*   **Service Mesh Integration:** Envoy proxy facilitates secure, high-performance, and resilient service-to-service communication.
+*   **Modern User Experience:** A sophisticated web interface provides traders with an intuitive command center, complemented by a robust and scalable backend.
+*   **Intelligent Orchestration:** A dedicated orchestrator service efficiently coordinates complex trading operations and sophisticated strategies.
+*   **Persistent Data Storage:** All trading activities and analytical data are securely and reliably stored within a PostgreSQL database.
 
-### Getting Started
+## Architecture Overview
 
-Spin up the entire system in seconds using the included Docker Compose setup.  
-No manual configuration—just deploy and trade.
+Aetherion comprises a suite of specialized microservices, each designed with a distinct purpose:
 
-### Live Console Output
+*   `multilanguage-backend`: The central intelligence and business logic hub.
+*   `multilanguage-frontend`: The intuitive user interface for traders.
+*   `multilanguage-orchestrator`: Manages and executes complex trading strategies.
+*   `multilanguage-trading`: Responsible for precise trade execution.
+*   `multilanguage-risk`: A high-performance Rust-based service for comprehensive risk management and analytics, leveraging advanced numerical libraries like `nalgebra` for robust calculations and `chrono` for precise time-series analysis.
+*   `multilanguage-envoy`: The service mesh proxy, ensuring efficient and secure inter-service communication.
+*   `multilanguage-postgres`: The foundational data persistence layer.
 
-Check out the action! Below are snapshots of Aetherion in full swing—services running, live BTC price fetching, and real-time trading logs.
+## Core Technologies
+
+Aetherion embraces a diverse and powerful technology stack:
+
+*   **Rust:** Utilized for performance-critical components like the `risk_service`, benefiting from its memory safety and concurrency features. Key libraries include `tonic` (gRPC), `tokio` (asynchronous runtime), `nalgebra` (linear algebra), and `chrono` (date and time).
+*   **Go:** Powers the core trading logic, chosen for its concurrency model and efficiency.
+*   **Python:** Employed for orchestration and data processing, leveraging its rich ecosystem.
+*   **JavaScript/React:** For the dynamic and responsive frontend user interface.
+*   **Docker & Docker Compose:** For containerization, orchestration, and simplified deployment.
+*   **Envoy Proxy:** As the service mesh for inter-service communication.
+*   **PostgreSQL:** For reliable and scalable data storage.
+*   **gRPC & Protobuf:** For high-performance, language-agnostic inter-service communication.
+
+## Getting Started
+
+The entire Aetherion system can be launched within seconds using the provided Docker Compose setup. No manual configuration is required—simply deploy and begin trading.
+
+## Live Console Output
+
+Observe Aetherion in action. Below are snapshots illustrating active services, real-time BTC price fetching, and live trading logs.
 
 ![Docker services running](container_success.png)
 
 ![Trading service logs](microservice_logging_success.png)
 
-> **Pro Tip:** If you encounter SSL errors, comment out the `.pem` certs and use the alternate certs in `envoy.yaml`.
+> **Note:** Should you encounter SSL certificate errors, consider commenting out the `.pem` certificates and utilizing the alternate certificates specified in `envoy.yaml`.

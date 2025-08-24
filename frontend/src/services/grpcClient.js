@@ -4,7 +4,7 @@ import {
   OrderBookRequest,
   StrategyRequest,
   Tick,
-  Portfolio,
+  PortfolioRequest,
   VaRRequest,
   RegisterRequest,
   AuthRequest,
@@ -218,9 +218,9 @@ export const fetchRiskMetrics = async () => {
   console.log('Fetching risk metrics');
   return withRetry(async () => {
     const request = new VaRRequest();
-    
-    // Create a portfolio for the current portfolio
-    const portfolio = new Portfolio();
+
+    // Create a portfolio request for the current portfolio
+    const portfolio = new PortfolioRequest();
     const positionsMap = portfolio.getPositionsMap();
     positionsMap.set('BTC-USD', 0.5);
     // use the account_value of Bot and maybe UserConfig 

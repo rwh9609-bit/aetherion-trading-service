@@ -224,11 +224,27 @@ func (s *Strategy) Run(ctx context.Context, server *tradingServer) {
 	}
 }
 
-// server implements the TradingService
+//	service PortfolioService {
+//	    rpc GetPortfolio(PortfolioRequest) returns (PortfolioResponse) {}
+//	    rpc StreamPortfolio(PortfolioRequest) returns (stream PortfolioResponse) {}
+//	    rpc GetPerformanceHistory(PerformanceHistoryRequest) returns (PerformanceHistoryResponse) {}
+//	}
+//
+// server implements the PortfolioService
+type portfolioServer struct {
+	pb.UnimplementedPortfolioServiceServer
+	dbService *DBService
+}
+
+func newPortfolioServer(dbService *DBService) *portfolioServer {
+	return &portfolioServer{
+		dbService: dbService,
+	}
+}
+
 type tradingServer struct {
-	pb.TradingServiceServer
+	pb.UnimplementedTradingServiceServer
 	orderBooks    map[string]*OrderBookManager // symbol -> order book
-	portfolios    map[string]*pb.Portfolio     // account -> portfolio
 	activeSymbols map[string]bool              // currently tracked symbols
 	strategies    map[string]*Strategy         // active strategies
 	mu            sync.RWMutex                 // protects concurrent access
@@ -250,7 +266,6 @@ type histPoint struct {
 func newTradingServer() *tradingServer {
 	return &tradingServer{
 		orderBooks:    make(map[string]*OrderBookManager),
-		portfolios:    make(map[string]*pb.Portfolio),
 		activeSymbols: make(map[string]bool),
 		strategies:    make(map[string]*Strategy),
 		eventBus:      NewEventBus(),
@@ -353,29 +368,6 @@ func (s *tradingServer) StopStrategy(ctx context.Context, req *pb.StrategyReques
 	s.mu.Unlock()
 
 	return &pb.StatusResponse{Success: true, Message: "Strategy stopped"}, nil
-}
-
-// GetPortfolio returns the current portfolio status
-func (s *tradingServer) GetPortfolio(ctx context.Context, req *pb.PortfolioRequest) (*pb.Portfolio, error) {
-	s.mu.RLock()
-	portfolio, exists := s.portfolios[req.AccountId]
-	s.mu.RUnlock()
-
-	if !exists {
-		// Create a new portfolio with some mock data
-		portfolio = &pb.Portfolio{
-			Positions: map[string]float64{
-				"BTC": 1.5,
-				"USD": 50000.0,
-			},
-			TotalValueUsd: 10000005.0,
-		}
-		s.mu.Lock()
-		s.portfolios[req.AccountId] = portfolio
-		s.mu.Unlock()
-	}
-
-	return portfolio, nil
 }
 
 // StreamOrderBook streams order book updates
@@ -653,6 +645,25 @@ func (s *tradingServer) ListSymbols(ctx context.Context, _ *pb.Empty) (*pb.Symbo
 	return &pb.SymbolList{Symbols: symbols}, nil
 }
 
+///////////////////////////////////////
+// PortfolioServiceServer
+///////////////////////////////////////
+
+func (s *portfolioServer) GetPortfolio(ctx context.Context, req *pb.PortfolioRequest) (*pb.PortfolioResponse, error) {
+	// TODO: Implement actual portfolio retrieval logic
+	return &pb.PortfolioResponse{}, nil
+}
+
+func (s *portfolioServer) StreamPortfolio(req *pb.PortfolioRequest, stream pb.PortfolioService_StreamPortfolioServer) error {
+	// TODO: Implement actual portfolio streaming logic
+	return nil
+}
+
+func (s *portfolioServer) GetPerformanceHistory(ctx context.Context, req *pb.PerformanceHistoryRequest) (*pb.PerformanceHistoryResponse, error) {
+	// Implementation here
+	return &pb.PerformanceHistoryResponse{}, nil
+}
+
 // ExecuteTrade executes a trade for the given request.
 // This function is called whenever a trade is initiated.
 func (s *tradingServer) ExecuteTrade(ctx context.Context, req *pb.TradeRequest) (*pb.TradeResponse, error) {
@@ -686,38 +697,7 @@ func (s *tradingServer) ExecuteTrade(ctx context.Context, req *pb.TradeRequest) 
 		execPrice = tick.Price
 	}
 
-	// Lock the trading server and get the portfolio
-	s.mu.Lock()
-	portfolio, exists := s.portfolios[req.BotId]
-	if !exists {
-		return &pb.TradeResponse{Accepted: false, Message: "Bot ID required."}, nil
-	}
-
-	// Initialize symbol position if absent
-	if _, ok := portfolio.Positions[req.Symbol]; !ok {
-		return &pb.TradeResponse{Accepted: false, Message: "Symbol required."}, nil
-	}
-
-	// Simple cash/position update (no fees, slippage)
-	qty := req.Size
-	notional := qty * execPrice
-	if side == "BUY" {
-		// Ensure sufficient USD
-		if portfolio.Positions["USD"] < notional {
-			s.mu.Unlock()
-			return &pb.TradeResponse{Accepted: false, Message: "insufficient USD balance"}, nil
-		}
-		portfolio.Positions[req.Symbol] += qty
-		portfolio.Positions["USD"] -= notional
-	} else { // SELL
-		if portfolio.Positions[req.Symbol] < qty {
-			s.mu.Unlock()
-			return &pb.TradeResponse{Accepted: false, Message: "insufficient position"}, nil
-		}
-		portfolio.Positions[req.Symbol] -= qty
-		portfolio.Positions["USD"] += notional
-	}
-	s.mu.Unlock()
+	// Implement portfolio update logic
 
 	trade := &pb.Trade{
 		TradeId:    uuid.New().String(),
@@ -784,21 +764,28 @@ func main() {
 		)),
 	)
 
-	// Initialize DBService
+	/////////////////////////
+	// Initialize services //
+	/////////////////////////
+
 	dbService, err := NewDBService(cfg.PostgresDSN)
 	if err != nil {
 		log.Fatal().Err(err).Msg("failed to initialize DBService")
 	}
 
-	// Create and register our trading service
+	portfolioService := newPortfolioServer(dbService)
+	pb.RegisterPortfolioServiceServer(grpcServer, portfolioService)
+
 	tradingService := newTradingServer()
 	tradingService.dbService = dbService
 	pb.RegisterTradingServiceServer(grpcServer, tradingService)
 
-	// Bot service (in-memory)
 	reg := newBotRegistry()
 	botSvc := newBotServiceServer(reg, tradingService, dbService)
 	pb.RegisterBotServiceServer(grpcServer, botSvc)
+
+	authSvc := newAuthServer(secret)
+	pb.RegisterAuthServiceServer(grpcServer, authSvc)
 
 	reflection.Register(grpcServer) // Register reflection service for gRPC CLI tools
 
@@ -828,10 +815,6 @@ func main() {
 	feed.Start(feedSymbols)
 	log.Info().Strs("symbols", feedSymbols).Msg("market data feed started")
 	tradingService.feed = feed
-
-	// Auth service
-	authSvc := newAuthServer(secret)
-	pb.RegisterAuthServiceServer(grpcServer, authSvc)
 
 	// Lightweight HTTP health endpoint (separate listener) for container health checks
 	go func(addr string) {
