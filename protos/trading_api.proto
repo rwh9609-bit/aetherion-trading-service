@@ -4,19 +4,19 @@ package trading;
 
 import "google/protobuf/timestamp.proto";
 
-option go_package = "github.com/rwh9609-bit/multilanguage/go/gen";
+option go_package = "aetherion/gen";
 
 // =================================================================
 // COMMON & UTILITY MESSAGES
 // =================================================================
+
+message Empty {}
 
 // High-precision financial values (avoids float rounding issues)
 message DecimalValue {
     int64 units = 1;   // Whole part
     sfixed32 nanos = 2; // Fractional part, -999,999,999 .. +999,999,999
 }
-
-message Empty {}
 
 message StatusResponse {
     bool success = 1;

@@ -7,6 +7,10 @@ const RecentTrades = ({ user, bot }) => {
   const [trades, setTrades] = useState([]);
 
   useEffect(() => {
+    if (!user || !user.id || !bot || !bot.id) {
+      setTrades([]); // Optionally clear trades if user/bot missing
+      return;
+    }
     const fetchTrades = () => { 
       const request = new TradeHistoryRequest();
       request.setUserId(user.id);
@@ -44,7 +48,7 @@ const RecentTrades = ({ user, bot }) => {
         </TableHead>
         <TableBody>
           {trades.map((trade) => (
-              <TableRow key={trade.getTradeId()}>
+              <TableRow key={trade && trade.id ? trade.id : Math.random()}>
               <TableCell component="th" scope="row">{trade.getSymbol()}</TableCell>
               <TableCell align="right">{trade.getUserId()}</TableCell>
               <TableCell align="right">{trade.getBotId()}</TableCell>

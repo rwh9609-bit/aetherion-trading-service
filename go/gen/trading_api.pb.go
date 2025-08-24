@@ -22,6 +22,42 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
+type Empty struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *Empty) Reset() {
+	*x = Empty{}
+	mi := &file_trading_api_proto_msgTypes[0]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *Empty) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*Empty) ProtoMessage() {}
+
+func (x *Empty) ProtoReflect() protoreflect.Message {
+	mi := &file_trading_api_proto_msgTypes[0]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use Empty.ProtoReflect.Descriptor instead.
+func (*Empty) Descriptor() ([]byte, []int) {
+	return file_trading_api_proto_rawDescGZIP(), []int{0}
+}
+
 // High-precision financial values (avoids float rounding issues)
 type DecimalValue struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
@@ -33,7 +69,7 @@ type DecimalValue struct {
 
 func (x *DecimalValue) Reset() {
 	*x = DecimalValue{}
-	mi := &file_trading_api_proto_msgTypes[0]
+	mi := &file_trading_api_proto_msgTypes[1]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -45,7 +81,7 @@ func (x *DecimalValue) String() string {
 func (*DecimalValue) ProtoMessage() {}
 
 func (x *DecimalValue) ProtoReflect() protoreflect.Message {
-	mi := &file_trading_api_proto_msgTypes[0]
+	mi := &file_trading_api_proto_msgTypes[1]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -58,7 +94,7 @@ func (x *DecimalValue) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DecimalValue.ProtoReflect.Descriptor instead.
 func (*DecimalValue) Descriptor() ([]byte, []int) {
-	return file_trading_api_proto_rawDescGZIP(), []int{0}
+	return file_trading_api_proto_rawDescGZIP(), []int{1}
 }
 
 func (x *DecimalValue) GetUnits() int64 {
@@ -73,42 +109,6 @@ func (x *DecimalValue) GetNanos() int32 {
 		return x.Nanos
 	}
 	return 0
-}
-
-type Empty struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *Empty) Reset() {
-	*x = Empty{}
-	mi := &file_trading_api_proto_msgTypes[1]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *Empty) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*Empty) ProtoMessage() {}
-
-func (x *Empty) ProtoReflect() protoreflect.Message {
-	mi := &file_trading_api_proto_msgTypes[1]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use Empty.ProtoReflect.Descriptor instead.
-func (*Empty) Descriptor() ([]byte, []int) {
-	return file_trading_api_proto_rawDescGZIP(), []int{1}
 }
 
 type StatusResponse struct {
@@ -2225,11 +2225,11 @@ var File_trading_api_proto protoreflect.FileDescriptor
 
 const file_trading_api_proto_rawDesc = "" +
 	"\n" +
-	"\x11trading_api.proto\x12\atrading\x1a\x1fgoogle/protobuf/timestamp.proto\":\n" +
+	"\x11trading_api.proto\x12\atrading\x1a\x1fgoogle/protobuf/timestamp.proto\"\a\n" +
+	"\x05Empty\":\n" +
 	"\fDecimalValue\x12\x14\n" +
 	"\x05units\x18\x01 \x01(\x03R\x05units\x12\x14\n" +
-	"\x05nanos\x18\x02 \x01(\x0fR\x05nanos\"\a\n" +
-	"\x05Empty\"T\n" +
+	"\x05nanos\x18\x02 \x01(\x0fR\x05nanos\"T\n" +
 	"\x0eStatusResponse\x12\x18\n" +
 	"\asuccess\x18\x01 \x01(\bR\asuccess\x12\x18\n" +
 	"\amessage\x18\x02 \x01(\tR\amessage\x12\x0e\n" +
@@ -2433,7 +2433,7 @@ const file_trading_api_proto_rawDesc = "" +
 	"\vListSymbols\x12\x0e.trading.Empty\x1a\x13.trading.SymbolList\"\x00\x12D\n" +
 	"\vGetMomentum\x12\x18.trading.MomentumRequest\x1a\x19.trading.MomentumResponse\"\x00\x12?\n" +
 	"\fExecuteTrade\x12\x15.trading.TradeRequest\x1a\x16.trading.TradeResponse\"\x00\x12P\n" +
-	"\x0fGetTradeHistory\x12\x1c.trading.TradeHistoryRequest\x1a\x1d.trading.TradeHistoryResponse\"\x00B-Z+github.com/rwh9609-bit/multilanguage/go/genb\x06proto3"
+	"\x0fGetTradeHistory\x12\x1c.trading.TradeHistoryRequest\x1a\x1d.trading.TradeHistoryResponse\"\x00B\x0fZ\raetherion/genb\x06proto3"
 
 var (
 	file_trading_api_proto_rawDescOnce sync.Once
@@ -2449,8 +2449,8 @@ func file_trading_api_proto_rawDescGZIP() []byte {
 
 var file_trading_api_proto_msgTypes = make([]protoimpl.MessageInfo, 39)
 var file_trading_api_proto_goTypes = []any{
-	(*DecimalValue)(nil),               // 0: trading.DecimalValue
-	(*Empty)(nil),                      // 1: trading.Empty
+	(*Empty)(nil),                      // 0: trading.Empty
+	(*DecimalValue)(nil),               // 1: trading.DecimalValue
 	(*StatusResponse)(nil),             // 2: trading.StatusResponse
 	(*PortfolioRequest)(nil),           // 3: trading.PortfolioRequest
 	(*PortfolioPosition)(nil),          // 4: trading.PortfolioPosition
@@ -2491,21 +2491,21 @@ var file_trading_api_proto_goTypes = []any{
 	(*timestamppb.Timestamp)(nil),      // 39: google.protobuf.Timestamp
 }
 var file_trading_api_proto_depIdxs = []int32{
-	0,  // 0: trading.PortfolioPosition.quantity:type_name -> trading.DecimalValue
-	0,  // 1: trading.PortfolioPosition.average_price:type_name -> trading.DecimalValue
-	0,  // 2: trading.PortfolioPosition.market_value:type_name -> trading.DecimalValue
-	0,  // 3: trading.PortfolioPosition.unrealized_pnl:type_name -> trading.DecimalValue
-	0,  // 4: trading.PortfolioPosition.exposure_pct:type_name -> trading.DecimalValue
+	1,  // 0: trading.PortfolioPosition.quantity:type_name -> trading.DecimalValue
+	1,  // 1: trading.PortfolioPosition.average_price:type_name -> trading.DecimalValue
+	1,  // 2: trading.PortfolioPosition.market_value:type_name -> trading.DecimalValue
+	1,  // 3: trading.PortfolioPosition.unrealized_pnl:type_name -> trading.DecimalValue
+	1,  // 4: trading.PortfolioPosition.exposure_pct:type_name -> trading.DecimalValue
 	4,  // 5: trading.PortfolioResponse.positions:type_name -> trading.PortfolioPosition
-	0,  // 6: trading.PortfolioResponse.total_portfolio_value:type_name -> trading.DecimalValue
-	0,  // 7: trading.PortfolioResponse.cash_balance:type_name -> trading.DecimalValue
+	1,  // 6: trading.PortfolioResponse.total_portfolio_value:type_name -> trading.DecimalValue
+	1,  // 7: trading.PortfolioResponse.cash_balance:type_name -> trading.DecimalValue
 	39, // 8: trading.PortfolioResponse.updated_at:type_name -> google.protobuf.Timestamp
 	39, // 9: trading.PerformanceHistoryRequest.start_time:type_name -> google.protobuf.Timestamp
 	39, // 10: trading.PerformanceHistoryRequest.end_time:type_name -> google.protobuf.Timestamp
 	39, // 11: trading.BotPerformanceSnapshot.snapshot_time:type_name -> google.protobuf.Timestamp
-	0,  // 12: trading.BotPerformanceSnapshot.equity_value:type_name -> trading.DecimalValue
-	0,  // 13: trading.BotPerformanceSnapshot.cash_balance:type_name -> trading.DecimalValue
-	0,  // 14: trading.BotPerformanceSnapshot.pnl:type_name -> trading.DecimalValue
+	1,  // 12: trading.BotPerformanceSnapshot.equity_value:type_name -> trading.DecimalValue
+	1,  // 13: trading.BotPerformanceSnapshot.cash_balance:type_name -> trading.DecimalValue
+	1,  // 14: trading.BotPerformanceSnapshot.pnl:type_name -> trading.DecimalValue
 	7,  // 15: trading.PerformanceHistoryResponse.snapshots:type_name -> trading.BotPerformanceSnapshot
 	10, // 16: trading.OrderBook.bids:type_name -> trading.OrderBookEntry
 	10, // 17: trading.OrderBook.asks:type_name -> trading.OrderBookEntry
@@ -2514,7 +2514,7 @@ var file_trading_api_proto_depIdxs = []int32{
 	37, // 20: trading.CreateBotRequest.parameters:type_name -> trading.CreateBotRequest.ParametersEntry
 	22, // 21: trading.BotList.bots:type_name -> trading.Bot
 	5,  // 22: trading.VaRRequest.current_portfolio:type_name -> trading.PortfolioResponse
-	0,  // 23: trading.VaRResponse.value_at_risk:type_name -> trading.DecimalValue
+	1,  // 23: trading.VaRResponse.value_at_risk:type_name -> trading.DecimalValue
 	39, // 24: trading.VaRResponse.last_update:type_name -> google.protobuf.Timestamp
 	29, // 25: trading.MomentumResponse.metrics:type_name -> trading.MomentumMetric
 	38, // 26: trading.StrategyRequest.parameters:type_name -> trading.StrategyRequest.ParametersEntry
@@ -2526,7 +2526,7 @@ var file_trading_api_proto_depIdxs = []int32{
 	19, // 32: trading.AuthService.GetUser:input_type -> trading.GetUserRequest
 	23, // 33: trading.BotService.CreateBot:input_type -> trading.CreateBotRequest
 	24, // 34: trading.BotService.DeleteBot:input_type -> trading.BotIdRequest
-	1,  // 35: trading.BotService.ListBots:input_type -> trading.Empty
+	0,  // 35: trading.BotService.ListBots:input_type -> trading.Empty
 	24, // 36: trading.BotService.StartBot:input_type -> trading.BotIdRequest
 	24, // 37: trading.BotService.StopBot:input_type -> trading.BotIdRequest
 	24, // 38: trading.BotService.GetBotStatus:input_type -> trading.BotIdRequest
@@ -2539,7 +2539,7 @@ var file_trading_api_proto_depIdxs = []int32{
 	32, // 45: trading.TradingService.StreamPrice:input_type -> trading.TickStreamRequest
 	33, // 46: trading.TradingService.AddSymbol:input_type -> trading.SymbolRequest
 	33, // 47: trading.TradingService.RemoveSymbol:input_type -> trading.SymbolRequest
-	1,  // 48: trading.TradingService.ListSymbols:input_type -> trading.Empty
+	0,  // 48: trading.TradingService.ListSymbols:input_type -> trading.Empty
 	28, // 49: trading.TradingService.GetMomentum:input_type -> trading.MomentumRequest
 	13, // 50: trading.TradingService.ExecuteTrade:input_type -> trading.TradeRequest
 	15, // 51: trading.TradingService.GetTradeHistory:input_type -> trading.TradeHistoryRequest

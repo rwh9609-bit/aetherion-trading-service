@@ -8,7 +8,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/rs/zerolog/log"
-	pb "github.com/rwh9609-bit/multilanguage/go/gen"
+	pb "aetherion/gen"
 )
 
 // DBService provides methods for interacting with the PostgreSQL database.

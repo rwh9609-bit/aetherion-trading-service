@@ -9,7 +9,7 @@ import (
 	"sync"
 	"time"
 
-	pb "github.com/rwh9609-bit/multilanguage/go/gen"
+	pb "aetherion/gen"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
