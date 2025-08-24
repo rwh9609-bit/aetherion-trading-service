@@ -19,8 +19,179 @@
 const grpc = {};
 grpc.web = require('grpc-web');
 
+
+var google_protobuf_timestamp_pb = require('google-protobuf/google/protobuf/timestamp_pb.js')
 const proto = {};
 proto.trading = require('./trading_api_pb.js');
+
+/**
+ * @param {string} hostname
+ * @param {?Object} credentials
+ * @param {?grpc.web.ClientOptions} options
+ * @constructor
+ * @struct
+ * @final
+ */
+proto.trading.PortfolioServiceClient =
+    function(hostname, credentials, options) {
+  if (!options) options = {};
+  options.format = 'text';
+
+  /**
+   * @private @const {!grpc.web.GrpcWebClientBase} The client
+   */
+  this.client_ = new grpc.web.GrpcWebClientBase(options);
+
+  /**
+   * @private @const {string} The hostname
+   */
+  this.hostname_ = hostname.replace(/\/+$/, '');
+
+};
+
+
+/**
+ * @param {string} hostname
+ * @param {?Object} credentials
+ * @param {?grpc.web.ClientOptions} options
+ * @constructor
+ * @struct
+ * @final
+ */
+proto.trading.PortfolioServicePromiseClient =
+    function(hostname, credentials, options) {
+  if (!options) options = {};
+  options.format = 'text';
+
+  /**
+   * @private @const {!grpc.web.GrpcWebClientBase} The client
+   */
+  this.client_ = new grpc.web.GrpcWebClientBase(options);
+
+  /**
+   * @private @const {string} The hostname
+   */
+  this.hostname_ = hostname.replace(/\/+$/, '');
+
+};
+
+
+/**
+ * @const
+ * @type {!grpc.web.MethodDescriptor<
+ *   !proto.trading.PortfolioRequest,
+ *   !proto.trading.PortfolioResponse>}
+ */
+const methodDescriptor_PortfolioService_StreamPortfolio = new grpc.web.MethodDescriptor(
+  '/trading.PortfolioService/StreamPortfolio',
+  grpc.web.MethodType.SERVER_STREAMING,
+  proto.trading.PortfolioRequest,
+  proto.trading.PortfolioResponse,
+  /**
+   * @param {!proto.trading.PortfolioRequest} request
+   * @return {!Uint8Array}
+   */
+  function(request) {
+    return request.serializeBinary();
+  },
+  proto.trading.PortfolioResponse.deserializeBinary
+);
+
+
+/**
+ * @param {!proto.trading.PortfolioRequest} request The request proto
+ * @param {?Object<string, string>=} metadata User defined
+ *     call metadata
+ * @return {!grpc.web.ClientReadableStream<!proto.trading.PortfolioResponse>}
+ *     The XHR Node Readable Stream
+ */
+proto.trading.PortfolioServiceClient.prototype.streamPortfolio =
+    function(request, metadata) {
+  return this.client_.serverStreaming(this.hostname_ +
+      '/trading.PortfolioService/StreamPortfolio',
+      request,
+      metadata || {},
+      methodDescriptor_PortfolioService_StreamPortfolio);
+};
+
+
+/**
+ * @param {!proto.trading.PortfolioRequest} request The request proto
+ * @param {?Object<string, string>=} metadata User defined
+ *     call metadata
+ * @return {!grpc.web.ClientReadableStream<!proto.trading.PortfolioResponse>}
+ *     The XHR Node Readable Stream
+ */
+proto.trading.PortfolioServicePromiseClient.prototype.streamPortfolio =
+    function(request, metadata) {
+  return this.client_.serverStreaming(this.hostname_ +
+      '/trading.PortfolioService/StreamPortfolio',
+      request,
+      metadata || {},
+      methodDescriptor_PortfolioService_StreamPortfolio);
+};
+
+
+/**
+ * @const
+ * @type {!grpc.web.MethodDescriptor<
+ *   !proto.trading.PerformanceHistoryRequest,
+ *   !proto.trading.PerformanceHistoryResponse>}
+ */
+const methodDescriptor_PortfolioService_GetPerformanceHistory = new grpc.web.MethodDescriptor(
+  '/trading.PortfolioService/GetPerformanceHistory',
+  grpc.web.MethodType.UNARY,
+  proto.trading.PerformanceHistoryRequest,
+  proto.trading.PerformanceHistoryResponse,
+  /**
+   * @param {!proto.trading.PerformanceHistoryRequest} request
+   * @return {!Uint8Array}
+   */
+  function(request) {
+    return request.serializeBinary();
+  },
+  proto.trading.PerformanceHistoryResponse.deserializeBinary
+);
+
+
+/**
+ * @param {!proto.trading.PerformanceHistoryRequest} request The
+ *     request proto
+ * @param {?Object<string, string>} metadata User defined
+ *     call metadata
+ * @param {function(?grpc.web.RpcError, ?proto.trading.PerformanceHistoryResponse)}
+ *     callback The callback function(error, response)
+ * @return {!grpc.web.ClientReadableStream<!proto.trading.PerformanceHistoryResponse>|undefined}
+ *     The XHR Node Readable Stream
+ */
+proto.trading.PortfolioServiceClient.prototype.getPerformanceHistory =
+    function(request, metadata, callback) {
+  return this.client_.rpcCall(this.hostname_ +
+      '/trading.PortfolioService/GetPerformanceHistory',
+      request,
+      metadata || {},
+      methodDescriptor_PortfolioService_GetPerformanceHistory,
+      callback);
+};
+
+
+/**
+ * @param {!proto.trading.PerformanceHistoryRequest} request The
+ *     request proto
+ * @param {?Object<string, string>=} metadata User defined
+ *     call metadata
+ * @return {!Promise<!proto.trading.PerformanceHistoryResponse>}
+ *     Promise that resolves to the response
+ */
+proto.trading.PortfolioServicePromiseClient.prototype.getPerformanceHistory =
+    function(request, metadata) {
+  return this.client_.unaryCall(this.hostname_ +
+      '/trading.PortfolioService/GetPerformanceHistory',
+      request,
+      metadata || {},
+      methodDescriptor_PortfolioService_GetPerformanceHistory);
+};
+
 
 /**
  * @param {string} hostname
@@ -1083,13 +1254,13 @@ proto.trading.TradingServicePromiseClient.prototype.stopStrategy =
  * @const
  * @type {!grpc.web.MethodDescriptor<
  *   !proto.trading.PortfolioRequest,
- *   !proto.trading.Portfolio>}
+ *   !proto.trading.PortfolioResponse>}
  */
 const methodDescriptor_TradingService_GetPortfolio = new grpc.web.MethodDescriptor(
   '/trading.TradingService/GetPortfolio',
   grpc.web.MethodType.UNARY,
   proto.trading.PortfolioRequest,
-  proto.trading.Portfolio,
+  proto.trading.PortfolioResponse,
   /**
    * @param {!proto.trading.PortfolioRequest} request
    * @return {!Uint8Array}
@@ -1097,7 +1268,7 @@ const methodDescriptor_TradingService_GetPortfolio = new grpc.web.MethodDescript
   function(request) {
     return request.serializeBinary();
   },
-  proto.trading.Portfolio.deserializeBinary
+  proto.trading.PortfolioResponse.deserializeBinary
 );
 
 
@@ -1106,9 +1277,9 @@ const methodDescriptor_TradingService_GetPortfolio = new grpc.web.MethodDescript
  *     request proto
  * @param {?Object<string, string>} metadata User defined
  *     call metadata
- * @param {function(?grpc.web.RpcError, ?proto.trading.Portfolio)}
+ * @param {function(?grpc.web.RpcError, ?proto.trading.PortfolioResponse)}
  *     callback The callback function(error, response)
- * @return {!grpc.web.ClientReadableStream<!proto.trading.Portfolio>|undefined}
+ * @return {!grpc.web.ClientReadableStream<!proto.trading.PortfolioResponse>|undefined}
  *     The XHR Node Readable Stream
  */
 proto.trading.TradingServiceClient.prototype.getPortfolio =
@@ -1127,7 +1298,7 @@ proto.trading.TradingServiceClient.prototype.getPortfolio =
  *     request proto
  * @param {?Object<string, string>=} metadata User defined
  *     call metadata
- * @return {!Promise<!proto.trading.Portfolio>}
+ * @return {!Promise<!proto.trading.PortfolioResponse>}
  *     Promise that resolves to the response
  */
 proto.trading.TradingServicePromiseClient.prototype.getPortfolio =

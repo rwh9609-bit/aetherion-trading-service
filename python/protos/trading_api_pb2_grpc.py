@@ -25,6 +25,133 @@ if _version_not_supported:
     )
 
 
+class PortfolioServiceStub(object):
+    """=================================================================
+    PORTFOLIO & PERFORMANCE SERVICE
+    =================================================================
+
+    """
+
+    def __init__(self, channel):
+        """Constructor.
+
+        Args:
+            channel: A grpc.Channel.
+        """
+        self.StreamPortfolio = channel.unary_stream(
+                '/trading.PortfolioService/StreamPortfolio',
+                request_serializer=trading__api__pb2.PortfolioRequest.SerializeToString,
+                response_deserializer=trading__api__pb2.PortfolioResponse.FromString,
+                _registered_method=True)
+        self.GetPerformanceHistory = channel.unary_unary(
+                '/trading.PortfolioService/GetPerformanceHistory',
+                request_serializer=trading__api__pb2.PerformanceHistoryRequest.SerializeToString,
+                response_deserializer=trading__api__pb2.PerformanceHistoryResponse.FromString,
+                _registered_method=True)
+
+
+class PortfolioServiceServicer(object):
+    """=================================================================
+    PORTFOLIO & PERFORMANCE SERVICE
+    =================================================================
+
+    """
+
+    def StreamPortfolio(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def GetPerformanceHistory(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+
+def add_PortfolioServiceServicer_to_server(servicer, server):
+    rpc_method_handlers = {
+            'StreamPortfolio': grpc.unary_stream_rpc_method_handler(
+                    servicer.StreamPortfolio,
+                    request_deserializer=trading__api__pb2.PortfolioRequest.FromString,
+                    response_serializer=trading__api__pb2.PortfolioResponse.SerializeToString,
+            ),
+            'GetPerformanceHistory': grpc.unary_unary_rpc_method_handler(
+                    servicer.GetPerformanceHistory,
+                    request_deserializer=trading__api__pb2.PerformanceHistoryRequest.FromString,
+                    response_serializer=trading__api__pb2.PerformanceHistoryResponse.SerializeToString,
+            ),
+    }
+    generic_handler = grpc.method_handlers_generic_handler(
+            'trading.PortfolioService', rpc_method_handlers)
+    server.add_generic_rpc_handlers((generic_handler,))
+    server.add_registered_method_handlers('trading.PortfolioService', rpc_method_handlers)
+
+
+ # This class is part of an EXPERIMENTAL API.
+class PortfolioService(object):
+    """=================================================================
+    PORTFOLIO & PERFORMANCE SERVICE
+    =================================================================
+
+    """
+
+    @staticmethod
+    def StreamPortfolio(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_stream(
+            request,
+            target,
+            '/trading.PortfolioService/StreamPortfolio',
+            trading__api__pb2.PortfolioRequest.SerializeToString,
+            trading__api__pb2.PortfolioResponse.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def GetPerformanceHistory(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/trading.PortfolioService/GetPerformanceHistory',
+            trading__api__pb2.PerformanceHistoryRequest.SerializeToString,
+            trading__api__pb2.PerformanceHistoryResponse.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+
 class AuthServiceStub(object):
     """=================================================================
     AUTH & USER SERVICE
@@ -622,7 +749,7 @@ class TradingServiceStub(object):
         self.GetPortfolio = channel.unary_unary(
                 '/trading.TradingService/GetPortfolio',
                 request_serializer=trading__api__pb2.PortfolioRequest.SerializeToString,
-                response_deserializer=trading__api__pb2.Portfolio.FromString,
+                response_deserializer=trading__api__pb2.PortfolioResponse.FromString,
                 _registered_method=True)
         self.SubscribeTicks = channel.unary_stream(
                 '/trading.TradingService/SubscribeTicks',
@@ -703,8 +830,7 @@ class TradingServiceServicer(object):
         raise NotImplementedError('Method not implemented!')
 
     def GetPortfolio(self, request, context):
-        """Gets the current portfolio status
-        """
+        """Missing associated documentation comment in .proto file."""
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
@@ -791,7 +917,7 @@ def add_TradingServiceServicer_to_server(servicer, server):
             'GetPortfolio': grpc.unary_unary_rpc_method_handler(
                     servicer.GetPortfolio,
                     request_deserializer=trading__api__pb2.PortfolioRequest.FromString,
-                    response_serializer=trading__api__pb2.Portfolio.SerializeToString,
+                    response_serializer=trading__api__pb2.PortfolioResponse.SerializeToString,
             ),
             'SubscribeTicks': grpc.unary_stream_rpc_method_handler(
                     servicer.SubscribeTicks,
@@ -973,7 +1099,7 @@ class TradingService(object):
             target,
             '/trading.TradingService/GetPortfolio',
             trading__api__pb2.PortfolioRequest.SerializeToString,
-            trading__api__pb2.Portfolio.FromString,
+            trading__api__pb2.PortfolioResponse.FromString,
             options,
             channel_credentials,
             insecure,

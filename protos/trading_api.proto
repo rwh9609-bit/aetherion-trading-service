@@ -2,11 +2,19 @@ syntax = "proto3";
 
 package trading;
 
+import "google/protobuf/timestamp.proto";
+
 option go_package = "github.com/rwh9609-bit/multilanguage/go/gen";
 
 // =================================================================
 // COMMON & UTILITY MESSAGES
 // =================================================================
+
+// High-precision financial values (avoids float rounding issues)
+message DecimalValue {
+    int64 units = 1;   // Whole part
+    sfixed32 nanos = 2; // Fractional part, -999,999,999 .. +999,999,999
+}
 
 message Empty {}
 
@@ -20,15 +28,48 @@ message StatusResponse {
 // PORTFOLIO & PERFORMANCE SERVICE
 // =================================================================
 
-message PortfolioRequest {
-    string account_id = 1;
+service PortfolioService {
+    rpc GetPortfolio(PortfolioRequest) returns (PortfolioResponse) {}
+    rpc StreamPortfolio(PortfolioRequest) returns (stream PortfolioResponse) {}
+    rpc GetPerformanceHistory(PerformanceHistoryRequest) returns (PerformanceHistoryResponse) {}
 }
 
-message Portfolio {
-    map<string, double> positions = 1;  // Map of symbol to quantity
-    double total_value_usd = 2;
-    optional double last_price_change = 3;  // Last observed price change percentage
-    string bot_id = 4;
+message PortfolioRequest {
+    string bot_id = 1;
+}
+
+message PortfolioPosition {
+    string symbol = 1;
+    DecimalValue quantity = 2;
+    DecimalValue average_price = 3;
+    DecimalValue market_value = 4;
+    DecimalValue unrealized_pnl = 5;
+    DecimalValue exposure_pct = 6;
+}
+
+message PortfolioResponse {
+    string bot_id = 1;
+    repeated PortfolioPosition positions = 2;
+    DecimalValue total_portfolio_value = 3;
+    DecimalValue cash_balance = 4;
+    google.protobuf.Timestamp updated_at = 5;
+}
+
+message PerformanceHistoryRequest {
+    string bot_id = 1;
+    google.protobuf.Timestamp start_time = 2;
+    google.protobuf.Timestamp end_time = 3;
+}
+
+message BotPerformanceSnapshot {
+    google.protobuf.Timestamp snapshot_time = 1;
+    DecimalValue equity_value = 2;
+    DecimalValue cash_balance = 3;
+    DecimalValue pnl = 4;
+}
+
+message PerformanceHistoryResponse {
+    repeated BotPerformanceSnapshot snapshots = 1;
 }
 
 // =================================================================
@@ -178,22 +219,20 @@ service RiskService {
     rpc CalculateVaR(VaRRequest) returns (VaRResponse) {}
 }
 
-// Request to calculate Value at Risk (VaR)
 message VaRRequest {
-    Portfolio current_portfolio = 1;
-    string risk_model = 2; // e.g., "monte_carlo"
-    double confidence_level = 3; // e.g., 0.95
-    double horizon_days = 4; // time horizon in days (e.g., 1)
+    PortfolioResponse current_portfolio = 1;
+    string risk_model = 2; // e.g. "historical", "monte_carlo"
+    double confidence_level = 3; // e.g. 0.95
+    double horizon_days = 4;
 }
 
-// Response with the calculated VaR
 message VaRResponse {
-    double value_at_risk = 1;
+    DecimalValue value_at_risk = 1;
     repeated string asset_names = 2;
-    repeated double correlation_matrix = 3; // row-major flattened
+    repeated double correlation_matrix = 3;
     repeated double volatility_per_asset = 4;
     string simulation_mode = 5;
-    string last_update = 6;
+    google.protobuf.Timestamp last_update = 6;
 }
 
 // ==================================================================
@@ -213,10 +252,7 @@ service TradingService {
     
     // Stop a trading strategy
     rpc StopStrategy(StrategyRequest) returns (StatusResponse) {}
-    
-    // Gets the current portfolio status
-    rpc GetPortfolio(PortfolioRequest) returns (Portfolio) {}
-    
+
     // Subscribes to a real-time feed of market data
     rpc SubscribeTicks(StrategyRequest) returns (stream Tick) {}
 
