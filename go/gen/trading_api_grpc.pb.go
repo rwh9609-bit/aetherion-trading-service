@@ -201,6 +201,222 @@ var PortfolioService_ServiceDesc = grpc.ServiceDesc{
 }
 
 const (
+	OrderService_CreateOrder_FullMethodName     = "/trading.OrderService/CreateOrder"
+	OrderService_CancelOrder_FullMethodName     = "/trading.OrderService/CancelOrder"
+	OrderService_GetOrder_FullMethodName        = "/trading.OrderService/GetOrder"
+	OrderService_GetTradeHistory_FullMethodName = "/trading.OrderService/GetTradeHistory"
+)
+
+// OrderServiceClient is the client API for OrderService service.
+//
+// For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
+type OrderServiceClient interface {
+	CreateOrder(ctx context.Context, in *CreateOrderRequest, opts ...grpc.CallOption) (*Order, error)
+	CancelOrder(ctx context.Context, in *CancelOrderRequest, opts ...grpc.CallOption) (*Order, error)
+	GetOrder(ctx context.Context, in *GetOrderRequest, opts ...grpc.CallOption) (*Order, error)
+	GetTradeHistory(ctx context.Context, in *TradeHistoryRequest, opts ...grpc.CallOption) (*TradeHistoryResponse, error)
+}
+
+type orderServiceClient struct {
+	cc grpc.ClientConnInterface
+}
+
+func NewOrderServiceClient(cc grpc.ClientConnInterface) OrderServiceClient {
+	return &orderServiceClient{cc}
+}
+
+func (c *orderServiceClient) CreateOrder(ctx context.Context, in *CreateOrderRequest, opts ...grpc.CallOption) (*Order, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(Order)
+	err := c.cc.Invoke(ctx, OrderService_CreateOrder_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *orderServiceClient) CancelOrder(ctx context.Context, in *CancelOrderRequest, opts ...grpc.CallOption) (*Order, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(Order)
+	err := c.cc.Invoke(ctx, OrderService_CancelOrder_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *orderServiceClient) GetOrder(ctx context.Context, in *GetOrderRequest, opts ...grpc.CallOption) (*Order, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(Order)
+	err := c.cc.Invoke(ctx, OrderService_GetOrder_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *orderServiceClient) GetTradeHistory(ctx context.Context, in *TradeHistoryRequest, opts ...grpc.CallOption) (*TradeHistoryResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(TradeHistoryResponse)
+	err := c.cc.Invoke(ctx, OrderService_GetTradeHistory_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+// OrderServiceServer is the server API for OrderService service.
+// All implementations must embed UnimplementedOrderServiceServer
+// for forward compatibility.
+type OrderServiceServer interface {
+	CreateOrder(context.Context, *CreateOrderRequest) (*Order, error)
+	CancelOrder(context.Context, *CancelOrderRequest) (*Order, error)
+	GetOrder(context.Context, *GetOrderRequest) (*Order, error)
+	GetTradeHistory(context.Context, *TradeHistoryRequest) (*TradeHistoryResponse, error)
+	mustEmbedUnimplementedOrderServiceServer()
+}
+
+// UnimplementedOrderServiceServer must be embedded to have
+// forward compatible implementations.
+//
+// NOTE: this should be embedded by value instead of pointer to avoid a nil
+// pointer dereference when methods are called.
+type UnimplementedOrderServiceServer struct{}
+
+func (UnimplementedOrderServiceServer) CreateOrder(context.Context, *CreateOrderRequest) (*Order, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CreateOrder not implemented")
+}
+func (UnimplementedOrderServiceServer) CancelOrder(context.Context, *CancelOrderRequest) (*Order, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CancelOrder not implemented")
+}
+func (UnimplementedOrderServiceServer) GetOrder(context.Context, *GetOrderRequest) (*Order, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetOrder not implemented")
+}
+func (UnimplementedOrderServiceServer) GetTradeHistory(context.Context, *TradeHistoryRequest) (*TradeHistoryResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetTradeHistory not implemented")
+}
+func (UnimplementedOrderServiceServer) mustEmbedUnimplementedOrderServiceServer() {}
+func (UnimplementedOrderServiceServer) testEmbeddedByValue()                      {}
+
+// UnsafeOrderServiceServer may be embedded to opt out of forward compatibility for this service.
+// Use of this interface is not recommended, as added methods to OrderServiceServer will
+// result in compilation errors.
+type UnsafeOrderServiceServer interface {
+	mustEmbedUnimplementedOrderServiceServer()
+}
+
+func RegisterOrderServiceServer(s grpc.ServiceRegistrar, srv OrderServiceServer) {
+	// If the following call pancis, it indicates UnimplementedOrderServiceServer was
+	// embedded by pointer and is nil.  This will cause panics if an
+	// unimplemented method is ever invoked, so we test this at initialization
+	// time to prevent it from happening at runtime later due to I/O.
+	if t, ok := srv.(interface{ testEmbeddedByValue() }); ok {
+		t.testEmbeddedByValue()
+	}
+	s.RegisterService(&OrderService_ServiceDesc, srv)
+}
+
+func _OrderService_CreateOrder_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CreateOrderRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(OrderServiceServer).CreateOrder(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: OrderService_CreateOrder_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(OrderServiceServer).CreateOrder(ctx, req.(*CreateOrderRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _OrderService_CancelOrder_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CancelOrderRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(OrderServiceServer).CancelOrder(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: OrderService_CancelOrder_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(OrderServiceServer).CancelOrder(ctx, req.(*CancelOrderRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _OrderService_GetOrder_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetOrderRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(OrderServiceServer).GetOrder(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: OrderService_GetOrder_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(OrderServiceServer).GetOrder(ctx, req.(*GetOrderRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _OrderService_GetTradeHistory_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(TradeHistoryRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(OrderServiceServer).GetTradeHistory(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: OrderService_GetTradeHistory_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(OrderServiceServer).GetTradeHistory(ctx, req.(*TradeHistoryRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+// OrderService_ServiceDesc is the grpc.ServiceDesc for OrderService service.
+// It's only intended for direct use with grpc.RegisterService,
+// and not to be introspected or modified (even as a copy)
+var OrderService_ServiceDesc = grpc.ServiceDesc{
+	ServiceName: "trading.OrderService",
+	HandlerType: (*OrderServiceServer)(nil),
+	Methods: []grpc.MethodDesc{
+		{
+			MethodName: "CreateOrder",
+			Handler:    _OrderService_CreateOrder_Handler,
+		},
+		{
+			MethodName: "CancelOrder",
+			Handler:    _OrderService_CancelOrder_Handler,
+		},
+		{
+			MethodName: "GetOrder",
+			Handler:    _OrderService_GetOrder_Handler,
+		},
+		{
+			MethodName: "GetTradeHistory",
+			Handler:    _OrderService_GetTradeHistory_Handler,
+		},
+	},
+	Streams:  []grpc.StreamDesc{},
+	Metadata: "trading_api.proto",
+}
+
+const (
 	AuthService_Register_FullMethodName     = "/trading.AuthService/Register"
 	AuthService_Login_FullMethodName        = "/trading.AuthService/Login"
 	AuthService_GetUser_FullMethodName      = "/trading.AuthService/GetUser"
@@ -417,12 +633,15 @@ var AuthService_ServiceDesc = grpc.ServiceDesc{
 }
 
 const (
-	BotService_CreateBot_FullMethodName    = "/trading.BotService/CreateBot"
-	BotService_DeleteBot_FullMethodName    = "/trading.BotService/DeleteBot"
-	BotService_ListBots_FullMethodName     = "/trading.BotService/ListBots"
-	BotService_StartBot_FullMethodName     = "/trading.BotService/StartBot"
-	BotService_StopBot_FullMethodName      = "/trading.BotService/StopBot"
-	BotService_GetBotStatus_FullMethodName = "/trading.BotService/GetBotStatus"
+	BotService_CreateBot_FullMethodName       = "/trading.BotService/CreateBot"
+	BotService_GetBot_FullMethodName          = "/trading.BotService/GetBot"
+	BotService_UpdateBot_FullMethodName       = "/trading.BotService/UpdateBot"
+	BotService_DeleteBot_FullMethodName       = "/trading.BotService/DeleteBot"
+	BotService_ListBots_FullMethodName        = "/trading.BotService/ListBots"
+	BotService_StartBot_FullMethodName        = "/trading.BotService/StartBot"
+	BotService_StopBot_FullMethodName         = "/trading.BotService/StopBot"
+	BotService_GetBotStatus_FullMethodName    = "/trading.BotService/GetBotStatus"
+	BotService_StreamBotStatus_FullMethodName = "/trading.BotService/StreamBotStatus"
 )
 
 // BotServiceClient is the client API for BotService service.
@@ -432,11 +651,14 @@ const (
 // BotService provides a focused interface for bot lifecycle operations.
 type BotServiceClient interface {
 	CreateBot(ctx context.Context, in *CreateBotRequest, opts ...grpc.CallOption) (*StatusResponse, error)
+	GetBot(ctx context.Context, in *BotIdRequest, opts ...grpc.CallOption) (*Bot, error)
+	UpdateBot(ctx context.Context, in *UpdateBotRequest, opts ...grpc.CallOption) (*Bot, error)
 	DeleteBot(ctx context.Context, in *BotIdRequest, opts ...grpc.CallOption) (*StatusResponse, error)
 	ListBots(ctx context.Context, in *Empty, opts ...grpc.CallOption) (*BotList, error)
 	StartBot(ctx context.Context, in *BotIdRequest, opts ...grpc.CallOption) (*StatusResponse, error)
 	StopBot(ctx context.Context, in *BotIdRequest, opts ...grpc.CallOption) (*StatusResponse, error)
 	GetBotStatus(ctx context.Context, in *BotIdRequest, opts ...grpc.CallOption) (*Bot, error)
+	StreamBotStatus(ctx context.Context, in *BotIdRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[Bot], error)
 }
 
 type botServiceClient struct {
@@ -451,6 +673,26 @@ func (c *botServiceClient) CreateBot(ctx context.Context, in *CreateBotRequest, 
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(StatusResponse)
 	err := c.cc.Invoke(ctx, BotService_CreateBot_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *botServiceClient) GetBot(ctx context.Context, in *BotIdRequest, opts ...grpc.CallOption) (*Bot, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(Bot)
+	err := c.cc.Invoke(ctx, BotService_GetBot_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *botServiceClient) UpdateBot(ctx context.Context, in *UpdateBotRequest, opts ...grpc.CallOption) (*Bot, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(Bot)
+	err := c.cc.Invoke(ctx, BotService_UpdateBot_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -507,6 +749,25 @@ func (c *botServiceClient) GetBotStatus(ctx context.Context, in *BotIdRequest, o
 	return out, nil
 }
 
+func (c *botServiceClient) StreamBotStatus(ctx context.Context, in *BotIdRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[Bot], error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	stream, err := c.cc.NewStream(ctx, &BotService_ServiceDesc.Streams[0], BotService_StreamBotStatus_FullMethodName, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	x := &grpc.GenericClientStream[BotIdRequest, Bot]{ClientStream: stream}
+	if err := x.ClientStream.SendMsg(in); err != nil {
+		return nil, err
+	}
+	if err := x.ClientStream.CloseSend(); err != nil {
+		return nil, err
+	}
+	return x, nil
+}
+
+// This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
+type BotService_StreamBotStatusClient = grpc.ServerStreamingClient[Bot]
+
 // BotServiceServer is the server API for BotService service.
 // All implementations must embed UnimplementedBotServiceServer
 // for forward compatibility.
@@ -514,11 +775,14 @@ func (c *botServiceClient) GetBotStatus(ctx context.Context, in *BotIdRequest, o
 // BotService provides a focused interface for bot lifecycle operations.
 type BotServiceServer interface {
 	CreateBot(context.Context, *CreateBotRequest) (*StatusResponse, error)
+	GetBot(context.Context, *BotIdRequest) (*Bot, error)
+	UpdateBot(context.Context, *UpdateBotRequest) (*Bot, error)
 	DeleteBot(context.Context, *BotIdRequest) (*StatusResponse, error)
 	ListBots(context.Context, *Empty) (*BotList, error)
 	StartBot(context.Context, *BotIdRequest) (*StatusResponse, error)
 	StopBot(context.Context, *BotIdRequest) (*StatusResponse, error)
 	GetBotStatus(context.Context, *BotIdRequest) (*Bot, error)
+	StreamBotStatus(*BotIdRequest, grpc.ServerStreamingServer[Bot]) error
 	mustEmbedUnimplementedBotServiceServer()
 }
 
@@ -531,6 +795,12 @@ type UnimplementedBotServiceServer struct{}
 
 func (UnimplementedBotServiceServer) CreateBot(context.Context, *CreateBotRequest) (*StatusResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CreateBot not implemented")
+}
+func (UnimplementedBotServiceServer) GetBot(context.Context, *BotIdRequest) (*Bot, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetBot not implemented")
+}
+func (UnimplementedBotServiceServer) UpdateBot(context.Context, *UpdateBotRequest) (*Bot, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method UpdateBot not implemented")
 }
 func (UnimplementedBotServiceServer) DeleteBot(context.Context, *BotIdRequest) (*StatusResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DeleteBot not implemented")
@@ -546,6 +816,9 @@ func (UnimplementedBotServiceServer) StopBot(context.Context, *BotIdRequest) (*S
 }
 func (UnimplementedBotServiceServer) GetBotStatus(context.Context, *BotIdRequest) (*Bot, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetBotStatus not implemented")
+}
+func (UnimplementedBotServiceServer) StreamBotStatus(*BotIdRequest, grpc.ServerStreamingServer[Bot]) error {
+	return status.Errorf(codes.Unimplemented, "method StreamBotStatus not implemented")
 }
 func (UnimplementedBotServiceServer) mustEmbedUnimplementedBotServiceServer() {}
 func (UnimplementedBotServiceServer) testEmbeddedByValue()                    {}
@@ -582,6 +855,42 @@ func _BotService_CreateBot_Handler(srv interface{}, ctx context.Context, dec fun
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(BotServiceServer).CreateBot(ctx, req.(*CreateBotRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _BotService_GetBot_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(BotIdRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(BotServiceServer).GetBot(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: BotService_GetBot_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(BotServiceServer).GetBot(ctx, req.(*BotIdRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _BotService_UpdateBot_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UpdateBotRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(BotServiceServer).UpdateBot(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: BotService_UpdateBot_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(BotServiceServer).UpdateBot(ctx, req.(*UpdateBotRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -676,6 +985,17 @@ func _BotService_GetBotStatus_Handler(srv interface{}, ctx context.Context, dec 
 	return interceptor(ctx, in, info, handler)
 }
 
+func _BotService_StreamBotStatus_Handler(srv interface{}, stream grpc.ServerStream) error {
+	m := new(BotIdRequest)
+	if err := stream.RecvMsg(m); err != nil {
+		return err
+	}
+	return srv.(BotServiceServer).StreamBotStatus(m, &grpc.GenericServerStream[BotIdRequest, Bot]{ServerStream: stream})
+}
+
+// This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
+type BotService_StreamBotStatusServer = grpc.ServerStreamingServer[Bot]
+
 // BotService_ServiceDesc is the grpc.ServiceDesc for BotService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -686,6 +1006,14 @@ var BotService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "CreateBot",
 			Handler:    _BotService_CreateBot_Handler,
+		},
+		{
+			MethodName: "GetBot",
+			Handler:    _BotService_GetBot_Handler,
+		},
+		{
+			MethodName: "UpdateBot",
+			Handler:    _BotService_UpdateBot_Handler,
 		},
 		{
 			MethodName: "DeleteBot",
@@ -708,7 +1036,13 @@ var BotService_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _BotService_GetBotStatus_Handler,
 		},
 	},
-	Streams:  []grpc.StreamDesc{},
+	Streams: []grpc.StreamDesc{
+		{
+			StreamName:    "StreamBotStatus",
+			Handler:       _BotService_StreamBotStatus_Handler,
+			ServerStreams: true,
+		},
+	},
 	Metadata: "trading_api.proto",
 }
 
@@ -831,8 +1165,6 @@ const (
 	TradingService_RemoveSymbol_FullMethodName    = "/trading.TradingService/RemoveSymbol"
 	TradingService_ListSymbols_FullMethodName     = "/trading.TradingService/ListSymbols"
 	TradingService_GetMomentum_FullMethodName     = "/trading.TradingService/GetMomentum"
-	TradingService_ExecuteTrade_FullMethodName    = "/trading.TradingService/ExecuteTrade"
-	TradingService_GetTradeHistory_FullMethodName = "/trading.TradingService/GetTradeHistory"
 )
 
 // TradingServiceClient is the client API for TradingService service.
@@ -841,30 +1173,16 @@ const (
 //
 // Service definition
 type TradingServiceClient interface {
-	// Stream order book updates
 	StreamOrderBook(ctx context.Context, in *OrderBookRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[OrderBook], error)
-	// Get current price for a symbol
 	GetPrice(ctx context.Context, in *Tick, opts ...grpc.CallOption) (*Tick, error)
-	// Start a trading strategy
 	StartStrategy(ctx context.Context, in *StrategyRequest, opts ...grpc.CallOption) (*StatusResponse, error)
-	// Stop a trading strategy
 	StopStrategy(ctx context.Context, in *StrategyRequest, opts ...grpc.CallOption) (*StatusResponse, error)
-	// Subscribes to a real-time feed of market data
 	SubscribeTicks(ctx context.Context, in *StrategyRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[Tick], error)
-	// Streams live ticks from internal event bus (websocket sourced)
 	StreamPrice(ctx context.Context, in *TickStreamRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[Tick], error)
-	// Dynamically add a symbol to market data feed
 	AddSymbol(ctx context.Context, in *SymbolRequest, opts ...grpc.CallOption) (*StatusResponse, error)
-	// Dynamically remove a symbol from market data feed
 	RemoveSymbol(ctx context.Context, in *SymbolRequest, opts ...grpc.CallOption) (*StatusResponse, error)
-	// List currently subscribed symbols in market data feed
 	ListSymbols(ctx context.Context, in *Empty, opts ...grpc.CallOption) (*SymbolList, error)
-	// Aggregate short-term momentum metrics for symbols (server-side analog of client scanner)
 	GetMomentum(ctx context.Context, in *MomentumRequest, opts ...grpc.CallOption) (*MomentumResponse, error)
-	// Execute a trade (simplified demo endpoint)
-	ExecuteTrade(ctx context.Context, in *TradeRequest, opts ...grpc.CallOption) (*TradeResponse, error)
-	// Get trade history for a user
-	GetTradeHistory(ctx context.Context, in *TradeHistoryRequest, opts ...grpc.CallOption) (*TradeHistoryResponse, error)
 }
 
 type tradingServiceClient struct {
@@ -1002,56 +1320,22 @@ func (c *tradingServiceClient) GetMomentum(ctx context.Context, in *MomentumRequ
 	return out, nil
 }
 
-func (c *tradingServiceClient) ExecuteTrade(ctx context.Context, in *TradeRequest, opts ...grpc.CallOption) (*TradeResponse, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(TradeResponse)
-	err := c.cc.Invoke(ctx, TradingService_ExecuteTrade_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *tradingServiceClient) GetTradeHistory(ctx context.Context, in *TradeHistoryRequest, opts ...grpc.CallOption) (*TradeHistoryResponse, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(TradeHistoryResponse)
-	err := c.cc.Invoke(ctx, TradingService_GetTradeHistory_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
 // TradingServiceServer is the server API for TradingService service.
 // All implementations must embed UnimplementedTradingServiceServer
 // for forward compatibility.
 //
 // Service definition
 type TradingServiceServer interface {
-	// Stream order book updates
 	StreamOrderBook(*OrderBookRequest, grpc.ServerStreamingServer[OrderBook]) error
-	// Get current price for a symbol
 	GetPrice(context.Context, *Tick) (*Tick, error)
-	// Start a trading strategy
 	StartStrategy(context.Context, *StrategyRequest) (*StatusResponse, error)
-	// Stop a trading strategy
 	StopStrategy(context.Context, *StrategyRequest) (*StatusResponse, error)
-	// Subscribes to a real-time feed of market data
 	SubscribeTicks(*StrategyRequest, grpc.ServerStreamingServer[Tick]) error
-	// Streams live ticks from internal event bus (websocket sourced)
 	StreamPrice(*TickStreamRequest, grpc.ServerStreamingServer[Tick]) error
-	// Dynamically add a symbol to market data feed
 	AddSymbol(context.Context, *SymbolRequest) (*StatusResponse, error)
-	// Dynamically remove a symbol from market data feed
 	RemoveSymbol(context.Context, *SymbolRequest) (*StatusResponse, error)
-	// List currently subscribed symbols in market data feed
 	ListSymbols(context.Context, *Empty) (*SymbolList, error)
-	// Aggregate short-term momentum metrics for symbols (server-side analog of client scanner)
 	GetMomentum(context.Context, *MomentumRequest) (*MomentumResponse, error)
-	// Execute a trade (simplified demo endpoint)
-	ExecuteTrade(context.Context, *TradeRequest) (*TradeResponse, error)
-	// Get trade history for a user
-	GetTradeHistory(context.Context, *TradeHistoryRequest) (*TradeHistoryResponse, error)
 	mustEmbedUnimplementedTradingServiceServer()
 }
 
@@ -1091,12 +1375,6 @@ func (UnimplementedTradingServiceServer) ListSymbols(context.Context, *Empty) (*
 }
 func (UnimplementedTradingServiceServer) GetMomentum(context.Context, *MomentumRequest) (*MomentumResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetMomentum not implemented")
-}
-func (UnimplementedTradingServiceServer) ExecuteTrade(context.Context, *TradeRequest) (*TradeResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method ExecuteTrade not implemented")
-}
-func (UnimplementedTradingServiceServer) GetTradeHistory(context.Context, *TradeHistoryRequest) (*TradeHistoryResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetTradeHistory not implemented")
 }
 func (UnimplementedTradingServiceServer) mustEmbedUnimplementedTradingServiceServer() {}
 func (UnimplementedTradingServiceServer) testEmbeddedByValue()                        {}
@@ -1278,42 +1556,6 @@ func _TradingService_GetMomentum_Handler(srv interface{}, ctx context.Context, d
 	return interceptor(ctx, in, info, handler)
 }
 
-func _TradingService_ExecuteTrade_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(TradeRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(TradingServiceServer).ExecuteTrade(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: TradingService_ExecuteTrade_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(TradingServiceServer).ExecuteTrade(ctx, req.(*TradeRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _TradingService_GetTradeHistory_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(TradeHistoryRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(TradingServiceServer).GetTradeHistory(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: TradingService_GetTradeHistory_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(TradingServiceServer).GetTradeHistory(ctx, req.(*TradeHistoryRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
 // TradingService_ServiceDesc is the grpc.ServiceDesc for TradingService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -1348,14 +1590,6 @@ var TradingService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetMomentum",
 			Handler:    _TradingService_GetMomentum_Handler,
-		},
-		{
-			MethodName: "ExecuteTrade",
-			Handler:    _TradingService_ExecuteTrade_Handler,
-		},
-		{
-			MethodName: "GetTradeHistory",
-			Handler:    _TradingService_GetTradeHistory_Handler,
 		},
 	},
 	Streams: []grpc.StreamDesc{
