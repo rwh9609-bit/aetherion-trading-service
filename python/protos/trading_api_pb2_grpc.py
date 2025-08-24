@@ -38,6 +38,11 @@ class PortfolioServiceStub(object):
         Args:
             channel: A grpc.Channel.
         """
+        self.GetPortfolio = channel.unary_unary(
+                '/trading.PortfolioService/GetPortfolio',
+                request_serializer=trading__api__pb2.PortfolioRequest.SerializeToString,
+                response_deserializer=trading__api__pb2.PortfolioResponse.FromString,
+                _registered_method=True)
         self.StreamPortfolio = channel.unary_stream(
                 '/trading.PortfolioService/StreamPortfolio',
                 request_serializer=trading__api__pb2.PortfolioRequest.SerializeToString,
@@ -57,6 +62,12 @@ class PortfolioServiceServicer(object):
 
     """
 
+    def GetPortfolio(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
     def StreamPortfolio(self, request, context):
         """Missing associated documentation comment in .proto file."""
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
@@ -72,6 +83,11 @@ class PortfolioServiceServicer(object):
 
 def add_PortfolioServiceServicer_to_server(servicer, server):
     rpc_method_handlers = {
+            'GetPortfolio': grpc.unary_unary_rpc_method_handler(
+                    servicer.GetPortfolio,
+                    request_deserializer=trading__api__pb2.PortfolioRequest.FromString,
+                    response_serializer=trading__api__pb2.PortfolioResponse.SerializeToString,
+            ),
             'StreamPortfolio': grpc.unary_stream_rpc_method_handler(
                     servicer.StreamPortfolio,
                     request_deserializer=trading__api__pb2.PortfolioRequest.FromString,
@@ -96,6 +112,33 @@ class PortfolioService(object):
     =================================================================
 
     """
+
+    @staticmethod
+    def GetPortfolio(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/trading.PortfolioService/GetPortfolio',
+            trading__api__pb2.PortfolioRequest.SerializeToString,
+            trading__api__pb2.PortfolioResponse.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
 
     @staticmethod
     def StreamPortfolio(request,
@@ -746,11 +789,6 @@ class TradingServiceStub(object):
                 request_serializer=trading__api__pb2.StrategyRequest.SerializeToString,
                 response_deserializer=trading__api__pb2.StatusResponse.FromString,
                 _registered_method=True)
-        self.GetPortfolio = channel.unary_unary(
-                '/trading.TradingService/GetPortfolio',
-                request_serializer=trading__api__pb2.PortfolioRequest.SerializeToString,
-                response_deserializer=trading__api__pb2.PortfolioResponse.FromString,
-                _registered_method=True)
         self.SubscribeTicks = channel.unary_stream(
                 '/trading.TradingService/SubscribeTicks',
                 request_serializer=trading__api__pb2.StrategyRequest.SerializeToString,
@@ -825,12 +863,6 @@ class TradingServiceServicer(object):
     def StopStrategy(self, request, context):
         """Stop a trading strategy
         """
-        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
-        context.set_details('Method not implemented!')
-        raise NotImplementedError('Method not implemented!')
-
-    def GetPortfolio(self, request, context):
-        """Missing associated documentation comment in .proto file."""
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
@@ -913,11 +945,6 @@ def add_TradingServiceServicer_to_server(servicer, server):
                     servicer.StopStrategy,
                     request_deserializer=trading__api__pb2.StrategyRequest.FromString,
                     response_serializer=trading__api__pb2.StatusResponse.SerializeToString,
-            ),
-            'GetPortfolio': grpc.unary_unary_rpc_method_handler(
-                    servicer.GetPortfolio,
-                    request_deserializer=trading__api__pb2.PortfolioRequest.FromString,
-                    response_serializer=trading__api__pb2.PortfolioResponse.SerializeToString,
             ),
             'SubscribeTicks': grpc.unary_stream_rpc_method_handler(
                     servicer.SubscribeTicks,
@@ -1073,33 +1100,6 @@ class TradingService(object):
             '/trading.TradingService/StopStrategy',
             trading__api__pb2.StrategyRequest.SerializeToString,
             trading__api__pb2.StatusResponse.FromString,
-            options,
-            channel_credentials,
-            insecure,
-            call_credentials,
-            compression,
-            wait_for_ready,
-            timeout,
-            metadata,
-            _registered_method=True)
-
-    @staticmethod
-    def GetPortfolio(request,
-            target,
-            options=(),
-            channel_credentials=None,
-            call_credentials=None,
-            insecure=False,
-            compression=None,
-            wait_for_ready=None,
-            timeout=None,
-            metadata=None):
-        return grpc.experimental.unary_unary(
-            request,
-            target,
-            '/trading.TradingService/GetPortfolio',
-            trading__api__pb2.PortfolioRequest.SerializeToString,
-            trading__api__pb2.PortfolioResponse.FromString,
             options,
             channel_credentials,
             insecure,

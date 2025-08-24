@@ -1,5 +1,5 @@
 import { grpc } from '@improbable-eng/grpc-web';
-import { TradingServiceClient, RiskServiceClient, AuthServiceClient, BotServiceClient } from '../proto/trading_api_grpc_web_pb.js';
+import { TradingServiceClient, RiskServiceClient, AuthServiceClient, BotServiceClient, PortfolioServiceClient } from '../proto/trading_api_grpc_web_pb.js';
 import { 
   OrderBookRequest,
   StrategyRequest,
@@ -49,6 +49,8 @@ const botClient = new BotServiceClient(host, null, {...options, format: 'text'})
 export { botClient };
 const authClient = new AuthServiceClient(host, null, {...options, format: 'text'});
 export { authClient };
+const portfolioClient = new PortfolioServiceClient(host, null, {...options, format: 'text'});
+export { portfolioClient };
 
 const MAX_RETRIES = 5;
 const RETRY_DELAY = 2000; // 2 seconds
@@ -218,16 +220,10 @@ export const fetchRiskMetrics = async () => {
   console.log('Fetching risk metrics');
   return withRetry(async () => {
     const request = new VaRRequest();
-
-    // Create a portfolio request for the current portfolio
-    const portfolio = new PortfolioRequest();
-    const positionsMap = portfolio.getPositionsMap();
-    positionsMap.set('BTC-USD', 0.5);
-    // use the account_value of Bot and maybe UserConfig 
-    portfolio.setTotalValueUsd(10000009);
-    
-    request.setCurrentPortfolio(portfolio);
-    request.setRiskModel('monte_carlo');
+    request.setCurrentPortfolio(portfolioClient.PortfolioRequest);
+    request.setRiskModel('monte_carlo'); 
+    request.setConfidenceLevel(0.95);
+    request.setHorizonDays(1.0);
 
     return new Promise((resolve, reject) => {
       riskClient.calculateVaR(request, createMetadata(), (err, response) => {

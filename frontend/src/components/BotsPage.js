@@ -36,6 +36,9 @@ const BotsPage = ({ onNavigate, onSelectBot, selectedBot }) => {
     try {
       await deleteBot(id);
       setAlert({ type: 'success', msg: 'Bot deleted' });
+      if (selectedBot && selectedBot.botId === id) {
+        onSelectBot(null); // Reset selectedBot if deleted
+      }
       await refresh();
     } catch (e) {
       setAlert({ type: 'error', msg: e.message || 'Failed to delete bot' });
