@@ -114,7 +114,7 @@ class TradingOrchestrator:
                         if signal['action'] != 'hold' and signal['size'] > 0:
                             print(f"Generated signal for bot {bot.name}: {json.dumps(signal)}")
                             positions_map = {bot.symbol: signal['size'] if signal['action']=='buy' else -signal['size']}
-                            portfolio = trading_api_pb2.Portfolio(positions=positions_map, total_value_usd=self.account_value, bot_id=bot.bot_id)
+                            portfolio = trading_api_pb2.PortfolioRequest(bot_id=bot.bot_id)
                             print(f"[DEBUG] VaR request: positions={positions_map}, total_value_usd={self.account_value}")
                             var_request = trading_api_pb2.VaRRequest(
                                 current_portfolio=portfolio,

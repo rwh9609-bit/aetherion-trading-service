@@ -18,10 +18,11 @@ import (
 	"syscall"
 	"time"
 
+	pb "aetherion/gen"
+
 	"github.com/google/uuid"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
-	pb "github.com/rwh9609-bit/multilanguage/go/gen"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/keepalive"

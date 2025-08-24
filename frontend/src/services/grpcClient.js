@@ -456,8 +456,7 @@ export const getBotStatus = async (id) => {
 
 export const deleteBot = async (id) => {
   const { BotIdRequest } = await import('../proto/trading_api_pb.js');
-  const req = new BotIdRequest();
-  req.setBotId(id);
+  const req = new BotIdRequest(); req.setBotId(id);
   return new Promise((resolve, reject) => {
     botClient.deleteBot(req, createMetadata(), (err, resp) => {
       if (err) return reject(err);
