@@ -51,9 +51,14 @@ static_resources:
                       cluster: trading_service
                       timeout: 0s
                       max_stream_duration: { grpc_timeout_header_max: 0s }
+                  - match: { prefix: "/trading.OrderService/" }
+                    route:
+                      cluster: trading_service
+                      timeout: 0s
+                      max_stream_duration: { grpc_timeout_header_max: 0s }
                   - match: { prefix: "/trading.RiskService/" }
                     route:
-                      cluster: risk_service
+                      cluster: trading_service
                       timeout: 0s
                       max_stream_duration: { grpc_timeout_header_max: 0s }
                   - match: { prefix: "/healthz" }
