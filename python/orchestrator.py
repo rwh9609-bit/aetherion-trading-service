@@ -94,9 +94,8 @@ class TradingOrchestrator:
                     # print(f"[DEBUG] Bot list: {bot_list}")
                     for bot in bot_list.bots:
                         if not getattr(bot, "is_active", False):
-                            print(f"[Orchestrator] Skipping inactive bot: {bot.name} ({bot.bot_id})")
+                            # print(f"[Orchestrator] Skipping inactive bot: {bot.name} ({bot.bot_id})")
                             continue  # Skip inactive bots
-                        print(f"[Orchestrator] Processing bot: {bot.name} ({bot.bot_id})")
                         print(f"[Orchestrator] Processing bot: {bot.name} ({bot.bot_id})")
                         # 2. Fetch current price for bot's symbol
                         price = fetch_binance_price(bot.symbol.replace("-", ""))
@@ -104,7 +103,7 @@ class TradingOrchestrator:
                         # 3. Generate trading signal (replace with bot-specific strategy)
                         # For demo, use mean reversion for all
                         signal = self.strategy.generate_signal(price, bot.account_value)
-                        print(f"[DEBUG] Signal details: {signal}")
+                        # print(f"[DEBUG] Signal details: {signal}")
                         if signal['action'] == 'hold':
                             print(f"[INFO] No trade signal for bot {bot.name}: zscore={signal.get('zscore')}, price={price}, reason=Hold action")
                         elif signal['size'] == 0:
@@ -133,13 +132,22 @@ class TradingOrchestrator:
                                     risk_ok = False
                                 print(f"Risk check: VaR {var_response.value_at_risk:.2f}, OK: {risk_ok}")
                                 if risk_ok:
-                                    strategy = getattr(bot, "strategy", None) 
+                                    strategy = getattr(bot, "strategy_id", None) 
+#                                     message TradeRequest {
+                                    #     string symbol = 1;
+                                    #     string side = 2;
+                                    #     double size = 3;
+                                    #     double price = 4;
+                                    #     string strategy_id = 5;
+                                    #     string user_id = 6;
+                                    #     string bot_id = 7;
+                                    # }
                                     trade_request = trading_api_pb2.TradeRequest(
                                         symbol=bot.symbol,
                                         side=signal['action'].upper(),
                                         size=float(signal['size']),
                                         price=float(price),
-                                        strategy=strategy,
+                                        strategy_id=strategy,
                                         user_id=bot.user_id,
                                         bot_id=bot.bot_id
                                     )
