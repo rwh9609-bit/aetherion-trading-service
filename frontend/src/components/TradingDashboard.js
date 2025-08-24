@@ -4,7 +4,7 @@ import OhlcPriceChart from './OhlcPriceChart';
 import CryptoScanner from './CryptoScanner';
 import ServerMomentum from './ServerMomentum';
 import SymbolManager from './SymbolManager';
-import RecentTrades from './RecentTrades';
+import RecentOrders from './RecentOrders';
 import { listSymbols, handleGrpcError } from '../services/grpcClient';
 
 console.log('TradingDashboard component loaded');
@@ -69,7 +69,7 @@ const TradingDashboard = ({ user, selectedBot, setUser, setView }) => {
       )}
 
       <Box>
-        <RecentTrades user={user} bot={selectedBot} />
+        <RecentOrders user={user} bot={selectedBot} />
       </Box>
       <Box sx={{ display:'grid', gap:3, gridTemplateColumns: { xs:'1fr' }, alignItems:'start' }}>
         <Box sx={{ gridColumn:'1 / -1', display:'flex', flexDirection:'column', gap:1 }}>

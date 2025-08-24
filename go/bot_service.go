@@ -212,7 +212,7 @@ func (s *botServiceServer) CreateBot(ctx context.Context, req *pb.CreateBotReque
 }
 
 func (s *botServiceServer) ListBots(ctx context.Context, _ *pb.Empty) (*pb.BotList, error) {
-	log.Printf("[ListBots] Received request to list bots")
+	// log.Printf("[ListBots] Received request to list bots")
 	out := &pb.BotList{}
 	s.reg.mu.RLock()
 	for _, b := range s.reg.bots {

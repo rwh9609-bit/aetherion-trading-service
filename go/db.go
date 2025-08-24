@@ -5,10 +5,12 @@ import (
 	"fmt"
 	"time"
 
+	pb "aetherion/gen"
+
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/rs/zerolog/log"
-	pb "aetherion/gen"
+	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 // DBService provides methods for interacting with the PostgreSQL database.
@@ -45,6 +47,126 @@ func NewDBService(connStr string) (*DBService, error) {
 func (s *DBService) Close() {
 	s.pool.Close()
 	log.Info().Msg("Database connection pool closed.")
+}
+
+// --------------------- //
+// - Order Management -- //
+// --------------------- //
+
+// CREATE TABLE IF NOT EXISTS orders (
+//
+//	id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+//	bot_id UUID REFERENCES bots(id) ON DELETE CASCADE,
+//	symbol TEXT NOT NULL,
+//	side TEXT NOT NULL, -- Use 'BUY' or 'SELL'
+//	type TEXT NOT NULL, -- Use 'MARKET', 'LIMIT', 'STOP'
+//	status TEXT NOT NULL, -- Use 'NEW', 'SUBMITTED', etc.
+//	quantity_requested NUMERIC(20, 8) NOT NULL,
+//	quantity_filled NUMERIC(20, 8) DEFAULT 0,
+//	limit_price NUMERIC(20, 8),
+//	stop_price NUMERIC(20, 8),
+//	created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+//	updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+//
+// );
+func (s *DBService) CreateOrder(
+	ctx context.Context,
+	id string,
+	botId string,
+	symbol string,
+	side string,
+	orderType string,
+	status pb.OrderStatus,
+	quantityRequested string,
+	quantityFilled string,
+	limitPrice string,
+	stopPrice string,
+) (string, error) {
+	var returnedId string
+	query := `INSERT INTO orders (id, bot_id, symbol, side, type, status, quantity_requested, quantity_filled, limit_price, stop_price, created_at, updated_at)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+        RETURNING id`
+	err := s.pool.QueryRow(ctx, query, id, botId, symbol, side, orderType, status.String(), quantityRequested, quantityFilled, limitPrice, stopPrice).Scan(&returnedId)
+	if err != nil {
+		log.Error().Err(err).Msg("Failed to create order")
+		return "", fmt.Errorf("failed to create order: %w", err)
+	}
+	log.Info().Str("order_id", returnedId).Msg("Order created successfully")
+	return returnedId, nil
+}
+
+func (s *DBService) GetOrder(ctx context.Context, orderID string) (*pb.Order, error) {
+	var order pb.Order
+	query := `SELECT id, bot_id, symbol, side, type, status, quantity_requested, quantity_filled, limit_price, stop_price, created_at, updated_at
+		FROM orders WHERE id = $1`
+	err := s.pool.QueryRow(ctx, query, orderID).Scan(&order.Id, &order.BotId, &order.Symbol, &order.Side, &order.Type, &order.Status, &order.QuantityRequested, &order.QuantityFilled, &order.LimitPrice, &order.StopPrice, &order.CreatedAt, &order.UpdatedAt)
+	if err != nil {
+		log.Error().Err(err).Str("order_id", orderID).Msg("Failed to get order")
+		return nil, fmt.Errorf("failed to get order: %w", err)
+	}
+	return &order, nil
+}
+
+func (s *DBService) ListOrders(ctx context.Context, botID string, limit, offset int32) ([]*pb.Order, error) {
+	// If botID == "" then return because it can't be empty.
+	if botID == "" {
+		return nil, fmt.Errorf("botID cannot be empty")
+	}
+	var orders []*pb.Order
+	query := `SELECT id, bot_id, symbol, side, type, status, quantity_requested, quantity_filled, limit_price, stop_price, created_at, updated_at
+		FROM orders WHERE bot_id = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3`
+	rows, err := s.pool.Query(ctx, query, botID, limit, offset)
+	if err != nil {
+		log.Error().Err(err).Str("bot_id", botID).Msg("Failed to list orders")
+		return nil, fmt.Errorf("failed to list orders: %w", err)
+	}
+	defer rows.Close()
+	for rows.Next() {
+		var order pb.Order
+		var sideStr, typeStr, statusStr string
+		var quantityRequestedStr, quantityFilledStr, limitPriceStr, stopPriceStr string
+		var createdAt, updatedAt time.Time
+
+		if err := rows.Scan(
+			&order.Id,
+			&order.BotId,
+			&order.Symbol,
+			&sideStr,
+			&typeStr,
+			&statusStr,
+			&quantityRequestedStr,
+			&quantityFilledStr,
+			&limitPriceStr,
+			&stopPriceStr,
+			&createdAt,
+			&updatedAt,
+		); err != nil {
+			log.Error().Err(err).Msg("Failed to scan order")
+			return nil, fmt.Errorf("failed to scan order: %w", err)
+		}
+
+		// Convert string to enum
+		order.Side = pb.OrderSide(pb.OrderSide_value[sideStr])
+		order.Type = pb.OrderType(pb.OrderType_value[typeStr])
+		order.Status = pb.OrderStatus(pb.OrderStatus_value[statusStr])
+
+		// Convert numeric strings to DecimalValue
+		order.QuantityRequested = numericValueToDecimal(quantityRequestedStr)
+		order.QuantityFilled = numericValueToDecimal(quantityFilledStr)
+		order.LimitPrice = numericValueToDecimal(limitPriceStr)
+		order.StopPrice = numericValueToDecimal(stopPriceStr)
+
+		// Convert timestamps
+		order.CreatedAt = timestamppb.New(createdAt)
+		order.UpdatedAt = timestamppb.New(updatedAt)
+
+		orders = append(orders, &order)
+	}
+	if err := rows.Err(); err != nil {
+		log.Error().Err(err).Msg("Failed to iterate orders")
+		return nil, fmt.Errorf("failed to iterate orders: %w", err)
+	}
+	return orders, nil
 }
 
 // ----------------------

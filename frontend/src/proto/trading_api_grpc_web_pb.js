@@ -551,6 +551,67 @@ proto.trading.OrderServicePromiseClient.prototype.getTradeHistory =
 
 
 /**
+ * @const
+ * @type {!grpc.web.MethodDescriptor<
+ *   !proto.trading.ListOrdersRequest,
+ *   !proto.trading.ListOrdersResponse>}
+ */
+const methodDescriptor_OrderService_ListOrders = new grpc.web.MethodDescriptor(
+  '/trading.OrderService/ListOrders',
+  grpc.web.MethodType.UNARY,
+  proto.trading.ListOrdersRequest,
+  proto.trading.ListOrdersResponse,
+  /**
+   * @param {!proto.trading.ListOrdersRequest} request
+   * @return {!Uint8Array}
+   */
+  function(request) {
+    return request.serializeBinary();
+  },
+  proto.trading.ListOrdersResponse.deserializeBinary
+);
+
+
+/**
+ * @param {!proto.trading.ListOrdersRequest} request The
+ *     request proto
+ * @param {?Object<string, string>} metadata User defined
+ *     call metadata
+ * @param {function(?grpc.web.RpcError, ?proto.trading.ListOrdersResponse)}
+ *     callback The callback function(error, response)
+ * @return {!grpc.web.ClientReadableStream<!proto.trading.ListOrdersResponse>|undefined}
+ *     The XHR Node Readable Stream
+ */
+proto.trading.OrderServiceClient.prototype.listOrders =
+    function(request, metadata, callback) {
+  return this.client_.rpcCall(this.hostname_ +
+      '/trading.OrderService/ListOrders',
+      request,
+      metadata || {},
+      methodDescriptor_OrderService_ListOrders,
+      callback);
+};
+
+
+/**
+ * @param {!proto.trading.ListOrdersRequest} request The
+ *     request proto
+ * @param {?Object<string, string>=} metadata User defined
+ *     call metadata
+ * @return {!Promise<!proto.trading.ListOrdersResponse>}
+ *     Promise that resolves to the response
+ */
+proto.trading.OrderServicePromiseClient.prototype.listOrders =
+    function(request, metadata) {
+  return this.client_.unaryCall(this.hostname_ +
+      '/trading.OrderService/ListOrders',
+      request,
+      metadata || {},
+      methodDescriptor_OrderService_ListOrders);
+};
+
+
+/**
  * @param {string} hostname
  * @param {?Object} credentials
  * @param {?grpc.web.ClientOptions} options

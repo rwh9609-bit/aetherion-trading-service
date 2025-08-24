@@ -113,6 +113,18 @@ service OrderService {
     rpc CancelOrder(CancelOrderRequest) returns (Order) {}
     rpc GetOrder(GetOrderRequest) returns (Order) {}
     rpc GetTradeHistory(TradeHistoryRequest) returns (TradeHistoryResponse) {}
+    rpc ListOrders(ListOrdersRequest) returns (ListOrdersResponse) {}
+}
+
+message ListOrdersRequest {
+  string bot_id = 1;
+  int32 limit = 2;
+  int32 offset = 3;
+}
+
+message ListOrdersResponse {
+  repeated Order orders = 1;
+  int32 total_count = 2;
 }
 
 message Order {
