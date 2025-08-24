@@ -394,14 +394,15 @@ export const handleGrpcError = (err, setUser, setView) => {
 };
 
 // --- Bot Service Helpers ---
-export const createBot = async ({ name, symbol, strategy, parameters, userId }) => {
+export const createBot = async ({ name, symbol, strategy, parameters, userId, account_value }) => {
   const { CreateBotRequest } = await import('../proto/trading_api_grpc_web_pb.js');
-  console.log('[grpcClient] Sending createBot request:', { name, symbol, strategy, parameters, userId });
+  console.log('[grpcClient] Sending createBot request:', { name, symbol, strategy, parameters, userId, account_value });
   return new Promise((resolve, reject) => {
     const req = new CreateBotRequest();
     req.setName(name); req.setSymbol(symbol); req.setStrategy(strategy);
     if (userId) req.setUserId(userId);
     const map = req.getParametersMap();
+    req.setAccountValue(account_value);
     Object.entries(parameters || {}).forEach(([k,v]) => map.set(k, String(v)));
     botClient.createBot(req, createMetadata(), (err, resp) => {
       if (err) {

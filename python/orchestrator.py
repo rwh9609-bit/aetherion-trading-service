@@ -115,7 +115,7 @@ class TradingOrchestrator:
                         if signal['action'] != 'hold' and signal['size'] > 0:
                             print(f"Generated signal for bot {bot.name}: {json.dumps(signal)}")
                             positions_map = {bot.symbol: signal['size'] if signal['action']=='buy' else -signal['size']}
-                            portfolio = trading_api_pb2.Portfolio(positions=positions_map, total_value_usd=self.account_value)
+                            portfolio = trading_api_pb2.Portfolio(positions=positions_map, total_value_usd=self.account_value, bot_id=bot.bot_id)
                             print(f"[DEBUG] VaR request: positions={positions_map}, total_value_usd={self.account_value}")
                             var_request = trading_api_pb2.VaRRequest(
                                 current_portfolio=portfolio,
@@ -133,19 +133,15 @@ class TradingOrchestrator:
                                     risk_ok = False
                                 print(f"Risk check: VaR {var_response.value_at_risk:.2f}, OK: {risk_ok}")
                                 if risk_ok:
-                                    strategy_id = getattr(bot, "strategy_id", None) 
-                                    if not strategy_id or strategy_id == "":
-                                        print(f"[WARNING] Strategy ID is missing for bot {bot.name}, generating a new one.")
-                                        # Generate a random UUID if missing
-                                        strategy_id = str(uuid.uuid4())
+                                    strategy = getattr(bot, "strategy", None) 
                                     trade_request = trading_api_pb2.TradeRequest(
                                         symbol=bot.symbol,
                                         side=signal['action'].upper(),
                                         size=float(signal['size']),
                                         price=float(price),
+                                        strategy=strategy,
                                         user_id=bot.user_id,
-                                        bot_id=bot.bot_id,
-                                        strategy_id=strategy_id
+                                        bot_id=bot.bot_id
                                     )
                                     try:
                                         trade_response = trading_stub.ExecuteTrade(trade_request, metadata=metadata)

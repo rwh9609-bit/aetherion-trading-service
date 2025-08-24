@@ -16,7 +16,7 @@ CREATE TABLE IF NOT EXISTS users (
 
 CREATE TABLE IF NOT EXISTS bots (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    user_id UUID NOT NULL,
     name TEXT NOT NULL,
     symbol TEXT NOT NULL,
     strategy TEXT NOT NULL,
@@ -29,13 +29,13 @@ CREATE TABLE IF NOT EXISTS bots (
 
 CREATE TABLE IF NOT EXISTS portfolios (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    bot_id UUID REFERENCES bots(id) ON DELETE CASCADE,
     symbol TEXT NOT NULL,
     quantity NUMERIC(20, 8) NOT NULL,
     average_price NUMERIC(20, 8) NOT NULL,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    UNIQUE (user_id, symbol)
+    UNIQUE(bot_id, symbol)
 );
 
 CREATE TABLE IF NOT EXISTS strategies (
@@ -51,19 +51,17 @@ CREATE TABLE IF NOT EXISTS strategies (
 );
 
 CREATE TABLE IF NOT EXISTS trades (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    user_id UUID REFERENCES users(id) ON DELETE SET NULL,
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(), 
     bot_id UUID REFERENCES bots(id) ON DELETE CASCADE,
     symbol TEXT NOT NULL,
     side TEXT NOT NULL,
     quantity NUMERIC(20, 8) NOT NULL,
     price NUMERIC(20, 8) NOT NULL,
-    executed_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    pnl NUMERIC(20, 8)
+    executed_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
 -- Add indexes for performance
-CREATE INDEX IF NOT EXISTS idx_portfolios_user_id ON portfolios (user_id);
+CREATE INDEX IF NOT EXISTS idx_portfolios_bot_id ON portfolios (bot_id);
 CREATE INDEX IF NOT EXISTS idx_strategies_user_id ON strategies (user_id);
-CREATE INDEX IF NOT EXISTS idx_trades_user_id ON trades (user_id);
+CREATE INDEX IF NOT EXISTS idx_trades_bot_id ON trades (bot_id);
 CREATE INDEX IF NOT EXISTS idx_trades_symbol ON trades (symbol);

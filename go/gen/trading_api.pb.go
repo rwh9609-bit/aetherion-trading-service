@@ -166,6 +166,7 @@ type Portfolio struct {
 	Positions       map[string]float64     `protobuf:"bytes,1,rep,name=positions,proto3" json:"positions,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"fixed64,2,opt,name=value"` // Map of symbol to quantity
 	TotalValueUsd   float64                `protobuf:"fixed64,2,opt,name=total_value_usd,json=totalValueUsd,proto3" json:"total_value_usd,omitempty"`
 	LastPriceChange *float64               `protobuf:"fixed64,3,opt,name=last_price_change,json=lastPriceChange,proto3,oneof" json:"last_price_change,omitempty"` // Last observed price change percentage
+	BotId           string                 `protobuf:"bytes,4,opt,name=bot_id,json=botId,proto3" json:"bot_id,omitempty"`
 	unknownFields   protoimpl.UnknownFields
 	sizeCache       protoimpl.SizeCache
 }
@@ -219,6 +220,13 @@ func (x *Portfolio) GetLastPriceChange() float64 {
 		return *x.LastPriceChange
 	}
 	return 0
+}
+
+func (x *Portfolio) GetBotId() string {
+	if x != nil {
+		return x.BotId
+	}
+	return ""
 }
 
 type OrderBook struct {
@@ -1035,7 +1043,7 @@ type Bot struct {
 	CreatedAtUnixMs int64                  `protobuf:"varint,6,opt,name=created_at_unix_ms,json=createdAtUnixMs,proto3" json:"created_at_unix_ms,omitempty"`
 	Name            string                 `protobuf:"bytes,7,opt,name=name,proto3" json:"name,omitempty"`
 	UserId          string                 `protobuf:"bytes,8,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
-	AccountValue    float64                `protobuf:"fixed64,9,opt,name=account_value,json=accountValue,proto3" json:"account_value,omitempty"` // <-- Add this line
+	AccountValue    float64                `protobuf:"fixed64,9,opt,name=account_value,json=accountValue,proto3" json:"account_value,omitempty"`
 	unknownFields   protoimpl.UnknownFields
 	sizeCache       protoimpl.SizeCache
 }
@@ -1139,6 +1147,7 @@ type CreateBotRequest struct {
 	Strategy      string                 `protobuf:"bytes,2,opt,name=strategy,proto3" json:"strategy,omitempty"`
 	Parameters    map[string]string      `protobuf:"bytes,3,rep,name=parameters,proto3" json:"parameters,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
 	Name          string                 `protobuf:"bytes,4,opt,name=name,proto3" json:"name,omitempty"`
+	AccountValue  float64                `protobuf:"fixed64,5,opt,name=account_value,json=accountValue,proto3" json:"account_value,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1199,6 +1208,13 @@ func (x *CreateBotRequest) GetName() string {
 		return x.Name
 	}
 	return ""
+}
+
+func (x *CreateBotRequest) GetAccountValue() float64 {
+	if x != nil {
+		return x.AccountValue
+	}
+	return 0
 }
 
 type BotIdRequest struct {
@@ -1901,11 +1917,12 @@ const file_trading_api_proto_rawDesc = "" +
 	"\x02id\x18\x03 \x01(\tR\x02id\"1\n" +
 	"\x10PortfolioRequest\x12\x1d\n" +
 	"\n" +
-	"account_id\x18\x01 \x01(\tR\taccountId\"\xf9\x01\n" +
+	"account_id\x18\x01 \x01(\tR\taccountId\"\x90\x02\n" +
 	"\tPortfolio\x12?\n" +
 	"\tpositions\x18\x01 \x03(\v2!.trading.Portfolio.PositionsEntryR\tpositions\x12&\n" +
 	"\x0ftotal_value_usd\x18\x02 \x01(\x01R\rtotalValueUsd\x12/\n" +
-	"\x11last_price_change\x18\x03 \x01(\x01H\x00R\x0flastPriceChange\x88\x01\x01\x1a<\n" +
+	"\x11last_price_change\x18\x03 \x01(\x01H\x00R\x0flastPriceChange\x88\x01\x01\x12\x15\n" +
+	"\x06bot_id\x18\x04 \x01(\tR\x05botId\x1a<\n" +
 	"\x0ePositionsEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
 	"\x05value\x18\x02 \x01(\x01R\x05value:\x028\x01B\x14\n" +
@@ -1982,14 +1999,15 @@ const file_trading_api_proto_rawDesc = "" +
 	"\raccount_value\x18\t \x01(\x01R\faccountValue\x1a=\n" +
 	"\x0fParametersEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
-	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\xe4\x01\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\x89\x02\n" +
 	"\x10CreateBotRequest\x12\x16\n" +
 	"\x06symbol\x18\x01 \x01(\tR\x06symbol\x12\x1a\n" +
 	"\bstrategy\x18\x02 \x01(\tR\bstrategy\x12I\n" +
 	"\n" +
 	"parameters\x18\x03 \x03(\v2).trading.CreateBotRequest.ParametersEntryR\n" +
 	"parameters\x12\x12\n" +
-	"\x04name\x18\x04 \x01(\tR\x04name\x1a=\n" +
+	"\x04name\x18\x04 \x01(\tR\x04name\x12#\n" +
+	"\raccount_value\x18\x05 \x01(\x01R\faccountValue\x1a=\n" +
 	"\x0fParametersEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
 	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"%\n" +

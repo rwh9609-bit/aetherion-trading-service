@@ -332,33 +332,16 @@ func (s *tradingServer) GetTradeHistory(ctx context.Context, req *pb.TradeHistor
 			return nil, err
 		}
 
-		// Convert []*Trade to []*pb.Trade
 		pbTrades := make([]*pb.Trade, len(trades))
 		for i, trade := range trades {
 			pbTrades[i] = &pb.Trade{
-				TradeId: trade.ID, StrategyId: trade.BotID,
+				TradeId: trade.TradeId, BotId: trade.BotId,
 				Symbol: trade.Symbol, Side: trade.Side, Quantity: trade.Quantity,
-				Price: trade.Price, ExecutedAt: trade.ExecutedAt.UnixNano()}
-		}
-		return &pb.TradeHistoryResponse{Trades: pbTrades}, nil
-	} else {
-		trades, err := s.dbService.GetTradesByUserID(ctx, userID)
-		if err != nil {
-			log.Error().Err(err).Msg("Failed to get trade history")
-			return nil, err
-		}
-
-		// Convert []*Trade to []*pb.Trade
-		pbTrades := make([]*pb.Trade, len(trades))
-		for i, trade := range trades {
-			pbTrades[i] = &pb.Trade{
-				TradeId: trade.ID, BotId: trade.BotID,
-				Symbol: trade.Symbol, Side: trade.Side, Quantity: trade.Quantity,
-				Price: trade.Price, ExecutedAt: trade.ExecutedAt.UnixNano()}
+				Price: trade.Price, ExecutedAt: trade.ExecutedAt}
 		}
 		return &pb.TradeHistoryResponse{Trades: pbTrades}, nil
 	}
-
+	return nil, status.Error(codes.Internal, "bot_id is required")
 }
 
 // StopStrategy stops a running strategy
@@ -670,7 +653,8 @@ func (s *tradingServer) ListSymbols(ctx context.Context, _ *pb.Empty) (*pb.Symbo
 	return &pb.SymbolList{Symbols: symbols}, nil
 }
 
-// Add to tradingServer methods
+// ExecuteTrade executes a trade for the given request.
+// This function is called whenever a trade is initiated.
 func (s *tradingServer) ExecuteTrade(ctx context.Context, req *pb.TradeRequest) (*pb.TradeResponse, error) {
 	// Basic validation
 	if req.Symbol == "" || req.Size <= 0 {
@@ -680,10 +664,17 @@ func (s *tradingServer) ExecuteTrade(ctx context.Context, req *pb.TradeRequest) 
 	if side != "BUY" && side != "SELL" {
 		return &pb.TradeResponse{Accepted: false, Message: "side must be BUY or SELL"}, nil
 	}
+
 	// Validate user ID is a UUID
 	if _, err := uuid.Parse(req.UserId); err != nil {
 		return &pb.TradeResponse{Accepted: false, Message: "user_id must be a valid UUID"}, nil
 	}
+
+	// Validate bot ID
+	if _, err := uuid.Parse(req.BotId); err != nil {
+		return &pb.TradeResponse{Accepted: false, Message: "bot_id must be a valid UUID"}, nil
+	}
+
 	// Get reference price (use provided price if >0 else fetch current)
 	execPrice := req.Price
 	if execPrice <= 0 {
@@ -695,17 +686,18 @@ func (s *tradingServer) ExecuteTrade(ctx context.Context, req *pb.TradeRequest) 
 		execPrice = tick.Price
 	}
 
-	accountID := "default"
+	// Lock the trading server and get the portfolio
 	s.mu.Lock()
-	portfolio, exists := s.portfolios[accountID]
+	portfolio, exists := s.portfolios[req.BotId]
 	if !exists {
-		portfolio = &pb.Portfolio{Positions: map[string]float64{"USD": 10000004}}
-		s.portfolios[accountID] = portfolio
+		return &pb.TradeResponse{Accepted: false, Message: "Bot ID required."}, nil
 	}
+
 	// Initialize symbol position if absent
 	if _, ok := portfolio.Positions[req.Symbol]; !ok {
-		portfolio.Positions[req.Symbol] = 0
+		return &pb.TradeResponse{Accepted: false, Message: "Symbol required."}, nil
 	}
+
 	// Simple cash/position update (no fees, slippage)
 	qty := req.Size
 	notional := qty * execPrice
@@ -727,28 +719,23 @@ func (s *tradingServer) ExecuteTrade(ctx context.Context, req *pb.TradeRequest) 
 	}
 	s.mu.Unlock()
 
-	// PnL simplified: positive for SELL, negative for BUY relative to notional (placeholder)
-	pnl := 0.0
-	if side == "SELL" {
-		pnl = notional * 0.0 // placeholder for realized PnL tracking
-	}
-	// After updating portfolio, record the trade:
-	trade := &Trade{
-		ID:         uuid.New().String(),
-		UserID:     req.UserId, // Make sure this is set by the bot/user
-		BotID:      req.BotId,  // Set by bot if applicable
+	trade := &pb.Trade{
+		TradeId:    uuid.New().String(),
 		Symbol:     req.Symbol,
 		Side:       req.Side,
 		Quantity:   req.Size,
 		Price:      execPrice,
-		ExecutedAt: time.Now(),
-		PnL:        pnl,
+		ExecutedAt: time.Now().UnixNano(),
+		StrategyId: req.StrategyId,
+		BotId:      req.BotId,
 	}
 	if s.dbService != nil {
 		if err := s.dbService.RecordTrade(ctx, trade); err != nil {
 			log.Error().Err(err).Msg("failed to record trade")
 		}
 	}
+
+	pnl := 0.0
 
 	return &pb.TradeResponse{Accepted: true, Message: "executed", ExecutedPrice: execPrice, Pnl: pnl}, nil
 }

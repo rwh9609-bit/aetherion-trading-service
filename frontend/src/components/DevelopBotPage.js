@@ -45,7 +45,7 @@ const handleSubmit = async () => {
       symbol: cfg.symbol,
       strategy: cfg.strategy,
       parameters: params,
-      account_value: Number(cfg.accountValue) // <-- Add this line
+      account_value: Number(cfg.accountValue) 
     });
     const resp = await createBot({ name: cfg.name, symbol: cfg.symbol, strategy: cfg.strategy, parameters: params, account_value: Number(cfg.accountValue) });
     console.log('[DevelopBotPage] createBot response:', resp);

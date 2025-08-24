@@ -28,6 +28,7 @@ message Portfolio {
     map<string, double> positions = 1;  // Map of symbol to quantity
     double total_value_usd = 2;
     optional double last_price_change = 3;  // Last observed price change percentage
+    string bot_id = 4;
 }
 
 // =================================================================
@@ -148,7 +149,7 @@ message Bot {
     int64 created_at_unix_ms = 6;
     string name = 7;
     string user_id = 8;
-    double account_value = 9; // <-- Add this line
+    double account_value = 9;
 }
  
 message CreateBotRequest {
@@ -156,6 +157,7 @@ message CreateBotRequest {
     string strategy = 2;
     map<string, string> parameters = 3;
     string name = 4;
+    double account_value = 5;
 }
  
 message BotIdRequest {

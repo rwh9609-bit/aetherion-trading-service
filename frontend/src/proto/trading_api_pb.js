@@ -1158,7 +1158,8 @@ proto.trading.Portfolio.toObject = function(includeInstance, msg) {
   var f, obj = {
 positionsMap: (f = msg.getPositionsMap()) ? f.toObject(includeInstance, undefined) : [],
 totalValueUsd: jspb.Message.getFloatingPointFieldWithDefault(msg, 2, 0.0),
-lastPriceChange: (f = jspb.Message.getOptionalFloatingPointField(msg, 3)) == null ? undefined : f
+lastPriceChange: (f = jspb.Message.getOptionalFloatingPointField(msg, 3)) == null ? undefined : f,
+botId: jspb.Message.getFieldWithDefault(msg, 4, "")
   };
 
   if (includeInstance) {
@@ -1209,6 +1210,10 @@ proto.trading.Portfolio.deserializeBinaryFromReader = function(msg, reader) {
       var value = /** @type {number} */ (reader.readDouble());
       msg.setLastPriceChange(value);
       break;
+    case 4:
+      var value = /** @type {string} */ (reader.readString());
+      msg.setBotId(value);
+      break;
     default:
       reader.skipField();
       break;
@@ -1253,6 +1258,13 @@ proto.trading.Portfolio.serializeBinaryToWriter = function(message, writer) {
   if (f != null) {
     writer.writeDouble(
       3,
+      f
+    );
+  }
+  f = message.getBotId();
+  if (f.length > 0) {
+    writer.writeString(
+      4,
       f
     );
   }
@@ -1333,6 +1345,24 @@ proto.trading.Portfolio.prototype.clearLastPriceChange = function() {
  */
 proto.trading.Portfolio.prototype.hasLastPriceChange = function() {
   return jspb.Message.getField(this, 3) != null;
+};
+
+
+/**
+ * optional string bot_id = 4;
+ * @return {string}
+ */
+proto.trading.Portfolio.prototype.getBotId = function() {
+  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 4, ""));
+};
+
+
+/**
+ * @param {string} value
+ * @return {!proto.trading.Portfolio} returns this
+ */
+proto.trading.Portfolio.prototype.setBotId = function(value) {
+  return jspb.Message.setProto3StringField(this, 4, value);
 };
 
 
@@ -4388,7 +4418,8 @@ proto.trading.CreateBotRequest.toObject = function(includeInstance, msg) {
 symbol: jspb.Message.getFieldWithDefault(msg, 1, ""),
 strategy: jspb.Message.getFieldWithDefault(msg, 2, ""),
 parametersMap: (f = msg.getParametersMap()) ? f.toObject(includeInstance, undefined) : [],
-name: jspb.Message.getFieldWithDefault(msg, 4, "")
+name: jspb.Message.getFieldWithDefault(msg, 4, ""),
+accountValue: jspb.Message.getFloatingPointFieldWithDefault(msg, 5, 0.0)
   };
 
   if (includeInstance) {
@@ -4443,6 +4474,10 @@ proto.trading.CreateBotRequest.deserializeBinaryFromReader = function(msg, reade
       var value = /** @type {string} */ (reader.readString());
       msg.setName(value);
       break;
+    case 5:
+      var value = /** @type {number} */ (reader.readDouble());
+      msg.setAccountValue(value);
+      break;
     default:
       reader.skipField();
       break;
@@ -4494,6 +4529,13 @@ proto.trading.CreateBotRequest.serializeBinaryToWriter = function(message, write
   if (f.length > 0) {
     writer.writeString(
       4,
+      f
+    );
+  }
+  f = message.getAccountValue();
+  if (f !== 0.0) {
+    writer.writeDouble(
+      5,
       f
     );
   }
@@ -4574,6 +4616,24 @@ proto.trading.CreateBotRequest.prototype.getName = function() {
  */
 proto.trading.CreateBotRequest.prototype.setName = function(value) {
   return jspb.Message.setProto3StringField(this, 4, value);
+};
+
+
+/**
+ * optional double account_value = 5;
+ * @return {number}
+ */
+proto.trading.CreateBotRequest.prototype.getAccountValue = function() {
+  return /** @type {number} */ (jspb.Message.getFloatingPointFieldWithDefault(this, 5, 0.0));
+};
+
+
+/**
+ * @param {number} value
+ * @return {!proto.trading.CreateBotRequest} returns this
+ */
+proto.trading.CreateBotRequest.prototype.setAccountValue = function(value) {
+  return jspb.Message.setProto3FloatField(this, 5, value);
 };
 
 
