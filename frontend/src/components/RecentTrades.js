@@ -3,13 +3,14 @@ import { tradingClient, createMetadata } from '../services/grpcClient';
 import { TradeHistoryRequest } from '../proto/trading_api_pb';
 import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Typography } from '@mui/material';
 
-const RecentTrades = ({ user }) => {
+const RecentTrades = ({ user, bot }) => {
   const [trades, setTrades] = useState([]);
 
   useEffect(() => {
     const fetchTrades = () => { 
       const request = new TradeHistoryRequest();
       request.setUserId(user.id);
+      request.setBotId(bot.id);
 
       tradingClient.getTradeHistory(request, createMetadata(), (err, response) => {
         if (err) {
@@ -43,10 +44,10 @@ const RecentTrades = ({ user }) => {
         </TableHead>
         <TableBody>
           {trades.map((trade) => (
-            <TableRow key={trade.getTradeId()}>
-              <TableCell component="th" scope="row">
-                {trade.getSymbol()}
-              </TableCell>
+              <TableRow key={trade.getTradeId()}>
+              <TableCell component="th" scope="row">{trade.getSymbol()}</TableCell>
+              <TableCell align="right">{trade.getUserId()}</TableCell>
+              <TableCell align="right">{trade.getBotId()}</TableCell>
               <TableCell align="right">{trade.getSide()}</TableCell>
               <TableCell align="right">{trade.getQuantity()}</TableCell>
               <TableCell align="right">{trade.getPrice().toFixed(2)}</TableCell>

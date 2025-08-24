@@ -69,7 +69,7 @@ const TradingDashboard = ({ user, selectedBot, setUser, setView }) => {
       )}
 
       <Box>
-        <RecentTrades user={user} />
+        <RecentTrades user={user} bot={selectedBot} />
       </Box>
       <Box sx={{ display:'grid', gap:3, gridTemplateColumns: { xs:'1fr' }, alignItems:'start' }}>
         <Box sx={{ gridColumn:'1 / -1', display:'flex', flexDirection:'column', gap:1 }}>

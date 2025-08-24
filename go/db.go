@@ -117,29 +117,9 @@ func (s *DBService) GetUserByID(ctx context.Context, userID string) (*User, erro
 	return &user, nil
 }
 
-// EnsureUserExists checks if a user exists by ID, and creates a placeholder if not.
-// You may want to improve this to set a real username/email if available.
-func (s *DBService) EnsureUserExists(ctx context.Context, userID, username string) error {
-	user, err := s.GetUserByID(ctx, userID)
-	if err == nil && user != nil {
-		return nil // User exists
-	}
-	// Create placeholder user if missing
-	placeholderUsername := username
-	if placeholderUsername == "" {
-		placeholderUsername = "user_" + userID
-	}
-	placeholderPassword := "placeholder" // You may want to hash this
-	query := `INSERT INTO users (id, username, password_hash) VALUES ($1, $2, $3)`
-	_, err = s.pool.Exec(ctx, query, userID, placeholderUsername, placeholderPassword)
-	if err != nil {
-		return fmt.Errorf("failed to create placeholder user: %w", err)
-	}
-	log.Info().Str("user_id", userID).Msg("Created placeholder user for bot/trade")
-	return nil
-}
-
-// --- Portfolio Management ---
+// ---------------------------- //
+// --- Portfolio Management --- //
+// ---------------------------- //
 
 // SavePortfolio saves or updates a user's portfolio.
 func (s *DBService) SavePortfolio(ctx context.Context, portfolio *Portfolio) error {
@@ -159,7 +139,6 @@ func (s *DBService) SavePortfolio(ctx context.Context, portfolio *Portfolio) err
 	return nil
 }
 
-// GetPortfolioByUserID retrieves a user's portfolio.
 func (s *DBService) GetPortfolioByUserID(ctx context.Context, userID string) ([]*Portfolio, error) {
 	var portfolios []*Portfolio
 	query := `SELECT id, user_id, symbol, quantity, average_price, created_at, updated_at FROM portfolios WHERE user_id = $1`
@@ -181,7 +160,9 @@ func (s *DBService) GetPortfolioByUserID(ctx context.Context, userID string) ([]
 	return portfolios, nil
 }
 
-// --- Strategy Management ---
+// --------------------------- //
+// --- Strategy Management --- //
+// --------------------------- //
 
 // SaveStrategy saves a new strategy or updates an existing one.
 func (s *DBService) SaveStrategy(ctx context.Context, strategy *Strategy) (string, error) {
@@ -239,15 +220,17 @@ func (s *DBService) GetStrategiesByUserID(ctx context.Context, userID string) ([
 	return strategies, nil
 }
 
-// --- Trade History ---
+// --------------------- //
+// --- Trade History --- //
+// --------------------- //
 
 // RecordTrade inserts a new trade record.
 func (s *DBService) RecordTrade(ctx context.Context, trade *Trade) error {
 	query := `
-		INSERT INTO trades (id, user_id, strategy_id, symbol, side, quantity, price, pnl)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+		INSERT INTO trades (id, user_id, bot_id, symbol, side, quantity, price, executed_at, pnl)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
 	`
-	_, err := s.pool.Exec(ctx, query, trade.ID, trade.UserID, trade.StrategyID, trade.Symbol, trade.Side, trade.Quantity, trade.Price, trade.PnL)
+	_, err := s.pool.Exec(ctx, query, trade.ID, trade.UserID, trade.BotID, trade.Symbol, trade.Side, trade.Quantity, trade.Price, trade.ExecutedAt, trade.PnL)
 	if err != nil {
 		log.Error().Err(err).Msg("Failed to record trade")
 		return fmt.Errorf("failed to record trade: %w", err)
@@ -255,7 +238,6 @@ func (s *DBService) RecordTrade(ctx context.Context, trade *Trade) error {
 	return nil
 }
 
-// GetTradesByUserID retrieves trade history for a user.
 func (s *DBService) GetTradesByUserID(ctx context.Context, userID string) ([]*Trade, error) {
 	if userID == "" {
 		return nil, fmt.Errorf("userID cannot be empty")
@@ -271,7 +253,7 @@ func (s *DBService) GetTradesByUserID(ctx context.Context, userID string) ([]*Tr
 
 	for rows.Next() {
 		var t Trade
-		if err := rows.Scan(&t.ID, &t.UserID, &t.StrategyID, &t.Symbol, &t.Side, &t.Quantity, &t.Price, &t.ExecutedAt, &t.PnL); err != nil {
+		if err := rows.Scan(&t.ID, &t.UserID, &t.BotID, &t.Symbol, &t.Side, &t.Quantity, &t.Price, &t.ExecutedAt, &t.PnL); err != nil {
 			log.Error().Err(err).Msg("Failed to scan trade row")
 			return nil, fmt.Errorf("failed to scan trade row: %w", err)
 		}
@@ -280,7 +262,30 @@ func (s *DBService) GetTradesByUserID(ctx context.Context, userID string) ([]*Tr
 	return trades, nil
 }
 
-// Define structs for database models (these should ideally be in a separate models.go file)
+func (s *DBService) GetTradesByBotID(ctx context.Context, botID string) ([]*Trade, error) {
+	if botID == "" {
+		return nil, fmt.Errorf("botID cannot be empty")
+	}
+	var trades []*Trade
+	query := `SELECT id, user_id, bot_id, symbol, side, quantity, price, executed_at, pnl FROM trades WHERE bot_id = $1 ORDER BY executed_at DESC`
+	rows, err := s.pool.Query(ctx, query, botID)
+	if err != nil {
+		log.Error().Err(err).Msg("Failed to get trades by bot ID")
+		return nil, fmt.Errorf("failed to get trades by bot ID: %w", err)
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var t Trade
+		if err := rows.Scan(&t.ID, &t.UserID, &t.BotID, &t.Symbol, &t.Side, &t.Quantity, &t.Price, &t.ExecutedAt, &t.PnL); err != nil {
+			log.Error().Err(err).Msg("Failed to scan trade row")
+			return nil, fmt.Errorf("failed to scan trade row: %w", err)
+		}
+		trades = append(trades, &t)
+	}
+	return trades, nil
+}
+
 type User struct {
 	ID           string
 	Username     string
@@ -302,11 +307,11 @@ type Portfolio struct {
 type Trade struct {
 	ID         string
 	UserID     string
-	StrategyID string // Nullable
+	BotID      string
 	Symbol     string
 	Side       string
 	Quantity   float64
 	Price      float64
 	ExecutedAt time.Time
-	PnL        float64 // Nullable
+	PnL        float64
 }
