@@ -82,6 +82,67 @@ proto.trading.PortfolioServicePromiseClient =
  *   !proto.trading.PortfolioRequest,
  *   !proto.trading.PortfolioResponse>}
  */
+const methodDescriptor_PortfolioService_GetPortfolio = new grpc.web.MethodDescriptor(
+  '/trading.PortfolioService/GetPortfolio',
+  grpc.web.MethodType.UNARY,
+  proto.trading.PortfolioRequest,
+  proto.trading.PortfolioResponse,
+  /**
+   * @param {!proto.trading.PortfolioRequest} request
+   * @return {!Uint8Array}
+   */
+  function(request) {
+    return request.serializeBinary();
+  },
+  proto.trading.PortfolioResponse.deserializeBinary
+);
+
+
+/**
+ * @param {!proto.trading.PortfolioRequest} request The
+ *     request proto
+ * @param {?Object<string, string>} metadata User defined
+ *     call metadata
+ * @param {function(?grpc.web.RpcError, ?proto.trading.PortfolioResponse)}
+ *     callback The callback function(error, response)
+ * @return {!grpc.web.ClientReadableStream<!proto.trading.PortfolioResponse>|undefined}
+ *     The XHR Node Readable Stream
+ */
+proto.trading.PortfolioServiceClient.prototype.getPortfolio =
+    function(request, metadata, callback) {
+  return this.client_.rpcCall(this.hostname_ +
+      '/trading.PortfolioService/GetPortfolio',
+      request,
+      metadata || {},
+      methodDescriptor_PortfolioService_GetPortfolio,
+      callback);
+};
+
+
+/**
+ * @param {!proto.trading.PortfolioRequest} request The
+ *     request proto
+ * @param {?Object<string, string>=} metadata User defined
+ *     call metadata
+ * @return {!Promise<!proto.trading.PortfolioResponse>}
+ *     Promise that resolves to the response
+ */
+proto.trading.PortfolioServicePromiseClient.prototype.getPortfolio =
+    function(request, metadata) {
+  return this.client_.unaryCall(this.hostname_ +
+      '/trading.PortfolioService/GetPortfolio',
+      request,
+      metadata || {},
+      methodDescriptor_PortfolioService_GetPortfolio);
+};
+
+
+/**
+ * @const
+ * @type {!grpc.web.MethodDescriptor<
+ *   !proto.trading.PortfolioRequest,
+ *   !proto.trading.PortfolioResponse>}
+ */
 const methodDescriptor_PortfolioService_StreamPortfolio = new grpc.web.MethodDescriptor(
   '/trading.PortfolioService/StreamPortfolio',
   grpc.web.MethodType.SERVER_STREAMING,
@@ -1247,67 +1308,6 @@ proto.trading.TradingServicePromiseClient.prototype.stopStrategy =
       request,
       metadata || {},
       methodDescriptor_TradingService_StopStrategy);
-};
-
-
-/**
- * @const
- * @type {!grpc.web.MethodDescriptor<
- *   !proto.trading.PortfolioRequest,
- *   !proto.trading.PortfolioResponse>}
- */
-const methodDescriptor_TradingService_GetPortfolio = new grpc.web.MethodDescriptor(
-  '/trading.TradingService/GetPortfolio',
-  grpc.web.MethodType.UNARY,
-  proto.trading.PortfolioRequest,
-  proto.trading.PortfolioResponse,
-  /**
-   * @param {!proto.trading.PortfolioRequest} request
-   * @return {!Uint8Array}
-   */
-  function(request) {
-    return request.serializeBinary();
-  },
-  proto.trading.PortfolioResponse.deserializeBinary
-);
-
-
-/**
- * @param {!proto.trading.PortfolioRequest} request The
- *     request proto
- * @param {?Object<string, string>} metadata User defined
- *     call metadata
- * @param {function(?grpc.web.RpcError, ?proto.trading.PortfolioResponse)}
- *     callback The callback function(error, response)
- * @return {!grpc.web.ClientReadableStream<!proto.trading.PortfolioResponse>|undefined}
- *     The XHR Node Readable Stream
- */
-proto.trading.TradingServiceClient.prototype.getPortfolio =
-    function(request, metadata, callback) {
-  return this.client_.rpcCall(this.hostname_ +
-      '/trading.TradingService/GetPortfolio',
-      request,
-      metadata || {},
-      methodDescriptor_TradingService_GetPortfolio,
-      callback);
-};
-
-
-/**
- * @param {!proto.trading.PortfolioRequest} request The
- *     request proto
- * @param {?Object<string, string>=} metadata User defined
- *     call metadata
- * @return {!Promise<!proto.trading.PortfolioResponse>}
- *     Promise that resolves to the response
- */
-proto.trading.TradingServicePromiseClient.prototype.getPortfolio =
-    function(request, metadata) {
-  return this.client_.unaryCall(this.hostname_ +
-      '/trading.TradingService/GetPortfolio',
-      request,
-      metadata || {},
-      methodDescriptor_TradingService_GetPortfolio);
 };
 
 

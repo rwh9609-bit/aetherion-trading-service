@@ -2402,8 +2402,9 @@ const file_trading_api_proto_rawDesc = "" +
 	"\auser_id\x18\x04 \x01(\tR\x06userId\x1a=\n" +
 	"\x0fParametersEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
-	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x012\xc4\x01\n" +
-	"\x10PortfolioService\x12L\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x012\x8d\x02\n" +
+	"\x10PortfolioService\x12G\n" +
+	"\fGetPortfolio\x12\x19.trading.PortfolioRequest\x1a\x1a.trading.PortfolioResponse\"\x00\x12L\n" +
 	"\x0fStreamPortfolio\x12\x19.trading.PortfolioRequest\x1a\x1a.trading.PortfolioResponse\"\x000\x01\x12b\n" +
 	"\x15GetPerformanceHistory\x12\".trading.PerformanceHistoryRequest\x1a#.trading.PerformanceHistoryResponse\"\x002\xbb\x01\n" +
 	"\vAuthService\x12=\n" +
@@ -2419,13 +2420,12 @@ const file_trading_api_proto_rawDesc = "" +
 	"\aStopBot\x12\x15.trading.BotIdRequest\x1a\x17.trading.StatusResponse\"\x00\x125\n" +
 	"\fGetBotStatus\x12\x15.trading.BotIdRequest\x1a\f.trading.Bot\"\x002J\n" +
 	"\vRiskService\x12;\n" +
-	"\fCalculateVaR\x12\x13.trading.VaRRequest\x1a\x14.trading.VaRResponse\"\x002\xe5\x06\n" +
+	"\fCalculateVaR\x12\x13.trading.VaRRequest\x1a\x14.trading.VaRResponse\"\x002\x9c\x06\n" +
 	"\x0eTradingService\x12D\n" +
 	"\x0fStreamOrderBook\x12\x19.trading.OrderBookRequest\x1a\x12.trading.OrderBook\"\x000\x01\x12*\n" +
 	"\bGetPrice\x12\r.trading.Tick\x1a\r.trading.Tick\"\x00\x12D\n" +
 	"\rStartStrategy\x12\x18.trading.StrategyRequest\x1a\x17.trading.StatusResponse\"\x00\x12C\n" +
-	"\fStopStrategy\x12\x18.trading.StrategyRequest\x1a\x17.trading.StatusResponse\"\x00\x12G\n" +
-	"\fGetPortfolio\x12\x19.trading.PortfolioRequest\x1a\x1a.trading.PortfolioResponse\"\x00\x12=\n" +
+	"\fStopStrategy\x12\x18.trading.StrategyRequest\x1a\x17.trading.StatusResponse\"\x00\x12=\n" +
 	"\x0eSubscribeTicks\x12\x18.trading.StrategyRequest\x1a\r.trading.Tick\"\x000\x01\x12<\n" +
 	"\vStreamPrice\x12\x1a.trading.TickStreamRequest\x1a\r.trading.Tick\"\x000\x01\x12>\n" +
 	"\tAddSymbol\x12\x16.trading.SymbolRequest\x1a\x17.trading.StatusResponse\"\x00\x12A\n" +
@@ -2518,23 +2518,23 @@ var file_trading_api_proto_depIdxs = []int32{
 	39, // 24: trading.VaRResponse.last_update:type_name -> google.protobuf.Timestamp
 	29, // 25: trading.MomentumResponse.metrics:type_name -> trading.MomentumMetric
 	38, // 26: trading.StrategyRequest.parameters:type_name -> trading.StrategyRequest.ParametersEntry
-	3,  // 27: trading.PortfolioService.StreamPortfolio:input_type -> trading.PortfolioRequest
-	6,  // 28: trading.PortfolioService.GetPerformanceHistory:input_type -> trading.PerformanceHistoryRequest
-	20, // 29: trading.AuthService.Register:input_type -> trading.RegisterRequest
-	17, // 30: trading.AuthService.Login:input_type -> trading.AuthRequest
-	19, // 31: trading.AuthService.GetUser:input_type -> trading.GetUserRequest
-	23, // 32: trading.BotService.CreateBot:input_type -> trading.CreateBotRequest
-	24, // 33: trading.BotService.DeleteBot:input_type -> trading.BotIdRequest
-	1,  // 34: trading.BotService.ListBots:input_type -> trading.Empty
-	24, // 35: trading.BotService.StartBot:input_type -> trading.BotIdRequest
-	24, // 36: trading.BotService.StopBot:input_type -> trading.BotIdRequest
-	24, // 37: trading.BotService.GetBotStatus:input_type -> trading.BotIdRequest
-	26, // 38: trading.RiskService.CalculateVaR:input_type -> trading.VaRRequest
-	11, // 39: trading.TradingService.StreamOrderBook:input_type -> trading.OrderBookRequest
-	31, // 40: trading.TradingService.GetPrice:input_type -> trading.Tick
-	35, // 41: trading.TradingService.StartStrategy:input_type -> trading.StrategyRequest
-	35, // 42: trading.TradingService.StopStrategy:input_type -> trading.StrategyRequest
-	3,  // 43: trading.TradingService.GetPortfolio:input_type -> trading.PortfolioRequest
+	3,  // 27: trading.PortfolioService.GetPortfolio:input_type -> trading.PortfolioRequest
+	3,  // 28: trading.PortfolioService.StreamPortfolio:input_type -> trading.PortfolioRequest
+	6,  // 29: trading.PortfolioService.GetPerformanceHistory:input_type -> trading.PerformanceHistoryRequest
+	20, // 30: trading.AuthService.Register:input_type -> trading.RegisterRequest
+	17, // 31: trading.AuthService.Login:input_type -> trading.AuthRequest
+	19, // 32: trading.AuthService.GetUser:input_type -> trading.GetUserRequest
+	23, // 33: trading.BotService.CreateBot:input_type -> trading.CreateBotRequest
+	24, // 34: trading.BotService.DeleteBot:input_type -> trading.BotIdRequest
+	1,  // 35: trading.BotService.ListBots:input_type -> trading.Empty
+	24, // 36: trading.BotService.StartBot:input_type -> trading.BotIdRequest
+	24, // 37: trading.BotService.StopBot:input_type -> trading.BotIdRequest
+	24, // 38: trading.BotService.GetBotStatus:input_type -> trading.BotIdRequest
+	26, // 39: trading.RiskService.CalculateVaR:input_type -> trading.VaRRequest
+	11, // 40: trading.TradingService.StreamOrderBook:input_type -> trading.OrderBookRequest
+	31, // 41: trading.TradingService.GetPrice:input_type -> trading.Tick
+	35, // 42: trading.TradingService.StartStrategy:input_type -> trading.StrategyRequest
+	35, // 43: trading.TradingService.StopStrategy:input_type -> trading.StrategyRequest
 	35, // 44: trading.TradingService.SubscribeTicks:input_type -> trading.StrategyRequest
 	32, // 45: trading.TradingService.StreamPrice:input_type -> trading.TickStreamRequest
 	33, // 46: trading.TradingService.AddSymbol:input_type -> trading.SymbolRequest
@@ -2543,23 +2543,23 @@ var file_trading_api_proto_depIdxs = []int32{
 	28, // 49: trading.TradingService.GetMomentum:input_type -> trading.MomentumRequest
 	13, // 50: trading.TradingService.ExecuteTrade:input_type -> trading.TradeRequest
 	15, // 51: trading.TradingService.GetTradeHistory:input_type -> trading.TradeHistoryRequest
-	5,  // 52: trading.PortfolioService.StreamPortfolio:output_type -> trading.PortfolioResponse
-	8,  // 53: trading.PortfolioService.GetPerformanceHistory:output_type -> trading.PerformanceHistoryResponse
-	18, // 54: trading.AuthService.Register:output_type -> trading.AuthResponse
-	18, // 55: trading.AuthService.Login:output_type -> trading.AuthResponse
-	21, // 56: trading.AuthService.GetUser:output_type -> trading.UserInfo
-	2,  // 57: trading.BotService.CreateBot:output_type -> trading.StatusResponse
-	2,  // 58: trading.BotService.DeleteBot:output_type -> trading.StatusResponse
-	25, // 59: trading.BotService.ListBots:output_type -> trading.BotList
-	2,  // 60: trading.BotService.StartBot:output_type -> trading.StatusResponse
-	2,  // 61: trading.BotService.StopBot:output_type -> trading.StatusResponse
-	22, // 62: trading.BotService.GetBotStatus:output_type -> trading.Bot
-	27, // 63: trading.RiskService.CalculateVaR:output_type -> trading.VaRResponse
-	9,  // 64: trading.TradingService.StreamOrderBook:output_type -> trading.OrderBook
-	31, // 65: trading.TradingService.GetPrice:output_type -> trading.Tick
-	2,  // 66: trading.TradingService.StartStrategy:output_type -> trading.StatusResponse
-	2,  // 67: trading.TradingService.StopStrategy:output_type -> trading.StatusResponse
-	5,  // 68: trading.TradingService.GetPortfolio:output_type -> trading.PortfolioResponse
+	5,  // 52: trading.PortfolioService.GetPortfolio:output_type -> trading.PortfolioResponse
+	5,  // 53: trading.PortfolioService.StreamPortfolio:output_type -> trading.PortfolioResponse
+	8,  // 54: trading.PortfolioService.GetPerformanceHistory:output_type -> trading.PerformanceHistoryResponse
+	18, // 55: trading.AuthService.Register:output_type -> trading.AuthResponse
+	18, // 56: trading.AuthService.Login:output_type -> trading.AuthResponse
+	21, // 57: trading.AuthService.GetUser:output_type -> trading.UserInfo
+	2,  // 58: trading.BotService.CreateBot:output_type -> trading.StatusResponse
+	2,  // 59: trading.BotService.DeleteBot:output_type -> trading.StatusResponse
+	25, // 60: trading.BotService.ListBots:output_type -> trading.BotList
+	2,  // 61: trading.BotService.StartBot:output_type -> trading.StatusResponse
+	2,  // 62: trading.BotService.StopBot:output_type -> trading.StatusResponse
+	22, // 63: trading.BotService.GetBotStatus:output_type -> trading.Bot
+	27, // 64: trading.RiskService.CalculateVaR:output_type -> trading.VaRResponse
+	9,  // 65: trading.TradingService.StreamOrderBook:output_type -> trading.OrderBook
+	31, // 66: trading.TradingService.GetPrice:output_type -> trading.Tick
+	2,  // 67: trading.TradingService.StartStrategy:output_type -> trading.StatusResponse
+	2,  // 68: trading.TradingService.StopStrategy:output_type -> trading.StatusResponse
 	31, // 69: trading.TradingService.SubscribeTicks:output_type -> trading.Tick
 	31, // 70: trading.TradingService.StreamPrice:output_type -> trading.Tick
 	2,  // 71: trading.TradingService.AddSymbol:output_type -> trading.StatusResponse

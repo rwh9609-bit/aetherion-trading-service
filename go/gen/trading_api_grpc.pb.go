@@ -19,6 +19,7 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
+	PortfolioService_GetPortfolio_FullMethodName          = "/trading.PortfolioService/GetPortfolio"
 	PortfolioService_StreamPortfolio_FullMethodName       = "/trading.PortfolioService/StreamPortfolio"
 	PortfolioService_GetPerformanceHistory_FullMethodName = "/trading.PortfolioService/GetPerformanceHistory"
 )
@@ -27,6 +28,7 @@ const (
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type PortfolioServiceClient interface {
+	GetPortfolio(ctx context.Context, in *PortfolioRequest, opts ...grpc.CallOption) (*PortfolioResponse, error)
 	StreamPortfolio(ctx context.Context, in *PortfolioRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[PortfolioResponse], error)
 	GetPerformanceHistory(ctx context.Context, in *PerformanceHistoryRequest, opts ...grpc.CallOption) (*PerformanceHistoryResponse, error)
 }
@@ -37,6 +39,16 @@ type portfolioServiceClient struct {
 
 func NewPortfolioServiceClient(cc grpc.ClientConnInterface) PortfolioServiceClient {
 	return &portfolioServiceClient{cc}
+}
+
+func (c *portfolioServiceClient) GetPortfolio(ctx context.Context, in *PortfolioRequest, opts ...grpc.CallOption) (*PortfolioResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(PortfolioResponse)
+	err := c.cc.Invoke(ctx, PortfolioService_GetPortfolio_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
 }
 
 func (c *portfolioServiceClient) StreamPortfolio(ctx context.Context, in *PortfolioRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[PortfolioResponse], error) {
@@ -72,6 +84,7 @@ func (c *portfolioServiceClient) GetPerformanceHistory(ctx context.Context, in *
 // All implementations must embed UnimplementedPortfolioServiceServer
 // for forward compatibility.
 type PortfolioServiceServer interface {
+	GetPortfolio(context.Context, *PortfolioRequest) (*PortfolioResponse, error)
 	StreamPortfolio(*PortfolioRequest, grpc.ServerStreamingServer[PortfolioResponse]) error
 	GetPerformanceHistory(context.Context, *PerformanceHistoryRequest) (*PerformanceHistoryResponse, error)
 	mustEmbedUnimplementedPortfolioServiceServer()
@@ -84,6 +97,9 @@ type PortfolioServiceServer interface {
 // pointer dereference when methods are called.
 type UnimplementedPortfolioServiceServer struct{}
 
+func (UnimplementedPortfolioServiceServer) GetPortfolio(context.Context, *PortfolioRequest) (*PortfolioResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetPortfolio not implemented")
+}
 func (UnimplementedPortfolioServiceServer) StreamPortfolio(*PortfolioRequest, grpc.ServerStreamingServer[PortfolioResponse]) error {
 	return status.Errorf(codes.Unimplemented, "method StreamPortfolio not implemented")
 }
@@ -109,6 +125,24 @@ func RegisterPortfolioServiceServer(s grpc.ServiceRegistrar, srv PortfolioServic
 		t.testEmbeddedByValue()
 	}
 	s.RegisterService(&PortfolioService_ServiceDesc, srv)
+}
+
+func _PortfolioService_GetPortfolio_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(PortfolioRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(PortfolioServiceServer).GetPortfolio(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: PortfolioService_GetPortfolio_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(PortfolioServiceServer).GetPortfolio(ctx, req.(*PortfolioRequest))
+	}
+	return interceptor(ctx, in, info, handler)
 }
 
 func _PortfolioService_StreamPortfolio_Handler(srv interface{}, stream grpc.ServerStream) error {
@@ -147,6 +181,10 @@ var PortfolioService_ServiceDesc = grpc.ServiceDesc{
 	ServiceName: "trading.PortfolioService",
 	HandlerType: (*PortfolioServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
+		{
+			MethodName: "GetPortfolio",
+			Handler:    _PortfolioService_GetPortfolio_Handler,
+		},
 		{
 			MethodName: "GetPerformanceHistory",
 			Handler:    _PortfolioService_GetPerformanceHistory_Handler,
@@ -749,7 +787,6 @@ const (
 	TradingService_GetPrice_FullMethodName        = "/trading.TradingService/GetPrice"
 	TradingService_StartStrategy_FullMethodName   = "/trading.TradingService/StartStrategy"
 	TradingService_StopStrategy_FullMethodName    = "/trading.TradingService/StopStrategy"
-	TradingService_GetPortfolio_FullMethodName    = "/trading.TradingService/GetPortfolio"
 	TradingService_SubscribeTicks_FullMethodName  = "/trading.TradingService/SubscribeTicks"
 	TradingService_StreamPrice_FullMethodName     = "/trading.TradingService/StreamPrice"
 	TradingService_AddSymbol_FullMethodName       = "/trading.TradingService/AddSymbol"
@@ -774,7 +811,6 @@ type TradingServiceClient interface {
 	StartStrategy(ctx context.Context, in *StrategyRequest, opts ...grpc.CallOption) (*StatusResponse, error)
 	// Stop a trading strategy
 	StopStrategy(ctx context.Context, in *StrategyRequest, opts ...grpc.CallOption) (*StatusResponse, error)
-	GetPortfolio(ctx context.Context, in *PortfolioRequest, opts ...grpc.CallOption) (*PortfolioResponse, error)
 	// Subscribes to a real-time feed of market data
 	SubscribeTicks(ctx context.Context, in *StrategyRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[Tick], error)
 	// Streams live ticks from internal event bus (websocket sourced)
@@ -844,16 +880,6 @@ func (c *tradingServiceClient) StopStrategy(ctx context.Context, in *StrategyReq
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(StatusResponse)
 	err := c.cc.Invoke(ctx, TradingService_StopStrategy_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *tradingServiceClient) GetPortfolio(ctx context.Context, in *PortfolioRequest, opts ...grpc.CallOption) (*PortfolioResponse, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(PortfolioResponse)
-	err := c.cc.Invoke(ctx, TradingService_GetPortfolio_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -972,7 +998,6 @@ type TradingServiceServer interface {
 	StartStrategy(context.Context, *StrategyRequest) (*StatusResponse, error)
 	// Stop a trading strategy
 	StopStrategy(context.Context, *StrategyRequest) (*StatusResponse, error)
-	GetPortfolio(context.Context, *PortfolioRequest) (*PortfolioResponse, error)
 	// Subscribes to a real-time feed of market data
 	SubscribeTicks(*StrategyRequest, grpc.ServerStreamingServer[Tick]) error
 	// Streams live ticks from internal event bus (websocket sourced)
@@ -1010,9 +1035,6 @@ func (UnimplementedTradingServiceServer) StartStrategy(context.Context, *Strateg
 }
 func (UnimplementedTradingServiceServer) StopStrategy(context.Context, *StrategyRequest) (*StatusResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method StopStrategy not implemented")
-}
-func (UnimplementedTradingServiceServer) GetPortfolio(context.Context, *PortfolioRequest) (*PortfolioResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetPortfolio not implemented")
 }
 func (UnimplementedTradingServiceServer) SubscribeTicks(*StrategyRequest, grpc.ServerStreamingServer[Tick]) error {
 	return status.Errorf(codes.Unimplemented, "method SubscribeTicks not implemented")
@@ -1120,24 +1142,6 @@ func _TradingService_StopStrategy_Handler(srv interface{}, ctx context.Context, 
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(TradingServiceServer).StopStrategy(ctx, req.(*StrategyRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _TradingService_GetPortfolio_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(PortfolioRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(TradingServiceServer).GetPortfolio(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: TradingService_GetPortfolio_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(TradingServiceServer).GetPortfolio(ctx, req.(*PortfolioRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -1290,10 +1294,6 @@ var TradingService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "StopStrategy",
 			Handler:    _TradingService_StopStrategy_Handler,
-		},
-		{
-			MethodName: "GetPortfolio",
-			Handler:    _TradingService_GetPortfolio_Handler,
 		},
 		{
 			MethodName: "AddSymbol",
