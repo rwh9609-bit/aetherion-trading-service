@@ -1001,7 +1001,7 @@ func (x *UserInfo) GetCreatedAtUnix() int64 {
 	return 0
 }
 
-type BotConfig struct {
+type Bot struct {
 	state           protoimpl.MessageState `protogen:"open.v1"`
 	BotId           string                 `protobuf:"bytes,1,opt,name=bot_id,json=botId,proto3" json:"bot_id,omitempty"`
 	Symbol          string                 `protobuf:"bytes,2,opt,name=symbol,proto3" json:"symbol,omitempty"`
@@ -1016,20 +1016,20 @@ type BotConfig struct {
 	sizeCache       protoimpl.SizeCache
 }
 
-func (x *BotConfig) Reset() {
-	*x = BotConfig{}
+func (x *Bot) Reset() {
+	*x = Bot{}
 	mi := &file_trading_api_proto_msgTypes[17]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *BotConfig) String() string {
+func (x *Bot) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*BotConfig) ProtoMessage() {}
+func (*Bot) ProtoMessage() {}
 
-func (x *BotConfig) ProtoReflect() protoreflect.Message {
+func (x *Bot) ProtoReflect() protoreflect.Message {
 	mi := &file_trading_api_proto_msgTypes[17]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -1041,68 +1041,68 @@ func (x *BotConfig) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use BotConfig.ProtoReflect.Descriptor instead.
-func (*BotConfig) Descriptor() ([]byte, []int) {
+// Deprecated: Use Bot.ProtoReflect.Descriptor instead.
+func (*Bot) Descriptor() ([]byte, []int) {
 	return file_trading_api_proto_rawDescGZIP(), []int{17}
 }
 
-func (x *BotConfig) GetBotId() string {
+func (x *Bot) GetBotId() string {
 	if x != nil {
 		return x.BotId
 	}
 	return ""
 }
 
-func (x *BotConfig) GetSymbol() string {
+func (x *Bot) GetSymbol() string {
 	if x != nil {
 		return x.Symbol
 	}
 	return ""
 }
 
-func (x *BotConfig) GetStrategy() string {
+func (x *Bot) GetStrategy() string {
 	if x != nil {
 		return x.Strategy
 	}
 	return ""
 }
 
-func (x *BotConfig) GetParameters() map[string]string {
+func (x *Bot) GetParameters() map[string]string {
 	if x != nil {
 		return x.Parameters
 	}
 	return nil
 }
 
-func (x *BotConfig) GetIsActive() bool {
+func (x *Bot) GetIsActive() bool {
 	if x != nil {
 		return x.IsActive
 	}
 	return false
 }
 
-func (x *BotConfig) GetCreatedAtUnixMs() int64 {
+func (x *Bot) GetCreatedAtUnixMs() int64 {
 	if x != nil {
 		return x.CreatedAtUnixMs
 	}
 	return 0
 }
 
-func (x *BotConfig) GetName() string {
+func (x *Bot) GetName() string {
 	if x != nil {
 		return x.Name
 	}
 	return ""
 }
 
-func (x *BotConfig) GetUserId() string {
+func (x *Bot) GetUserId() string {
 	if x != nil {
 		return x.UserId
 	}
 	return ""
 }
 
-func (x *BotConfig) GetAccountValue() float64 {
+func (x *Bot) GetAccountValue() float64 {
 	if x != nil {
 		return x.AccountValue
 	}
@@ -1223,7 +1223,7 @@ func (x *BotIdRequest) GetBotId() string {
 
 type BotList struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Bots          []*BotConfig           `protobuf:"bytes,1,rep,name=bots,proto3" json:"bots,omitempty"`
+	Bots          []*Bot                 `protobuf:"bytes,1,rep,name=bots,proto3" json:"bots,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1258,7 +1258,7 @@ func (*BotList) Descriptor() ([]byte, []int) {
 	return file_trading_api_proto_rawDescGZIP(), []int{20}
 }
 
-func (x *BotList) GetBots() []*BotConfig {
+func (x *BotList) GetBots() []*Bot {
 	if x != nil {
 		return x.Bots
 	}
@@ -1940,13 +1940,13 @@ const file_trading_api_proto_rawDesc = "" +
 	"\bUserInfo\x12\x1a\n" +
 	"\busername\x18\x01 \x01(\tR\busername\x12\x14\n" +
 	"\x05email\x18\x02 \x01(\tR\x05email\x12&\n" +
-	"\x0fcreated_at_unix\x18\x03 \x01(\x03R\rcreatedAtUnix\"\xf5\x02\n" +
-	"\tBotConfig\x12\x15\n" +
+	"\x0fcreated_at_unix\x18\x03 \x01(\x03R\rcreatedAtUnix\"\xe9\x02\n" +
+	"\x03Bot\x12\x15\n" +
 	"\x06bot_id\x18\x01 \x01(\tR\x05botId\x12\x16\n" +
 	"\x06symbol\x18\x02 \x01(\tR\x06symbol\x12\x1a\n" +
-	"\bstrategy\x18\x03 \x01(\tR\bstrategy\x12B\n" +
+	"\bstrategy\x18\x03 \x01(\tR\bstrategy\x12<\n" +
 	"\n" +
-	"parameters\x18\x04 \x03(\v2\".trading.BotConfig.ParametersEntryR\n" +
+	"parameters\x18\x04 \x03(\v2\x1c.trading.Bot.ParametersEntryR\n" +
 	"parameters\x12\x1b\n" +
 	"\tis_active\x18\x05 \x01(\bR\bisActive\x12+\n" +
 	"\x12created_at_unix_ms\x18\x06 \x01(\x03R\x0fcreatedAtUnixMs\x12\x12\n" +
@@ -1967,9 +1967,9 @@ const file_trading_api_proto_rawDesc = "" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
 	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"%\n" +
 	"\fBotIdRequest\x12\x15\n" +
-	"\x06bot_id\x18\x01 \x01(\tR\x05botId\"1\n" +
-	"\aBotList\x12&\n" +
-	"\x04bots\x18\x01 \x03(\v2\x12.trading.BotConfigR\x04bots\"\xba\x01\n" +
+	"\x06bot_id\x18\x01 \x01(\tR\x05botId\"+\n" +
+	"\aBotList\x12 \n" +
+	"\x04bots\x18\x01 \x03(\v2\f.trading.BotR\x04bots\"\xba\x01\n" +
 	"\n" +
 	"VaRRequest\x12?\n" +
 	"\x11current_portfolio\x18\x01 \x01(\v2\x12.trading.PortfolioR\x10currentPortfolio\x12\x1d\n" +
@@ -2026,15 +2026,15 @@ const file_trading_api_proto_rawDesc = "" +
 	"\vAuthService\x12=\n" +
 	"\bRegister\x12\x18.trading.RegisterRequest\x1a\x15.trading.AuthResponse\"\x00\x126\n" +
 	"\x05Login\x12\x14.trading.AuthRequest\x1a\x15.trading.AuthResponse\"\x00\x125\n" +
-	"\aGetUser\x12\x17.trading.GetUserRequest\x1a\x11.trading.UserInfo2\xf6\x02\n" +
+	"\aGetUser\x12\x17.trading.GetUserRequest\x1a\x11.trading.UserInfo2\xf0\x02\n" +
 	"\n" +
 	"BotService\x12A\n" +
 	"\tCreateBot\x12\x19.trading.CreateBotRequest\x1a\x17.trading.StatusResponse\"\x00\x12=\n" +
 	"\tDeleteBot\x12\x15.trading.BotIdRequest\x1a\x17.trading.StatusResponse\"\x00\x12.\n" +
 	"\bListBots\x12\x0e.trading.Empty\x1a\x10.trading.BotList\"\x00\x12<\n" +
 	"\bStartBot\x12\x15.trading.BotIdRequest\x1a\x17.trading.StatusResponse\"\x00\x12;\n" +
-	"\aStopBot\x12\x15.trading.BotIdRequest\x1a\x17.trading.StatusResponse\"\x00\x12;\n" +
-	"\fGetBotStatus\x12\x15.trading.BotIdRequest\x1a\x12.trading.BotConfig\"\x002J\n" +
+	"\aStopBot\x12\x15.trading.BotIdRequest\x1a\x17.trading.StatusResponse\"\x00\x125\n" +
+	"\fGetBotStatus\x12\x15.trading.BotIdRequest\x1a\f.trading.Bot\"\x002J\n" +
 	"\vRiskService\x12;\n" +
 	"\fCalculateVaR\x12\x13.trading.VaRRequest\x1a\x14.trading.VaRResponse\"\x002\xdd\x06\n" +
 	"\x0eTradingService\x12D\n" +
@@ -2083,7 +2083,7 @@ var file_trading_api_proto_goTypes = []any{
 	(*GetUserRequest)(nil),       // 14: trading.GetUserRequest
 	(*RegisterRequest)(nil),      // 15: trading.RegisterRequest
 	(*UserInfo)(nil),             // 16: trading.UserInfo
-	(*BotConfig)(nil),            // 17: trading.BotConfig
+	(*Bot)(nil),                  // 17: trading.Bot
 	(*CreateBotRequest)(nil),     // 18: trading.CreateBotRequest
 	(*BotIdRequest)(nil),         // 19: trading.BotIdRequest
 	(*BotList)(nil),              // 20: trading.BotList
@@ -2098,7 +2098,7 @@ var file_trading_api_proto_goTypes = []any{
 	(*SymbolList)(nil),           // 29: trading.SymbolList
 	(*StrategyRequest)(nil),      // 30: trading.StrategyRequest
 	nil,                          // 31: trading.Portfolio.PositionsEntry
-	nil,                          // 32: trading.BotConfig.ParametersEntry
+	nil,                          // 32: trading.Bot.ParametersEntry
 	nil,                          // 33: trading.CreateBotRequest.ParametersEntry
 	nil,                          // 34: trading.StrategyRequest.ParametersEntry
 }
@@ -2107,9 +2107,9 @@ var file_trading_api_proto_depIdxs = []int32{
 	5,  // 1: trading.OrderBook.bids:type_name -> trading.OrderBookEntry
 	5,  // 2: trading.OrderBook.asks:type_name -> trading.OrderBookEntry
 	7,  // 3: trading.TradeHistoryResponse.trades:type_name -> trading.Trade
-	32, // 4: trading.BotConfig.parameters:type_name -> trading.BotConfig.ParametersEntry
+	32, // 4: trading.Bot.parameters:type_name -> trading.Bot.ParametersEntry
 	33, // 5: trading.CreateBotRequest.parameters:type_name -> trading.CreateBotRequest.ParametersEntry
-	17, // 6: trading.BotList.bots:type_name -> trading.BotConfig
+	17, // 6: trading.BotList.bots:type_name -> trading.Bot
 	3,  // 7: trading.VaRRequest.current_portfolio:type_name -> trading.Portfolio
 	24, // 8: trading.MomentumResponse.metrics:type_name -> trading.MomentumMetric
 	34, // 9: trading.StrategyRequest.parameters:type_name -> trading.StrategyRequest.ParametersEntry
@@ -2144,7 +2144,7 @@ var file_trading_api_proto_depIdxs = []int32{
 	20, // 38: trading.BotService.ListBots:output_type -> trading.BotList
 	1,  // 39: trading.BotService.StartBot:output_type -> trading.StatusResponse
 	1,  // 40: trading.BotService.StopBot:output_type -> trading.StatusResponse
-	17, // 41: trading.BotService.GetBotStatus:output_type -> trading.BotConfig
+	17, // 41: trading.BotService.GetBotStatus:output_type -> trading.Bot
 	22, // 42: trading.RiskService.CalculateVaR:output_type -> trading.VaRResponse
 	4,  // 43: trading.TradingService.StreamOrderBook:output_type -> trading.OrderBook
 	26, // 44: trading.TradingService.GetPrice:output_type -> trading.Tick

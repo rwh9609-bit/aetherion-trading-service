@@ -237,7 +237,7 @@ class BotServiceStub(object):
         self.GetBotStatus = channel.unary_unary(
                 '/trading.BotService/GetBotStatus',
                 request_serializer=trading__api__pb2.BotIdRequest.SerializeToString,
-                response_deserializer=trading__api__pb2.BotConfig.FromString,
+                response_deserializer=trading__api__pb2.Bot.FromString,
                 _registered_method=True)
 
 
@@ -316,7 +316,7 @@ def add_BotServiceServicer_to_server(servicer, server):
             'GetBotStatus': grpc.unary_unary_rpc_method_handler(
                     servicer.GetBotStatus,
                     request_deserializer=trading__api__pb2.BotIdRequest.FromString,
-                    response_serializer=trading__api__pb2.BotConfig.SerializeToString,
+                    response_serializer=trading__api__pb2.Bot.SerializeToString,
             ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
@@ -485,7 +485,7 @@ class BotService(object):
             target,
             '/trading.BotService/GetBotStatus',
             trading__api__pb2.BotIdRequest.SerializeToString,
-            trading__api__pb2.BotConfig.FromString,
+            trading__api__pb2.Bot.FromString,
             options,
             channel_credentials,
             insecure,

@@ -18,13 +18,13 @@ import (
 
 type botRegistry struct {
 	mu   sync.RWMutex
-	bots map[string]*pb.BotConfig
+	bots map[string]*pb.Bot
 	path string
 	pg   *pgx.Conn
 }
 
 func newBotRegistry() *botRegistry {
-	r := &botRegistry{bots: make(map[string]*pb.BotConfig)}
+	r := &botRegistry{bots: make(map[string]*pb.Bot)}
 	dsn := os.Getenv("POSTGRES_DSN")
 	if dsn != "" {
 		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
@@ -86,7 +86,7 @@ func (r *botRegistry) loadFromPg(ctx context.Context) {
 		_ = json.Unmarshal(paramsBytes, &m)
 		// Need to get real UserId for this.
 		// This is what actually sets bot's account value. Initially it seems to be docker compose.
-		r.bots[id] = &pb.BotConfig{BotId: id, Name: name, Symbol: symbol, Strategy: strategy, Parameters: m, IsActive: active, UserId: userID, CreatedAtUnixMs: created, AccountValue: 1000007}
+		r.bots[id] = &pb.Bot{BotId: id, Name: name, Symbol: symbol, Strategy: strategy, Parameters: m, IsActive: active, UserId: userID, CreatedAtUnixMs: created, AccountValue: 1000007}
 	}
 }
 
@@ -95,7 +95,7 @@ func (r *botRegistry) loadFromFile() {
 	if err != nil {
 		return
 	}
-	var arr []*pb.BotConfig
+	var arr []*pb.Bot
 	if err := json.Unmarshal(b, &arr); err != nil {
 		log.Printf("bot registry load error: %v", err)
 		return
@@ -137,7 +137,7 @@ func (r *botRegistry) persist() {
 	}
 	r.mu.RLock()
 	defer r.mu.RUnlock()
-	arr := make([]*pb.BotConfig, 0, len(r.bots))
+	arr := make([]*pb.Bot, 0, len(r.bots))
 	for _, b := range r.bots {
 		arr = append(arr, b)
 	}
@@ -223,7 +223,7 @@ func (s *botServiceServer) CreateBot(ctx context.Context, req *pb.CreateBotReque
 
 	// Add entry to the database
 	if s.dbclient != nil {
-		_, err := s.dbclient.CreateBot(ctx, &pb.BotConfig{
+		_, err := s.dbclient.CreateBot(ctx, &pb.Bot{
 			BotId:           id,
 			UserId:          userID,
 			Name:            req.GetName(),
@@ -241,7 +241,7 @@ func (s *botServiceServer) CreateBot(ctx context.Context, req *pb.CreateBotReque
 		}
 	}
 
-	bot := &pb.BotConfig{BotId: id, Name: req.GetName(), Symbol: req.GetSymbol(), Strategy: req.GetStrategy(), Parameters: params, IsActive: false}
+	bot := &pb.Bot{BotId: id, Name: req.GetName(), Symbol: req.GetSymbol(), Strategy: req.GetStrategy(), Parameters: params, IsActive: false}
 	s.reg.mu.Lock()
 	s.reg.bots[id] = bot
 	s.reg.mu.Unlock()
@@ -309,12 +309,12 @@ func (s *botServiceServer) StopBot(ctx context.Context, req *pb.BotIdRequest) (*
 	return &pb.StatusResponse{Success: true, Message: "bot stopped", Id: bot.BotId}, nil
 }
 
-func (s *botServiceServer) GetBotStatus(ctx context.Context, req *pb.BotIdRequest) (*pb.BotConfig, error) {
+func (s *botServiceServer) GetBotStatus(ctx context.Context, req *pb.BotIdRequest) (*pb.Bot, error) {
 	s.reg.mu.RLock()
 	bot, ok := s.reg.bots[req.GetBotId()]
 	s.reg.mu.RUnlock()
 	if !ok {
-		return &pb.BotConfig{}, nil
+		return &pb.Bot{}, nil
 	}
 	return bot, nil
 }

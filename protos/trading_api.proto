@@ -133,10 +133,10 @@ service BotService {
   rpc ListBots(Empty) returns (BotList) {}
   rpc StartBot(BotIdRequest) returns (StatusResponse) {}
   rpc StopBot(BotIdRequest) returns (StatusResponse) {}
-  rpc GetBotStatus(BotIdRequest) returns (BotConfig) {}
+  rpc GetBotStatus(BotIdRequest) returns (Bot) {}
 }
 
-message BotConfig {
+message Bot {
     string bot_id = 1;
     string symbol = 2;
     string strategy = 3;
@@ -160,7 +160,7 @@ message BotIdRequest {
 }
  
 message BotList {
-    repeated BotConfig bots = 1;
+    repeated Bot bots = 1;
 }
 
 // =================================================================
