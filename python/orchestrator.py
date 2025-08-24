@@ -85,7 +85,7 @@ class TradingOrchestrator:
                     metadata = []
                     if token:
                         metadata.append(('authorization', f'Bearer {token}'))
-                    print(f"[DEBUG] gRPC metadata: {metadata}")
+                    # print(f"[DEBUG] gRPC metadata: {metadata}")
 
                     # 1. Fetch all bots from Go backend
                     bot_stub = trading_api_pb2_grpc.BotServiceStub(trading_channel)
