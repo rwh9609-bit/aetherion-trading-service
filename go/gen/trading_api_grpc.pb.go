@@ -216,7 +216,7 @@ type BotServiceClient interface {
 	ListBots(ctx context.Context, in *Empty, opts ...grpc.CallOption) (*BotList, error)
 	StartBot(ctx context.Context, in *BotIdRequest, opts ...grpc.CallOption) (*StatusResponse, error)
 	StopBot(ctx context.Context, in *BotIdRequest, opts ...grpc.CallOption) (*StatusResponse, error)
-	GetBotStatus(ctx context.Context, in *BotIdRequest, opts ...grpc.CallOption) (*BotConfig, error)
+	GetBotStatus(ctx context.Context, in *BotIdRequest, opts ...grpc.CallOption) (*Bot, error)
 }
 
 type botServiceClient struct {
@@ -277,9 +277,9 @@ func (c *botServiceClient) StopBot(ctx context.Context, in *BotIdRequest, opts .
 	return out, nil
 }
 
-func (c *botServiceClient) GetBotStatus(ctx context.Context, in *BotIdRequest, opts ...grpc.CallOption) (*BotConfig, error) {
+func (c *botServiceClient) GetBotStatus(ctx context.Context, in *BotIdRequest, opts ...grpc.CallOption) (*Bot, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(BotConfig)
+	out := new(Bot)
 	err := c.cc.Invoke(ctx, BotService_GetBotStatus_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
@@ -298,7 +298,7 @@ type BotServiceServer interface {
 	ListBots(context.Context, *Empty) (*BotList, error)
 	StartBot(context.Context, *BotIdRequest) (*StatusResponse, error)
 	StopBot(context.Context, *BotIdRequest) (*StatusResponse, error)
-	GetBotStatus(context.Context, *BotIdRequest) (*BotConfig, error)
+	GetBotStatus(context.Context, *BotIdRequest) (*Bot, error)
 	mustEmbedUnimplementedBotServiceServer()
 }
 
@@ -324,7 +324,7 @@ func (UnimplementedBotServiceServer) StartBot(context.Context, *BotIdRequest) (*
 func (UnimplementedBotServiceServer) StopBot(context.Context, *BotIdRequest) (*StatusResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method StopBot not implemented")
 }
-func (UnimplementedBotServiceServer) GetBotStatus(context.Context, *BotIdRequest) (*BotConfig, error) {
+func (UnimplementedBotServiceServer) GetBotStatus(context.Context, *BotIdRequest) (*Bot, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetBotStatus not implemented")
 }
 func (UnimplementedBotServiceServer) mustEmbedUnimplementedBotServiceServer() {}

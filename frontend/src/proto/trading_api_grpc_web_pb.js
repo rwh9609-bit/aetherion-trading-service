@@ -618,13 +618,13 @@ proto.trading.BotServicePromiseClient.prototype.stopBot =
  * @const
  * @type {!grpc.web.MethodDescriptor<
  *   !proto.trading.BotIdRequest,
- *   !proto.trading.BotConfig>}
+ *   !proto.trading.Bot>}
  */
 const methodDescriptor_BotService_GetBotStatus = new grpc.web.MethodDescriptor(
   '/trading.BotService/GetBotStatus',
   grpc.web.MethodType.UNARY,
   proto.trading.BotIdRequest,
-  proto.trading.BotConfig,
+  proto.trading.Bot,
   /**
    * @param {!proto.trading.BotIdRequest} request
    * @return {!Uint8Array}
@@ -632,7 +632,7 @@ const methodDescriptor_BotService_GetBotStatus = new grpc.web.MethodDescriptor(
   function(request) {
     return request.serializeBinary();
   },
-  proto.trading.BotConfig.deserializeBinary
+  proto.trading.Bot.deserializeBinary
 );
 
 
@@ -641,9 +641,9 @@ const methodDescriptor_BotService_GetBotStatus = new grpc.web.MethodDescriptor(
  *     request proto
  * @param {?Object<string, string>} metadata User defined
  *     call metadata
- * @param {function(?grpc.web.RpcError, ?proto.trading.BotConfig)}
+ * @param {function(?grpc.web.RpcError, ?proto.trading.Bot)}
  *     callback The callback function(error, response)
- * @return {!grpc.web.ClientReadableStream<!proto.trading.BotConfig>|undefined}
+ * @return {!grpc.web.ClientReadableStream<!proto.trading.Bot>|undefined}
  *     The XHR Node Readable Stream
  */
 proto.trading.BotServiceClient.prototype.getBotStatus =
@@ -662,7 +662,7 @@ proto.trading.BotServiceClient.prototype.getBotStatus =
  *     request proto
  * @param {?Object<string, string>=} metadata User defined
  *     call metadata
- * @return {!Promise<!proto.trading.BotConfig>}
+ * @return {!Promise<!proto.trading.Bot>}
  *     Promise that resolves to the response
  */
 proto.trading.BotServicePromiseClient.prototype.getBotStatus =

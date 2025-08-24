@@ -223,7 +223,7 @@ export const fetchRiskMetrics = async () => {
     const portfolio = new Portfolio();
     const positionsMap = portfolio.getPositionsMap();
     positionsMap.set('BTC-USD', 0.5);
-    // use the account_value of BotConfig and maybe UserConfig 
+    // use the account_value of Bot and maybe UserConfig 
     portfolio.setTotalValueUsd(10000009);
     
     request.setCurrentPortfolio(portfolio);

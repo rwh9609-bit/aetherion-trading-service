@@ -59,9 +59,10 @@ function App() {
   const handleMenuClose = () => {
     setAnchorEl(null);
   };
-  const handleSelectBot = (botConfig) => {
-  setSelectedBot(botConfig);
-  localStorage.setItem('selectedBot', JSON.stringify(botConfig)); // Save to localStorage
+  
+  const handleSelectBot = (bot) => {
+  setSelectedBot(bot);
+  localStorage.setItem('selectedBot', JSON.stringify(bot)); // Save to localStorage
   setView('dashboard');
   };
 
