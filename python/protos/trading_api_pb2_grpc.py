@@ -228,6 +228,11 @@ class OrderServiceStub(object):
                 request_serializer=trading__api__pb2.TradeHistoryRequest.SerializeToString,
                 response_deserializer=trading__api__pb2.TradeHistoryResponse.FromString,
                 _registered_method=True)
+        self.ListOrders = channel.unary_unary(
+                '/trading.OrderService/ListOrders',
+                request_serializer=trading__api__pb2.ListOrdersRequest.SerializeToString,
+                response_deserializer=trading__api__pb2.ListOrdersResponse.FromString,
+                _registered_method=True)
 
 
 class OrderServiceServicer(object):
@@ -261,6 +266,12 @@ class OrderServiceServicer(object):
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
+    def ListOrders(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
 
 def add_OrderServiceServicer_to_server(servicer, server):
     rpc_method_handlers = {
@@ -283,6 +294,11 @@ def add_OrderServiceServicer_to_server(servicer, server):
                     servicer.GetTradeHistory,
                     request_deserializer=trading__api__pb2.TradeHistoryRequest.FromString,
                     response_serializer=trading__api__pb2.TradeHistoryResponse.SerializeToString,
+            ),
+            'ListOrders': grpc.unary_unary_rpc_method_handler(
+                    servicer.ListOrders,
+                    request_deserializer=trading__api__pb2.ListOrdersRequest.FromString,
+                    response_serializer=trading__api__pb2.ListOrdersResponse.SerializeToString,
             ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
@@ -397,6 +413,33 @@ class OrderService(object):
             '/trading.OrderService/GetTradeHistory',
             trading__api__pb2.TradeHistoryRequest.SerializeToString,
             trading__api__pb2.TradeHistoryResponse.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def ListOrders(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/trading.OrderService/ListOrders',
+            trading__api__pb2.ListOrdersRequest.SerializeToString,
+            trading__api__pb2.ListOrdersResponse.FromString,
             options,
             channel_credentials,
             insecure,

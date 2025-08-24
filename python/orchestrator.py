@@ -96,10 +96,10 @@ class TradingOrchestrator:
                         if not getattr(bot, "is_active", False):
                             # print(f"[Orchestrator] Skipping inactive bot: {bot.name} ({bot.bot_id})")
                             continue  # Skip inactive bots
-                        print(f"[Orchestrator] Processing bot: {bot.name} ({bot.bot_id})")
+                        # print(f"[Orchestrator] Processing bot: {bot.name} ({bot.bot_id})")
                         # 2. Fetch current price for bot's symbol
                         price = fetch_binance_price(bot.symbol.replace("-", ""))
-                        print(f"Current price for {bot.symbol}: ${price:,.2f}")
+                        # print(f"Current price for {bot.symbol}: ${price:,.2f}")
                         # 3. Generate trading signal (replace with bot-specific strategy)
                         # For demo, use mean reversion for all
                         signal = self.strategy.generate_signal(price, bot.account_value)
