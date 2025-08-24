@@ -108,6 +108,49 @@ message PerformanceHistoryResponse {
 // ORDER & TRADE SERVICE
 // =================================================================
 
+service OrderService {
+    rpc CreateOrder(CreateOrderRequest) returns (Order) {}
+    rpc CancelOrder(CancelOrderRequest) returns (Order) {}
+    rpc GetOrder(GetOrderRequest) returns (Order) {}
+    rpc GetTradeHistory(TradeHistoryRequest) returns (TradeHistoryResponse) {}
+}
+
+message Order {
+    string id = 1;
+    string bot_id = 2;
+    string symbol = 3;
+    OrderSide side = 4;
+    OrderType type = 5;
+    OrderStatus status = 6;
+    DecimalValue quantity_requested = 7;
+    DecimalValue quantity_filled = 8;
+    optional DecimalValue limit_price = 9;
+    optional DecimalValue stop_price = 10;
+    google.protobuf.Timestamp created_at = 11;
+    google.protobuf.Timestamp updated_at = 12;
+    repeated Trade trades = 13;
+}
+
+message CreateOrderRequest {
+    string bot_id = 1;
+    string symbol = 2;
+    OrderSide side = 3;
+    OrderType type = 4;
+    DecimalValue quantity = 5;
+    optional DecimalValue limit_price = 6;
+    optional DecimalValue stop_price = 7;
+}
+
+message CancelOrderRequest {
+    string order_id = 1;
+    string bot_id = 2;
+}
+
+message GetOrderRequest {
+    string order_id = 1;
+}
+
+
 message OrderBook {
     repeated OrderBookEntry bids = 1;
     repeated OrderBookEntry asks = 2;
@@ -133,6 +176,10 @@ message Trade {
     int64 executed_at = 6;
     string strategy_id = 7;
     string bot_id = 8;
+    optional DecimalValue commission = 9;
+    google.protobuf.Timestamp executed_at_timestamp = 10;
+    optional DecimalValue pnl_realized = 11;
+    optional DecimalValue pnl_unrealized = 12;
 }
 
 message TradeRequest {
@@ -159,6 +206,7 @@ message TradeHistoryRequest {
 
 message TradeHistoryResponse {
     repeated Trade trades = 1;
+    int32 total_count = 2;
 }
 
 // =================================================================
@@ -182,6 +230,7 @@ message AuthResponse {
     string message = 2;
     string token = 3;           // JWT bearer token
     int64 expires_at_unix = 4;   // Expiration timestamp (seconds since epoch)
+    string refresh_token = 5;
 }
 
 message GetUserRequest {
@@ -211,11 +260,14 @@ message RefreshTokenRequest {
 // BotService provides a focused interface for bot lifecycle operations.
 service BotService {
   rpc CreateBot(CreateBotRequest) returns (StatusResponse) {}
+  rpc GetBot(BotIdRequest) returns (Bot) {}
+  rpc UpdateBot(UpdateBotRequest) returns (Bot) {}
   rpc DeleteBot(BotIdRequest) returns (StatusResponse) {}
   rpc ListBots(Empty) returns (BotList) {}
   rpc StartBot(BotIdRequest) returns (StatusResponse) {}
   rpc StopBot(BotIdRequest) returns (StatusResponse) {}
   rpc GetBotStatus(BotIdRequest) returns (Bot) {}
+  rpc StreamBotStatus(BotIdRequest) returns (stream Bot) {} // realtime updates
 }
 
 message Bot {
@@ -228,8 +280,20 @@ message Bot {
     string name = 7;
     string user_id = 8;
     double account_value = 9;
+    string description = 10;
+    DecimalValue initial_account_value = 11;
+    DecimalValue current_account_value = 12;
+    bool is_live = 13;
+    google.protobuf.Timestamp created_at = 14;
+    google.protobuf.Timestamp updated_at = 15;
 }
  
+message UpdateBotRequest {
+    string bot_id = 1;
+    optional string name = 2;
+    optional string description = 3;
+    optional bool is_active = 4;
+}
 message CreateBotRequest {
     string symbol = 1;
     string strategy = 2;
@@ -240,6 +304,10 @@ message CreateBotRequest {
  
 message BotIdRequest {
     string bot_id = 1;
+}
+
+message ListBotsRequest {
+    string user_id = 1;
 }
  
 message BotList {
@@ -278,46 +346,22 @@ message VaRResponse {
 
 // Service definition
 service TradingService {
-    // Stream order book updates
     rpc StreamOrderBook(OrderBookRequest) returns (stream OrderBook) {}
-    
-    // Get current price for a symbol
     rpc GetPrice(Tick) returns (Tick) {}
-    
-    // Start a trading strategy
     rpc StartStrategy(StrategyRequest) returns (StatusResponse) {}
-    
-    // Stop a trading strategy
     rpc StopStrategy(StrategyRequest) returns (StatusResponse) {}
-
-    // Subscribes to a real-time feed of market data
     rpc SubscribeTicks(StrategyRequest) returns (stream Tick) {}
-
-    // Streams live ticks from internal event bus (websocket sourced)
     rpc StreamPrice(TickStreamRequest) returns (stream Tick) {}
-
-    // Dynamically add a symbol to market data feed
     rpc AddSymbol(SymbolRequest) returns (StatusResponse) {}
-    // Dynamically remove a symbol from market data feed
     rpc RemoveSymbol(SymbolRequest) returns (StatusResponse) {}
-    // List currently subscribed symbols in market data feed
     rpc ListSymbols(Empty) returns (SymbolList) {}
-    // Aggregate short-term momentum metrics for symbols (server-side analog of client scanner)
     rpc GetMomentum(MomentumRequest) returns (MomentumResponse) {}
-
-    // Execute a trade (simplified demo endpoint)
-    rpc ExecuteTrade(TradeRequest) returns (TradeResponse) {}
-
-    // Get trade history for a user
-    rpc GetTradeHistory(TradeHistoryRequest) returns (TradeHistoryResponse) {}
 }
 
-// Request momentum metrics for specified symbols. If symbols empty, server returns all tracked symbols.
 message MomentumRequest {
     repeated string symbols = 1; // optional filter list
 }
 
-// Per-symbol momentum & volatility metrics (short-term heuristic)
 message MomentumMetric {
     string symbol = 1;
     double last_price = 2;
@@ -332,24 +376,20 @@ message MomentumResponse {
     int64 generated_at_unix_ms = 2;
 }
 
-// Represents a single market data tick
 message Tick {
     string symbol = 1;
     double price = 2;
     int64 timestamp_ns = 3; // Nanosecond precision timestamp
 }
 
-// Request to stream live price ticks (optional symbol filter; empty = all subscribed symbols server supports)
 message TickStreamRequest {
     string symbol = 1;
 }
 
-// Generic symbol request for add/remove symbol operations
 message SymbolRequest {
     string symbol = 1;
 }
 
-// Response listing active market data symbols
 message SymbolList {
     repeated string symbols = 1;
 }
@@ -358,5 +398,5 @@ message StrategyRequest {
     string strategy_id = 1;
     string symbol = 2;
     map<string, string> parameters = 3;
-    string user_id = 4; // <-- Add this line
+    string user_id = 4;
 }
