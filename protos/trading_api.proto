@@ -169,6 +169,7 @@ service AuthService {
     rpc Register(RegisterRequest) returns (AuthResponse) {}
     rpc Login(AuthRequest) returns (AuthResponse) {}
     rpc GetUser(GetUserRequest) returns (UserInfo);
+    rpc RefreshToken(RefreshTokenRequest) returns (AuthResponse) {}
 }
 
 message AuthRequest {
@@ -197,6 +198,10 @@ message UserInfo {
   string username = 1;
   string email = 2;
   int64 created_at_unix = 3;
+}
+
+message RefreshTokenRequest {
+    string refresh_token = 1;
 }
 
 // =================================================================
