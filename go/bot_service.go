@@ -166,19 +166,19 @@ func (s *botServiceServer) CreateBot(ctx context.Context, req *pb.CreateBotReque
 		params = map[string]string{}
 	}
 
-	// Add entry to the database. If there's no Symbol or Strategy, set them to NULL.
 	if s.dbclient != nil {
 		_, err := s.dbclient.CreateBot(ctx, &pb.Bot{
 			BotId:           id,
-			UserId:          userID,
-			Name:            req.GetName(),
 			Symbol:          req.GetSymbol(),
 			Strategy:        req.GetStrategy(),
 			Parameters:      params,
 			IsActive:        false,
+			Name:            req.GetName(),
+			UserId:          userID,
+			AccountValue:    req.GetAccountValue(), // <-- use this instead
 			CreatedAtUnixMs: time.Now().UnixMilli(),
-			AccountValue:    1000006,
 		})
+
 		log.Printf("[CreateBot] Added bot to database with ID: %s", id)
 		if err != nil {
 			log.Printf("[CreateBot] Error adding bot to database: %v", err)
@@ -193,6 +193,19 @@ func (s *botServiceServer) CreateBot(ctx context.Context, req *pb.CreateBotReque
 	s.reg.mu.Lock()
 	s.reg.bots[id] = bot
 	s.reg.mu.Unlock()
+
+	// Persist to file if using file storage
+	// if s.dbclient != nil {
+	// 	portfolio := &pb.Portfolio{
+	// 		Positions:     make(map[string]float64),
+	// 		TotalValueUsd: req.GetAccountValue(),
+	// 		BotId:         id,
+	// 	}
+	// 	if err := s.dbclient.SavePortfolio(ctx, portfolio); err != nil {
+	// 		log.Printf("[CreateBot] Error creating portfolio in database: %v", err)
+	// 		return &pb.StatusResponse{Success: false, Message: err.Error()}, nil
+	// 	}
+	// }
 
 	// Return success response
 	return &pb.StatusResponse{Success: true, Message: "bot created", Id: id}, nil
