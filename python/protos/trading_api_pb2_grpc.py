@@ -25,11 +25,688 @@ if _version_not_supported:
     )
 
 
-class AuthServiceStub(object):
-    """=================================================================
-    AUTH & USER SERVICE
-    =================================================================
+class TradingServiceStub(object):
+    """Service definition
+    """
 
+    def __init__(self, channel):
+        """Constructor.
+
+        Args:
+            channel: A grpc.Channel.
+        """
+        self.StreamOrderBook = channel.unary_stream(
+                '/trading.TradingService/StreamOrderBook',
+                request_serializer=trading__api__pb2.OrderBookRequest.SerializeToString,
+                response_deserializer=trading__api__pb2.OrderBook.FromString,
+                _registered_method=True)
+        self.GetPrice = channel.unary_unary(
+                '/trading.TradingService/GetPrice',
+                request_serializer=trading__api__pb2.Tick.SerializeToString,
+                response_deserializer=trading__api__pb2.Tick.FromString,
+                _registered_method=True)
+        self.StartStrategy = channel.unary_unary(
+                '/trading.TradingService/StartStrategy',
+                request_serializer=trading__api__pb2.StrategyRequest.SerializeToString,
+                response_deserializer=trading__api__pb2.StatusResponse.FromString,
+                _registered_method=True)
+        self.StopStrategy = channel.unary_unary(
+                '/trading.TradingService/StopStrategy',
+                request_serializer=trading__api__pb2.StrategyRequest.SerializeToString,
+                response_deserializer=trading__api__pb2.StatusResponse.FromString,
+                _registered_method=True)
+        self.GetPortfolio = channel.unary_unary(
+                '/trading.TradingService/GetPortfolio',
+                request_serializer=trading__api__pb2.PortfolioRequest.SerializeToString,
+                response_deserializer=trading__api__pb2.Portfolio.FromString,
+                _registered_method=True)
+        self.SubscribeTicks = channel.unary_stream(
+                '/trading.TradingService/SubscribeTicks',
+                request_serializer=trading__api__pb2.StrategyRequest.SerializeToString,
+                response_deserializer=trading__api__pb2.Tick.FromString,
+                _registered_method=True)
+        self.StreamPrice = channel.unary_stream(
+                '/trading.TradingService/StreamPrice',
+                request_serializer=trading__api__pb2.TickStreamRequest.SerializeToString,
+                response_deserializer=trading__api__pb2.Tick.FromString,
+                _registered_method=True)
+        self.AddSymbol = channel.unary_unary(
+                '/trading.TradingService/AddSymbol',
+                request_serializer=trading__api__pb2.SymbolRequest.SerializeToString,
+                response_deserializer=trading__api__pb2.StatusResponse.FromString,
+                _registered_method=True)
+        self.RemoveSymbol = channel.unary_unary(
+                '/trading.TradingService/RemoveSymbol',
+                request_serializer=trading__api__pb2.SymbolRequest.SerializeToString,
+                response_deserializer=trading__api__pb2.StatusResponse.FromString,
+                _registered_method=True)
+        self.ListSymbols = channel.unary_unary(
+                '/trading.TradingService/ListSymbols',
+                request_serializer=trading__api__pb2.Empty.SerializeToString,
+                response_deserializer=trading__api__pb2.SymbolList.FromString,
+                _registered_method=True)
+        self.GetMomentum = channel.unary_unary(
+                '/trading.TradingService/GetMomentum',
+                request_serializer=trading__api__pb2.MomentumRequest.SerializeToString,
+                response_deserializer=trading__api__pb2.MomentumResponse.FromString,
+                _registered_method=True)
+        self.ExecuteTrade = channel.unary_unary(
+                '/trading.TradingService/ExecuteTrade',
+                request_serializer=trading__api__pb2.TradeRequest.SerializeToString,
+                response_deserializer=trading__api__pb2.TradeResponse.FromString,
+                _registered_method=True)
+        self.GetTradeHistory = channel.unary_unary(
+                '/trading.TradingService/GetTradeHistory',
+                request_serializer=trading__api__pb2.TradeHistoryRequest.SerializeToString,
+                response_deserializer=trading__api__pb2.TradeHistoryResponse.FromString,
+                _registered_method=True)
+
+
+class TradingServiceServicer(object):
+    """Service definition
+    """
+
+    def StreamOrderBook(self, request, context):
+        """Stream order book updates
+        """
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def GetPrice(self, request, context):
+        """Get current price for a symbol
+        """
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def StartStrategy(self, request, context):
+        """Start a trading strategy
+        """
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def StopStrategy(self, request, context):
+        """Stop a trading strategy
+        """
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def GetPortfolio(self, request, context):
+        """Gets the current portfolio status
+        """
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def SubscribeTicks(self, request, context):
+        """Subscribes to a real-time feed of market data
+        """
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def StreamPrice(self, request, context):
+        """Streams live ticks from internal event bus (websocket sourced)
+        """
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def AddSymbol(self, request, context):
+        """Dynamically add a symbol to market data feed
+        """
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def RemoveSymbol(self, request, context):
+        """Dynamically remove a symbol from market data feed
+        """
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def ListSymbols(self, request, context):
+        """List currently subscribed symbols in market data feed
+        """
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def GetMomentum(self, request, context):
+        """Aggregate short-term momentum metrics for symbols (server-side analog of client scanner)
+        """
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def ExecuteTrade(self, request, context):
+        """Execute a trade (simplified demo endpoint)
+        """
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def GetTradeHistory(self, request, context):
+        """Get trade history for a user
+        """
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+
+def add_TradingServiceServicer_to_server(servicer, server):
+    rpc_method_handlers = {
+            'StreamOrderBook': grpc.unary_stream_rpc_method_handler(
+                    servicer.StreamOrderBook,
+                    request_deserializer=trading__api__pb2.OrderBookRequest.FromString,
+                    response_serializer=trading__api__pb2.OrderBook.SerializeToString,
+            ),
+            'GetPrice': grpc.unary_unary_rpc_method_handler(
+                    servicer.GetPrice,
+                    request_deserializer=trading__api__pb2.Tick.FromString,
+                    response_serializer=trading__api__pb2.Tick.SerializeToString,
+            ),
+            'StartStrategy': grpc.unary_unary_rpc_method_handler(
+                    servicer.StartStrategy,
+                    request_deserializer=trading__api__pb2.StrategyRequest.FromString,
+                    response_serializer=trading__api__pb2.StatusResponse.SerializeToString,
+            ),
+            'StopStrategy': grpc.unary_unary_rpc_method_handler(
+                    servicer.StopStrategy,
+                    request_deserializer=trading__api__pb2.StrategyRequest.FromString,
+                    response_serializer=trading__api__pb2.StatusResponse.SerializeToString,
+            ),
+            'GetPortfolio': grpc.unary_unary_rpc_method_handler(
+                    servicer.GetPortfolio,
+                    request_deserializer=trading__api__pb2.PortfolioRequest.FromString,
+                    response_serializer=trading__api__pb2.Portfolio.SerializeToString,
+            ),
+            'SubscribeTicks': grpc.unary_stream_rpc_method_handler(
+                    servicer.SubscribeTicks,
+                    request_deserializer=trading__api__pb2.StrategyRequest.FromString,
+                    response_serializer=trading__api__pb2.Tick.SerializeToString,
+            ),
+            'StreamPrice': grpc.unary_stream_rpc_method_handler(
+                    servicer.StreamPrice,
+                    request_deserializer=trading__api__pb2.TickStreamRequest.FromString,
+                    response_serializer=trading__api__pb2.Tick.SerializeToString,
+            ),
+            'AddSymbol': grpc.unary_unary_rpc_method_handler(
+                    servicer.AddSymbol,
+                    request_deserializer=trading__api__pb2.SymbolRequest.FromString,
+                    response_serializer=trading__api__pb2.StatusResponse.SerializeToString,
+            ),
+            'RemoveSymbol': grpc.unary_unary_rpc_method_handler(
+                    servicer.RemoveSymbol,
+                    request_deserializer=trading__api__pb2.SymbolRequest.FromString,
+                    response_serializer=trading__api__pb2.StatusResponse.SerializeToString,
+            ),
+            'ListSymbols': grpc.unary_unary_rpc_method_handler(
+                    servicer.ListSymbols,
+                    request_deserializer=trading__api__pb2.Empty.FromString,
+                    response_serializer=trading__api__pb2.SymbolList.SerializeToString,
+            ),
+            'GetMomentum': grpc.unary_unary_rpc_method_handler(
+                    servicer.GetMomentum,
+                    request_deserializer=trading__api__pb2.MomentumRequest.FromString,
+                    response_serializer=trading__api__pb2.MomentumResponse.SerializeToString,
+            ),
+            'ExecuteTrade': grpc.unary_unary_rpc_method_handler(
+                    servicer.ExecuteTrade,
+                    request_deserializer=trading__api__pb2.TradeRequest.FromString,
+                    response_serializer=trading__api__pb2.TradeResponse.SerializeToString,
+            ),
+            'GetTradeHistory': grpc.unary_unary_rpc_method_handler(
+                    servicer.GetTradeHistory,
+                    request_deserializer=trading__api__pb2.TradeHistoryRequest.FromString,
+                    response_serializer=trading__api__pb2.TradeHistoryResponse.SerializeToString,
+            ),
+    }
+    generic_handler = grpc.method_handlers_generic_handler(
+            'trading.TradingService', rpc_method_handlers)
+    server.add_generic_rpc_handlers((generic_handler,))
+    server.add_registered_method_handlers('trading.TradingService', rpc_method_handlers)
+
+
+ # This class is part of an EXPERIMENTAL API.
+class TradingService(object):
+    """Service definition
+    """
+
+    @staticmethod
+    def StreamOrderBook(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_stream(
+            request,
+            target,
+            '/trading.TradingService/StreamOrderBook',
+            trading__api__pb2.OrderBookRequest.SerializeToString,
+            trading__api__pb2.OrderBook.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def GetPrice(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/trading.TradingService/GetPrice',
+            trading__api__pb2.Tick.SerializeToString,
+            trading__api__pb2.Tick.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def StartStrategy(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/trading.TradingService/StartStrategy',
+            trading__api__pb2.StrategyRequest.SerializeToString,
+            trading__api__pb2.StatusResponse.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def StopStrategy(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/trading.TradingService/StopStrategy',
+            trading__api__pb2.StrategyRequest.SerializeToString,
+            trading__api__pb2.StatusResponse.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def GetPortfolio(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/trading.TradingService/GetPortfolio',
+            trading__api__pb2.PortfolioRequest.SerializeToString,
+            trading__api__pb2.Portfolio.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def SubscribeTicks(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_stream(
+            request,
+            target,
+            '/trading.TradingService/SubscribeTicks',
+            trading__api__pb2.StrategyRequest.SerializeToString,
+            trading__api__pb2.Tick.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def StreamPrice(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_stream(
+            request,
+            target,
+            '/trading.TradingService/StreamPrice',
+            trading__api__pb2.TickStreamRequest.SerializeToString,
+            trading__api__pb2.Tick.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def AddSymbol(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/trading.TradingService/AddSymbol',
+            trading__api__pb2.SymbolRequest.SerializeToString,
+            trading__api__pb2.StatusResponse.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def RemoveSymbol(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/trading.TradingService/RemoveSymbol',
+            trading__api__pb2.SymbolRequest.SerializeToString,
+            trading__api__pb2.StatusResponse.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def ListSymbols(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/trading.TradingService/ListSymbols',
+            trading__api__pb2.Empty.SerializeToString,
+            trading__api__pb2.SymbolList.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def GetMomentum(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/trading.TradingService/GetMomentum',
+            trading__api__pb2.MomentumRequest.SerializeToString,
+            trading__api__pb2.MomentumResponse.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def ExecuteTrade(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/trading.TradingService/ExecuteTrade',
+            trading__api__pb2.TradeRequest.SerializeToString,
+            trading__api__pb2.TradeResponse.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def GetTradeHistory(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/trading.TradingService/GetTradeHistory',
+            trading__api__pb2.TradeHistoryRequest.SerializeToString,
+            trading__api__pb2.TradeHistoryResponse.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+
+class RiskServiceStub(object):
+    """Service for performing risk calculations
+    """
+
+    def __init__(self, channel):
+        """Constructor.
+
+        Args:
+            channel: A grpc.Channel.
+        """
+        self.CalculateVaR = channel.unary_unary(
+                '/trading.RiskService/CalculateVaR',
+                request_serializer=trading__api__pb2.VaRRequest.SerializeToString,
+                response_deserializer=trading__api__pb2.VaRResponse.FromString,
+                _registered_method=True)
+
+
+class RiskServiceServicer(object):
+    """Service for performing risk calculations
+    """
+
+    def CalculateVaR(self, request, context):
+        """Calculates the Value at Risk for a given portfolio
+        """
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+
+def add_RiskServiceServicer_to_server(servicer, server):
+    rpc_method_handlers = {
+            'CalculateVaR': grpc.unary_unary_rpc_method_handler(
+                    servicer.CalculateVaR,
+                    request_deserializer=trading__api__pb2.VaRRequest.FromString,
+                    response_serializer=trading__api__pb2.VaRResponse.SerializeToString,
+            ),
+    }
+    generic_handler = grpc.method_handlers_generic_handler(
+            'trading.RiskService', rpc_method_handlers)
+    server.add_generic_rpc_handlers((generic_handler,))
+    server.add_registered_method_handlers('trading.RiskService', rpc_method_handlers)
+
+
+ # This class is part of an EXPERIMENTAL API.
+class RiskService(object):
+    """Service for performing risk calculations
+    """
+
+    @staticmethod
+    def CalculateVaR(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/trading.RiskService/CalculateVaR',
+            trading__api__pb2.VaRRequest.SerializeToString,
+            trading__api__pb2.VaRResponse.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+
+class AuthServiceStub(object):
+    """Service for authentication
     """
 
     def __init__(self, channel):
@@ -39,27 +716,24 @@ class AuthServiceStub(object):
             channel: A grpc.Channel.
         """
         self.Register = channel.unary_unary(
-                '/aetherion.AuthService/Register',
+                '/trading.AuthService/Register',
                 request_serializer=trading__api__pb2.RegisterRequest.SerializeToString,
                 response_deserializer=trading__api__pb2.AuthResponse.FromString,
                 _registered_method=True)
         self.Login = channel.unary_unary(
-                '/aetherion.AuthService/Login',
+                '/trading.AuthService/Login',
                 request_serializer=trading__api__pb2.AuthRequest.SerializeToString,
                 response_deserializer=trading__api__pb2.AuthResponse.FromString,
                 _registered_method=True)
         self.GetUser = channel.unary_unary(
-                '/aetherion.AuthService/GetUser',
+                '/trading.AuthService/GetUser',
                 request_serializer=trading__api__pb2.GetUserRequest.SerializeToString,
                 response_deserializer=trading__api__pb2.UserInfo.FromString,
                 _registered_method=True)
 
 
 class AuthServiceServicer(object):
-    """=================================================================
-    AUTH & USER SERVICE
-    =================================================================
-
+    """Service for authentication
     """
 
     def Register(self, request, context):
@@ -100,17 +774,14 @@ def add_AuthServiceServicer_to_server(servicer, server):
             ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
-            'aetherion.AuthService', rpc_method_handlers)
+            'trading.AuthService', rpc_method_handlers)
     server.add_generic_rpc_handlers((generic_handler,))
-    server.add_registered_method_handlers('aetherion.AuthService', rpc_method_handlers)
+    server.add_registered_method_handlers('trading.AuthService', rpc_method_handlers)
 
 
  # This class is part of an EXPERIMENTAL API.
 class AuthService(object):
-    """=================================================================
-    AUTH & USER SERVICE
-    =================================================================
-
+    """Service for authentication
     """
 
     @staticmethod
@@ -127,7 +798,7 @@ class AuthService(object):
         return grpc.experimental.unary_unary(
             request,
             target,
-            '/aetherion.AuthService/Register',
+            '/trading.AuthService/Register',
             trading__api__pb2.RegisterRequest.SerializeToString,
             trading__api__pb2.AuthResponse.FromString,
             options,
@@ -154,7 +825,7 @@ class AuthService(object):
         return grpc.experimental.unary_unary(
             request,
             target,
-            '/aetherion.AuthService/Login',
+            '/trading.AuthService/Login',
             trading__api__pb2.AuthRequest.SerializeToString,
             trading__api__pb2.AuthResponse.FromString,
             options,
@@ -181,7 +852,7 @@ class AuthService(object):
         return grpc.experimental.unary_unary(
             request,
             target,
-            '/aetherion.AuthService/GetUser',
+            '/trading.AuthService/GetUser',
             trading__api__pb2.GetUserRequest.SerializeToString,
             trading__api__pb2.UserInfo.FromString,
             options,
@@ -196,10 +867,7 @@ class AuthService(object):
 
 
 class BotServiceStub(object):
-    """=================================================================
-    BOT MANAGEMENT SERVICE
-    =================================================================
-
+    """BotService provides a focused interface for bot lifecycle operations.
     """
 
     def __init__(self, channel):
@@ -209,47 +877,39 @@ class BotServiceStub(object):
             channel: A grpc.Channel.
         """
         self.CreateBot = channel.unary_unary(
-                '/aetherion.BotService/CreateBot',
+                '/trading.BotService/CreateBot',
                 request_serializer=trading__api__pb2.CreateBotRequest.SerializeToString,
                 response_deserializer=trading__api__pb2.StatusResponse.FromString,
                 _registered_method=True)
-        self.GetBot = channel.unary_unary(
-                '/aetherion.BotService/GetBot',
-                request_serializer=trading__api__pb2.BotIdRequest.SerializeToString,
-                response_deserializer=trading__api__pb2.Bot.FromString,
-                _registered_method=True)
-        self.ListBots = channel.unary_unary(
-                '/aetherion.BotService/ListBots',
-                request_serializer=trading__api__pb2.ListBotsRequest.SerializeToString,
-                response_deserializer=trading__api__pb2.BotList.FromString,
-                _registered_method=True)
-        self.UpdateBot = channel.unary_unary(
-                '/aetherion.BotService/UpdateBot',
-                request_serializer=trading__api__pb2.UpdateBotRequest.SerializeToString,
-                response_deserializer=trading__api__pb2.Bot.FromString,
-                _registered_method=True)
         self.DeleteBot = channel.unary_unary(
-                '/aetherion.BotService/DeleteBot',
+                '/trading.BotService/DeleteBot',
                 request_serializer=trading__api__pb2.BotIdRequest.SerializeToString,
                 response_deserializer=trading__api__pb2.StatusResponse.FromString,
                 _registered_method=True)
+        self.ListBots = channel.unary_unary(
+                '/trading.BotService/ListBots',
+                request_serializer=trading__api__pb2.Empty.SerializeToString,
+                response_deserializer=trading__api__pb2.BotList.FromString,
+                _registered_method=True)
         self.StartBot = channel.unary_unary(
-                '/aetherion.BotService/StartBot',
+                '/trading.BotService/StartBot',
                 request_serializer=trading__api__pb2.BotIdRequest.SerializeToString,
                 response_deserializer=trading__api__pb2.StatusResponse.FromString,
                 _registered_method=True)
         self.StopBot = channel.unary_unary(
-                '/aetherion.BotService/StopBot',
+                '/trading.BotService/StopBot',
                 request_serializer=trading__api__pb2.BotIdRequest.SerializeToString,
                 response_deserializer=trading__api__pb2.StatusResponse.FromString,
+                _registered_method=True)
+        self.GetBotStatus = channel.unary_unary(
+                '/trading.BotService/GetBotStatus',
+                request_serializer=trading__api__pb2.BotIdRequest.SerializeToString,
+                response_deserializer=trading__api__pb2.BotConfig.FromString,
                 _registered_method=True)
 
 
 class BotServiceServicer(object):
-    """=================================================================
-    BOT MANAGEMENT SERVICE
-    =================================================================
-
+    """BotService provides a focused interface for bot lifecycle operations.
     """
 
     def CreateBot(self, request, context):
@@ -258,25 +918,13 @@ class BotServiceServicer(object):
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
-    def GetBot(self, request, context):
+    def DeleteBot(self, request, context):
         """Missing associated documentation comment in .proto file."""
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
     def ListBots(self, request, context):
-        """Missing associated documentation comment in .proto file."""
-        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
-        context.set_details('Method not implemented!')
-        raise NotImplementedError('Method not implemented!')
-
-    def UpdateBot(self, request, context):
-        """Missing associated documentation comment in .proto file."""
-        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
-        context.set_details('Method not implemented!')
-        raise NotImplementedError('Method not implemented!')
-
-    def DeleteBot(self, request, context):
         """Missing associated documentation comment in .proto file."""
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
@@ -294,6 +942,12 @@ class BotServiceServicer(object):
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
+    def GetBotStatus(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
 
 def add_BotServiceServicer_to_server(servicer, server):
     rpc_method_handlers = {
@@ -302,25 +956,15 @@ def add_BotServiceServicer_to_server(servicer, server):
                     request_deserializer=trading__api__pb2.CreateBotRequest.FromString,
                     response_serializer=trading__api__pb2.StatusResponse.SerializeToString,
             ),
-            'GetBot': grpc.unary_unary_rpc_method_handler(
-                    servicer.GetBot,
-                    request_deserializer=trading__api__pb2.BotIdRequest.FromString,
-                    response_serializer=trading__api__pb2.Bot.SerializeToString,
-            ),
-            'ListBots': grpc.unary_unary_rpc_method_handler(
-                    servicer.ListBots,
-                    request_deserializer=trading__api__pb2.ListBotsRequest.FromString,
-                    response_serializer=trading__api__pb2.BotList.SerializeToString,
-            ),
-            'UpdateBot': grpc.unary_unary_rpc_method_handler(
-                    servicer.UpdateBot,
-                    request_deserializer=trading__api__pb2.UpdateBotRequest.FromString,
-                    response_serializer=trading__api__pb2.Bot.SerializeToString,
-            ),
             'DeleteBot': grpc.unary_unary_rpc_method_handler(
                     servicer.DeleteBot,
                     request_deserializer=trading__api__pb2.BotIdRequest.FromString,
                     response_serializer=trading__api__pb2.StatusResponse.SerializeToString,
+            ),
+            'ListBots': grpc.unary_unary_rpc_method_handler(
+                    servicer.ListBots,
+                    request_deserializer=trading__api__pb2.Empty.FromString,
+                    response_serializer=trading__api__pb2.BotList.SerializeToString,
             ),
             'StartBot': grpc.unary_unary_rpc_method_handler(
                     servicer.StartBot,
@@ -332,19 +976,21 @@ def add_BotServiceServicer_to_server(servicer, server):
                     request_deserializer=trading__api__pb2.BotIdRequest.FromString,
                     response_serializer=trading__api__pb2.StatusResponse.SerializeToString,
             ),
+            'GetBotStatus': grpc.unary_unary_rpc_method_handler(
+                    servicer.GetBotStatus,
+                    request_deserializer=trading__api__pb2.BotIdRequest.FromString,
+                    response_serializer=trading__api__pb2.BotConfig.SerializeToString,
+            ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
-            'aetherion.BotService', rpc_method_handlers)
+            'trading.BotService', rpc_method_handlers)
     server.add_generic_rpc_handlers((generic_handler,))
-    server.add_registered_method_handlers('aetherion.BotService', rpc_method_handlers)
+    server.add_registered_method_handlers('trading.BotService', rpc_method_handlers)
 
 
  # This class is part of an EXPERIMENTAL API.
 class BotService(object):
-    """=================================================================
-    BOT MANAGEMENT SERVICE
-    =================================================================
-
+    """BotService provides a focused interface for bot lifecycle operations.
     """
 
     @staticmethod
@@ -361,90 +1007,9 @@ class BotService(object):
         return grpc.experimental.unary_unary(
             request,
             target,
-            '/aetherion.BotService/CreateBot',
+            '/trading.BotService/CreateBot',
             trading__api__pb2.CreateBotRequest.SerializeToString,
             trading__api__pb2.StatusResponse.FromString,
-            options,
-            channel_credentials,
-            insecure,
-            call_credentials,
-            compression,
-            wait_for_ready,
-            timeout,
-            metadata,
-            _registered_method=True)
-
-    @staticmethod
-    def GetBot(request,
-            target,
-            options=(),
-            channel_credentials=None,
-            call_credentials=None,
-            insecure=False,
-            compression=None,
-            wait_for_ready=None,
-            timeout=None,
-            metadata=None):
-        return grpc.experimental.unary_unary(
-            request,
-            target,
-            '/aetherion.BotService/GetBot',
-            trading__api__pb2.BotIdRequest.SerializeToString,
-            trading__api__pb2.Bot.FromString,
-            options,
-            channel_credentials,
-            insecure,
-            call_credentials,
-            compression,
-            wait_for_ready,
-            timeout,
-            metadata,
-            _registered_method=True)
-
-    @staticmethod
-    def ListBots(request,
-            target,
-            options=(),
-            channel_credentials=None,
-            call_credentials=None,
-            insecure=False,
-            compression=None,
-            wait_for_ready=None,
-            timeout=None,
-            metadata=None):
-        return grpc.experimental.unary_unary(
-            request,
-            target,
-            '/aetherion.BotService/ListBots',
-            trading__api__pb2.ListBotsRequest.SerializeToString,
-            trading__api__pb2.BotList.FromString,
-            options,
-            channel_credentials,
-            insecure,
-            call_credentials,
-            compression,
-            wait_for_ready,
-            timeout,
-            metadata,
-            _registered_method=True)
-
-    @staticmethod
-    def UpdateBot(request,
-            target,
-            options=(),
-            channel_credentials=None,
-            call_credentials=None,
-            insecure=False,
-            compression=None,
-            wait_for_ready=None,
-            timeout=None,
-            metadata=None):
-        return grpc.experimental.unary_unary(
-            request,
-            target,
-            '/aetherion.BotService/UpdateBot',
-            trading__api__pb2.UpdateBotRequest.SerializeToString,
-            trading__api__pb2.Bot.FromString,
             options,
             channel_credentials,
             insecure,
@@ -469,9 +1034,36 @@ class BotService(object):
         return grpc.experimental.unary_unary(
             request,
             target,
-            '/aetherion.BotService/DeleteBot',
+            '/trading.BotService/DeleteBot',
             trading__api__pb2.BotIdRequest.SerializeToString,
             trading__api__pb2.StatusResponse.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def ListBots(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/trading.BotService/ListBots',
+            trading__api__pb2.Empty.SerializeToString,
+            trading__api__pb2.BotList.FromString,
             options,
             channel_credentials,
             insecure,
@@ -496,7 +1088,7 @@ class BotService(object):
         return grpc.experimental.unary_unary(
             request,
             target,
-            '/aetherion.BotService/StartBot',
+            '/trading.BotService/StartBot',
             trading__api__pb2.BotIdRequest.SerializeToString,
             trading__api__pb2.StatusResponse.FromString,
             options,
@@ -523,7 +1115,7 @@ class BotService(object):
         return grpc.experimental.unary_unary(
             request,
             target,
-            '/aetherion.BotService/StopBot',
+            '/trading.BotService/StopBot',
             trading__api__pb2.BotIdRequest.SerializeToString,
             trading__api__pb2.StatusResponse.FromString,
             options,
@@ -536,120 +1128,8 @@ class BotService(object):
             metadata,
             _registered_method=True)
 
-
-class OrderServiceStub(object):
-    """=================================================================
-    ORDER & TRADE SERVICE (REPLACES TradingService)
-    =================================================================
-
-    CHANGED: This service now correctly models the order lifecycle.
-    """
-
-    def __init__(self, channel):
-        """Constructor.
-
-        Args:
-            channel: A grpc.Channel.
-        """
-        self.CreateOrder = channel.unary_unary(
-                '/aetherion.OrderService/CreateOrder',
-                request_serializer=trading__api__pb2.CreateOrderRequest.SerializeToString,
-                response_deserializer=trading__api__pb2.Order.FromString,
-                _registered_method=True)
-        self.CancelOrder = channel.unary_unary(
-                '/aetherion.OrderService/CancelOrder',
-                request_serializer=trading__api__pb2.CancelOrderRequest.SerializeToString,
-                response_deserializer=trading__api__pb2.Order.FromString,
-                _registered_method=True)
-        self.GetOrder = channel.unary_unary(
-                '/aetherion.OrderService/GetOrder',
-                request_serializer=trading__api__pb2.GetOrderRequest.SerializeToString,
-                response_deserializer=trading__api__pb2.Order.FromString,
-                _registered_method=True)
-        self.GetTradeHistory = channel.unary_unary(
-                '/aetherion.OrderService/GetTradeHistory',
-                request_serializer=trading__api__pb2.TradeHistoryRequest.SerializeToString,
-                response_deserializer=trading__api__pb2.TradeHistoryResponse.FromString,
-                _registered_method=True)
-
-
-class OrderServiceServicer(object):
-    """=================================================================
-    ORDER & TRADE SERVICE (REPLACES TradingService)
-    =================================================================
-
-    CHANGED: This service now correctly models the order lifecycle.
-    """
-
-    def CreateOrder(self, request, context):
-        """Create a new order (intent to trade)
-        """
-        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
-        context.set_details('Method not implemented!')
-        raise NotImplementedError('Method not implemented!')
-
-    def CancelOrder(self, request, context):
-        """Cancel a pending or partially filled order
-        """
-        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
-        context.set_details('Method not implemented!')
-        raise NotImplementedError('Method not implemented!')
-
-    def GetOrder(self, request, context):
-        """Get the status and details of a specific order
-        """
-        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
-        context.set_details('Method not implemented!')
-        raise NotImplementedError('Method not implemented!')
-
-    def GetTradeHistory(self, request, context):
-        """Get trade history for a bot
-        """
-        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
-        context.set_details('Method not implemented!')
-        raise NotImplementedError('Method not implemented!')
-
-
-def add_OrderServiceServicer_to_server(servicer, server):
-    rpc_method_handlers = {
-            'CreateOrder': grpc.unary_unary_rpc_method_handler(
-                    servicer.CreateOrder,
-                    request_deserializer=trading__api__pb2.CreateOrderRequest.FromString,
-                    response_serializer=trading__api__pb2.Order.SerializeToString,
-            ),
-            'CancelOrder': grpc.unary_unary_rpc_method_handler(
-                    servicer.CancelOrder,
-                    request_deserializer=trading__api__pb2.CancelOrderRequest.FromString,
-                    response_serializer=trading__api__pb2.Order.SerializeToString,
-            ),
-            'GetOrder': grpc.unary_unary_rpc_method_handler(
-                    servicer.GetOrder,
-                    request_deserializer=trading__api__pb2.GetOrderRequest.FromString,
-                    response_serializer=trading__api__pb2.Order.SerializeToString,
-            ),
-            'GetTradeHistory': grpc.unary_unary_rpc_method_handler(
-                    servicer.GetTradeHistory,
-                    request_deserializer=trading__api__pb2.TradeHistoryRequest.FromString,
-                    response_serializer=trading__api__pb2.TradeHistoryResponse.SerializeToString,
-            ),
-    }
-    generic_handler = grpc.method_handlers_generic_handler(
-            'aetherion.OrderService', rpc_method_handlers)
-    server.add_generic_rpc_handlers((generic_handler,))
-    server.add_registered_method_handlers('aetherion.OrderService', rpc_method_handlers)
-
-
- # This class is part of an EXPERIMENTAL API.
-class OrderService(object):
-    """=================================================================
-    ORDER & TRADE SERVICE (REPLACES TradingService)
-    =================================================================
-
-    CHANGED: This service now correctly models the order lifecycle.
-    """
-
     @staticmethod
-    def CreateOrder(request,
+    def GetBotStatus(request,
             target,
             options=(),
             channel_credentials=None,
@@ -662,222 +1142,9 @@ class OrderService(object):
         return grpc.experimental.unary_unary(
             request,
             target,
-            '/aetherion.OrderService/CreateOrder',
-            trading__api__pb2.CreateOrderRequest.SerializeToString,
-            trading__api__pb2.Order.FromString,
-            options,
-            channel_credentials,
-            insecure,
-            call_credentials,
-            compression,
-            wait_for_ready,
-            timeout,
-            metadata,
-            _registered_method=True)
-
-    @staticmethod
-    def CancelOrder(request,
-            target,
-            options=(),
-            channel_credentials=None,
-            call_credentials=None,
-            insecure=False,
-            compression=None,
-            wait_for_ready=None,
-            timeout=None,
-            metadata=None):
-        return grpc.experimental.unary_unary(
-            request,
-            target,
-            '/aetherion.OrderService/CancelOrder',
-            trading__api__pb2.CancelOrderRequest.SerializeToString,
-            trading__api__pb2.Order.FromString,
-            options,
-            channel_credentials,
-            insecure,
-            call_credentials,
-            compression,
-            wait_for_ready,
-            timeout,
-            metadata,
-            _registered_method=True)
-
-    @staticmethod
-    def GetOrder(request,
-            target,
-            options=(),
-            channel_credentials=None,
-            call_credentials=None,
-            insecure=False,
-            compression=None,
-            wait_for_ready=None,
-            timeout=None,
-            metadata=None):
-        return grpc.experimental.unary_unary(
-            request,
-            target,
-            '/aetherion.OrderService/GetOrder',
-            trading__api__pb2.GetOrderRequest.SerializeToString,
-            trading__api__pb2.Order.FromString,
-            options,
-            channel_credentials,
-            insecure,
-            call_credentials,
-            compression,
-            wait_for_ready,
-            timeout,
-            metadata,
-            _registered_method=True)
-
-    @staticmethod
-    def GetTradeHistory(request,
-            target,
-            options=(),
-            channel_credentials=None,
-            call_credentials=None,
-            insecure=False,
-            compression=None,
-            wait_for_ready=None,
-            timeout=None,
-            metadata=None):
-        return grpc.experimental.unary_unary(
-            request,
-            target,
-            '/aetherion.OrderService/GetTradeHistory',
-            trading__api__pb2.TradeHistoryRequest.SerializeToString,
-            trading__api__pb2.TradeHistoryResponse.FromString,
-            options,
-            channel_credentials,
-            insecure,
-            call_credentials,
-            compression,
-            wait_for_ready,
-            timeout,
-            metadata,
-            _registered_method=True)
-
-
-class PortfolioServiceStub(object):
-    """=================================================================
-    PORTFOLIO & PERFORMANCE SERVICE
-    =================================================================
-
-    ADDED: A new service to handle portfolio and performance data.
-    """
-
-    def __init__(self, channel):
-        """Constructor.
-
-        Args:
-            channel: A grpc.Channel.
-        """
-        self.GetPortfolio = channel.unary_unary(
-                '/aetherion.PortfolioService/GetPortfolio',
-                request_serializer=trading__api__pb2.PortfolioRequest.SerializeToString,
-                response_deserializer=trading__api__pb2.PortfolioResponse.FromString,
-                _registered_method=True)
-        self.GetPerformanceHistory = channel.unary_unary(
-                '/aetherion.PortfolioService/GetPerformanceHistory',
-                request_serializer=trading__api__pb2.PerformanceHistoryRequest.SerializeToString,
-                response_deserializer=trading__api__pb2.PerformanceHistoryResponse.FromString,
-                _registered_method=True)
-
-
-class PortfolioServiceServicer(object):
-    """=================================================================
-    PORTFOLIO & PERFORMANCE SERVICE
-    =================================================================
-
-    ADDED: A new service to handle portfolio and performance data.
-    """
-
-    def GetPortfolio(self, request, context):
-        """Gets the current portfolio status for a bot
-        """
-        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
-        context.set_details('Method not implemented!')
-        raise NotImplementedError('Method not implemented!')
-
-    def GetPerformanceHistory(self, request, context):
-        """Gets historical performance snapshots for charting
-        """
-        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
-        context.set_details('Method not implemented!')
-        raise NotImplementedError('Method not implemented!')
-
-
-def add_PortfolioServiceServicer_to_server(servicer, server):
-    rpc_method_handlers = {
-            'GetPortfolio': grpc.unary_unary_rpc_method_handler(
-                    servicer.GetPortfolio,
-                    request_deserializer=trading__api__pb2.PortfolioRequest.FromString,
-                    response_serializer=trading__api__pb2.PortfolioResponse.SerializeToString,
-            ),
-            'GetPerformanceHistory': grpc.unary_unary_rpc_method_handler(
-                    servicer.GetPerformanceHistory,
-                    request_deserializer=trading__api__pb2.PerformanceHistoryRequest.FromString,
-                    response_serializer=trading__api__pb2.PerformanceHistoryResponse.SerializeToString,
-            ),
-    }
-    generic_handler = grpc.method_handlers_generic_handler(
-            'aetherion.PortfolioService', rpc_method_handlers)
-    server.add_generic_rpc_handlers((generic_handler,))
-    server.add_registered_method_handlers('aetherion.PortfolioService', rpc_method_handlers)
-
-
- # This class is part of an EXPERIMENTAL API.
-class PortfolioService(object):
-    """=================================================================
-    PORTFOLIO & PERFORMANCE SERVICE
-    =================================================================
-
-    ADDED: A new service to handle portfolio and performance data.
-    """
-
-    @staticmethod
-    def GetPortfolio(request,
-            target,
-            options=(),
-            channel_credentials=None,
-            call_credentials=None,
-            insecure=False,
-            compression=None,
-            wait_for_ready=None,
-            timeout=None,
-            metadata=None):
-        return grpc.experimental.unary_unary(
-            request,
-            target,
-            '/aetherion.PortfolioService/GetPortfolio',
-            trading__api__pb2.PortfolioRequest.SerializeToString,
-            trading__api__pb2.PortfolioResponse.FromString,
-            options,
-            channel_credentials,
-            insecure,
-            call_credentials,
-            compression,
-            wait_for_ready,
-            timeout,
-            metadata,
-            _registered_method=True)
-
-    @staticmethod
-    def GetPerformanceHistory(request,
-            target,
-            options=(),
-            channel_credentials=None,
-            call_credentials=None,
-            insecure=False,
-            compression=None,
-            wait_for_ready=None,
-            timeout=None,
-            metadata=None):
-        return grpc.experimental.unary_unary(
-            request,
-            target,
-            '/aetherion.PortfolioService/GetPerformanceHistory',
-            trading__api__pb2.PerformanceHistoryRequest.SerializeToString,
-            trading__api__pb2.PerformanceHistoryResponse.FromString,
+            '/trading.BotService/GetBotStatus',
+            trading__api__pb2.BotIdRequest.SerializeToString,
+            trading__api__pb2.BotConfig.FromString,
             options,
             channel_credentials,
             insecure,

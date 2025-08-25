@@ -1,63 +1,6 @@
 import requests
 import time
 import json
-import csv
-from datetime import datetime
-
-SYMBOLS = [
-    'BTC-USD', 'ETH-USD', 'XRP-USD', 'BNB-USD', 'SOL-USD',
-    'ADA-USD', 'DOGE-USD', 'TRX-USD', 'LINK-USD',
-    'DOT-USD', 'MATIC-USD', 'TON-USD', 'SHIB-USD', 'DAI-USD', 'BCH-USD',
-    'LTC-USD', 'NEAR-USD'
-]
-
-def fetch_price(symbol):
-    # Accepts symbol in 'ETH-USD' or 'ETHUSDT' format
-    if '-' in symbol:
-        base = symbol.split('-')[0]
-        binance_symbol = f"{base}USDT"
-        coinbase_symbol = symbol
-    elif symbol.endswith('USDT'):
-        base = symbol.replace('USDT', '')
-        binance_symbol = symbol
-        coinbase_symbol = f"{base}-USD"
-    else:
-        base = symbol
-        binance_symbol = f"{base}USDT"
-        coinbase_symbol = f"{base}-USD"
-
-    # Try Coinbase first
-    try:
-        cb_url = f"https://api.coinbase.com/v2/prices/{coinbase_symbol}/spot"
-        resp = requests.get(cb_url)
-        resp.raise_for_status()
-        data = resp.json()
-        price = float(data["data"]["amount"])
-        # print(f"Fetched {coinbase_symbol} from Coinbase: {price}")
-        return price
-    except Exception as e:
-        print(f"Coinbase error for {coinbase_symbol}: {e}")
-        # Fallback to Binance
-        try:
-            url = f"https://api.binance.com/api/v3/ticker/price?symbol={binance_symbol}"
-            headers = {
-                'User-Agent': 'Mozilla/5.0'
-            }
-            resp = requests.get(url, headers=headers)
-            resp.raise_for_status()
-            data = resp.json()
-            price = float(data["price"])
-            # print(f"Fetched {binance_symbol} from Binance: {price}")
-            return price
-        except Exception as e2:
-            print(f"Binance error for {binance_symbol}: {e2}")
-            return None
-
-def append_price_to_csv(symbol, price, timestamp):
-    csv_file = f"data/{symbol.replace('-', '')}_1min.csv"
-    with open(csv_file, mode="a", newline="", encoding="utf-8") as f:
-        writer = csv.writer(f)
-        writer.writerow([timestamp, price])
 
 def fetch_binance_price(symbol="BTCUSDT"):
     """Fetch current price from either Binance or Coinbase API"""
@@ -112,15 +55,14 @@ def append_price_to_csv(price, timestamp):
         writer = csv.writer(f)
         writer.writerow([timestamp, price])
 
-if __name__ == "__main__": 
-    print("Streaming live prices for all symbols every minute...")
+if __name__ == "__main__":
+    print("Streaming live BTC/USDT price to CSV every minute...")
     while True:
-        timestamp = datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")
-        for symbol in SYMBOLS:
-            price = fetch_price(symbol)
-            if price is not None:
-                append_price_to_csv(symbol, price, timestamp)
-                print(f"{timestamp}, {symbol}: ${price:,.2f}")
-            else:
-                print(f"{timestamp}, {symbol}: Price unavailable")
+        try:
+            price = fetch_binance_price()
+            timestamp = datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")
+            append_price_to_csv(price, timestamp)
+            print(f"{timestamp}, BTC/USDT: ${price:,.2f}")
+        except Exception as e:
+            print(f"Error: {str(e)}")
         time.sleep(60)

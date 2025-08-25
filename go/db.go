@@ -47,61 +47,17 @@ func (s *DBService) Close() {
 	log.Info().Msg("Database connection pool closed.")
 }
 
-// CreateBot inserts a new bot into the database using the updated proto fields.
-func (s *DBService) CreateBot(ctx context.Context, bot *pb.Bot) (string, error) {
-	query := `
-        INSERT INTO bots (
-            id, user_id, name, description, symbols, strategy_name, strategy_parameters,
-            initial_account_value, current_account_value, is_active, is_live, created_at, updated_at
-        )
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, to_timestamp($12), to_timestamp($13))
-        ON CONFLICT (id) DO UPDATE SET
-            name=EXCLUDED.name,
-            description=EXCLUDED.description,
-            symbols=EXCLUDED.symbols,
-            strategy_name=EXCLUDED.strategy_name,
-            strategy_parameters=EXCLUDED.strategy_parameters,
-            initial_account_value=EXCLUDED.initial_account_value,
-            current_account_value=EXCLUDED.current_account_value,
-            is_active=EXCLUDED.is_active,
-            is_live=EXCLUDED.is_live,
-            updated_at=EXCLUDED.updated_at
-        RETURNING id
-    `
-	symbols := bot.GetSymbols()
-	strategyParams := bot.GetStrategyParameters()
-	initialAccount := decimalToFloat(bot.GetInitialAccountValue())
-	currentAccount := decimalToFloat(bot.GetCurrentAccountValue())
-	created := bot.GetCreatedAt().AsTime().Unix()
-	updated := bot.GetUpdatedAt().AsTime().Unix()
-
+// --- Bot Management ---
+func (s *DBService) CreateBot(ctx context.Context, bot *pb.BotConfig) (string, error) {
 	var id string
-	err := s.pool.QueryRow(ctx, query,
-		bot.GetId(),
-		bot.GetUserId(),
-		bot.GetName(),
-		bot.GetDescription(),
-		symbols,
-		bot.GetStrategyName(),
-		strategyParams,
-		initialAccount,
-		currentAccount,
-		bot.GetIsActive(),
-		bot.GetIsLive(),
-		created,
-		updated,
-	).Scan(&id)
+	query := `INSERT INTO bots (id, user_id, name, symbol, strategy, parameters, is_active, account_value) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id`
+	err := s.pool.QueryRow(ctx, query, bot.BotId, bot.UserId, bot.Name, bot.Symbol, bot.Strategy, bot.Parameters, bot.IsActive, bot.AccountValue).Scan(&id)
 	if err != nil {
-		log.Error().Err(err).Msg("Failed to create/update bot")
-		return "", fmt.Errorf("failed to create/update bot: %w", err)
+		log.Error().Err(err).Msg("Failed to create bot")
+		return "", fmt.Errorf("failed to create bot: %w", err)
 	}
+	log.Info().Str("bot_id", id).Msg("Bot created successfully")
 	return id, nil
-}
-func decimalToFloat(dv *pb.DecimalValue) float64 {
-	if dv == nil {
-		return 0
-	}
-	return float64(dv.Units) + float64(dv.Nanos)/1e9
 }
 
 // DeleteBot permanently removes a bot from the database.
@@ -162,26 +118,20 @@ func (s *DBService) GetUserByID(ctx context.Context, userID string) (*User, erro
 }
 
 // EnsureUserExists checks if a user exists by ID, and creates a placeholder if not.
-// This version works with your schema (username and password_hash required).
-func (s *DBService) EnsureUserExists(ctx context.Context, userID string, passwordHash string) error {
-	if userID == "" {
-		return fmt.Errorf("userID must not be empty")
-	}
-	if _, err := uuid.Parse(userID); err != nil {
-		return fmt.Errorf("userID must be a valid UUID: %w", err)
-	}
-	// Try to fetch user
-	var exists bool
-	query := `SELECT EXISTS(SELECT 1 FROM users WHERE id = $1)`
-	err := s.pool.QueryRow(ctx, query, userID).Scan(&exists)
-	if err != nil {
-		return fmt.Errorf("failed to check user existence: %w", err)
-	}
-	if exists {
+// You may want to improve this to set a real username/email if available.
+func (s *DBService) EnsureUserExists(ctx context.Context, userID, username string) error {
+	user, err := s.GetUserByID(ctx, userID)
+	if err == nil && user != nil {
 		return nil // User exists
 	}
-	insert := `INSERT INTO users (id, username, password_hash) VALUES ($1, $2, $3)`
-	_, err = s.pool.Exec(ctx, insert, userID, userID, passwordHash)
+	// Create placeholder user if missing
+	placeholderUsername := username
+	if placeholderUsername == "" {
+		placeholderUsername = "user_" + userID
+	}
+	placeholderPassword := "placeholder" // You may want to hash this
+	query := `INSERT INTO users (id, username, password_hash) VALUES ($1, $2, $3)`
+	_, err = s.pool.Exec(ctx, query, userID, placeholderUsername, placeholderPassword)
 	if err != nil {
 		return fmt.Errorf("failed to create placeholder user: %w", err)
 	}
@@ -280,7 +230,7 @@ func (s *DBService) GetStrategiesByUserID(ctx context.Context, userID string) ([
 
 	for rows.Next() {
 		var strat Strategy
-		if err := rows.Scan(&strat.ID, &strat.UserID, &strat.BotId, &strat.Symbol, &strat.StrategyType, &strat.Parameters, &strat.IsActive, &strat.CreatedAt, &strat.UpdatedAt); err != nil {
+		if err := rows.Scan(&strat.ID, &strat.UserID, &strat.Symbol, &strat.StrategyType, &strat.Parameters, &strat.IsActive, &strat.CreatedAt, &strat.UpdatedAt); err != nil {
 			log.Error().Err(err).Msg("Failed to scan strategy row")
 			return nil, fmt.Errorf("failed to scan strategy row: %w", err)
 		}
@@ -305,17 +255,17 @@ func (s *DBService) RecordTrade(ctx context.Context, trade *Trade) error {
 	return nil
 }
 
-// GetTradesByBotID retrieves trade history for a bot.
-func (s *DBService) GetTradesByBotID(ctx context.Context, botID string) ([]*Trade, error) {
-	if botID == "" {
-		return nil, fmt.Errorf("botID cannot be empty")
+// GetTradesByUserID retrieves trade history for a user.
+func (s *DBService) GetTradesByUserID(ctx context.Context, userID string) ([]*Trade, error) {
+	if userID == "" {
+		return nil, fmt.Errorf("userID cannot be empty")
 	}
 	var trades []*Trade
-	query := `SELECT id, user_id, strategy_id, symbol, side, quantity, price, executed_at, pnl FROM trades WHERE bot_id = $1 ORDER BY executed_at DESC`
-	rows, err := s.pool.Query(ctx, query, botID)
+	query := `SELECT id, user_id, strategy_id, symbol, side, quantity, price, executed_at, pnl FROM trades WHERE user_id = $1 ORDER BY executed_at DESC`
+	rows, err := s.pool.Query(ctx, query, userID)
 	if err != nil {
-		log.Error().Err(err).Msg("Failed to get trades by bot ID")
-		return nil, fmt.Errorf("failed to get trades by bot ID: %w", err)
+		log.Error().Err(err).Msg("Failed to get trades by user ID")
+		return nil, fmt.Errorf("failed to get trades by user ID: %w", err)
 	}
 	defer rows.Close()
 

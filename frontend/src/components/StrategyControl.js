@@ -11,7 +11,6 @@ import {
 
 const StrategyControl = () => {
   const [params, setParams] = useState({
-    symbol: 'BTC-USD',
     lookbackPeriod: 20,
     entryStdDev: 2.0,
     exitStdDev: 0.5,
@@ -37,7 +36,6 @@ const StrategyControl = () => {
       if (status === 'stopped') {
         // Pass all UI params to backend
         const resp = await startStrategy({
-          symbol: params.symbol,
           lookbackPeriod: params.lookbackPeriod,
           entryStdDev: params.entryStdDev,
           exitStdDev: params.exitStdDev,
@@ -72,13 +70,6 @@ const StrategyControl = () => {
         )}
 
         <Box sx={{ display: 'grid', gap: 2, gridTemplateColumns: 'repeat(2, 1fr)' }}>
-          <TextField
-            label="Symbol"
-            type="text"
-            value={params.symbol}
-            onChange={handleParamChange('symbol')}
-            fullWidth
-          />
           <TextField
             label="Lookback Period"
             type="number"

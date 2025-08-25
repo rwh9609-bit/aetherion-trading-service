@@ -185,23 +185,16 @@ function App() {
           {view === 'landing' && <LandingPage onGetStarted={handleGetStarted} />}
 
           {view === 'login' && (
-          <Box sx={{ 
-            minHeight: '100vh', 
-            background: 'linear-gradient(135deg, #0a1929 0%, #1a1a2e 100%)',
-            display: 'flex', 
-            alignItems: 'center',
-            justifyContent: 'center'
-          }}>
-            <Login
-              onAuth={(u) => {
-                // u should be an object like { id: 'uuid...', ... }
-                setUser(u); // <-- make sure u.id exists!
-                setView('dashboard');
-              }}
-              onBack={() => setView('landing')}
-            />
-          </Box>
-        )}
+            <Box sx={{ 
+              minHeight: '100vh', 
+              background: 'linear-gradient(135deg, #0a1929 0%, #1a1a2e 100%)',
+              display: 'flex', 
+              alignItems: 'center',
+              justifyContent: 'center'
+            }}>
+              <Login onAuth={(u)=> { setUser(u); setView('dashboard'); }} onBack={() => setView('landing')} />
+            </Box>
+          )}
           {user && view === 'dashboard' && (
             <div style={{ padding: '24px' }}>
               <TradingDashboard user={user} selectedBot={selectedBot} setUser={setUser} setView={setView} />
@@ -224,7 +217,7 @@ function App() {
           )}
           {user && view === 'developBot' && (
             <div style={{ padding: '24px' }}>
-              <DevelopBotPage onNavigate={setView} userId={user.id} /> {/* <-- pass userId prop */}
+              <DevelopBotPage onNavigate={setView} />
             </div>
           )}
           {user && view === 'account' && (
