@@ -248,11 +248,16 @@ export const createBot = async ({ name, symbol, strategy, parameters, userId, ac
 };
 
 export const listBots = async () => {
+  console.log('[grpcClient] Calling listBots...');
   const { Empty } = await import('../proto/trading_api_pb.js');
   const req = new Empty();
   return new Promise((resolve, reject) => {
     botClient.listBots(req, createMetadata(), (err, resp) => {
-      if (err) return reject(err);
+      if (err) {
+        console.error('[grpcClient] listBots error:', err);
+        return reject(err);
+      }
+      console.log('[grpcClient] listBots response:', resp?.toObject());
       resolve(resp.toObject());
     });
   });

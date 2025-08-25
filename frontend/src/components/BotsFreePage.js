@@ -1,44 +1,80 @@
 import React, { useEffect, useState } from 'react';
 import { Container, Box, Typography, Card, CardContent, Button, Stack, Dialog, DialogTitle, DialogContent, DialogActions, Chip, CircularProgress, Alert } from '@mui/material';
-import { listBots, startBot, stopBot, getBotStatus, deleteBot } from '../services/grpcClient'; // <-- import deleteBot
-
-const EXAMPLE_BOT = {
-  botId: 'example-bot-1',
-  name: 'Example Bot',
-  symbol: 'BTC-USD',
-  strategy: 'MEAN_REVERSION',
-  isActive: false,
-  parameters: { lookback: 20, threshold: 0.5 },
-};
+import { listBots, startBot, stopBot, getBotStatus, deleteBot } from '../services/grpcClient';
 
 const statusColor = (active) => active ? 'success.main' : 'text.secondary';
 
-const BotsFreePage = ({ onNavigate, onSelectBot, selectedBot }) => {
+const BotsFreePage = () => {
   const [bots, setBots] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [selectedBot, setSelectedBot] = useState(null);
   const [viewBot, setViewBot] = useState(null);
   const [actionBusy, setActionBusy] = useState(null);
-  const [alert, setAlert] = useState(null); // <-- add alert state
+  const [alert, setAlert] = useState(null);
+  const [error, setError] = useState(null);
+  const [loading, setLoading] = useState(false);
+
+  const botsToShow = bots.length > 0 ? bots : [];
 
   const refresh = async () => {
-    try {
-      setLoading(true); setError(null);
-      const resp = await listBots();
-      setBots(resp.botsList || []);
-    } catch(e) {
-      setError(e.message || 'Failed to load bots');
-    } finally { setLoading(false); }
-  };
-  useEffect(()=> {
+  console.log('[BotsFreePage] refresh called');
+  setLoading(true);
+  setError(null);
+  try {
+    const resp = await listBots();
+    if (!resp.botsList || resp.botsList.length === 0) {
+      setBots([
+        {
+          botId: 'example-bot-1',
+          name: 'Example Bot',
+          symbol: 'BTC-USD',
+          strategy: 'MEAN_REVERSION',
+          isActive: false,
+          parameters: { lookback: 20, threshold: 0.5 },
+        }
+      ]);
+    } else {
+      setBots(resp.botsList);
+    }
+  } catch (e) {
+    setError(e.message || 'Failed to load bots');
+  } finally {
+    setLoading(false);
+  }
+};
+
+  useEffect(() => {
     refresh();
-    const id = setInterval(refresh, 8000); // auto-refresh every 8s
-    return () => clearInterval(id);
   }, []);
 
-  const handleStart = async (id) => { setActionBusy(id); try { await startBot(id); await refresh(); } finally { setActionBusy(null); } };
-  const handleStop = async (id) => { setActionBusy(id); try { await stopBot(id); await refresh(); } finally { setActionBusy(null); } };
-  const handleView = async (bot) => { try { const status = await getBotStatus(bot.botId); setViewBot(status); } catch { setViewBot(bot); } };
+  const handleStart = async (id) => {
+    setActionBusy(id);
+    try {
+      await startBot(id);
+      await refresh();
+    } finally {
+      setActionBusy(null);
+    }
+  };
+
+  const handleStop = async (id) => {
+    setActionBusy(id);
+    try {
+      await stopBot(id);
+      await refresh();
+    } finally {
+      setActionBusy(null);
+    }
+  };
+
+  const handleView = async (bot) => {
+    try {
+      const status = await getBotStatus(bot.botId);
+      setViewBot(status);
+    } catch {
+      setViewBot(bot);
+    }
+  };
+
   const handleDelete = async (id) => {
     if (!window.confirm('Delete this bot?')) return;
     setActionBusy(id);
@@ -46,7 +82,7 @@ const BotsFreePage = ({ onNavigate, onSelectBot, selectedBot }) => {
       await deleteBot(id);
       setAlert({ type: 'success', msg: 'Bot deleted' });
       if (selectedBot && selectedBot.botId === id) {
-        onSelectBot(null); // Reset selectedBot if deleted
+        setSelectedBot(null);
       }
       await refresh();
     } catch (e) {
@@ -56,16 +92,15 @@ const BotsFreePage = ({ onNavigate, onSelectBot, selectedBot }) => {
     }
   };
 
-  const botsToShow = bots.length ? bots : [EXAMPLE_BOT];
-
   return (
     <Container maxWidth="lg" sx={{ mt:4, mb:4 }}>
       <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb:3, flexWrap:'wrap', gap:2 }}>
         <Typography variant="h5" fontWeight={600}>Bots</Typography>
-        {/* <Button variant="contained" size="small" onClick={()=> onNavigate && onNavigate('developBot')}>Develop Bot</Button> */}
       </Stack>
+
       {alert && <Alert severity={alert.type} sx={{ mb:2 }} onClose={()=>setAlert(null)}>{alert.msg}</Alert>}
       {error && <Alert severity="error" sx={{ mb:2 }}>{error}</Alert>}
+      
       <Box sx={{ display:'grid', gap:2, gridTemplateColumns:{ xs:'1fr', sm:'1fr 1fr', md:'1fr 1fr 1fr' } }}>
         {botsToShow.map(bot => (
           <Card
@@ -94,9 +129,18 @@ const BotsFreePage = ({ onNavigate, onSelectBot, selectedBot }) => {
                 <Button
                   size="small"
                   variant={selectedBot && selectedBot.botId === bot.botId ? "contained" : "outlined"}
-                  onClick={() => onSelectBot(bot)}
+                  onClick={() => setSelectedBot(bot)}
                 >
                   {selectedBot && selectedBot.botId === bot.botId ? "Selected" : "Select"}
+                </Button>
+                <Button
+                  size="small"
+                  variant="outlined"
+                  color="error"
+                  disabled={actionBusy===bot.botId}
+                  onClick={() => handleDelete(bot.botId)}
+                >
+                  Delete
                 </Button>
               </Stack>
             </CardContent>
@@ -104,7 +148,6 @@ const BotsFreePage = ({ onNavigate, onSelectBot, selectedBot }) => {
         ))}
       </Box>
       {loading && <Box sx={{ mt:4, display:'flex', justifyContent:'center' }}><CircularProgress size={32} /></Box>}
-      {/* Remove the old fallback, since botsToShow always has at least one bot */}
       <Dialog open={!!viewBot} onClose={()=>setViewBot(null)} maxWidth="sm" fullWidth>
         <DialogTitle>Bot Details</DialogTitle>
         <DialogContent dividers>

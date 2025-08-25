@@ -1820,6 +1820,7 @@ type AuthResponse struct {
 	Token         string                 `protobuf:"bytes,3,opt,name=token,proto3" json:"token,omitempty"`                                         // JWT bearer token
 	ExpiresAtUnix int64                  `protobuf:"varint,4,opt,name=expires_at_unix,json=expiresAtUnix,proto3" json:"expires_at_unix,omitempty"` // Expiration timestamp (seconds since epoch)
 	RefreshToken  string                 `protobuf:"bytes,5,opt,name=refresh_token,json=refreshToken,proto3" json:"refresh_token,omitempty"`
+	Role          string                 `protobuf:"bytes,6,opt,name=role,proto3" json:"role,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1885,6 +1886,13 @@ func (x *AuthResponse) GetExpiresAtUnix() int64 {
 func (x *AuthResponse) GetRefreshToken() string {
 	if x != nil {
 		return x.RefreshToken
+	}
+	return ""
+}
+
+func (x *AuthResponse) GetRole() string {
+	if x != nil {
+		return x.Role
 	}
 	return ""
 }
@@ -3574,13 +3582,14 @@ const file_trading_api_proto_rawDesc = "" +
 	"totalCount\"E\n" +
 	"\vAuthRequest\x12\x1a\n" +
 	"\busername\x18\x01 \x01(\tR\busername\x12\x1a\n" +
-	"\bpassword\x18\x02 \x01(\tR\bpassword\"\xa5\x01\n" +
+	"\bpassword\x18\x02 \x01(\tR\bpassword\"\xb9\x01\n" +
 	"\fAuthResponse\x12\x18\n" +
 	"\asuccess\x18\x01 \x01(\bR\asuccess\x12\x18\n" +
 	"\amessage\x18\x02 \x01(\tR\amessage\x12\x14\n" +
 	"\x05token\x18\x03 \x01(\tR\x05token\x12&\n" +
 	"\x0fexpires_at_unix\x18\x04 \x01(\x03R\rexpiresAtUnix\x12#\n" +
-	"\rrefresh_token\x18\x05 \x01(\tR\frefreshToken\",\n" +
+	"\rrefresh_token\x18\x05 \x01(\tR\frefreshToken\x12\x12\n" +
+	"\x04role\x18\x06 \x01(\tR\x04role\",\n" +
 	"\x0eGetUserRequest\x12\x1a\n" +
 	"\busername\x18\x01 \x01(\tR\busername\"_\n" +
 	"\x0fRegisterRequest\x12\x1a\n" +
