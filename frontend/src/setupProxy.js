@@ -4,13 +4,13 @@ module.exports = function(app) {
   // Proxy all gRPC-web requests to the Go service
   // NOTE: gRPC-web traffic goes through Envoy at :8080, while health endpoint lives on :8090
   app.use(
-    '/aetherion.aetherion',
+    '/trading.TradingService',
     createProxyMiddleware({
       target: 'http://localhost:8080',
       changeOrigin: true,
       ws: true,
       pathRewrite: {
-        '^/aetherion.aetherion': '', // Remove the service prefix
+        '^/trading.TradingService': '', // Remove the service prefix
       },
       onProxyReq: (proxyReq, req, res) => {
         proxyReq.setHeader('Content-Type', 'application/grpc-web+proto');
