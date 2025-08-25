@@ -80,7 +80,7 @@ const PricingPage = ({ setView }) => {
           <div className="bg-gray-800 p-8 rounded-xl border border-emerald-500 glow-effect">
             <h3 className="text-3xl font-bold mb-4 text-emerald-400">Pro</h3>
             <p className="text-5xl font-black mb-4">$50<span className="text-lg font-medium">/mo</span></p>
-            <p className="text-gray-400 mb-8">For serious traders</p>
+            <p className="text-gray-400 mb-8">For advanced traders, developers, or supporters who want premium features.</p>
             <ul className="text-left space-y-2 text-gray-400">
               <li>✓ Multiple bots</li>
               <li>✓ Access to advanced strategies</li>
