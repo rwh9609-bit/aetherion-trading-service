@@ -31,7 +31,7 @@ static_resources:
                     - safe_regex: { google_re2: {}, regex: '^https://app\.aetherion\.cloud$'}
                   allow_methods: GET, PUT, DELETE, POST, OPTIONS
                   allow_headers: >-
-                    keep-alive,user-agent,cache-control,content-type,content-transfer-encoding,x-grpc-web,grpc-accept-encoding,x-user-agent,custom-header-1,x-grpc-timeout,authorization, 103, 47, 105
+                    keep-alive,user-agent,cache-control,content-type,content-transfer-encoding,x-grpc-web,grpc-accept-encoding,x-user-agent,custom-header-1,x-grpc-timeout,authorization
                   expose_headers: grpc-status,grpc-message
                   max_age: "86400"
                   allow_credentials: false
@@ -121,7 +121,7 @@ static_resources:
                             regex: '^https://app\.aetherion\.cloud$'
                       allow_methods: GET, PUT, DELETE, POST, OPTIONS
                       allow_headers: >-
-                        keep-alive,user-agent,cache-control,content-type,content-transfer-encoding,x-grpc-web,grpc-accept-encoding,x-user-agent,custom-header-1,x-grpc-timeout,authorization, 103, 47, 105
+                        keep-alive,user-agent,cache-control,content-type,content-transfer-encoding,x-grpc-web,grpc-accept-encoding,x-user-agent,custom-header-1,x-grpc-timeout,authorization
                       expose_headers: grpc-status,grpc-message
                       max_age: "86400"
                       allow_credentials: false

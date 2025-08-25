@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { ThemeProvider, createTheme, CssBaseline, AppBar, Toolbar, Typography, Button, Box, Tooltip, CircularProgress, Snackbar, Alert, Menu, MenuItem } from '@mui/material';
 
-import { getUser } from './services/grpcClient';
 import TradingOperations from './components/TradingOperations';
 import BotsPage from './components/BotsPage';
 import DevelopBotPage from './components/DevelopBotPage';
@@ -43,19 +42,13 @@ function App() {
   
   // Restore user session from localStorage on app load
   useEffect(() => {
-    const restoreSession = async () => {
-      try {
-        const user = await getUser();
-        if (user) {
-          setUser(user);
-          setView('dashboard');
-        }
-      } catch (error) {
-        console.error("Session restore failed:", error);
-        // Token is likely invalid, let user log in again.
-      }
-    };
-    restoreSession();
+    const token = localStorage.getItem('authToken');
+    if (token) {
+      // Optionally decode token to get username, or fetch user info from backend
+      // For now, just set a placeholder user
+      setUser('logged-in');
+      setView('dashboard');
+    }
   }, []);
 
   const handleMenuClick = (event) => {
@@ -149,8 +142,8 @@ function App() {
 
                   {user ? (
                     <>
-                      {/* <Button color="inherit" onClick={()=>setView('account')} sx={{ mr:1 }}>Account</Button> */}
-                      {/* <Button
+                      <Button color="inherit" onClick={()=>setView('account')} sx={{ mr:1 }}>Account</Button>
+                      <Button
                         color="inherit"
                         onClick={handleMenuClick}
                         sx={{ mr: 1 }}
@@ -165,8 +158,8 @@ function App() {
                         <MenuItem onClick={() => handleMenuItemClick('dashboard')}>Dashboard</MenuItem>
                         <MenuItem onClick={() => handleMenuItemClick('backtest')}>Backtesting</MenuItem>
                         <MenuItem onClick={() => handleMenuItemClick('operations')}>Operations</MenuItem>
-                      </Menu> */}
-                      <Button color="inherit" onClick={()=>setView('studio')} sx={{ mr:1 }}>Strategy Studio</Button>
+                      </Menu>
+                      <Button color="inherit" onClick={()=>setView('bots')} sx={{ mr:1 }}>Bots</Button>
                       <Button color="inherit" onClick={()=> { setUser(null); setView('landing'); }}>Logout</Button>
                     </>
                   ) : (
@@ -218,15 +211,9 @@ function App() {
               <TradingOperations onNavigate={setView} selectedBot={selectedBot} />
             </div>
           )}
-          {user && view === 'studio' && (
+          {user && view === 'bots' && (
             <div style={{ padding: '24px' }}>
-              <BotsPage 
-                onNavigate={setView} 
-                onSelectBot={handleSelectBot} 
-                selectedBot={selectedBot}
-                userId={user.id}
-                authToken={localStorage.getItem('authToken')}
-              />
+              <BotsPage onNavigate={setView} onSelectBot={handleSelectBot} selectedBot={selectedBot} />
             </div>
           )}
           {user && view === 'developBot' && (
