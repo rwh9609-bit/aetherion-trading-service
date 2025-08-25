@@ -20,23 +20,19 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-// authServer implements the AuthService defined in protobufs.
-// NOTE: In-memory user store & unsalted SHA-256 hashing for demo purposes only.
-// Extend userStore interface
 type userStore interface {
-	CreateUser(ctx context.Context, username, email, pwHash string) error
+	CreateUser(ctx context.Context, username, email, pwHash, role string) error
 	GetUserHash(ctx context.Context, username string) (string, error)
 	GetUser(ctx context.Context, username string) (*pb.UserInfo, error)
+	GetUserRole(ctx context.Context, username string) (string, error)
 }
-
-// context key for user hash
-type ctxKeyUserHash struct{}
 
 // memUserStore implements userStore in-memory
 type memUserStore struct {
 	users map[string]struct {
 		Email string
 		Hash  string
+		Role  string
 	}
 }
 
@@ -44,18 +40,33 @@ func newMemUserStore() *memUserStore {
 	return &memUserStore{users: make(map[string]struct {
 		Email string
 		Hash  string
+		Role  string
 	})}
 }
-func (m *memUserStore) CreateUser(_ context.Context, u, email, h string) error {
+
+func (m *memUserStore) CreateUser(_ context.Context, u, email, h, role string) error {
 	if _, ok := m.users[u]; ok {
 		return fmt.Errorf("exists")
 	}
 	m.users[u] = struct {
 		Email string
 		Hash  string
-	}{Email: email, Hash: h}
+		Role  string
+	}{Email: email, Hash: h, Role: role}
 	return nil
 }
+
+func (m *memUserStore) GetUserRole(_ context.Context, username string) (string, error) {
+	v, ok := m.users[username]
+	if !ok {
+		return "", fmt.Errorf("notfound")
+	}
+	return v.Role, nil
+}
+
+// context key for user hash
+type ctxKeyUserHash struct{}
+
 func (m *memUserStore) GetUserHash(_ context.Context, u string) (string, error) {
 	v, ok := m.users[u]
 	if !ok {
@@ -88,6 +99,7 @@ func newPgUserStore(ctx context.Context, dsn string) (*pgUserStore, error) {
         username TEXT UNIQUE NOT NULL,
         email TEXT,
         password_hash TEXT NOT NULL,
+		role TEXT NOT NULL DEFAULT 'user',
         created_at TIMESTAMPTZ DEFAULT now()
     )`)
 	if err != nil {
@@ -98,9 +110,9 @@ func newPgUserStore(ctx context.Context, dsn string) (*pgUserStore, error) {
 }
 
 // Update CreateUser to use UUID
-func (p *pgUserStore) CreateUser(ctx context.Context, username, email, pwHash string) error {
+func (p *pgUserStore) CreateUser(ctx context.Context, username, email, pwHash string, role string) error {
 	id := uuid.New().String()
-	_, err := p.db.Exec(ctx, `INSERT INTO users (id, username, email, password_hash) VALUES ($1,$2,$3,$4)`, id, username, email, pwHash)
+	_, err := p.db.Exec(ctx, `INSERT INTO users (id, username, email, password_hash, role) VALUES ($1,$2,$3,$4,$5)`, id, username, email, pwHash, role)
 	if err != nil {
 		if strings.Contains(err.Error(), "duplicate") {
 			return fmt.Errorf("exists")
@@ -185,55 +197,64 @@ func verifyPassword(hashed, pw string) bool {
 	return bcrypt.CompareHashAndPassword([]byte(hashed), []byte(pw)) == nil
 }
 
-// In Register, after creating user, get their UUID and use it in JWT
 func (a *authServer) Register(ctx context.Context, req *pb.RegisterRequest) (*pb.AuthResponse, error) {
 	if req.GetUsername() == "" || req.GetPassword() == "" || req.GetEmail() == "" {
 		return &pb.AuthResponse{Success: false, Message: "username, password, and email required"}, nil
 	}
-	if err := a.store.CreateUser(ctx, req.Username, req.Email, hashPassword(req.Password)); err != nil {
+	// Always create as "user" unless you want to allow specifying
+	if err := a.store.CreateUser(ctx, req.Username, req.Email, hashPassword(req.Password), "user"); err != nil {
 		if err.Error() == "exists" {
 			return &pb.AuthResponse{Success: false, Message: "user exists"}, nil
 		}
 		return &pb.AuthResponse{Success: false, Message: err.Error()}, nil
 	}
 	// Get UUID for JWT
-	var userID string
+	var userID, role string
 	if pgStore, ok := a.store.(*pgUserStore); ok {
 		userID, _ = pgStore.GetUserByUsername(ctx, req.Username)
+		role, _ = pgStore.GetUserRole(ctx, req.Username)
+	} else if memStore, ok := a.store.(*memUserStore); ok {
+		userID = req.Username
+		role, _ = memStore.GetUserRole(ctx, req.Username)
 	} else {
-		userID = req.Username // fallback for mem store
+		userID = req.Username
+		role = "user"
 	}
 	exp := time.Now().Add(1 * time.Hour)
-	claims := jwt.MapClaims{"sub": userID, "exp": exp.Unix()}
+	claims := jwt.MapClaims{"sub": userID, "exp": exp.Unix(), "role": role}
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	signed, err := token.SignedString(a.secret)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "token signing failed: %v", err)
 	}
-	return &pb.AuthResponse{Success: true, Message: "registered", Token: signed, ExpiresAtUnix: exp.Unix()}, nil
+	return &pb.AuthResponse{Success: true, Message: "registered", Token: signed, ExpiresAtUnix: exp.Unix(), Role: role}, nil
 }
 
-// In Login, get UUID by username and use it in JWT
 func (a *authServer) Login(ctx context.Context, req *pb.AuthRequest) (*pb.AuthResponse, error) {
 	stored, err := a.store.GetUserHash(ctx, req.Username)
 	if err != nil || !verifyPassword(stored, req.Password) {
 		return &pb.AuthResponse{Success: false, Message: "invalid credentials"}, nil
 	}
-	var userID string
+	var userID, role string
 	if pgStore, ok := a.store.(*pgUserStore); ok {
 		userID, _ = pgStore.GetUserByUsername(ctx, req.Username)
+		role, _ = pgStore.GetUserRole(ctx, req.Username)
+	} else if memStore, ok := a.store.(*memUserStore); ok {
+		userID = req.Username
+		role, _ = memStore.GetUserRole(ctx, req.Username)
 	} else {
-		userID = req.Username // fallback for mem store
+		userID = req.Username
+		role = "user"
 	}
 	exp := time.Now().Add(1 * time.Hour)
-	claims := jwt.MapClaims{"sub": userID, "exp": exp.Unix()}
+	claims := jwt.MapClaims{"sub": userID, "exp": exp.Unix(), "role": role}
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	signed, err := token.SignedString(a.secret)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "token signing failed: %v", err)
 	}
 	log.Printf("[Login] Generated JWT token for user: %s", req.Username)
-	return &pb.AuthResponse{Success: true, Message: "ok", Token: signed, ExpiresAtUnix: exp.Unix()}, nil
+	return &pb.AuthResponse{Success: true, Message: "ok", Token: signed, ExpiresAtUnix: exp.Unix(), Role: role}, nil
 }
 
 // Add GetUser handler to authServer
@@ -243,6 +264,15 @@ func (a *authServer) GetUser(ctx context.Context, req *pb.GetUserRequest) (*pb.U
 		return nil, status.Error(codes.NotFound, "user not found")
 	}
 	return user, nil
+}
+
+func (p *pgUserStore) GetUserRole(ctx context.Context, username string) (string, error) {
+	var role string
+	err := p.db.QueryRow(ctx, `SELECT role FROM users WHERE username=$1`, username).Scan(&role)
+	if err != nil {
+		return "", fmt.Errorf("notfound")
+	}
+	return role, nil
 }
 
 func authUnaryInterceptor(secret []byte) grpc.UnaryServerInterceptor {
