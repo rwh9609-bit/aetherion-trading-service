@@ -5,8 +5,7 @@ import TradingDashboard from './components/TradingDashboard';
 import TradingOperations from './components/TradingOperations';
 import BotsFreePage from './components/BotsFreePage';
 import DevelopBotPage from './components/DevelopBotPage';
-import AboutPage from './components/AboutPage';
-import ArticlesPage from './components/ArticlesPage';
+import AboutPage from './components/AboutPage'; 
 import ContactPage from './components/ContactPage';
 import NewsPage from './components/NewsPage';
 import Login from './components/Login';
@@ -143,8 +142,7 @@ function App() {
                   Aetherion Trading Engine
                 </Typography>
                 <Box>
-                  <Button color="inherit" onClick={()=>setView('about')} sx={{ mr:1 }}>About</Button>
-                  <Button color="inherit" onClick={()=>setView('articles')} sx={{ mr:1 }}>Articles</Button>
+                  <Button color="inherit" onClick={()=>setView('about')} sx={{ mr:1 }}>About</Button> 
                   <Button color="inherit" onClick={()=>setView('contact')} sx={{ mr:1 }}>Contact</Button>
                   <Button color="inherit" onClick={()=>setView('news')} sx={{ mr:1 }}>News</Button>
 
@@ -244,8 +242,7 @@ function App() {
               />
             </div>
           )}
-          {view === 'about' && <AboutPage />}
-          {view === 'articles' && <ArticlesPage />}
+          {view === 'about' && <AboutPage />} 
           {view === 'contact' && <ContactPage />}
           {view === 'news' && <NewsPage />}
         </div>
