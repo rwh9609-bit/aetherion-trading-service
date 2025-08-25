@@ -2,17 +2,23 @@ import React, { useState, useEffect } from 'react';
 import { Card, CardContent, Typography, Box, CircularProgress } from '@mui/material';
 import { fetchRiskMetrics } from '../services/grpcClient';
 
-const RiskMetrics = () => {
+
+const RiskMetrics = ({ bot }) => {
   const [metrics, setMetrics] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
   useEffect(() => {
+    if (!bot) {
+      setMetrics(null);
+      setLoading(false);
+      return;
+    }
     const fetchMetrics = async () => {
       try {
-        console.log('Fetching risk metrics...');
-        const data = await fetchRiskMetrics();
-        console.log('Risk metrics data:', data);
+        setLoading(true);
+        // Pass bot info to fetchRiskMetrics
+        const data = await fetchRiskMetrics(bot);
         setMetrics({
           valueAtRisk: data.valueAtRisk || 0,
           positionSize: data.positionSize || 0,
@@ -26,7 +32,6 @@ const RiskMetrics = () => {
         });
         setLoading(false);
       } catch (err) {
-        console.error('Error fetching risk metrics:', err);
         setError(err.message);
         setLoading(false);
       }
@@ -36,11 +41,12 @@ const RiskMetrics = () => {
     const interval = setInterval(fetchMetrics, 5000);
 
     return () => clearInterval(interval);
-  }, []);
+  }, [bot]);
 
   if (loading) return <CircularProgress />;
   if (error) return <Typography color="error">{error}</Typography>;
   if (!metrics) return null;
+
 
   return (
     <Card>

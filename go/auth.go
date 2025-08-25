@@ -8,7 +8,7 @@ import (
 	"strings"
 	"time"
 
-	pb "github.com/rwh9609-bit/multilanguage/go/gen"
+	pb "aetherion/gen"
 
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"

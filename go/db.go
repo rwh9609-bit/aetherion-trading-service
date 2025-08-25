@@ -5,10 +5,12 @@ import (
 	"fmt"
 	"time"
 
+	pb "aetherion/gen"
+
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/rs/zerolog/log"
-	pb "github.com/rwh9609-bit/multilanguage/go/gen"
+	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 // DBService provides methods for interacting with the PostgreSQL database.
@@ -47,8 +49,131 @@ func (s *DBService) Close() {
 	log.Info().Msg("Database connection pool closed.")
 }
 
+// --------------------- //
+// - Order Management -- //
+// --------------------- //
+
+// CREATE TABLE IF NOT EXISTS orders (
+//
+//	id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+//	bot_id UUID REFERENCES bots(id) ON DELETE CASCADE,
+//	symbol TEXT NOT NULL,
+//	side TEXT NOT NULL, -- Use 'BUY' or 'SELL'
+//	type TEXT NOT NULL, -- Use 'MARKET', 'LIMIT', 'STOP'
+//	status TEXT NOT NULL, -- Use 'NEW', 'SUBMITTED', etc.
+//	quantity_requested NUMERIC(20, 8) NOT NULL,
+//	quantity_filled NUMERIC(20, 8) DEFAULT 0,
+//	limit_price NUMERIC(20, 8),
+//	stop_price NUMERIC(20, 8),
+//	created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+//	updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+//
+// );
+func (s *DBService) CreateOrder(
+	ctx context.Context,
+	id string,
+	botId string,
+	symbol string,
+	side string,
+	orderType string,
+	status pb.OrderStatus,
+	quantityRequested string,
+	quantityFilled string,
+	limitPrice string,
+	stopPrice string,
+) (string, error) {
+	var returnedId string
+	query := `INSERT INTO orders (id, bot_id, symbol, side, type, status, quantity_requested, quantity_filled, limit_price, stop_price, created_at, updated_at)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+        RETURNING id`
+	err := s.pool.QueryRow(ctx, query, id, botId, symbol, side, orderType, status.String(), quantityRequested, quantityFilled, limitPrice, stopPrice).Scan(&returnedId)
+	if err != nil {
+		log.Error().Err(err).Msg("Failed to create order")
+		return "", fmt.Errorf("failed to create order: %w", err)
+	}
+	log.Info().Str("order_id", returnedId).Msg("Order created successfully")
+	return returnedId, nil
+}
+
+func (s *DBService) GetOrder(ctx context.Context, orderID string) (*pb.Order, error) {
+	var order pb.Order
+	query := `SELECT id, bot_id, symbol, side, type, status, quantity_requested, quantity_filled, limit_price, stop_price, created_at, updated_at
+		FROM orders WHERE id = $1`
+	err := s.pool.QueryRow(ctx, query, orderID).Scan(&order.Id, &order.BotId, &order.Symbol, &order.Side, &order.Type, &order.Status, &order.QuantityRequested, &order.QuantityFilled, &order.LimitPrice, &order.StopPrice, &order.CreatedAt, &order.UpdatedAt)
+	if err != nil {
+		log.Error().Err(err).Str("order_id", orderID).Msg("Failed to get order")
+		return nil, fmt.Errorf("failed to get order: %w", err)
+	}
+	return &order, nil
+}
+
+func (s *DBService) ListOrders(ctx context.Context, botID string, limit, offset int32) ([]*pb.Order, error) {
+	// If botID == "" then return because it can't be empty.
+	if botID == "" {
+		return nil, fmt.Errorf("botID cannot be empty")
+	}
+	var orders []*pb.Order
+	query := `SELECT id, bot_id, symbol, side, type, status, quantity_requested, quantity_filled, limit_price, stop_price, created_at, updated_at
+		FROM orders WHERE bot_id = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3`
+	rows, err := s.pool.Query(ctx, query, botID, limit, offset)
+	if err != nil {
+		log.Error().Err(err).Str("bot_id", botID).Msg("Failed to list orders")
+		return nil, fmt.Errorf("failed to list orders: %w", err)
+	}
+	defer rows.Close()
+	for rows.Next() {
+		var order pb.Order
+		var sideStr, typeStr, statusStr string
+		var quantityRequestedStr, quantityFilledStr, limitPriceStr, stopPriceStr string
+		var createdAt, updatedAt time.Time
+
+		if err := rows.Scan(
+			&order.Id,
+			&order.BotId,
+			&order.Symbol,
+			&sideStr,
+			&typeStr,
+			&statusStr,
+			&quantityRequestedStr,
+			&quantityFilledStr,
+			&limitPriceStr,
+			&stopPriceStr,
+			&createdAt,
+			&updatedAt,
+		); err != nil {
+			log.Error().Err(err).Msg("Failed to scan order")
+			return nil, fmt.Errorf("failed to scan order: %w", err)
+		}
+
+		// Convert string to enum
+		order.Side = pb.OrderSide(pb.OrderSide_value[sideStr])
+		order.Type = pb.OrderType(pb.OrderType_value[typeStr])
+		order.Status = pb.OrderStatus(pb.OrderStatus_value[statusStr])
+
+		// Convert numeric strings to DecimalValue
+		order.QuantityRequested = numericValueToDecimal(quantityRequestedStr)
+		order.QuantityFilled = numericValueToDecimal(quantityFilledStr)
+		order.LimitPrice = numericValueToDecimal(limitPriceStr)
+		order.StopPrice = numericValueToDecimal(stopPriceStr)
+
+		// Convert timestamps
+		order.CreatedAt = timestamppb.New(createdAt)
+		order.UpdatedAt = timestamppb.New(updatedAt)
+
+		orders = append(orders, &order)
+	}
+	if err := rows.Err(); err != nil {
+		log.Error().Err(err).Msg("Failed to iterate orders")
+		return nil, fmt.Errorf("failed to iterate orders: %w", err)
+	}
+	return orders, nil
+}
+
+// ----------------------
 // --- Bot Management ---
-func (s *DBService) CreateBot(ctx context.Context, bot *pb.BotConfig) (string, error) {
+// ----------------------
+
+func (s *DBService) CreateBot(ctx context.Context, bot *pb.Bot) (string, error) {
 	var id string
 	query := `INSERT INTO bots (id, user_id, name, symbol, strategy, parameters, is_active, account_value) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id`
 	err := s.pool.QueryRow(ctx, query, bot.BotId, bot.UserId, bot.Name, bot.Symbol, bot.Strategy, bot.Parameters, bot.IsActive, bot.AccountValue).Scan(&id)
@@ -60,7 +185,6 @@ func (s *DBService) CreateBot(ctx context.Context, bot *pb.BotConfig) (string, e
 	return id, nil
 }
 
-// DeleteBot permanently removes a bot from the database.
 func (s *DBService) DeleteBot(ctx context.Context, botID string) error {
 	query := `DELETE FROM bots WHERE id = $1`
 	_, err := s.pool.Exec(ctx, query, botID)
@@ -72,16 +196,10 @@ func (s *DBService) DeleteBot(ctx context.Context, botID string) error {
 	return nil
 }
 
+// -----------------------
 // --- User Management ---
+// -----------------------
 
-// Postgres implementation
-func (p *pgUserStore) UpdateUser(ctx context.Context, user *User) error {
-	// Example: update password hash
-	_, err := p.db.Exec(ctx, `UPDATE users SET password_hash=$2 WHERE username=$1`, user.Username, user.PasswordHash)
-	return err
-}
-
-// CreateUser inserts a new user into the database using a UUID for the user ID.
 func (s *DBService) CreateUser(ctx context.Context, username, passwordHash string) (string, error) {
 	id := uuid.New().String()
 	query := `INSERT INTO users (id, username, password_hash) VALUES ($1, $2, $3) RETURNING id`
@@ -93,95 +211,54 @@ func (s *DBService) CreateUser(ctx context.Context, username, passwordHash strin
 	return id, nil
 }
 
-// GetUserByUsername retrieves a user by their username.
-func (s *DBService) GetUserByUsername(ctx context.Context, username string) (*User, error) {
-	var user User
-	query := `SELECT id, username, email, password_hash, created_at FROM users WHERE username = $1`
-	err := s.pool.QueryRow(ctx, query, username).Scan(&user.ID, &user.Username, &user.Email, &user.PasswordHash, &user.CreatedAt)
-	if err != nil {
-		log.Error().Err(err).Msg("Failed to get user by username")
-		return nil, fmt.Errorf("failed to get user by username: %w", err)
-	}
-	return &user, nil
-}
+// ---------------------------- //
+// --- Portfolio Management --- //
+// ---------------------------- //
 
-// GetUserByID retrieves a user by their ID.
-func (s *DBService) GetUserByID(ctx context.Context, userID string) (*User, error) {
-	var user User
-	query := `SELECT id, username, email, password_hash, created_at FROM users WHERE id = $1`
-	err := s.pool.QueryRow(ctx, query, userID).Scan(&user.ID, &user.Username, &user.Email, &user.PasswordHash, &user.CreatedAt)
-	if err != nil {
-		log.Error().Err(err).Msg("Failed to get user by ID")
-		return nil, fmt.Errorf("failed to get user by ID: %w", err)
-	}
-	return &user, nil
-}
+// CREATE TABLE IF NOT EXISTS portfolios (
+//     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+//     bot_id UUID REFERENCES bots(id) ON DELETE CASCADE,
+//     symbol TEXT NOT NULL,
+//     quantity NUMERIC(20, 8) NOT NULL,
+//     average_price NUMERIC(20, 8) NOT NULL,
+//     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+//     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+//     UNIQUE(bot_id, symbol)
+// );
 
-// EnsureUserExists checks if a user exists by ID, and creates a placeholder if not.
-// You may want to improve this to set a real username/email if available.
-func (s *DBService) EnsureUserExists(ctx context.Context, userID, username string) error {
-	user, err := s.GetUserByID(ctx, userID)
-	if err == nil && user != nil {
-		return nil // User exists
-	}
-	// Create placeholder user if missing
-	placeholderUsername := username
-	if placeholderUsername == "" {
-		placeholderUsername = "user_" + userID
-	}
-	placeholderPassword := "placeholder" // You may want to hash this
-	query := `INSERT INTO users (id, username, password_hash) VALUES ($1, $2, $3)`
-	_, err = s.pool.Exec(ctx, query, userID, placeholderUsername, placeholderPassword)
-	if err != nil {
-		return fmt.Errorf("failed to create placeholder user: %w", err)
-	}
-	log.Info().Str("user_id", userID).Msg("Created placeholder user for bot/trade")
-	return nil
-}
+// message PortfolioRequest {
+//     string account_id = 1;
+// }
 
-// --- Portfolio Management ---
-
+//	message Portfolio {
+//	    map<string, double> positions = 1;  // Map of symbol to quantity
+//	    double total_value_usd = 2;
+//	    optional double last_price_change = 3;  // Last observed price change percentage
+//	    string bot_id = 4;
+//	}
+//
 // SavePortfolio saves or updates a user's portfolio.
-func (s *DBService) SavePortfolio(ctx context.Context, portfolio *Portfolio) error {
-	query := `
-		INSERT INTO portfolios (id, user_id, symbol, quantity, average_price, updated_at)
-		VALUES ($1, $2, $3, $4, $5, CURRENT_TIMESTAMP)
-		ON CONFLICT (user_id, symbol) DO UPDATE
-		SET quantity = EXCLUDED.quantity,
-			average_price = EXCLUDED.average_price,
-			updated_at = CURRENT_TIMESTAMP
-	`
-	_, err := s.pool.Exec(ctx, query, portfolio.ID, portfolio.UserID, portfolio.Symbol, portfolio.Quantity, portfolio.AveragePrice)
-	if err != nil {
-		log.Error().Err(err).Msg("Failed to save portfolio")
-		return fmt.Errorf("failed to save portfolio: %w", err)
-	}
-	return nil
-}
 
-// GetPortfolioByUserID retrieves a user's portfolio.
-func (s *DBService) GetPortfolioByUserID(ctx context.Context, userID string) ([]*Portfolio, error) {
-	var portfolios []*Portfolio
-	query := `SELECT id, user_id, symbol, quantity, average_price, created_at, updated_at FROM portfolios WHERE user_id = $1`
-	rows, err := s.pool.Query(ctx, query, userID)
-	if err != nil {
-		log.Error().Err(err).Msg("Failed to get portfolio by user ID")
-		return nil, fmt.Errorf("failed to get portfolio by user ID: %w", err)
-	}
-	defer rows.Close()
+// func (s *DBService) SavePortfolio(ctx context.Context, portfolio *pb.Portfolio) error {
+// 	query := `
+// 		INSERT INTO portfolios (id, bot_id, symbol, quantity, average_price, created_at, updated_at)
+// 		VALUES ($1, $2, $3, $4, $5, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+// 		ON CONFLICT (bot_id, symbol) DO UPDATE
+// 		SET quantity = EXCLUDED.quantity,
+// 			average_price = EXCLUDED.average_price,
+// 			updated_at = CURRENT_TIMESTAMP
+// 	`
+// 	_, err := s.pool.Exec(ctx, query, portfolio.Positions, portfolio.TotalValueUsd, portfolio.LastPriceChange, portfolio.BotId)
+// 	if err != nil {
+// 		log.Error().Err(err).Msg("Failed to save portfolio")
+// 		return fmt.Errorf("failed to save portfolio: %w", err)
+// 	}
+// 	return nil
+// }
 
-	for rows.Next() {
-		var p Portfolio
-		if err := rows.Scan(&p.ID, &p.UserID, &p.Symbol, &p.Quantity, &p.AveragePrice, &p.CreatedAt, &p.UpdatedAt); err != nil {
-			log.Error().Err(err).Msg("Failed to scan portfolio row")
-			return nil, fmt.Errorf("failed to scan portfolio row: %w", err)
-		}
-		portfolios = append(portfolios, &p)
-	}
-	return portfolios, nil
-}
-
-// --- Strategy Management ---
+// --------------------------- //
+// --- Strategy Management --- //
+// --------------------------- //
 
 // SaveStrategy saves a new strategy or updates an existing one.
 func (s *DBService) SaveStrategy(ctx context.Context, strategy *Strategy) (string, error) {
@@ -239,15 +316,38 @@ func (s *DBService) GetStrategiesByUserID(ctx context.Context, userID string) ([
 	return strategies, nil
 }
 
-// --- Trade History ---
+// --------------------- //
+// --- Trade History --- //
+// --------------------- //
+
+// 	CREATE TABLE IF NOT EXISTS trades (
+//     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+//     bot_id UUID REFERENCES bots(id) ON DELETE CASCADE,
+//     symbol TEXT NOT NULL,
+//     side TEXT NOT NULL,
+//     quantity NUMERIC(20, 8) NOT NULL,
+//     price NUMERIC(20, 8) NOT NULL,
+//     executed_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+// );
+// message Trade {
+//     string trade_id = 1;
+//     string symbol = 2;
+//     string side = 3;
+//     double quantity = 4;
+//     double price = 5;
+//     int64 executed_at = 6;
+//     string strategy_id = 7;
+//     string bot_id = 8;
+// }
 
 // RecordTrade inserts a new trade record.
-func (s *DBService) RecordTrade(ctx context.Context, trade *Trade) error {
+func (s *DBService) RecordTrade(ctx context.Context, trade *pb.Trade) error {
 	query := `
-		INSERT INTO trades (id, user_id, strategy_id, symbol, side, quantity, price, pnl)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+		INSERT INTO trades (id, bot_id, symbol, side, quantity, price, executed_at)
+		VALUES ($1, $2, $3, $4, $5, $6, $7)
 	`
-	_, err := s.pool.Exec(ctx, query, trade.ID, trade.UserID, trade.StrategyID, trade.Symbol, trade.Side, trade.Quantity, trade.Price, trade.PnL)
+
+	_, err := s.pool.Exec(ctx, query, trade.TradeId, trade.Symbol, trade.Side, trade.Quantity, trade.Price, trade.ExecutedAt, trade.StrategyId, trade.BotId)
 	if err != nil {
 		log.Error().Err(err).Msg("Failed to record trade")
 		return fmt.Errorf("failed to record trade: %w", err)
@@ -255,58 +355,26 @@ func (s *DBService) RecordTrade(ctx context.Context, trade *Trade) error {
 	return nil
 }
 
-// GetTradesByUserID retrieves trade history for a user.
-func (s *DBService) GetTradesByUserID(ctx context.Context, userID string) ([]*Trade, error) {
-	if userID == "" {
-		return nil, fmt.Errorf("userID cannot be empty")
+func (s *DBService) GetTradesByBotID(ctx context.Context, botID string) ([]*pb.Trade, error) {
+	if botID == "" {
+		return nil, fmt.Errorf("botID cannot be empty")
 	}
-	var trades []*Trade
-	query := `SELECT id, user_id, strategy_id, symbol, side, quantity, price, executed_at, pnl FROM trades WHERE user_id = $1 ORDER BY executed_at DESC`
-	rows, err := s.pool.Query(ctx, query, userID)
+	var trades []*pb.Trade
+	query := `SELECT id, bot_id, symbol, side, quantity, price, executed_at FROM trades WHERE bot_id = $1 ORDER BY executed_at DESC`
+	rows, err := s.pool.Query(ctx, query, botID)
 	if err != nil {
-		log.Error().Err(err).Msg("Failed to get trades by user ID")
-		return nil, fmt.Errorf("failed to get trades by user ID: %w", err)
+		log.Error().Err(err).Msg("Failed to get trades by bot ID")
+		return nil, fmt.Errorf("failed to get trades by bot ID: %w", err)
 	}
 	defer rows.Close()
 
 	for rows.Next() {
-		var t Trade
-		if err := rows.Scan(&t.ID, &t.UserID, &t.StrategyID, &t.Symbol, &t.Side, &t.Quantity, &t.Price, &t.ExecutedAt, &t.PnL); err != nil {
+		var t pb.Trade
+		if err := rows.Scan(&t.TradeId, &t.BotId, &t.Symbol, &t.Side, &t.Quantity, &t.Price, &t.ExecutedAt); err != nil {
 			log.Error().Err(err).Msg("Failed to scan trade row")
 			return nil, fmt.Errorf("failed to scan trade row: %w", err)
 		}
 		trades = append(trades, &t)
 	}
 	return trades, nil
-}
-
-// Define structs for database models (these should ideally be in a separate models.go file)
-type User struct {
-	ID           string
-	Username     string
-	Email        string
-	PasswordHash string
-	CreatedAt    time.Time
-}
-
-type Portfolio struct {
-	ID           string
-	UserID       string
-	Symbol       string
-	Quantity     float64
-	AveragePrice float64
-	CreatedAt    time.Time
-	UpdatedAt    time.Time
-}
-
-type Trade struct {
-	ID         string
-	UserID     string
-	StrategyID string // Nullable
-	Symbol     string
-	Side       string
-	Quantity   float64
-	Price      float64
-	ExecutedAt time.Time
-	PnL        float64 // Nullable
 }

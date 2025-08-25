@@ -6,11 +6,10 @@ import (
 	"log"
 	"os"
 	"path/filepath"
-	"strings"
 	"sync"
 	"time"
 
-	pb "github.com/rwh9609-bit/multilanguage/go/gen"
+	pb "aetherion/gen"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
@@ -18,13 +17,13 @@ import (
 
 type botRegistry struct {
 	mu   sync.RWMutex
-	bots map[string]*pb.BotConfig
+	bots map[string]*pb.Bot
 	path string
 	pg   *pgx.Conn
 }
 
 func newBotRegistry() *botRegistry {
-	r := &botRegistry{bots: make(map[string]*pb.BotConfig)}
+	r := &botRegistry{bots: make(map[string]*pb.Bot)}
 	dsn := os.Getenv("POSTGRES_DSN")
 	if dsn != "" {
 		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
@@ -86,7 +85,7 @@ func (r *botRegistry) loadFromPg(ctx context.Context) {
 		_ = json.Unmarshal(paramsBytes, &m)
 		// Need to get real UserId for this.
 		// This is what actually sets bot's account value. Initially it seems to be docker compose.
-		r.bots[id] = &pb.BotConfig{BotId: id, Name: name, Symbol: symbol, Strategy: strategy, Parameters: m, IsActive: active, UserId: userID, CreatedAtUnixMs: created, AccountValue: 1000007}
+		r.bots[id] = &pb.Bot{BotId: id, Name: name, Symbol: symbol, Strategy: strategy, Parameters: m, IsActive: active, UserId: userID, CreatedAtUnixMs: created, AccountValue: 1000007}
 	}
 }
 
@@ -95,7 +94,7 @@ func (r *botRegistry) loadFromFile() {
 	if err != nil {
 		return
 	}
-	var arr []*pb.BotConfig
+	var arr []*pb.Bot
 	if err := json.Unmarshal(b, &arr); err != nil {
 		log.Printf("bot registry load error: %v", err)
 		return
@@ -104,50 +103,6 @@ func (r *botRegistry) loadFromFile() {
 	defer r.mu.Unlock()
 	for _, bot := range arr {
 		r.bots[bot.BotId] = bot
-	}
-}
-
-func (r *botRegistry) persist() {
-	if r.pg != nil {
-		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-		defer cancel()
-		log.Printf("persisting %d bots to pg", len(r.bots))
-		for _, b := range r.bots {
-			paramsJSON, _ := json.Marshal(b.Parameters)
-			log.Printf("persisting bot %s to pg", b.BotId)
-			// Provide created_at and updated_at as Unix timestamps
-			created := b.CreatedAtUnixMs / 1000 // convert ms to seconds
-			updated := time.Now().Unix()        // current time as updated_at
-			_, err := r.pg.Exec(ctx, `INSERT INTO bots (id, user_id, name, symbol, strategy, parameters, is_active, created_at, updated_at, account_value)
-                VALUES ($1,$2,$3,$4,$5,$6,$7,to_timestamp($8),to_timestamp($9), $10)
-                ON CONFLICT (id) DO UPDATE SET
-                    name=EXCLUDED.name,
-                    symbol=EXCLUDED.symbol,
-                    strategy=EXCLUDED.strategy,
-                    parameters=EXCLUDED.parameters,
-                    is_active=EXCLUDED.is_active,
-                    updated_at=EXCLUDED.updated_at,
-					account_value=EXCLUDED.account_value`,
-				b.BotId, b.UserId, b.Name, b.Symbol, b.Strategy, string(paramsJSON), b.IsActive, created, updated, b.AccountValue)
-			if err != nil && !strings.Contains(err.Error(), "duplicate") {
-				log.Printf("bot upsert err: %v", err)
-			}
-		}
-		return
-	}
-	r.mu.RLock()
-	defer r.mu.RUnlock()
-	arr := make([]*pb.BotConfig, 0, len(r.bots))
-	for _, b := range r.bots {
-		arr = append(arr, b)
-	}
-	data, err := json.MarshalIndent(arr, "", "  ")
-	if err != nil {
-		log.Printf("bot registry marshal err: %v", err)
-		return
-	}
-	if err := os.WriteFile(r.path, data, 0o644); err != nil {
-		log.Printf("bot registry write err: %v", err)
 	}
 }
 
@@ -180,60 +135,50 @@ func (s *botServiceServer) DeleteBot(ctx context.Context, req *pb.BotIdRequest) 
 		}
 	}
 	delete(s.reg.bots, req.GetBotId())
-	s.reg.persist()
 	log.Printf("[DeleteBot] Bot %s deleted", bot.Name)
 	return &pb.StatusResponse{Success: true, Message: "bot deleted"}, nil
 }
 
 func (s *botServiceServer) CreateBot(ctx context.Context, req *pb.CreateBotRequest) (*pb.StatusResponse, error) {
-	log.Printf("[CreateBot] Handler entered")
-	if req.GetName() == "" || req.GetSymbol() == "" || req.GetStrategy() == "" {
-		log.Printf("[CreateBot] Missing required fields: Name=%s, Symbol=%s, Strategy=%s", req.GetName(), req.GetSymbol(), req.GetStrategy())
+	if req.GetName() == "" {
 		return &pb.StatusResponse{Success: false, Message: "name, symbol, strategy required"}, nil
 	}
-	log.Printf("[CreateBot] Received request: Name=%s, Symbol=%s, Strategy=%s, Parameters=%v, UserId=%s", req.GetName(), req.GetSymbol(), req.GetStrategy(), req.GetParameters(), ctx.Value("user_id"))
 
+	// Generate a new bot ID
 	id := uuid.New().String()
+
+	// Extract user ID from context (set by auth interceptor)
 	userID, ok := ctx.Value("user_id").(string)
 	if !ok || userID == "" {
 		log.Printf("[CreateBot] user_id missing from context")
 		return &pb.StatusResponse{Success: false, Message: "auth required"}, nil
 	}
+
 	// Validate userID is a UUID
 	if _, err := uuid.Parse(userID); err != nil {
 		log.Printf("[CreateBot] user_id is not a valid UUID: %s", userID)
 		return &pb.StatusResponse{Success: false, Message: "user_id must be a valid UUID"}, nil
 	}
 
-	// Ensure user exists in DB
-	if s.dbclient != nil {
-		err := s.dbclient.EnsureUserExists(ctx, userID, userID)
-		if err != nil {
-			log.Printf("[CreateBot] Failed to ensure user exists: %v", err)
-			return &pb.StatusResponse{Success: false, Message: "user_id does not exist and could not be created"}, nil
-		}
-	}
-
-	log.Printf("[CreateBot] Generated new bot ID: %s for user: %s", id, userID)
-
+	// Set default parameters if not provided
 	params := req.GetParameters()
 	if params == nil {
 		params = map[string]string{}
 	}
 
-	// Add entry to the database
 	if s.dbclient != nil {
-		_, err := s.dbclient.CreateBot(ctx, &pb.BotConfig{
+		_, err := s.dbclient.CreateBot(ctx, &pb.Bot{
 			BotId:           id,
-			UserId:          userID,
-			Name:            req.GetName(),
 			Symbol:          req.GetSymbol(),
 			Strategy:        req.GetStrategy(),
 			Parameters:      params,
 			IsActive:        false,
+			Name:            req.GetName(),
+			UserId:          userID,
+			AccountValue:    req.GetAccountValue(), // <-- use this instead
 			CreatedAtUnixMs: time.Now().UnixMilli(),
-			AccountValue:    1000006,
 		})
+
 		log.Printf("[CreateBot] Added bot to database with ID: %s", id)
 		if err != nil {
 			log.Printf("[CreateBot] Error adding bot to database: %v", err)
@@ -241,16 +186,33 @@ func (s *botServiceServer) CreateBot(ctx context.Context, req *pb.CreateBotReque
 		}
 	}
 
-	bot := &pb.BotConfig{BotId: id, Name: req.GetName(), Symbol: req.GetSymbol(), Strategy: req.GetStrategy(), Parameters: params, IsActive: false}
+	// Create bot entry in registry
+	bot := &pb.Bot{BotId: id, Name: req.GetName(), Symbol: req.GetSymbol(), Strategy: req.GetStrategy(), Parameters: params, IsActive: false}
+
+	// Add bot to registry
 	s.reg.mu.Lock()
 	s.reg.bots[id] = bot
 	s.reg.mu.Unlock()
-	s.reg.persist()
+
+	// Persist to file if using file storage
+	// if s.dbclient != nil {
+	// 	portfolio := &pb.Portfolio{
+	// 		Positions:     make(map[string]float64),
+	// 		TotalValueUsd: req.GetAccountValue(),
+	// 		BotId:         id,
+	// 	}
+	// 	if err := s.dbclient.SavePortfolio(ctx, portfolio); err != nil {
+	// 		log.Printf("[CreateBot] Error creating portfolio in database: %v", err)
+	// 		return &pb.StatusResponse{Success: false, Message: err.Error()}, nil
+	// 	}
+	// }
+
+	// Return success response
 	return &pb.StatusResponse{Success: true, Message: "bot created", Id: id}, nil
 }
 
 func (s *botServiceServer) ListBots(ctx context.Context, _ *pb.Empty) (*pb.BotList, error) {
-	log.Printf("[ListBots] Received request to list bots")
+	// log.Printf("[ListBots] Received request to list bots")
 	out := &pb.BotList{}
 	s.reg.mu.RLock()
 	for _, b := range s.reg.bots {
@@ -284,9 +246,6 @@ func (s *botServiceServer) StartBot(ctx context.Context, req *pb.BotIdRequest) (
 	bot.IsActive = true
 	bot.Parameters["strategy_id"] = resp.Id
 	s.reg.mu.Unlock()
-	log.Printf("[StartBot] Bot %s IsActive set to true. Persisting...", bot.Name)
-	s.reg.persist()
-	log.Printf("[StartBot] Bot %s persisted. New IsActive: %t", bot.Name, bot.IsActive)
 
 	return &pb.StatusResponse{Success: true, Message: "bot started", Id: bot.BotId}, nil
 }
@@ -305,16 +264,16 @@ func (s *botServiceServer) StopBot(ctx context.Context, req *pb.BotIdRequest) (*
 	s.reg.mu.Lock()
 	bot.IsActive = false
 	s.reg.mu.Unlock()
-	s.reg.persist()
+
 	return &pb.StatusResponse{Success: true, Message: "bot stopped", Id: bot.BotId}, nil
 }
 
-func (s *botServiceServer) GetBotStatus(ctx context.Context, req *pb.BotIdRequest) (*pb.BotConfig, error) {
+func (s *botServiceServer) GetBotStatus(ctx context.Context, req *pb.BotIdRequest) (*pb.Bot, error) {
 	s.reg.mu.RLock()
 	bot, ok := s.reg.bots[req.GetBotId()]
 	s.reg.mu.RUnlock()
 	if !ok {
-		return &pb.BotConfig{}, nil
+		return &pb.Bot{}, nil
 	}
 	return bot, nil
 }
