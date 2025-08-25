@@ -89,8 +89,8 @@ services:
       context: .
       dockerfile: Dockerfile.frontend
       args:
-        REACT_APP_GRPC_HOST: https://api.aetherion.cloud
-        # REACT_APP_GRPC_HOST: http://localhost:8080
+        # REACT_APP_GRPC_HOST: https://api.aetherion.cloud
+        REACT_APP_GRPC_HOST: http://localhost:8080
         REACT_APP_STRIPE_PRICE_ID_MONTHLY: ${REACT_APP_STRIPE_PRICE_ID_MONTHLY}
         REACT_APP_STRIPE_PRICE_ID_YEARLY: ${REACT_APP_STRIPE_PRICE_ID_YEARLY}
         REACT_APP_STRIPE_PUBLISHABLE_KEY: ${REACT_APP_STRIPE_PUBLISHABLE_KEY}
