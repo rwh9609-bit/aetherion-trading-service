@@ -4,6 +4,7 @@ import OhlcPriceChart from './OhlcPriceChart';
 import CryptoScanner from './CryptoScanner';
 import ServerMomentum from './ServerMomentum';
 import SymbolManager from './SymbolManager';
+import RiskMetrics from './RiskMetrics';
 import RecentOrders from './RecentOrders';
 import { listSymbols, handleGrpcError } from '../services/grpcClient';
 
@@ -57,19 +58,33 @@ const TradingDashboard = ({ user, selectedBot, setUser, setView }) => {
   };
 
   return (
-    <Container maxWidth={false} sx={{ mt:4, mb:4 }}>
+    <Container maxWidth={false} sx={{ mt:4, mb:4 }}> 
       {selectedBot && (
-        <Box sx={{ mb: 3, p: 2, border: '1px solid rgba(255,255,255,0.1)', borderRadius: 1 }}>
-          <Typography variant="h6" gutterBottom>Selected Bot:</Typography>
-          <Typography variant="body1"><strong>Name:</strong> {selectedBot.name}</Typography>
-          <Typography variant="body1"><strong>Symbol:</strong> {selectedBot.symbol}</Typography>
-          <Typography variant="body1"><strong>Strategy:</strong> {selectedBot.strategy}</Typography>
-          <Typography variant="body1"><strong>Status:</strong> {selectedBot.isActive ? 'Running' : 'Stopped'}</Typography>
+        <Box sx={{ mb: 3, p: 2, border: '1px solid rgba(255,255,255,0.1)', borderRadius: 1, display: 'flex', gap: 4 }}>
+          <Box>
+            <Typography variant="h6" gutterBottom>Selected Bot:</Typography>
+            <Typography variant="body1"><strong>Name:</strong> {selectedBot.name}</Typography>
+            <Typography variant="body1"><strong>Symbol:</strong> {selectedBot.symbol}</Typography>
+            <Typography variant="body1"><strong>Strategy:</strong> {selectedBot.strategy}</Typography>
+            <Typography variant="body1"><strong>Status:</strong> {selectedBot.isActive ? 'Running' : 'Stopped'}</Typography>
+            <Typography variant="body1"><strong>Bot ID:</strong> {selectedBot.botId}</Typography>
+            {selectedBot.account_value !== undefined && (
+              <Typography variant="body1"><strong>Account Value:</strong> {selectedBot.account_value}</Typography>
+            )}
+          </Box>
+          <Box>
+              {selectedBot && (
+                <RiskMetrics bot={selectedBot} />
+              )}
+          </Box>
         </Box>
       )}
-
+ 
+      
       <Box>
-        <RecentOrders user={user} bot={selectedBot} />
+        {selectedBot && (
+          <RecentOrders user={user} bot={selectedBot} limit={5} />
+        )}
       </Box>
       <Box sx={{ display:'grid', gap:3, gridTemplateColumns: { xs:'1fr' }, alignItems:'start' }}>
         <Box sx={{ gridColumn:'1 / -1', display:'flex', flexDirection:'column', gap:1 }}>

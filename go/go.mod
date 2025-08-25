@@ -11,6 +11,7 @@ require (
 	github.com/jackc/pgx/v5 v5.7.5
 	github.com/rs/cors v1.11.1
 	github.com/rs/zerolog v1.33.0
+	github.com/stripe/stripe-go/v72 v72.122.0
 	golang.org/x/crypto v0.41.0
 	google.golang.org/grpc v1.67.0
 	google.golang.org/protobuf v1.34.2

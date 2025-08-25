@@ -56,16 +56,16 @@ export { portfolioClient };
 const orderClient = new OrderServiceClient(host, null, {...options, format: 'text'});
 export { orderClient };
 
+const MAX_RETRIES = 5;
+const RETRY_DELAY = 2000; // 2 seconds
+const TIMEOUT = 60000; // 60 seconds
+const BACKOFF_FACTOR = 1.5; // Exponential backoff factor
+
 //////////////////////////////////
 //                              //
 //     Utility Functions        //
 //                              //
 //////////////////////////////////
-
-const MAX_RETRIES = 5;
-const RETRY_DELAY = 2000; // 2 seconds
-const TIMEOUT = 60000; // 60 seconds
-const BACKOFF_FACTOR = 1.5; // Exponential backoff factor
 
 export const handleGrpcError = (err, setUser, setView) => {
   // gRPC Unauthenticated error code is 16
@@ -89,6 +89,12 @@ const createMetadata = () => {
   return meta;
 };
 export { createMetadata };
+
+// Helper to convert DecimalValue to JS number
+function decimalToNumber(decimal) {
+  if (!decimal) return 0;
+  return Number(decimal.units || 0) + Number(decimal.nanos || 0) / 1e9;
+}
 
 //////////////////////////////////
 //                              //
@@ -176,29 +182,45 @@ const withRetry = async (operation, operationName = 'Operation', retries = MAX_R
 //     Risk Management          //
 //                              //
 //////////////////////////////////
-
-export const fetchRiskMetrics = async () => {
-  console.log('Fetching risk metrics');
-  return withRetry(async () => {
-    const request = new VaRRequest();
-    request.setCurrentPortfolio(portfolioClient.PortfolioRequest);
-    request.setRiskModel('monte_carlo'); 
-    request.setConfidenceLevel(0.95);
-    request.setHorizonDays(1.0);
-
+ 
+  // Fetch portfolio for a bot using PortfolioService
+  async function getPortfolioForBot(bot_id) {
+    const req = new PortfolioRequest();
+    req.setBotId(bot_id);
     return new Promise((resolve, reject) => {
-      riskClient.calculateVaR(request, createMetadata(), (err, response) => {
-        if (err) {
-          console.error('Error fetching risk metrics:', err);
-          reject(err);
-          return;
-        }
-        resolve(response.toObject());
+      portfolioClient.getPortfolio(req, createMetadata(), (err, resp) => {
+        if (err) return reject(err);
+        resolve(resp);
       });
     });
-  }, 'Fetch Risk Metrics');
-};
+  }
 
+export async function fetchRiskMetrics(bot) {
+  if (!bot) return {};
+  // Fetch the bot's portfolio first
+  const portfolioResp = await getPortfolioForBot(bot.bot_id);
+  // VaRRequest expects a PortfolioResponse message
+  const varReq = new VaRRequest();
+  varReq.setCurrentPortfolio(portfolioResp);
+  varReq.setRiskModel("monte_carlo");
+  varReq.setConfidenceLevel(0.95);
+  varReq.setHorizonDays(1.0);
+
+  return new Promise((resolve, reject) => {
+    riskClient.calculateVaR(varReq, createMetadata(), (err, resp) => {
+      if (err) return reject(err);
+      const obj = resp.toObject();
+      resolve({
+        valueAtRisk: decimalToNumber(obj.valueAtRisk),
+        assetNames: obj.assetNamesList,
+        correlationMatrix: obj.correlationMatrixList,
+        volatilityPerAsset: obj.volatilityPerAssetList,
+        simulationMode: obj.simulationMode,
+        lastUpdate: obj.lastUpdate,
+      });
+    });
+  });
+}
 //////////////////////////////////
 //                              //
 //     Bot Service Helpers      //

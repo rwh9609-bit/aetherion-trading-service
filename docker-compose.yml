@@ -21,6 +21,8 @@ services:
       - LOG_LEVEL=${LOG_LEVEL}
       - REQUEST_TIMEOUT=${REQUEST_TIMEOUT}
       - POSTGRES_DSN=postgres://user:password@postgres:5432/aetherion?sslmode=disable
+      - REACT_APP_STRIPE_PRICE_ID_MONTHLY=${REACT_APP_STRIPE_PRICE_ID_MONTHLY}
+      - REACT_APP_STRIPE_PRICE_ID_YEARLY=${REACT_APP_STRIPE_PRICE_ID_YEARLY}
     depends_on:
       - risk
       - postgres
@@ -32,7 +34,10 @@ services:
     restart: unless-stopped
     expose:
       - "50051"
-  
+      - "8081"
+    ports:
+      - "8081:8081"
+
   postgres:
     image: postgres:16-alpine
     restart: unless-stopped
@@ -56,6 +61,8 @@ services:
       dockerfile: Dockerfile
     environment:
       - AUTH_SECRET=${AUTH_SECRET}
+      - STRIPE_API_KEY=${STRIPE_API_KEY}
+      - STRIPE_WEBHOOK_SECRET=${STRIPE_WEBHOOK_SECRET}
     expose:
       - "8000"
     ports:
@@ -77,7 +84,7 @@ services:
     ports:
       - "443:443"
       - "80:80"
-      - "8080:8080"   # <-- Add this line for gRPC
+      - "8080:8080"
     restart: unless-stopped
     environment:
       - ENVOY_UID=1337
@@ -88,6 +95,9 @@ services:
       args:
         # REACT_APP_GRPC_HOST: https://api.aetherion.cloud
         REACT_APP_GRPC_HOST: http://localhost:8080
+        REACT_APP_STRIPE_PRICE_ID_MONTHLY: ${REACT_APP_STRIPE_PRICE_ID_MONTHLY}
+        REACT_APP_STRIPE_PRICE_ID_YEARLY: ${REACT_APP_STRIPE_PRICE_ID_YEARLY}
+        REACT_APP_STRIPE_PUBLISHABLE_KEY: ${REACT_APP_STRIPE_PUBLISHABLE_KEY}
     ports:
       - "3000:80"
     depends_on:

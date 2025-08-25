@@ -412,3 +412,45 @@ message StrategyRequest {
     map<string, string> parameters = 3;
     string user_id = 4;
 }
+
+// =================================================================
+// SUBSCRIPTION SERVICE
+// =================================================================
+
+service SubscriptionService {
+    rpc GetProducts(Empty) returns (GetProductsResponse) {}
+    rpc CreateCheckoutSession(CreateCheckoutSessionRequest) returns (CreateCheckoutSessionResponse) {}
+    rpc GetUserSubscription(Empty) returns (Subscription) {}
+    rpc CancelUserSubscription(Empty) returns (StatusResponse) {}
+}
+
+message Product {
+    string id = 1;
+    string name = 2;
+    string description = 3;
+    string stripe_product_id = 4;
+    double price_monthly = 5;
+    string stripe_price_id_monthly = 6;
+    double price_yearly = 7;
+    string stripe_price_id_yearly = 8;
+    repeated string features = 9;
+}
+
+message Subscription {
+    string id = 1;
+    string product_id = 2;
+    string status = 3;
+    int64 current_period_end = 4;
+}
+
+message GetProductsResponse {
+    repeated Product products = 1;
+}
+
+message CreateCheckoutSessionRequest {
+    string price_id = 1;
+}
+
+message CreateCheckoutSessionResponse {
+    string session_id = 1;
+}

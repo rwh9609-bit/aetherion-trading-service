@@ -101,8 +101,28 @@ func (s *OrderServiceServer) CreateOrder(ctx context.Context, req *pb.CreateOrde
 }
 
 func (s *OrderServiceServer) CancelOrder(ctx context.Context, req *pb.CancelOrderRequest) (*pb.Order, error) {
-	// TODO: Find order, update status to CANCELED, return updated order
-	return &pb.Order{}, nil
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	// Fetch the order from DB
+	order, err := s.dbclient.GetOrder(ctx, req.OrderId)
+	if err != nil {
+		return nil, err
+	}
+	// Update status to CANCELED
+	order.Status = pb.OrderStatus_CANCELED
+	order.UpdatedAt = &timestamppb.Timestamp{
+		Seconds: time.Now().Unix(),
+		Nanos:   int32(time.Now().Nanosecond()),
+	}
+
+	// // Persist the update
+	// err = s.dbclient.UpdateOrderStatus(ctx, order.Id, pb.OrderStatus_CANCELED)
+	// if err != nil {
+	// 	return nil, err
+	// }
+
+	return order, nil
 }
 
 func (s *OrderServiceServer) GetOrder(ctx context.Context, req *pb.GetOrderRequest) (*pb.Order, error) {

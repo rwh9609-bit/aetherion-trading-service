@@ -791,6 +791,25 @@ func main() {
 	orderSvc := newOrderServiceServer(dbService)
 	pb.RegisterOrderServiceServer(grpcServer, orderSvc)
 
+	subscriptionSvc := newSubscriptionServer()
+	pb.RegisterSubscriptionServiceServer(grpcServer, subscriptionSvc)
+
+	// HTTP server for Stripe webhook and health endpoint with CORS
+	go func(addr string) {
+		mux := http.NewServeMux()
+		mux.HandleFunc("/healthz", func(w http.ResponseWriter, r *http.Request) {
+			w.WriteHeader(http.StatusOK)
+			_, _ = w.Write([]byte("ok"))
+		})
+		mux.HandleFunc("/stripe/webhook", handleStripeWebhook)
+		handler := corsMiddleware().Handler(mux)
+		log.Info().Msgf("HTTP server with CORS listening on %s", addr)
+		srv := &http.Server{Addr: addr, Handler: handler}
+		if err := srv.ListenAndServe(); err != nil {
+			log.Warn().Err(err).Msg("HTTP server exited")
+		}
+	}(":8081")
+
 	reflection.Register(grpcServer) // Register reflection service for gRPC CLI tools
 
 	// Market data feed (dynamic)
@@ -827,6 +846,9 @@ func main() {
 			w.WriteHeader(http.StatusOK)
 			_, _ = w.Write([]byte("ok"))
 		})
+		// Add the Stripe webhook handler
+		mux.HandleFunc("/stripe-webhook", handleStripeWebhook)
+
 		srv := &http.Server{Addr: addr, Handler: mux}
 		if err := srv.ListenAndServe(); err != nil {
 			log.Warn().Err(err).Msg("health server exited")

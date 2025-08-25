@@ -5,6 +5,8 @@ import { setAuthToken } from '../services/grpcClient';
 const AccountPage = ({ user, onLogout }) => {
   const logout = () => {
     setAuthToken(null);
+    localStorage.removeItem('authToken');
+    localStorage.removeItem('selectedBot');
     onLogout();
   };
   return (

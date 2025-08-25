@@ -1,165 +1,82 @@
 # Deployment Guide
 
----
-## Open Source & Developer Community
+This document provides instructions for deploying the Aetherion Trading Platform.
 
-This deployment guide is for an open-source project. We welcome contributors! See DEVELOPER.md and the Careers page for details.
+## Deployment Options
 
----
+There are two primary ways to deploy Aetherion:
 
-This document is for internal/operators. The public `README.md` intentionally omits these details.
+1.  **Docker Compose (Recommended):** The simplest method, suitable for single-server deployments.
+2.  **Manual Deployment:** For more complex setups or when Docker Compose is not an option.
 
-## Domain Migration (Localhost -> Production)
+## Building & Packaging
 
-1. DNS: Point apex or `app.yourdomain.com` (frontend) and `api.yourdomain.com` (API → Envoy) to your hosting server IP.
-2. Build Frontend:
-   - Same-origin approach (simpler):
-     ```bash
-     export REACT_APP_GRPC_HOST=https://app.yourdomain.com
-     npm run build --prefix frontend
-     ```
-   - Separate API subdomain:
-     ```bash
-     export REACT_APP_GRPC_HOST=https://api.yourdomain.com
-     npm run build --prefix frontend
-     ```
-3. Serve `frontend/build` via HTTPS (Netlify, Vercel, Nginx, S3+CloudFront, etc.).
-4. Backend CORS:
-   ```bash
-   export CORS_ALLOWED_ORIGINS=https://app.yourdomain.com,https://api.yourdomain.com
-   ```
-5. Run backend/Envoy (keep Envoy bound locally; expose via reverse proxy on api domain).
-6. Verify in browser DevTools Network tab that gRPC-web calls use the production domain and no CORS errors appear.
+The `scripts/deploy.sh` script automates the process of building all services and packaging them into a distributable tarball.
 
-## 2025-08: HTTPS & Security Upgrade
+To create a production build, run the following command from the project root:
 
-Production endpoints now use HTTPS with Let’s Encrypt certificates for all domains. Envoy terminates TLS on port 443. If you see SSL or CORS errors, check for duplicate domains in envoy.yaml and verify certificate paths and permissions.
-
-### Step 5: Deploy React Frontend to Apache (cPanel) & Disable Directory Listing
-
-If your root domain (e.g. `https://aetherion.cloud`) is currently showing a plain directory index, you have not yet uploaded the built React assets or Apache is allowed to list directories. Fix it by building locally and uploading the optimized build, plus adding an `.htaccess` file.
-
-Steps:
-
-1. Build locally (adjust host as needed):
-
-  ```bash
-  # From repo root
-  export REACT_APP_GRPC_HOST="https://api.aetherion.cloud"   # or https://aetherion.cloud if same-origin
-  npm ci --prefix frontend
-  npm run build --prefix frontend
-  ```
-
-1. The build artifacts are in `frontend/build/` (contains `index.html`, `asset-manifest.json`, `static/` etc.).
-
-1. Upload contents (NOT the `build` folder itself; just its contents) into your server's `public_html/` (or the document root for the desired vhost) via one of:
-
-  - cPanel File Manager (Compress locally -> Upload zip -> Extract)
-  - SCP/rsync: `rsync -av frontend/build/ user@server:/home/<cpaneluser>/public_html/`
-
-1. Create (or edit) `/home/<cpaneluser>/public_html/.htaccess` with at least:
-
-  ```apache
-  Options -Indexes
-  <IfModule mod_rewrite.c>
-    RewriteEngine On
-    RewriteBase /
-    # SPA routing: send non-file, non-dir requests to index.html
-    RewriteRule ^index\.html$ - [L]
-    RewriteCond %{REQUEST_FILENAME} !-f
-    RewriteCond %{REQUEST_FILENAME} !-d
-    RewriteRule . /index.html [L]
-  </IfModule>
-  ```
-
-  This removes directory listing and enables client-side routing.
-
-1. (Optional Hardening / Performance) Extend `.htaccess` later with caching & compression:
-
-  ```apache
-  <IfModule mod_expires.c>
-    ExpiresActive On
-    ExpiresByType text/css "access plus 1 year"
-    ExpiresByType application/javascript "access plus 1 year"
-    ExpiresByType image/svg+xml "access plus 1 year"
-    ExpiresByType image/png "access plus 1 year"
-    ExpiresByType image/webp "access plus 1 year"
-  </IfModule>
-  <IfModule mod_deflate.c>
-    AddOutputFilterByType DEFLATE text/html text/css application/javascript application/json image/svg+xml
-  </IfModule>
-  Header always set X-Frame-Options "SAMEORIGIN"
-  Header always set X-Content-Type-Options "nosniff"
-  Header always set Referrer-Policy "strict-origin-when-cross-origin"
-  ```
-
-1. Verify:
-
-  ```bash
-  curl -I https://aetherion.cloud/
-  # Expect: HTTP/2 200 and content-type: text/html
-  ```
-
-  Load the site in a browser; you should no longer see a directory listing.
-
-If you separate (`app.` + `api.`), point `app.` to static assets and configure reverse proxy for `api.` to `http://127.0.0.1:8080/`.
-
-
-### Automated Build Script
-
-You can use the helper script:
 ```bash
-chmod +x scripts/deploy.sh
-AUTH_SECRET=prodsecret \
-REACT_APP_GRPC_HOST=https://app.yourdomain.com \
-CORS_ALLOWED_ORIGINS=https://app.yourdomain.com \
 ./scripts/deploy.sh
 ```
-Resulting `dist/` directory contains binaries, Envoy config, and frontend build plus a packaged tarball.
 
-\n## Envoy Hardening
+This will create a `dist` directory containing the compiled binaries, frontend assets, and configuration files, as well as a `.tar.gz` archive.
 
-- Restrict `domains` in `envoy.yaml` (replace `"*"` with explicit host).
-- Add TLS termination (if Envoy directly internet-facing) or place behind a managed LB.
-- Enable access logs & monitoring.
-- Rate limit sensitive RPCs (authentication, symbol management).
+## Deployment with Docker Compose
 
-\n## Secure Secrets
+This is the recommended method for most use cases.
 
-- Set `AUTH_SECRET` with a strong random value (32+ bytes).
-- Store secrets in a vault or environment manager (not committed to repo).
-- For key rotation deploy new `AUTH_SECRET` while keeping old in `AUTH_PREVIOUS_SECRET` for token grace period, then remove after expiry window.
+1.  **Prerequisites:** Ensure Docker and Docker Compose are installed on your server.
+2.  **Configuration:** Create a `.env` file in the project root and configure the necessary environment variables (e.g., `AUTH_SECRET`, `CORS_ALLOWED_ORIGINS`, `REACT_APP_GRPC_HOST`).
+3.  **Run:**
+    ```bash
+    docker-compose up -d --build
+    ```
 
-\n## Observability
+## Manual Deployment
 
-- Go service exposes HTTP health at `:8090/healthz` (used by Docker healthcheck). Add external LB health probe to Envoy or directly to this endpoint if desired.
-- Collect logs centrally.
+For manual deployments, you can use the artifacts generated by the `scripts/deploy.sh` script.
 
-\n## Zero-Downtime Updates
+1.  **Transfer Files:** Copy the contents of the `dist` directory to your server.
+2.  **Run Services:** You will need to run each service individually. The `dist/README_DEPLOY_ARTIFACTS.txt` file provides basic instructions for this.
+3.  **Web Server:** You will need a web server (e.g., Nginx, Apache) to serve the frontend assets from the `dist/frontend` directory.
 
-- Build new image / artifact.
-- Deploy behind load balancer using rolling or blue/green strategy.
-- Invalidate CDN cache for updated frontend assets if necessary.
+### Example: Serving the Frontend with Nginx
 
-\n## Troubleshooting
+Below is a basic Nginx configuration for serving the React frontend:
 
-| Symptom | Likely Cause | Fix |
-|--------|--------------|-----|
-| CORS error in console | Origin not in `CORS_ALLOWED_ORIGINS` | Update env and restart backend |
-| gRPC calls 404 | Envoy route prefix mismatch | Confirm service method prefixes |
-| Envoy 503 UC | Backend service unreachable | Check service pods/ports |
-| Mixed content warning | Serving API over HTTP while site is HTTPS | Use HTTPS for API |
-| Momentum metrics empty | Insufficient price history (<1-2 minutes) | Wait for data accumulation or ensure symbols streaming |
+```nginx
+server {
+    listen 80;
+    server_name yourdomain.com;
 
-## Example Systemd Unit Snippet
+    root /path/to/your/dist/frontend;
+    index index.html;
 
-```ini
-[Service]
-Environment=AUTH_SECRET=change_me
-Environment=CORS_ALLOWED_ORIGINS=https://app.yourdomain.com
-ExecStart=/usr/local/bin/aetherion-trading-service
-Restart=always
+    location / {
+        try_files $uri /index.html;
+    }
+}
 ```
 
----
-For contribution or deeper architectural notes see `DEVELOPER.md`.
+## Production Configuration
+
+### Environment Variables
+
+*   `REACT_APP_GRPC_HOST`: The public URL of your gRPC API (e.g., `https://api.yourdomain.com`). This is a build-time variable for the frontend.
+*   `CORS_ALLOWED_ORIGINS`: A comma-separated list of allowed origins for CORS (e.g., `https://yourdomain.com,https://www.yourdomain.com`).
+*   `AUTH_SECRET`: A strong, random secret for signing JWTs.
+
+### Envoy Hardening
+
+*   **Restrict Domains:** In `envoy.yaml`, replace `"*"` with your specific domains.
+*   **TLS:** Use TLS termination for all public-facing traffic.
+*   **Rate Limiting:** Implement rate limiting for sensitive RPCs.
+
+### Secure Secrets
+
+*   **`AUTH_SECRET`:** Use a strong, random value (32+ bytes).
+*   **Storage:** Store secrets in a secure vault or environment manager, not in the repository.
+
+### Observability
+
+The `trading` service exposes a health check endpoint at `http://localhost:8090/healthz`.

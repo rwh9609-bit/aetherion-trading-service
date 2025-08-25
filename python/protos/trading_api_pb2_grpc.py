@@ -1655,3 +1655,216 @@ class TradingService(object):
             timeout,
             metadata,
             _registered_method=True)
+
+
+class SubscriptionServiceStub(object):
+    """=================================================================
+    SUBSCRIPTION SERVICE
+    =================================================================
+
+    """
+
+    def __init__(self, channel):
+        """Constructor.
+
+        Args:
+            channel: A grpc.Channel.
+        """
+        self.GetProducts = channel.unary_unary(
+                '/trading.SubscriptionService/GetProducts',
+                request_serializer=trading__api__pb2.Empty.SerializeToString,
+                response_deserializer=trading__api__pb2.GetProductsResponse.FromString,
+                _registered_method=True)
+        self.CreateCheckoutSession = channel.unary_unary(
+                '/trading.SubscriptionService/CreateCheckoutSession',
+                request_serializer=trading__api__pb2.CreateCheckoutSessionRequest.SerializeToString,
+                response_deserializer=trading__api__pb2.CreateCheckoutSessionResponse.FromString,
+                _registered_method=True)
+        self.GetUserSubscription = channel.unary_unary(
+                '/trading.SubscriptionService/GetUserSubscription',
+                request_serializer=trading__api__pb2.Empty.SerializeToString,
+                response_deserializer=trading__api__pb2.Subscription.FromString,
+                _registered_method=True)
+        self.CancelUserSubscription = channel.unary_unary(
+                '/trading.SubscriptionService/CancelUserSubscription',
+                request_serializer=trading__api__pb2.Empty.SerializeToString,
+                response_deserializer=trading__api__pb2.StatusResponse.FromString,
+                _registered_method=True)
+
+
+class SubscriptionServiceServicer(object):
+    """=================================================================
+    SUBSCRIPTION SERVICE
+    =================================================================
+
+    """
+
+    def GetProducts(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def CreateCheckoutSession(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def GetUserSubscription(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def CancelUserSubscription(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+
+def add_SubscriptionServiceServicer_to_server(servicer, server):
+    rpc_method_handlers = {
+            'GetProducts': grpc.unary_unary_rpc_method_handler(
+                    servicer.GetProducts,
+                    request_deserializer=trading__api__pb2.Empty.FromString,
+                    response_serializer=trading__api__pb2.GetProductsResponse.SerializeToString,
+            ),
+            'CreateCheckoutSession': grpc.unary_unary_rpc_method_handler(
+                    servicer.CreateCheckoutSession,
+                    request_deserializer=trading__api__pb2.CreateCheckoutSessionRequest.FromString,
+                    response_serializer=trading__api__pb2.CreateCheckoutSessionResponse.SerializeToString,
+            ),
+            'GetUserSubscription': grpc.unary_unary_rpc_method_handler(
+                    servicer.GetUserSubscription,
+                    request_deserializer=trading__api__pb2.Empty.FromString,
+                    response_serializer=trading__api__pb2.Subscription.SerializeToString,
+            ),
+            'CancelUserSubscription': grpc.unary_unary_rpc_method_handler(
+                    servicer.CancelUserSubscription,
+                    request_deserializer=trading__api__pb2.Empty.FromString,
+                    response_serializer=trading__api__pb2.StatusResponse.SerializeToString,
+            ),
+    }
+    generic_handler = grpc.method_handlers_generic_handler(
+            'trading.SubscriptionService', rpc_method_handlers)
+    server.add_generic_rpc_handlers((generic_handler,))
+    server.add_registered_method_handlers('trading.SubscriptionService', rpc_method_handlers)
+
+
+ # This class is part of an EXPERIMENTAL API.
+class SubscriptionService(object):
+    """=================================================================
+    SUBSCRIPTION SERVICE
+    =================================================================
+
+    """
+
+    @staticmethod
+    def GetProducts(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/trading.SubscriptionService/GetProducts',
+            trading__api__pb2.Empty.SerializeToString,
+            trading__api__pb2.GetProductsResponse.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def CreateCheckoutSession(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/trading.SubscriptionService/CreateCheckoutSession',
+            trading__api__pb2.CreateCheckoutSessionRequest.SerializeToString,
+            trading__api__pb2.CreateCheckoutSessionResponse.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def GetUserSubscription(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/trading.SubscriptionService/GetUserSubscription',
+            trading__api__pb2.Empty.SerializeToString,
+            trading__api__pb2.Subscription.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def CancelUserSubscription(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/trading.SubscriptionService/CancelUserSubscription',
+            trading__api__pb2.Empty.SerializeToString,
+            trading__api__pb2.StatusResponse.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
