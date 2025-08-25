@@ -3,14 +3,13 @@ import { tradingClient, createMetadata } from '../services/grpcClient';
 import { TradeHistoryRequest } from '../proto/trading_api_pb';
 import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Typography } from '@mui/material';
 
-const RecentTrades = ({ bot }) => {
+const RecentTrades = ({ user }) => {
   const [trades, setTrades] = useState([]);
 
   useEffect(() => {
-    if (!bot || !bot.id) return;
     const fetchTrades = () => { 
       const request = new TradeHistoryRequest();
-      request.setUserId(bot.id);
+      request.setUserId(user.id);
 
       tradingClient.getTradeHistory(request, createMetadata(), (err, response) => {
         if (err) {
@@ -22,15 +21,10 @@ const RecentTrades = ({ bot }) => {
     };
 
     fetchTrades();
-    const interval = setInterval(fetchTrades, 5000);
+    const interval = setInterval(fetchTrades, 5000); // Refresh every 5 seconds
 
     return () => clearInterval(interval);
-  }, [bot?.id]);
-
-  // Guard after hooks
-  if (!bot || !bot.id) {
-    return <Typography sx={{ p: 2 }}>No bot selected.</Typography>;
-  }
+  }, [user.id]);
 
   return (
     <TableContainer component={Paper}>

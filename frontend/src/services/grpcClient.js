@@ -247,10 +247,9 @@ export const startStrategy = async (params) => {
   return withRetry(async () => {
     const request = new StrategyRequest();
     request.setStrategyId('mean_reversion');
-    // want bots to be able to look at all symbols....
-    request.setSymbol(params.symbol); 
-    if (params.userId) request.setUserId(params.userId); // <-- FIX: use real userId
-
+    request.setSymbol('BTC-USD');
+    request.setUserId('currentUserId'); // Replace with actual user ID from context or state
+  
     // Convert parameters to strings for the map
     const paramMap = {};
     paramMap['type'] = 'MEAN_REVERSION';
@@ -395,18 +394,15 @@ export const handleGrpcError = (err, setUser, setView) => {
 };
 
 // --- Bot Service Helpers ---
-export const createBot = async ({ id, user_id, name, description, symbols, strategy_name, strategy_parameters, initial_account_value, current_account_value, is_active, is_live, created_at, updated_at }) => {
+export const createBot = async ({ name, symbol, strategy, parameters, userId }) => {
   const { CreateBotRequest } = await import('../proto/trading_api_grpc_web_pb.js');
-  console.log('[grpcClient] Sending createBot request:', { id, user_id, name, description, symbols, strategy_name, strategy_parameters, initial_account_value, current_account_value, is_active, is_live, created_at, updated_at });
+  console.log('[grpcClient] Sending createBot request:', { name, symbol, strategy, parameters, userId });
   return new Promise((resolve, reject) => {
     const req = new CreateBotRequest();
-    req.setName(name);
-    req.setDescription(description); // new field
-    req.setSymbolsList(symbols); // repeated string
-    req.setStrategyName(strategyName); // renamed field
-    req.setStrategyParameters(JSON.stringify(parameters)); // now a JSON string
-    req.setInitialAccountValue({ units: initialAccountValue, nanos: 0 }); // use DecimalValue
-    req.setIsLive(isLive); // new field
+    req.setName(name); req.setSymbol(symbol); req.setStrategy(strategy);
+    if (userId) req.setUserId(userId);
+    const map = req.getParametersMap();
+    Object.entries(parameters || {}).forEach(([k,v]) => map.set(k, String(v)));
     botClient.createBot(req, createMetadata(), (err, resp) => {
       if (err) {
         console.error('[grpcClient] createBot error:', err);
@@ -419,8 +415,7 @@ export const createBot = async ({ id, user_id, name, description, symbols, strat
 
 export const listBots = async () => {
   const { Empty } = await import('../proto/trading_api_pb.js');
-  const req = new ListBotsRequest();
-  req.setUserId(userId);
+  const req = new Empty();
   return new Promise((resolve, reject) => {
     botClient.listBots(req, createMetadata(), (err, resp) => {
       if (err) return reject(err);

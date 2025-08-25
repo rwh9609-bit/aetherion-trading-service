@@ -9,7 +9,7 @@ import jwt
 import uuid
 from datetime import datetime
 from strategies.mean_reversion import MeanReversionStrategy, MeanReversionParams
-from fetch_binance import fetch_price
+from fetch_binance import fetch_binance_price
 from protos import trading_api_pb2, trading_api_pb2_grpc
 
 # Add protos path to sys.path
@@ -20,20 +20,6 @@ def load_backfill_prices(csv_path, lookback_period):
     df = pd.read_csv(csv_path)
     prices = df['price'].tolist()  # <-- fix: use 'price' instead of 'close'
     return prices[-lookback_period:]
-
-def format_symbol_for_exchange(symbol, exchange):
-    symbol = symbol.strip()
-    if exchange == "coinbase":
-        # Convert ETHUSD -> ETH-USD
-        if len(symbol) > 3 and "-" not in symbol:
-            return symbol[:3] + "-" + symbol[3:]
-        return symbol
-    elif exchange == "binance":
-        # Convert ETHUSD -> ETHUSDT
-        if symbol.endswith("USD") and not symbol.endswith("USDT"):
-            return symbol + "T"
-        return symbol
-    return symbol
 
 class TradingOrchestrator:
     def __init__(self):
@@ -111,85 +97,68 @@ class TradingOrchestrator:
                             print(f"[Orchestrator] Skipping inactive bot: {bot.name} ({bot.bot_id})")
                             continue  # Skip inactive bots
                         print(f"[Orchestrator] Processing bot: {bot.name} ({bot.bot_id})")
+                        print(f"[Orchestrator] Processing bot: {bot.name} ({bot.bot_id})")
+                        # 2. Fetch current price for bot's symbol
+                        price = fetch_binance_price(bot.symbol.replace("-", ""))
+                        print(f"Current price for {bot.symbol}: ${price:,.2f}")
+                        # 3. Generate trading signal (replace with bot-specific strategy)
+                        # For demo, use mean reversion for all
+                        signal = self.strategy.generate_signal(price, bot.account_value)
+                        print(f"[DEBUG] Signal details: {signal}")
+                        if signal['action'] == 'hold':
+                            print(f"[INFO] No trade signal for bot {bot.name}: zscore={signal.get('zscore')}, price={price}, reason=Hold action")
+                        elif signal['size'] == 0:
+                            print(f"[INFO] Signal size is zero for bot {bot.name}: zscore={signal.get('zscore')}, price={price}, reason=Zero size")
+                        else:
+                            print(f"[INFO] Trade signal for bot {bot.name}: action={signal['action']}, size={signal['size']}, stop_loss={signal.get('stop_loss')}")
 
-                        for raw_symbol in bot.symbol.split(","):
-                            coinbase_symbol = format_symbol_for_exchange(raw_symbol, "coinbase")
-                            binance_symbol = format_symbol_for_exchange(raw_symbol.replace("-", ""), "binance")
-                            # print(f"[DEBUG] Mapped symbols: raw={raw_symbol}, coinbase={coinbase_symbol}, binance={binance_symbol}")
-
-                            # Fetch price from Binance 
-                            price = fetch_price(binance_symbol)
-                            # print(f"Current price for {binance_symbol} (Binance): {price if price is not None else 'N/A'}")
-
-                            # Defensive: handle None price
-                            if price is None:
-                                # print(f"[ERROR] Could not fetch price for {binance_symbol} from Binance.")
-                                # Fetch price from Coinbase
-                                price = fetch_price(coinbase_symbol)
-                                # print(f"Current price for {coinbase_symbol} (Coinbase): {price if price is not None else 'N/A'}")
-                            if price is None:
-                                print(f"[ERROR] Could not fetch price for {coinbase_symbol} from Coinbase. Skipping trade logic.")
-                                continue
-
-                            # If you want to fetch from Coinbase, use coinbase_symbol
-                            # coinbase_price = fetch_coinbase_price(coinbase_symbol)
-                            # print(f"Current price for {coinbase_symbol} (Coinbase): ${coinbase_price:,.2f}")
-                            # ...rest of your trading logic...
-                            # If you want to fetch from Coinbase, use coinbase_symbol
-                            # coinbase_price = fetch_coinbase_price(coinbase_symbol)
-                            # print(f"Current price for {coinbase_symbol} (Coinbase): ${coinbase_price:,.2f}")
-                            # 3. Generate trading signal (replace with bot-specific strategy)
-                            # For demo, use mean reversion for all
-                            signal = self.strategy.generate_signal(price, bot.account_value)
-                            # print(f"[DEBUG] Signal details: {signal}")
-
-                            if signal['action'] != 'hold' and signal['size'] > 0:
-                                print(f"Generated signal for bot {bot.name}: {json.dumps(signal)}")
-                                positions_map = {bot.symbol: signal['size'] if signal['action']=='buy' else -signal['size']}
-                                portfolio = trading_api_pb2.Portfolio(positions=positions_map, total_value_usd=self.account_value)
-                                print(f"[DEBUG] VaR request: positions={positions_map}, total_value_usd={self.account_value}")
-                                var_request = trading_api_pb2.VaRRequest(
-                                    current_portfolio=portfolio,
-                                    risk_model="monte_carlo",
-                                    confidence_level=0.95,
-                                    horizon_days=1
-                                )
-                                print(f"Calculating VaR for bot {bot.name} with portfolio: {portfolio}")
-                                try:
-                                    var_response = risk_stub.CalculateVaR(var_request, metadata=metadata)
-                                    print(f"[DEBUG] VaR response: {var_response.value_at_risk}")
-                                    if var_response.value_at_risk is not None and bot.account_value is not None:
-                                        risk_ok = float(var_response.value_at_risk) <= (bot.account_value * 0.10)
-                                    else:
-                                        risk_ok = False
-                                    print(f"Risk check: VaR {var_response.value_at_risk:.2f}, OK: {risk_ok}")
-                                    if risk_ok:
-                                        strategy_id = getattr(bot, "strategy_id", None) 
-                                        if not strategy_id or strategy_id == "":
-                                            print(f"[WARNING] Strategy ID is missing for bot {bot.name}, generating a new one.")
-                                            # Generate a random UUID if missing
-                                            strategy_id = str(uuid.uuid4())
-                                        trade_request = trading_api_pb2.TradeRequest(
-                                            symbol=bot.symbol,
-                                            side=signal['action'].upper(),
-                                            size=float(signal['size']),
-                                            price=float(price),
-                                            user_id=bot.bot_id,
-                                            strategy_id=strategy_id
-                                        )
-                                        try:
-                                            trade_response = trading_stub.ExecuteTrade(trade_request, metadata=metadata)
-                                            print(f"Trade executed for bot {bot.name} @ {trade_response.executed_price:.2f}: {trade_response.message}")
-                                            print(f"Signal: {json.dumps(signal)}  VaR: {var_response.value_at_risk:.2f}")
-                                            if hasattr(trade_response, 'pnl'):
-                                                self.account_value += float(trade_response.pnl)
-                                                print(f"Account value: ${self.account_value:,.2f}")
-                                        except grpc.RpcError as e:
-                                            print(f"Error executing trade for bot {bot.name}: {e.details()}")
-                                    else:
-                                        print(f"Trade blocked for bot {bot.name}: VaR {var_response.value_at_risk:.2f} over limit")
-                                except grpc.RpcError as e:
-                                    print(f"Error calculating VaR for bot {bot.name}: {e.details()}")
+                        if signal['action'] != 'hold' and signal['size'] > 0:
+                            print(f"Generated signal for bot {bot.name}: {json.dumps(signal)}")
+                            positions_map = {bot.symbol: signal['size'] if signal['action']=='buy' else -signal['size']}
+                            portfolio = trading_api_pb2.Portfolio(positions=positions_map, total_value_usd=self.account_value)
+                            print(f"[DEBUG] VaR request: positions={positions_map}, total_value_usd={self.account_value}")
+                            var_request = trading_api_pb2.VaRRequest(
+                                current_portfolio=portfolio,
+                                risk_model="monte_carlo",
+                                confidence_level=0.95,
+                                horizon_days=1
+                            )
+                            print(f"Calculating VaR for bot {bot.name} with portfolio: {portfolio}")
+                            try:
+                                var_response = risk_stub.CalculateVaR(var_request, metadata=metadata)
+                                print(f"[DEBUG] VaR response: {var_response.value_at_risk}")
+                                if var_response.value_at_risk is not None and bot.account_value is not None:
+                                    risk_ok = float(var_response.value_at_risk) <= (bot.account_value * 0.10)
+                                else:
+                                    risk_ok = False
+                                print(f"Risk check: VaR {var_response.value_at_risk:.2f}, OK: {risk_ok}")
+                                if risk_ok:
+                                    strategy_id = getattr(bot, "strategy_id", None) 
+                                    if not strategy_id or strategy_id == "":
+                                        print(f"[WARNING] Strategy ID is missing for bot {bot.name}, generating a new one.")
+                                        # Generate a random UUID if missing
+                                        strategy_id = str(uuid.uuid4())
+                                    trade_request = trading_api_pb2.TradeRequest(
+                                        symbol=bot.symbol,
+                                        side=signal['action'].upper(),
+                                        size=float(signal['size']),
+                                        price=float(price),
+                                        user_id=bot.bot_id,
+                                        strategy_id=strategy_id
+                                    )
+                                    try:
+                                        trade_response = trading_stub.ExecuteTrade(trade_request, metadata=metadata)
+                                        print(f"Trade executed for bot {bot.name} @ {trade_response.executed_price:.2f}: {trade_response.message}")
+                                        print(f"Signal: {json.dumps(signal)}  VaR: {var_response.value_at_risk:.2f}")
+                                        if hasattr(trade_response, 'pnl'):
+                                            self.account_value += float(trade_response.pnl)
+                                            print(f"Account value: ${self.account_value:,.2f}")
+                                    except grpc.RpcError as e:
+                                        print(f"Error executing trade for bot {bot.name}: {e.details()}")
+                                else:
+                                    print(f"Trade blocked for bot {bot.name}: VaR {var_response.value_at_risk:.2f} over limit")
+                            except grpc.RpcError as e:
+                                print(f"Error calculating VaR for bot {bot.name}: {e.details()}")
                         # Add logging for trade execution
 
                         # After trading logic, fetch trade history:
