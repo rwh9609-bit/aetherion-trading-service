@@ -8,14 +8,14 @@ const PricingPage = ({ setView }) => {
   const handleSubscribe = async (priceId) => {
   console.log('Sending priceId:', priceId);
   try {
-    const response = await fetch('http://localhost:8000/api/create-checkout-session', {
+    const response = await fetch('/create-checkout-session', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ priceId }),
     });
     const data = await response.json();
     if (!response.ok) {
-      alert('Failed to start subscription: ' + (data.error || 'Unknown error'));
+      alert('Aetherion is not ready to be used: ' + (data.error || 'Unknown error'));
       return;
     }
     const { sessionId } = data;
@@ -26,7 +26,7 @@ const PricingPage = ({ setView }) => {
     const stripe = window.Stripe(STRIPE_PUBLISHABLE_KEY);
     await stripe.redirectToCheckout({ sessionId });
   } catch (err) {
-    alert('Failed to start subscription: ' + err.message);
+    alert('Aetherion is not ready to be used: ' + err.message);
   }
 };
 

@@ -3,7 +3,7 @@ import { ThemeProvider, createTheme, CssBaseline, AppBar, Toolbar, Typography, B
 import TradingDashboard from './components/TradingDashboard';
 
 import TradingOperations from './components/TradingOperations';
-import BotsPage from './components/BotsPage';
+import BotsFreePage from './components/BotsFreePage';
 import DevelopBotPage from './components/DevelopBotPage';
 import AboutPage from './components/AboutPage';
 import ContactPage from './components/ContactPage';
@@ -165,7 +165,9 @@ function App() {
                         <MenuItem onClick={() => handleMenuItemClick('backtest')}>Backtesting</MenuItem>
                         <MenuItem onClick={() => handleMenuItemClick('operations')}>Operations</MenuItem>
                       </Menu>
-                      <Button color="inherit" onClick={()=>setView('bots')} sx={{ mr:1 }}>Bots</Button>
+                      {/* <Button color="inherit" onClick={()=>setView('bots')} sx={{ mr:1 }}>Bots</Button> */}
+
+                      <Button color="inherit" onClick={()=>setView('bots_free')} sx={{ mr:1 }}>Bots</Button>
                       <Button color="inherit" onClick={()=> { setUser(null);setSelectedBot(null);localStorage.removeItem('authToken'); localStorage.removeItem('selectedBot'); setView('landing'); } }>Logout</Button>
                     </>
                   ) : (
@@ -218,7 +220,7 @@ function App() {
           )}
           {user && view === 'bots' && (
             <div style={{ padding: '24px' }}>
-              <BotsPage onNavigate={setView} onSelectBot={handleSelectBot} selectedBot={selectedBot} />
+              <BotsFreePage onNavigate={setView} onSelectBot={handleSelectBot} selectedBot={selectedBot} />
             </div>
           )}
           {user && view === 'developBot' && (
@@ -249,11 +251,11 @@ function App() {
             Backend health failing. Check server or network.
           </Alert>
         </Snackbar>
-        <Snackbar open={showLiveFetchSnackbar} autoHideDuration={3000} onClose={()=>setShowLiveFetchSnackbar(false)} anchorOrigin={{ vertical:'bottom', horizontal:'left' }}>
+        {/* <Snackbar open={showLiveFetchSnackbar} autoHideDuration={3000} onClose={()=>setShowLiveFetchSnackbar(false)} anchorOrigin={{ vertical:'bottom', horizontal:'left' }}>
           <Alert severity={liveFetchStatus==='success' ? 'success' : 'error'} variant="filled" onClose={()=>setShowLiveFetchSnackbar(false)}>
             {liveFetchStatus==='success' ? 'Live price fetched and saved!' : 'Live price fetch failed.'}
           </Alert>
-        </Snackbar>
+        </Snackbar> */}
       </ThemeProvider>
     </ErrorBoundary>
   );

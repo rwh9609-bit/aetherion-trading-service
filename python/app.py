@@ -12,7 +12,7 @@ app = FastAPI()
 # Enable CORS for frontend
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000"],
+    allow_origins=["http://localhost:8000"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"]
@@ -30,8 +30,8 @@ async def create_checkout_session(request: Request):
             payment_method_types=["card"],
             line_items=[{"price": price_id, "quantity": 1}],
             mode="subscription",
-            success_url="http://localhost:3000/success?session_id={CHECKOUT_SESSION_ID}",
-            cancel_url="http://localhost:3000/cancel",
+            success_url="http://localhost:8000/success?session_id={CHECKOUT_SESSION_ID}",
+            cancel_url="http://localhost:8000/cancel",
         )
         return {"sessionId": session.id}
     except Exception as e:
