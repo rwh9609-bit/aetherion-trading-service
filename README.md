@@ -52,12 +52,4 @@ We welcome contributors! Aetherion is an open-source project, and we'd love your
 *   **Find an Issue:** Look for open issues on our GitHub repository.
 *   **Submit a Pull Request:** We're excited to see your contributions!
 
-## Live Console Output
-
-Observe Aetherion in action. Below are snapshots illustrating active services, real-time BTC price fetching, and live trading logs.
-
-![Docker services running](container_success.png)
-
-![Trading service logs](microservice_logging_success.png)
-
 > **Note:** Should you encounter SSL certificate errors, consider commenting out the `.pem` certificates and utilizing the alternate certificates specified in `envoy.yaml`.
