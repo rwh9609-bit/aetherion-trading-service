@@ -23,16 +23,21 @@ const AccountPage = ({ user, onLogout, onGoToPricing }) => {
             <Chip label={`Subscription: ${user.subscription.status}`} color="success" />
           )}
         </Stack>
-        <Typography variant="body1" sx={{ mb: 1 }}>
-          <strong>Username:</strong> {user.username}
-        </Typography>
-        <Typography variant="body1" sx={{ mb: 1 }}>
-          <strong>Email:</strong> {user.email || "N/A"}
-        </Typography>
-        <Typography variant="body1" sx={{ mb: 1 }}>
-          <strong>Registered:</strong>{" "}
-          {user.createdAt ? new Date(user.createdAt).toLocaleString() : "N/A"}
-        </Typography>
+        {user.username && (
+          <Typography variant="body1" sx={{ mb: 1 }}>
+            <strong>Username:</strong> {user.username}
+          </Typography>
+        )}
+        {user.email && (
+          <Typography variant="body1" sx={{ mb: 1 }}>
+            <strong>Email:</strong> {user.email}
+          </Typography>
+        )}
+        {user.createdAt && (
+          <Typography variant="body1" sx={{ mb: 1 }}>
+            <strong>Registered:</strong> {new Date(user.createdAt).toLocaleString()}
+          </Typography>
+        )}
         {user.subscription && (
           <Typography variant="body1" sx={{ mb: 2 }}>
             <strong>Plan:</strong> {user.subscription.productName || "N/A"}
