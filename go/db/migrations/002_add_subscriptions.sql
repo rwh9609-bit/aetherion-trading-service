@@ -1,5 +1,3 @@
--- This migration adds tables for managing subscriptions and products.
-
 CREATE TABLE IF NOT EXISTS products (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     name TEXT NOT NULL, -- e.g., Pro, Enterprise

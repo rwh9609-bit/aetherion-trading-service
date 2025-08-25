@@ -174,7 +174,7 @@ static_resources:
                         route:
                           cluster: trading_http
                           timeout: 15s
-                      - match: { prefix: "/api/create-checkout-session" }
+                      - match: { prefix: "/create-checkout-session" }
                         route:
                           cluster: trading_http
                           timeout: 15s
