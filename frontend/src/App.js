@@ -6,6 +6,7 @@ import TradingOperations from './components/TradingOperations';
 import BotsFreePage from './components/BotsFreePage';
 import DevelopBotPage from './components/DevelopBotPage';
 import AboutPage from './components/AboutPage';
+import ArticlesPage from './components/ArticlesPage';
 import ContactPage from './components/ContactPage';
 import NewsPage from './components/NewsPage';
 import Login from './components/Login';
@@ -143,12 +144,14 @@ function App() {
                 </Typography>
                 <Box>
                   <Button color="inherit" onClick={()=>setView('about')} sx={{ mr:1 }}>About</Button>
-                  <Button color="inherit" onClick={()=>setView('news')} sx={{ mr:1 }}>News</Button>
+                  <Button color="inherit" onClick={()=>setView('articles')} sx={{ mr:1 }}>Articles</Button>
                   <Button color="inherit" onClick={()=>setView('contact')} sx={{ mr:1 }}>Contact</Button>
+                  <Button color="inherit" onClick={()=>setView('news')} sx={{ mr:1 }}>News</Button>
 
                   {user ? (
                     <>
                       <Button color="inherit" onClick={()=>setView('account')} sx={{ mr:1 }}>Account</Button>
+                      <Button color="inherit" onClick={()=>setView('bots_free')} sx={{ mr:1 }}>Bots</Button>
                       <Button
                         color="inherit"
                         onClick={handleMenuClick}
@@ -167,7 +170,6 @@ function App() {
                       </Menu>
                       {/* <Button color="inherit" onClick={()=>setView('bots')} sx={{ mr:1 }}>Bots</Button> */}
 
-                      <Button color="inherit" onClick={()=>setView('bots_free')} sx={{ mr:1 }}>Bots</Button>
                       <Button color="inherit" onClick={()=> { setUser(null);setSelectedBot(null);localStorage.removeItem('authToken'); localStorage.removeItem('selectedBot'); setView('landing'); } }>Logout</Button>
                     </>
                   ) : (
@@ -243,6 +245,7 @@ function App() {
             </div>
           )}
           {view === 'about' && <AboutPage />}
+          {view === 'articles' && <ArticlesPage />}
           {view === 'contact' && <ContactPage />}
           {view === 'news' && <NewsPage />}
         </div>
