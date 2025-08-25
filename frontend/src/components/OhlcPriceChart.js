@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Card, CardContent, Stack, Typography, Chip, Tooltip, Fade, ToggleButton, ToggleButtonGroup, LinearProgress, Box } from '@mui/material';
+import { fetchPrice, streamPrice, addSymbol, removeSymbol } from '../services/grpcClient';
 
 const BAR_INTERVAL_MS = 5000;
 const HISTORY_WINDOW_MS = 30 * 60 * 1000;
@@ -38,6 +39,19 @@ const OhlcPriceChart = ({ symbol }) => {
     receivedRef.current = false;
     let cancelled = false;
     let cleanup;
+
+    // Add the selected symbol to backend feed
+    addSymbol(activeSymbol).catch(err => {
+      console.error('Failed to add symbol to backend feed:', err);
+    });
+
+    // Remove previous symbol from backend feed (if any)
+    if (prevSymbolRef.current && prevSymbolRef.current !== activeSymbol) {
+      removeSymbol(prevSymbolRef.current).catch(err => {
+        console.error('Failed to remove previous symbol from backend feed:', err);
+      });
+    }
+    prevSymbolRef.current = activeSymbol;
 
     const upsert = (price, ts) => {
       const bucket = Math.floor(ts / BAR_INTERVAL_MS) * BAR_INTERVAL_MS;
@@ -82,6 +96,22 @@ const OhlcPriceChart = ({ symbol }) => {
         }, 1200);
       }
     })();
+
+    cleanup = streamPrice(activeSymbol, tick => {
+      if (cancelled) return;
+      upsert(tick.price, Date.now());
+      if (!receivedRef.current) {
+        receivedRef.current = true;
+        setStreamState('live');
+        setLoading(false);
+      }
+    }, err => {
+      if (cancelled) return;
+      console.error('Price stream error', err);
+      setStreamState('error');
+      setLoading(false);
+    });
+
     return () => { cancelled = true; cleanup && cleanup(); };
   }, [activeSymbol]);
 

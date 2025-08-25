@@ -1,24 +1,16 @@
 import { grpc } from '@improbable-eng/grpc-web';
+import { TradingServiceClient, RiskServiceClient, AuthServiceClient, BotServiceClient } from '../proto/trading_api_grpc_web_pb.js';
 import { 
-  OrderServiceClient,
-  RiskServiceClient,
-  AuthServiceClient,
-  BotServiceClient,
-  PortfolioServiceClient
-} from '../proto/trading_api_grpc_web_pb.js';
-import {
-  PortfolioResponse,
-  PortfolioPosition,
-  DecimalValue,
+  OrderBookRequest,
+  StrategyRequest,
+  Tick,
+  Portfolio,
   VaRRequest,
-  CreateBotRequest,
   RegisterRequest,
   AuthRequest,
-  BotIdRequest,
-  ListBotsRequest,
-  Empty
-} from '../proto/trading_api_pb.js';
-
+  TickStreamRequest,
+  SymbolRequest
+} from '../proto/trading_api_pb.js'; // explicit extension already present
 
 // Determine gRPC-web host.
 // Priority: explicit env var -> same-origin (production) -> localhost dev fallback.
@@ -49,16 +41,14 @@ const options = {
   debug: true
 };
 
-const orderClient = new OrderServiceClient(host, null, {...options, format: 'text'});
-export { orderClient };
+const tradingClient = new TradingServiceClient(host, null, {...options, format: 'text'});
+export { tradingClient };
 const riskClient = new RiskServiceClient(host, null, {...options, format: 'text'});
 export { riskClient };
 const botClient = new BotServiceClient(host, null, {...options, format: 'text'});
 export { botClient };
 const authClient = new AuthServiceClient(host, null, {...options, format: 'text'});
 export { authClient };
-const portfolioClient = new PortfolioServiceClient(host, null, {...options, format: 'text'});
-export { portfolioClient };
 
 const MAX_RETRIES = 5;
 const RETRY_DELAY = 2000; // 2 seconds
@@ -153,47 +143,91 @@ const withRetry = async (operation, operationName = 'Operation', retries = MAX_R
   }
 };
 
+export const streamOrderBook = (symbol, onData, onError) => {
+  console.log('Starting OrderBook stream for symbol:', symbol);
+  let retryCount = 0;
+  let stream = null;
+  
+  const setupStream = () => {
+    try {
+      const request = new OrderBookRequest();
+      request.setSymbol(symbol);
+      console.log('OrderBook Request:', request.toObject());
+
+      console.log('Setting up new OrderBook stream with metadata:', createMetadata());
+      stream = tradingClient.streamOrderBook(request, createMetadata());
+
+      stream.on('data', (response) => {
+        try {
+          console.log('Received OrderBook data');
+          const data = response.toObject();
+          console.log('Parsed OrderBook data:', data);
+          onData({
+            bids: data.bidsList.map(bid => ({
+              price: bid.price,
+              size: bid.size,
+              timestamp: bid.timestamp
+            })) || [],
+            asks: data.asksList.map(ask => ({
+              price: ask.price,
+              size: ask.size,
+              timestamp: ask.timestamp
+            })) || []
+          });
+          retryCount = 0; // Reset retry count on successful data
+          console.log('Successfully processed OrderBook data');
+        } catch (err) {
+          console.error('Error parsing OrderBook data:', err);
+          onError(`Error parsing data: ${err.message}`);
+        }
+      });
+
+      stream.on('error', (err) => {
+        console.error('OrderBook stream error:', err);
+        onError(`Stream error: ${err.message}`);
+        
+        if (retryCount < MAX_RETRIES) {
+          retryCount++;
+          const delay = RETRY_DELAY * Math.pow(BACKOFF_FACTOR, retryCount - 1);
+          console.log(`Reconnecting OrderBook stream in ${delay}ms (attempt ${retryCount}/${MAX_RETRIES})...`);
+          setTimeout(setupStream, delay);
+        } else {
+          console.error('Max retry attempts reached for OrderBook stream');
+          onError('Failed to maintain connection after maximum retry attempts');
+        }
+      });
+
+      return () => {
+        console.log('Cleaning up OrderBook stream');
+        if (stream) {
+          stream.cancel();
+          stream = null;
+        }
+      };
+    } catch (err) {
+      console.error('Error setting up OrderBook stream:', err);
+      onError(`Failed to setup stream: ${err.message}`);
+      return () => {}; // Return no-op cleanup function
+    }
+  };
+
+  return setupStream();
+};
+
 export const fetchRiskMetrics = async () => {
   console.log('Fetching risk metrics');
   return withRetry(async () => {
     const request = new VaRRequest();
-
-    // Build PortfolioResponse for current portfolio
-    const portfolio = new PortfolioResponse();
-    portfolio.setBotId("123");
-    portfolio.setTotalPortfolioValue(new DecimalValue());
-    portfolio.getTotalPortfolioValue().setUnits(50000);
-    portfolio.getTotalPortfolioValue().setNanos(0);
-    portfolio.setCashBalance(new DecimalValue());
-    portfolio.getCashBalance().setUnits(0);
-    portfolio.getCashBalance().setNanos(0);
-
-    // Add a position
-    const position = new PortfolioPosition();
-    position.setSymbol("BTCUSD");
-    position.setQuantity(new DecimalValue());
-    position.getQuantity().setUnits(1);
-    position.getQuantity().setNanos(0);
-    position.setAveragePrice(new DecimalValue());
-    position.getAveragePrice().setUnits(50000);
-    position.getAveragePrice().setNanos(0);
-    position.setMarketValue(new DecimalValue());
-    position.getMarketValue().setUnits(50000);
-    position.getMarketValue().setNanos(0);
-    position.setUnrealizedPnl(new DecimalValue());
-    position.getUnrealizedPnl().setUnits(0);
-    position.getUnrealizedPnl().setNanos(0);
-    position.setExposurePct(new DecimalValue());
-    position.getExposurePct().setUnits(100);
-    position.getExposurePct().setNanos(0);
-
-    portfolio.setPositionsList([position]);
-    portfolio.setUpdatedAt(Math.floor(Date.now() / 1000));
-
+    
+    // Create a portfolio for the current portfolio
+    const portfolio = new Portfolio();
+    const positionsMap = portfolio.getPositionsMap();
+    positionsMap.set('BTC-USD', 0.5);
+    // use the account_value of BotConfig and maybe UserConfig 
+    portfolio.setTotalValueUsd(10000009);
+    
     request.setCurrentPortfolio(portfolio);
-    request.setRiskModel('historical');
-    request.setConfidenceLevel(0.95);
-    request.setHorizonDays(1);
+    request.setRiskModel('monte_carlo');
 
     return new Promise((resolve, reject) => {
       riskClient.calculateVaR(request, createMetadata(), (err, response) => {
@@ -208,6 +242,147 @@ export const fetchRiskMetrics = async () => {
   }, 'Fetch Risk Metrics');
 };
 
+export const startStrategy = async (params) => {
+  console.log('Starting strategy with params:', params);
+  return withRetry(async () => {
+    const request = new StrategyRequest();
+    request.setStrategyId('mean_reversion');
+    // want bots to be able to look at all symbols....
+    request.setSymbol(params.symbol); 
+    if (params.userId) request.setUserId(params.userId); // <-- FIX: use real userId
+
+    // Convert parameters to strings for the map
+    const paramMap = {};
+    paramMap['type'] = 'MEAN_REVERSION';
+    paramMap['lookback_period'] = params.lookbackPeriod.toString();
+    paramMap['entry_std_dev'] = params.entryStdDev.toString();
+    paramMap['exit_std_dev'] = params.exitStdDev.toString();
+    paramMap['max_position_size'] = params.maxPositionSize.toString();
+    paramMap['stop_loss_percent'] = params.stopLossPercent.toString();
+    paramMap['risk_per_trade_percent'] = params.riskPerTradePercent.toString();
+    paramMap['period'] = '5'; // Update interval in seconds
+    paramMap['threshold'] = params.entryStdDev.toString();
+  
+    const map = request.getParametersMap();
+    Object.entries(paramMap || {}).forEach(([k, v]) => map.set(k, String(v)));
+
+    return new Promise((resolve, reject) => {
+      tradingClient.startStrategy(request, createMetadata(), (err, response) => {
+        if (err) {
+          console.error('Error starting strategy:', err);
+          reject(err);
+          return;
+        }
+        resolve(response.toObject());
+      });
+    });
+  }, 'Start Strategy');
+};
+
+export const fetchPrice = async (symbol) => {
+  console.log('Fetching price for symbol:', symbol);
+  return withRetry(async () => {
+    const request = new Tick();
+    request.setSymbol(symbol);
+
+    return new Promise((resolve, reject) => {
+      tradingClient.getPrice(request, createMetadata(), (err, response) => {
+        if (err) {
+          console.error('Error fetching price:', err);
+          reject(err);
+          return;
+        }
+        resolve(response.toObject());
+      });
+    });
+  }, 'Fetch Price');
+};
+
+export const addSymbol = async (symbol) => {
+  return new Promise((resolve, reject) => {
+    const req = new SymbolRequest();
+    req.setSymbol(symbol);
+    tradingClient.addSymbol(req, createMetadata(), (err, resp) => {
+      if (err) return reject(err);
+      resolve(resp.toObject());
+    });
+  });
+};
+
+export const removeSymbol = async (symbol) => {
+  return new Promise((resolve, reject) => {
+    const req = new SymbolRequest();
+    req.setSymbol(symbol);
+    tradingClient.removeSymbol(req, createMetadata(), (err, resp) => {
+      if (err) return reject(err);
+      resolve(resp.toObject());
+    });
+  });
+};
+
+export const listSymbols = async () => {
+  const { Empty } = await import('../proto/trading_api_pb.js');
+  const req = new Empty();
+  return new Promise((resolve, reject) => {
+    tradingClient.listSymbols(req, createMetadata(), (err, resp) => {
+      if (err) return reject(err);
+      resolve(resp.toObject());
+    });
+  });
+};
+
+// Fetch server-side momentum metrics (optional symbol filter array)
+export const getMomentum = async (symbols=[]) => {
+  const { MomentumRequest } = await import('../proto/trading_api_pb.js');
+  const req = new MomentumRequest();
+  req.setSymbolsList(symbols);
+  return new Promise((resolve, reject) => {
+    tradingClient.getMomentum(req, createMetadata(), (err, resp) => {
+      if (err) return reject(err);
+      resolve(resp.toObject());
+    });
+  });
+};
+
+// Stream live price ticks (server-streaming gRPC). Returns a cleanup function to cancel.
+export const streamPrice = (symbol, onData, onError) => {
+  console.log('Starting Price stream for symbol:', symbol);
+  let stream;
+  try {
+    const request = new TickStreamRequest();
+    request.setSymbol(symbol);
+    stream = tradingClient.streamPrice(request, createMetadata());
+
+    stream.on('data', (resp) => {
+      try {
+        const tick = resp.toObject();
+        // tick: { symbol, price, timestamp }
+        onData(tick);
+      } catch (e) {
+        console.error('Error handling price tick:', e);
+        onError && onError(e.message || 'Tick parse error');
+      }
+    });
+    stream.on('error', (err) => {
+      console.error('Price stream error:', err);
+      onError && onError(err.message || 'Stream error');
+    });
+    stream.on('end', () => {
+      console.log('Price stream ended');
+    });
+  } catch (e) {
+    console.error('Failed to start price stream:', e);
+    onError && onError(e.message || 'Stream start failure');
+  }
+  return () => {
+    if (stream) {
+      console.log('Cancelling price stream for symbol:', symbol);
+      stream.cancel();
+      stream = null;
+    }
+  };
+};
+
 export const handleGrpcError = (err, setUser, setView) => {
   // gRPC Unauthenticated error code is 16
   if (err && (err.code === 16 || err.message?.toLowerCase().includes('unauthenticated') || err.message?.toLowerCase().includes('invalid token'))) {
@@ -220,39 +395,18 @@ export const handleGrpcError = (err, setUser, setView) => {
 };
 
 // --- Bot Service Helpers ---
-export const createBot = async ({
-  user_id,
-  name,
-  description,
-  symbols,
-  strategy_name,
-  strategy_parameters,
-  initial_account_value,
-  is_live
-}) => {
-  // Use generated CreateBotRequest
-  const req = new CreateBotRequest();
-  req.setUserId(user_id);
-  req.setName(name);
-  req.setDescription(description);
-  req.setSymbolsList(symbols);
-  req.setStrategyName(strategy_name);
-
-  // Set strategy_parameters as a map
-  const paramsMap = req.getStrategyParametersMap();
-  Object.entries(strategy_parameters || {}).forEach(([key, value]) => {
-    paramsMap.set(key, value);
-  });
-
-  // Set initial_account_value as DecimalValue
-  const dec = new DecimalValue();
-  dec.setUnits(initial_account_value);
-  dec.setNanos(0);
-  req.setInitialAccountValue(dec);
-
-  req.setIsLive(is_live);
-
+export const createBot = async ({ id, user_id, name, description, symbols, strategy_name, strategy_parameters, initial_account_value, current_account_value, is_active, is_live, created_at, updated_at }) => {
+  const { CreateBotRequest } = await import('../proto/trading_api_grpc_web_pb.js');
+  console.log('[grpcClient] Sending createBot request:', { id, user_id, name, description, symbols, strategy_name, strategy_parameters, initial_account_value, current_account_value, is_active, is_live, created_at, updated_at });
   return new Promise((resolve, reject) => {
+    const req = new CreateBotRequest();
+    req.setName(name);
+    req.setDescription(description); // new field
+    req.setSymbolsList(symbols); // repeated string
+    req.setStrategyName(strategyName); // renamed field
+    req.setStrategyParameters(JSON.stringify(parameters)); // now a JSON string
+    req.setInitialAccountValue({ units: initialAccountValue, nanos: 0 }); // use DecimalValue
+    req.setIsLive(isLive); // new field
     botClient.createBot(req, createMetadata(), (err, resp) => {
       if (err) {
         console.error('[grpcClient] createBot error:', err);
@@ -263,10 +417,10 @@ export const createBot = async ({
   });
 };
 
-export const listBots = async (userId) => {
-  const { ListBotsRequest, Empty } = await import('../proto/trading_api_pb.js');
+export const listBots = async () => {
+  const { Empty } = await import('../proto/trading_api_pb.js');
   const req = new ListBotsRequest();
-  req.setUserId(userId); // userId now passed as argument
+  req.setUserId(userId);
   return new Promise((resolve, reject) => {
     botClient.listBots(req, createMetadata(), (err, resp) => {
       if (err) return reject(err);

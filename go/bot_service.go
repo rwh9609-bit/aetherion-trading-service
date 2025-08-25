@@ -84,11 +84,6 @@ func (r *botRegistry) loadFromPg(ctx context.Context) {
 			log.Printf("bot load pg scan err: %v", err)
 			continue
 		}
-		var strategyParamsMap map[string]string
-		if err := json.Unmarshal([]byte(strategyParameters), &strategyParamsMap); err != nil {
-			log.Printf("bot load pg strategyParameters unmarshal err: %v", err)
-			strategyParamsMap = make(map[string]string)
-		}
 		r.bots[id] = &pb.Bot{
 			Id:                  id,
 			UserId:              userID,
@@ -96,7 +91,7 @@ func (r *botRegistry) loadFromPg(ctx context.Context) {
 			Description:         description,
 			Symbols:             symbols,
 			StrategyName:        strategyName,
-			StrategyParameters:  strategyParamsMap,
+			StrategyParameters:  strategyParameters,
 			InitialAccountValue: &pb.DecimalValue{Units: int64(initialAccountValue), Nanos: int32((initialAccountValue - float64(int64(initialAccountValue))) * 1e9)},
 			CurrentAccountValue: &pb.DecimalValue{Units: int64(currentAccountValue), Nanos: int32((currentAccountValue - float64(int64(currentAccountValue))) * 1e9)},
 			IsActive:            isActive,
