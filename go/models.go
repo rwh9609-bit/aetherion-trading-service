@@ -17,14 +17,14 @@ type User struct {
 }
 
 type Product struct {
-	ID                    string   `json:"id"`
-	Name                  string   `json:"name"`
-	StripeProductID       string   `json:"stripe_product_id"`
-	PriceMonthly          float64  `json:"price_monthly"`
-	StripePriceIDMonthly  string   `json:"stripe_price_id_monthly"`
-	PriceYearly           float64  `json:"price_yearly"`
-	StripePriceIDYearly   string   `json:"stripe_price_id_yearly"`
-	Features              []string `json:"features"`
+	ID                   string   `json:"id"`
+	Name                 string   `json:"name"`
+	StripeProductID      string   `json:"stripe_product_id"`
+	PriceMonthly         float64  `json:"price_monthly"`
+	StripePriceIDMonthly string   `json:"stripe_price_id_monthly"`
+	PriceYearly          float64  `json:"price_yearly"`
+	StripePriceIDYearly  string   `json:"stripe_price_id_yearly"`
+	Features             []string `json:"features"`
 }
 
 type Subscription struct {

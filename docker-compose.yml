@@ -16,7 +16,7 @@ services:
       - AUTH_SECRET=${AUTH_SECRET}
       - CORS_ALLOWED_ORIGINS=${CORS_ALLOWED_ORIGINS:-http://localhost:3000,https://app.aetherion.cloud, https://api.aetherion.cloud, https://www.aetherion.cloud}
       - AUTH_PREVIOUS_SECRET=${AUTH_PREVIOUS_SECRET:-}
-      - POSTGRES_DSN=postgres://user:password@postgres:5432/aetherion?sslmode=disable
+      - POSTGRES_DSN=${POSTGRES_DSN}
       - REACT_APP_STRIPE_PRICE_ID_MONTHLY=${REACT_APP_STRIPE_PRICE_ID_MONTHLY}
       - REACT_APP_STRIPE_PRICE_ID_YEARLY=${REACT_APP_STRIPE_PRICE_ID_YEARLY}
     depends_on:
@@ -39,8 +39,8 @@ services:
     restart: unless-stopped
     environment:
       POSTGRES_DB: aetherion
-      POSTGRES_USER: user
-      POSTGRES_PASSWORD: password
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./go/db/migrations:/migrations:ro

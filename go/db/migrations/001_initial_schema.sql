@@ -4,18 +4,51 @@ DROP TABLE IF EXISTS portfolios CASCADE;
 DROP TABLE IF EXISTS users CASCADE;
 DROP TABLE IF EXISTS bots CASCADE;
 DROP TABLE IF EXISTS orders CASCADE;
+DROP TABLE IF EXISTS subscriptions CASCADE;
+DROP TABLE IF EXISTS products CASCADE;
 
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
+-- 1. Create users table (without subscription_id)
 CREATE TABLE IF NOT EXISTS users (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     username TEXT UNIQUE NOT NULL,
     email TEXT,
     password_hash TEXT NOT NULL,
     role TEXT NOT NULL DEFAULT 'user',  
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    stripe_customer_id TEXT UNIQUE
 );
 
+-- 2. Create products table
+CREATE TABLE IF NOT EXISTS products (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    name TEXT NOT NULL, -- e.g., Pro, Enterprise
+    stripe_product_id TEXT UNIQUE NOT NULL,
+    price_monthly NUMERIC(10, 2) NOT NULL,
+    stripe_price_id_monthly TEXT UNIQUE NOT NULL,
+    price_yearly NUMERIC(10, 2) NOT NULL,
+    stripe_price_id_yearly TEXT UNIQUE NOT NULL,
+    features JSONB NOT NULL -- Store features as a JSON array
+);
+
+-- 3. Create subscriptions table (references users and products)
+CREATE TABLE IF NOT EXISTS subscriptions (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    product_id UUID NOT NULL REFERENCES products(id),
+    stripe_subscription_id TEXT UNIQUE NOT NULL,
+    status TEXT NOT NULL, -- e.g., active, canceled, past_due
+    current_period_start TIMESTAMP WITH TIME ZONE NOT NULL,
+    current_period_end TIMESTAMP WITH TIME ZONE NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 4. Add subscription_id to users table (references subscriptions)
+ALTER TABLE users ADD COLUMN IF NOT EXISTS subscription_id UUID REFERENCES subscriptions(id);
+
+-- 5. Create other tables
 CREATE TABLE IF NOT EXISTS bots (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     user_id UUID NOT NULL,
@@ -84,3 +117,4 @@ CREATE INDEX IF NOT EXISTS idx_trades_bot_id ON trades (bot_id);
 CREATE INDEX IF NOT EXISTS idx_trades_symbol ON trades (symbol);
 CREATE INDEX IF NOT EXISTS idx_orders_bot_id ON orders (bot_id);
 CREATE INDEX IF NOT EXISTS idx_orders_symbol ON orders (symbol);
+CREATE INDEX IF NOT EXISTS idx_subscriptions_user_id ON subscriptions (user_id);
