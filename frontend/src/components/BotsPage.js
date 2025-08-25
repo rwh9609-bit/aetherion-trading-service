@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { TextField, Container, Box, Typography, Card, CardContent, Button, Stack, Dialog, DialogTitle, DialogContent, DialogActions, Chip, CircularProgress, Alert } from '@mui/material';
+import { Container, Box, Typography, Card, CardContent, Button, Stack, Dialog, DialogTitle, DialogContent, DialogActions, Chip, CircularProgress, Alert } from '@mui/material';
 import { BotServiceClient } from "../proto/trading_api_grpc_web_pb";
 import {
   ListBotsRequest,
@@ -12,21 +12,12 @@ import {
 export default function BotsPage({ onNavigate, onSelectBot, selectedBot, userId, authToken }) {
 
   const client = new BotServiceClient("http://localhost:8080");
+
   const statusColor = (active) => active ? 'success.main' : 'text.secondary';
+  
+
   const [bots, setBots] = useState([]);
   const [loading, setLoading] = useState(true);
-
-  // Dialog state
-  const [createOpen, setCreateOpen] = useState(false);
-  const [form, setForm] = useState({
-    name: "",
-    description: "",
-    symbols: "",
-    strategyName: "",
-    paramKey: "",
-    paramValue: "",
-    isLive: false,
-  });
 
   // Fetch bots for the user
   // Helper to fetch bots
@@ -53,41 +44,28 @@ export default function BotsPage({ onNavigate, onSelectBot, selectedBot, userId,
   }, [userId, authToken]);
 
 
-  // Dialog open/close handlers
-  const handleOpenCreate = () => setCreateOpen(true);
-  const handleCloseCreate = () => setCreateOpen(false);
-
-  // Form change handler
-  const handleFormChange = (e) => {
-    const { name, value, type, checked } = e.target;
-    setForm((prev) => ({
-      ...prev,
-      [name]: type === "checkbox" ? checked : value,
-    }));
-  };
-
-
   // Example: Create a new bot
   const handleCreateBot = async () => {
     const req = new CreateBotRequest();
     req.setUserId(userId);
-    req.setName(form.name);
-    req.setDescription(form.description);
-    req.setSymbolsList(form.symbols.split(",").map(s => s.trim()));
-    req.setStrategyName(form.strategyName);
+    req.setName("My Bot");
+    req.setDescription("A sample bot");
+    req.setSymbolsList(["AAPL", "GOOG"]);
+    req.setStrategyName("mean_reversion");
     const paramsMap = req.getStrategyParametersMap();
-    if (form.paramKey && form.paramValue) {
-      paramsMap.set(form.paramKey, form.paramValue);
-    }
-    req.setIsLive(form.isLive);
-
+    paramsMap.set("param1", "value1");
+    paramsMap.set("param2", "value2");
+    // Set initial_account_value as a DecimalValue
+    // You may need to construct DecimalValue using generated code
+    // req.setInitialAccountValue(decimalValue);
+    req.setIsLive(true); 
     client.createBot(req, authToken, (err, resp) => {
       if (err) {
         alert("Failed to create bot: " + err.message);
         return;
       }
+      // Optionally refresh bot list
       fetchBots();
-      handleCloseCreate();
     });
   };
 
@@ -122,36 +100,12 @@ export default function BotsPage({ onNavigate, onSelectBot, selectedBot, userId,
   };
 
   return (
-    <Container>
-      <Box sx={{ mt: 2 }}>
-        <Typography variant="h4">Your Bots</Typography>
-        <Button variant="contained" color="primary" sx={{ mt: 2 }} onClick={handleOpenCreate}>
-          Create Bot
-        </Button>
-        <Dialog open={createOpen} onClose={handleCloseCreate}>
-          <DialogTitle>Create Bot</DialogTitle>
-          <DialogContent>
-            <Stack spacing={2}>
-              <TextField label="Name" name="name" value={form.name} onChange={handleFormChange} fullWidth />
-              <TextField label="Description" name="description" value={form.description} onChange={handleFormChange} fullWidth />
-              <TextField label="Symbols (comma separated)" name="symbols" value={form.symbols} onChange={handleFormChange} fullWidth />
-              <TextField label="Strategy Name" name="strategyName" value={form.strategyName} onChange={handleFormChange} fullWidth />
-              <TextField label="Strategy Param Key" name="paramKey" value={form.paramKey} onChange={handleFormChange} fullWidth />
-              <TextField label="Strategy Param Value" name="paramValue" value={form.paramValue} onChange={handleFormChange} fullWidth />
-              <Box>
-                <label>
-                  <input type="checkbox" name="isLive" checked={form.isLive} onChange={handleFormChange} />
-                  Live Bot
-                </label>
-              </Box>
-            </Stack>
-          </DialogContent>
-          <DialogActions>
-            <Button onClick={handleCloseCreate}>Cancel</Button>
-            <Button onClick={handleCreateBot} variant="contained">Create</Button>
-          </DialogActions>
-        </Dialog>
-
+    <div>
+      <h1>Your Bots</h1>
+      {loading ? (
+        <p>Loading...</p>
+      ) : (
+        <ul>
           {bots.map((bot) => (
             <li key={bot.getId()}>
               <strong>{bot.getName()}</strong> - {bot.getDescription()}
@@ -159,7 +113,9 @@ export default function BotsPage({ onNavigate, onSelectBot, selectedBot, userId,
               <button onClick={() => handleDeleteBot(bot.getId())}>Delete</button>
             </li>
           ))}
-      </Box>
-    </Container>
+        </ul>
+      )}
+      <button onClick={handleCreateBot}>Create Bot</button>
+    </div>
   );
 }
