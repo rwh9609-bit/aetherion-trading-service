@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { botClient, createMetadata } from '../services/grpcClient';
+import { tradingClient, createMetadata } from '../services/grpcClient';
 import { TradeHistoryRequest } from '../proto/trading_api_pb';
 import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Typography } from '@mui/material';
 
@@ -12,7 +12,7 @@ const RecentTrades = ({ bot }) => {
       const request = new TradeHistoryRequest();
       request.setUserId(bot.id);
 
-      botClient.getTradeHistory(request, createMetadata(), (err, response) => {
+      tradingClient.getTradeHistory(request, createMetadata(), (err, response) => {
         if (err) {
           console.error('Error fetching trade history:', err);
           return;

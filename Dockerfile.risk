@@ -2,7 +2,7 @@
 # Build stage
 #############################################
 FROM rust:1.78-alpine AS builder
-RUN apk add --no-cache musl-dev pkgconfig protobuf-dev
+RUN apk add --no-cache musl-dev pkgconfig protobuf
 WORKDIR /app
 COPY rust/risk_service/Cargo.toml rust/risk_service/Cargo.lock ./
 COPY rust/risk_service/build.rs ./build.rs

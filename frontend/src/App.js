@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { ThemeProvider, createTheme, CssBaseline, AppBar, Toolbar, Typography, Button, Box, Tooltip, CircularProgress, Snackbar, Alert, Menu, MenuItem } from '@mui/material';
+import TradingDashboard from './components/TradingDashboard';
 
 import TradingOperations from './components/TradingOperations';
 import BotsPage from './components/BotsPage';
@@ -201,6 +202,11 @@ function App() {
             />
           </Box>
         )}
+          {user && view === 'dashboard' && (
+            <div style={{ padding: '24px' }}>
+              <TradingDashboard user={user} selectedBot={selectedBot} setUser={setUser} setView={setView} />
+            </div>
+          )}
           {user && view === 'backtest' && (
             <div style={{ padding: '24px' }}>
               <BacktestRunner />

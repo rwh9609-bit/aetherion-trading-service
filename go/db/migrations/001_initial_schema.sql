@@ -55,18 +55,6 @@ CREATE TABLE IF NOT EXISTS portfolios (
     UNIQUE (bot_id, symbol) -- <-- CORRECTED: Changed from (user_id, symbol)
 );
 
-CREATE TABLE IF NOT EXISTS portfolio_history (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    portfolio_id UUID NOT NULL REFERENCES portfolios(id) ON DELETE CASCADE,
-    snapshot_time TIMESTAMP WITH TIME ZONE NOT NULL,
-    quantity NUMERIC(20, 8) NOT NULL,
-    average_price NUMERIC(20, 8) NOT NULL,
-    market_value NUMERIC(20, 8) NOT NULL,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    UNIQUE (portfolio_id, snapshot_time)
-);
-
 -- ADDED: A new table to track historical portfolio snapshots for analysis
 CREATE TABLE IF NOT EXISTS bot_performance_snapshots (
     id BIGSERIAL PRIMARY KEY, -- Use BIGSERIAL for high-frequency time-series data
