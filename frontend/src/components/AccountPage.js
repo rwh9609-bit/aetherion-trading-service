@@ -11,26 +11,27 @@ const AccountPage = ({ user, onLogout, onGoToPricing }) => {
   };
 
   return (
-    <Card sx={{ maxWidth: 640, margin: '32px auto' }}>
+    <Card sx={{ maxWidth: 600, margin: '32px auto' }}>
       <CardContent>
         <Typography variant="h5" gutterBottom>
-          Welcome, {user.username}
+          Account Overview
         </Typography>
         <Divider sx={{ mb: 2 }} />
         <Stack direction="row" spacing={1} sx={{ mb: 2 }}>
-          <Chip label={user.role ? user.role : "user"} color={user.role === "superuser" ? "secondary" : "primary"} />
+          <Chip label={user.role || "user"} color={user.role === "superuser" ? "secondary" : "primary"} />
           {user.subscription && (
             <Chip label={`Subscription: ${user.subscription.status}`} color="success" />
           )}
         </Stack>
         <Typography variant="body1" sx={{ mb: 1 }}>
+          <strong>Username:</strong> {user.username}
+        </Typography>
+        <Typography variant="body1" sx={{ mb: 1 }}>
           <strong>Email:</strong> {user.email || "N/A"}
         </Typography>
         <Typography variant="body1" sx={{ mb: 1 }}>
           <strong>Registered:</strong>{" "}
-          {user.createdAt
-            ? new Date(user.createdAt).toLocaleString()
-            : "N/A"}
+          {user.createdAt ? new Date(user.createdAt).toLocaleString() : "N/A"}
         </Typography>
         {user.subscription && (
           <Typography variant="body1" sx={{ mb: 2 }}>
