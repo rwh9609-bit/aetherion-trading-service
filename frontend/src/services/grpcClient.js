@@ -7,11 +7,6 @@ import {
   PortfolioServiceClient
 } from '../proto/trading_api_grpc_web_pb.js';
 import {
-  Timestamp
-} from 'google-protobuf/google/protobuf/timestamp_pb.js';
-import { jwtDecode } from 'jwt-decode';
-import {
-  GetUserRequest,
   PortfolioResponse,
   PortfolioPosition,
   DecimalValue,
@@ -118,38 +113,6 @@ export const loginUser = async (username, password) => {
   });
 };
 
-export const getUser = async () => {
-  const token = localStorage.getItem('authToken');
-  if (!token) return null;
-
-  try {
-    const decoded = jwtDecode(token);
-    if (decoded.exp * 1000 < Date.now()) {
-      localStorage.removeItem('authToken');
-      return null;
-    }
-
-    const req = new GetUserRequest();
-    req.setUserId(decoded.sub); // Assumes user ID is in the 'sub' claim of the JWT
-
-    return new Promise((resolve, reject) => {
-      authClient.getUser(req, createMetadata(), (err, resp) => {
-        if (err) {
-          if (err.code === 5 || err.code === 16) { // NOT_FOUND or UNAUTHENTICATED
-            localStorage.removeItem('authToken');
-          }
-          return reject(err);
-        }
-        resolve(resp.toObject());
-      });
-    });
-  } catch (e) {
-    console.error("Failed to decode or validate token", e);
-    localStorage.removeItem('authToken');
-    return null;
-  }
-};
-
 const withRetry = async (operation, operationName = 'Operation', retries = MAX_RETRIES) => {
   let currentDelay = RETRY_DELAY;
   
@@ -225,9 +188,7 @@ export const fetchRiskMetrics = async () => {
     position.getExposurePct().setNanos(0);
 
     portfolio.setPositionsList([position]);
-    const timestamp = new Timestamp();
-    timestamp.setSeconds(Math.floor(Date.now() / 1000));
-    portfolio.setUpdatedAt(timestamp);
+    portfolio.setUpdatedAt(Math.floor(Date.now() / 1000));
 
     request.setCurrentPortfolio(portfolio);
     request.setRiskModel('historical');

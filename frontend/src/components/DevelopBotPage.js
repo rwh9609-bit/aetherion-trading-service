@@ -11,7 +11,6 @@ const symbols = [
 
 const defaultConfig = {
   name: '',
-  description: '',
   symbol: [],
   strategy: 'MEAN_REVERSION',
   lookback: 20,
@@ -47,10 +46,6 @@ const DevelopBotPage = ({ onNavigate, userId }) => {
   };
 
   const handleSubmit = async () => {
-    if (!cfg.name || cfg.symbol.length === 0) {
-      setAlert({ type: 'error', msg: 'Bot Name and at least one Symbol are required.' });
-      return;
-    }
     setSubmitting(true); setAlert(null);
     try {
       const params = {
@@ -61,18 +56,16 @@ const DevelopBotPage = ({ onNavigate, userId }) => {
         stopLossPct: String(cfg.stopLossPct),
         riskPerTradePct: String(cfg.riskPerTradePct)
       };
-      const payload = {
-        user_id: userId,
+      const symbolString = cfg.symbol.join(',');
+      console.log('[DevelopBotPage] createBot request:', {
         name: cfg.name,
-        description: cfg.description, // Added description
-        symbols: cfg.symbol, // Pass array directly
-        strategy_name: cfg.strategy,
-        strategy_parameters: params,
-        initial_account_value: Number(cfg.accountValue),
-        is_live: false, // Default to paper trading
-      };
-      console.log('[DevelopBotPage] createBot request:', payload);
-      const resp = await createBot(payload);
+        symbol: symbolString,
+        strategy: cfg.strategy,
+        parameters: params,
+        account_value: Number(cfg.accountValue),
+        user_id: userId
+      });
+      const resp = await createBot({ name: cfg.name, symbol: symbolString, strategy: cfg.strategy, parameters: params, account_value: Number(cfg.accountValue), user_id: userId });
       console.log('[DevelopBotPage] createBot response:', resp);
       if (resp.success) {
         setAlert({ type:'success', msg: `Bot created (id=${resp.id})` });
@@ -98,7 +91,6 @@ const DevelopBotPage = ({ onNavigate, userId }) => {
           {alert && <Alert severity={alert.type} sx={{ mb:2 }} onClose={()=>setAlert(null)}>{alert.msg}</Alert>}
           <Stack spacing={2}>
             <TextField label="Bot Name" value={cfg.name} onChange={setField('name')} fullWidth required />
-            <TextField label="Description" value={cfg.description} onChange={setField('description')} fullWidth multiline rows={2} />
             <FormControl component="fieldset" fullWidth>
               <FormLabel component="legend" sx={{ mb: 1, typography: 'subtitle2', fontWeight: 600 }}>Symbols</FormLabel>
               <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
