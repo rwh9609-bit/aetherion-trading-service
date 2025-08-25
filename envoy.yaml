@@ -58,7 +58,7 @@ static_resources:
                       max_stream_duration: { grpc_timeout_header_max: 0s }
                   - match: { prefix: "/trading.RiskService/" }
                     route:
-                      cluster: trading_service
+                      cluster: risk_service
                       timeout: 0s
                       max_stream_duration: { grpc_timeout_header_max: 0s }
                   - match: { prefix: "/healthz" }
@@ -170,6 +170,15 @@ static_resources:
                       - match: { prefix: "/" }
                         route:
                           cluster: frontend
+                      - match: { prefix: "/stripe-webhook" }
+                        route:
+                          cluster: trading_http
+                          timeout: 15s
+                      - match: { prefix: "/api/create-checkout-session" }
+                        route:
+                          cluster: trading_http
+                          timeout: 15s
+
                   - name: root_domain_passthrough
                     domains: ["aetherion.cloud"]
                     routes:
@@ -276,3 +285,16 @@ static_resources:
                     socket_address:
                       address: acme-challenge
                       port_value: 8080
+    - name: trading_http
+      connect_timeout: 0.5s
+      type: STRICT_DNS
+      lb_policy: ROUND_ROBIN
+      load_assignment:
+        cluster_name: trading_http
+        endpoints:
+          - lb_endpoints:
+              - endpoint:
+                  address:
+                    socket_address:
+                      address: trading
+                      port_value: 8081
