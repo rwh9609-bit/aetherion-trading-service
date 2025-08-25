@@ -51,13 +51,30 @@ const PricingPage = ({ setView }) => {
               <li>✓ Limited functionality</li>
               <li>✓ Community support</li>
             </ul>
-            <Button
-  variant="contained"
-  color="primary"
-  onClick={() => setView('dashboard')}
->
-  Current Plan
-</Button>
+            <p>
+              <Button
+                variant="contained"
+                color="primary"
+                onClick={() => setView('dashboard')}
+                sx={{
+                  width: '100%',
+                  py: 2,
+                  px: 4,
+                  borderRadius: 2,
+                  fontWeight: 'bold',
+                  boxShadow: 2,
+                  background: 'linear-gradient(90deg, #3b82f6 0%, #6366f1 100%)',
+                  color: '#fff',
+                  transition: 'transform 0.1s',
+                  '&:hover': {
+                    background: 'linear-gradient(90deg, #2563eb 0%, #4f46e5 100%)',
+                    transform: 'scale(1.04)',
+                  },
+                }}
+              >
+                Current Plan
+              </Button>
+            </p>
           </div>
           {/* Pro Tier */}
           <div className="bg-gray-800 p-8 rounded-xl border border-emerald-500 glow-effect">
