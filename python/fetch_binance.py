@@ -22,7 +22,7 @@ def fetch_binance_price(symbol="BTCUSDT"):
         resp.raise_for_status()
         data = resp.json()
         price = float(data["data"]["amount"])
-        print(f"Successfully fetched price for {base} from Coinbase")
+        # print(f"Successfully fetched price for {base} from Coinbase")
         return price
     except requests.exceptions.RequestException as e:
         print(f"Error fetching price from Coinbase: {str(e)}")

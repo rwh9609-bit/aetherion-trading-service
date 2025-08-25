@@ -2,93 +2,181 @@ syntax = "proto3";
 
 package trading;
 
-option go_package = "github.com/rwh9609-bit/multilanguage/go/gen";
+import "google/protobuf/timestamp.proto";
 
-// Represents a single market data tick
-message Tick {
-    string symbol = 1;
-    double price = 2;
-    int64 timestamp_ns = 3; // Nanosecond precision timestamp
-}
+option go_package = "aetherion/gen";
 
-// Request to stream live price ticks (optional symbol filter; empty = all subscribed symbols server supports)
-message TickStreamRequest {
-    string symbol = 1;
-}
+// =================================================================
+// COMMON & UTILITY MESSAGES
+// =================================================================
 
-// Generic symbol request for add/remove symbol operations
-message SymbolRequest {
-    string symbol = 1;
-}
-
-// Empty request placeholder
 message Empty {}
 
-// Response listing active market data symbols
-message SymbolList {
-    repeated string symbols = 1;
+// High-precision financial values (avoids float rounding issues)
+message DecimalValue {
+    int64 units = 1;   // Whole part
+    sfixed32 nanos = 2; // Fractional part, -999,999,999 .. +999,999,999
 }
 
-message StrategyRequest {
-    string strategy_id = 1;
-    string symbol = 2;
-    map<string, string> parameters = 3;
-    string user_id = 4; // <-- Add this line
-}
-
-// Generic response for operations
 message StatusResponse {
     bool success = 1;
     string message = 2;
     string id = 3; // optional identifier (e.g., strategy/bot id)
 }
 
-// Request to get portfolio status
+message Pagination {
+    int32 limit = 1;
+    int32 offset = 2;
+}
+
+// =================================================================
+// ENUMS
+// =================================================================
+
+enum OrderSide {
+    ORDER_SIDE_UNSPECIFIED = 0;
+    BUY = 1;
+    SELL = 2;
+}
+
+enum OrderType {
+    ORDER_TYPE_UNSPECIFIED = 0;
+    MARKET = 1;
+    LIMIT = 2;
+    STOP = 3;
+}
+
+enum OrderStatus {
+    ORDER_STATUS_UNSPECIFIED = 0;
+    NEW = 1;
+    SUBMITTED = 2;
+    PARTIALLY_FILLED = 3;
+    FILLED = 4;
+    CANCELED = 5;
+    REJECTED = 6;
+}
+
+// =================================================================
+// PORTFOLIO & PERFORMANCE SERVICE
+// =================================================================
+
+service PortfolioService {
+    rpc GetPortfolio(PortfolioRequest) returns (PortfolioResponse) {}
+    rpc StreamPortfolio(PortfolioRequest) returns (stream PortfolioResponse) {}
+    rpc GetPerformanceHistory(PerformanceHistoryRequest) returns (PerformanceHistoryResponse) {}
+}
+
 message PortfolioRequest {
-    string account_id = 1;
+    string bot_id = 1;
 }
 
-// Response with portfolio details
-// Portfolio snapshot at a point in time
-message Portfolio {
-    map<string, double> positions = 1;  // Map of symbol to quantity
-    double total_value_usd = 2;
-    optional double last_price_change = 3;  // Last observed price change percentage
-}
-
-
-// Request to calculate Value at Risk (VaR)
-message VaRRequest {
-    Portfolio current_portfolio = 1;
-    string risk_model = 2; // e.g., "monte_carlo"
-    double confidence_level = 3; // e.g., 0.95
-    double horizon_days = 4; // time horizon in days (e.g., 1)
-}
-
-// Response with the calculated VaR
-message VaRResponse {
-    double value_at_risk = 1;
-    repeated string asset_names = 2;
-    repeated double correlation_matrix = 3; // row-major flattened
-    repeated double volatility_per_asset = 4;
-    string simulation_mode = 5;
-    string last_update = 6;
-}
-
-message TradeRequest {
+message PortfolioPosition {
     string symbol = 1;
-    string side = 2;
-    double size = 3;
-    double price = 4;
-    string strategy_id = 5;
-    string user_id = 6; // <-- Add this line
+    DecimalValue quantity = 2;
+    DecimalValue average_price = 3;
+    DecimalValue market_value = 4;
+    DecimalValue unrealized_pnl = 5;
+    DecimalValue exposure_pct = 6;
 }
 
-message TradeResponse {
-    bool accepted = 1;
-    string message = 2;
-    double executed_price = 3;
-    double pnl = 4; // realized PnL for closing trades (simplified)
+message PortfolioResponse {
+    string bot_id = 1;
+    repeated PortfolioPosition positions = 2;
+    DecimalValue total_portfolio_value = 3;
+    DecimalValue cash_balance = 4;
+    google.protobuf.Timestamp updated_at = 5;
+}
+
+message PerformanceHistoryRequest {
+    string bot_id = 1;
+    google.protobuf.Timestamp start_time = 2;
+    google.protobuf.Timestamp end_time = 3;
+}
+
+message BotPerformanceSnapshot {
+    google.protobuf.Timestamp snapshot_time = 1;
+    DecimalValue equity_value = 2;
+    DecimalValue cash_balance = 3;
+    DecimalValue pnl = 4;
+}
+
+message PerformanceHistoryResponse {
+    repeated BotPerformanceSnapshot snapshots = 1;
+}
+
+// =================================================================
+// ORDER & TRADE SERVICE
+// =================================================================
+
+service OrderService {
+    rpc CreateOrder(CreateOrderRequest) returns (Order) {}
+    rpc CancelOrder(CancelOrderRequest) returns (Order) {}
+    rpc GetOrder(GetOrderRequest) returns (Order) {}
+    rpc GetTradeHistory(TradeHistoryRequest) returns (TradeHistoryResponse) {}
+    rpc ListOrders(ListOrdersRequest) returns (ListOrdersResponse) {}
+}
+
+message ListOrdersRequest {
+  string bot_id = 1;
+  int32 limit = 2;
+  int32 offset = 3;
+}
+
+message ListOrdersResponse {
+  repeated Order orders = 1;
+  int32 total_count = 2;
+}
+
+message Order {
+    string id = 1;
+    string bot_id = 2;
+    string symbol = 3;
+    OrderSide side = 4;
+    OrderType type = 5;
+    OrderStatus status = 6;
+    DecimalValue quantity_requested = 7;
+    DecimalValue quantity_filled = 8;
+    optional DecimalValue limit_price = 9;
+    optional DecimalValue stop_price = 10;
+    google.protobuf.Timestamp created_at = 11;
+    google.protobuf.Timestamp updated_at = 12;
+    repeated Trade trades = 13;
+}
+
+message CreateOrderRequest {
+    string bot_id = 1;
+    string symbol = 2;
+    OrderSide side = 3;
+    OrderType type = 4;
+    DecimalValue quantity = 5;
+    optional DecimalValue limit_price = 6;
+    optional DecimalValue stop_price = 7;
+}
+
+message CancelOrderRequest {
+    string order_id = 1;
+    string bot_id = 2;
+}
+
+message GetOrderRequest {
+    string order_id = 1;
+}
+
+
+message OrderBook {
+    repeated OrderBookEntry bids = 1;
+    repeated OrderBookEntry asks = 2;
+    string symbol = 3;
+}
+
+message OrderBookEntry {
+    double price = 1;
+    double size = 2;
+    int64 timestamp = 3; // Unix epoch milliseconds
+}
+
+message OrderBookRequest {
+    string symbol = 1;
 }
 
 message Trade {
@@ -99,40 +187,193 @@ message Trade {
     double price = 5;
     int64 executed_at = 6;
     string strategy_id = 7;
+    string bot_id = 8;
+    optional DecimalValue commission = 9;
+    google.protobuf.Timestamp executed_at_timestamp = 10;
+    optional DecimalValue pnl_realized = 11;
+    optional DecimalValue pnl_unrealized = 12;
+}
+
+message TradeRequest {
+    string symbol = 1;
+    string side = 2;
+    double size = 3;
+    double price = 4;
+    string strategy_id = 5;
+    string user_id = 6;
+    string bot_id = 7;
+}
+
+message TradeResponse {
+    bool accepted = 1;
+    string message = 2;
+    double executed_price = 3;
+    double pnl = 4; // realized PnL for closing trades (simplified)
 }
 
 message TradeHistoryRequest {
     string user_id = 1;
+    string bot_id = 2;
 }
 
 message TradeHistoryResponse {
     repeated Trade trades = 1;
+    int32 total_count = 2;
 }
 
-// OrderBook related messages
-message OrderBookEntry {
-    double price = 1;
-    double size = 2;
-    int64 timestamp = 3; // Unix epoch milliseconds
+// =================================================================
+// AUTH & USER SERVICE
+// =================================================================
+ 
+service AuthService {
+    rpc Register(RegisterRequest) returns (AuthResponse) {}
+    rpc Login(AuthRequest) returns (AuthResponse) {}
+    rpc GetUser(GetUserRequest) returns (UserInfo);
+    rpc RefreshToken(RefreshTokenRequest) returns (AuthResponse) {}
 }
 
-message OrderBook {
-    repeated OrderBookEntry bids = 1;
-    repeated OrderBookEntry asks = 2;
-    string symbol = 3;
+message AuthRequest {
+    string username = 1;
+    string password = 2;
 }
 
-message OrderBookRequest {
+message AuthResponse {
+    bool success = 1;
+    string message = 2;
+    string token = 3;           // JWT bearer token
+    int64 expires_at_unix = 4;   // Expiration timestamp (seconds since epoch)
+    string refresh_token = 5;
+}
+
+message GetUserRequest {
+  string username = 1;
+}
+
+message RegisterRequest {
+    string username = 1;
+    string password = 2; // Plaintext over TLS; will be hashed server-side
+    string email = 3;
+}
+
+message UserInfo {
+  string username = 1;
+  string email = 2;
+  int64 created_at_unix = 3;
+}
+
+message RefreshTokenRequest {
+    string refresh_token = 1;
+}
+
+// =================================================================
+// BOT MANAGEMENT SERVICE
+// =================================================================
+
+// BotService provides a focused interface for bot lifecycle operations.
+service BotService {
+  rpc CreateBot(CreateBotRequest) returns (StatusResponse) {}
+  rpc GetBot(BotIdRequest) returns (Bot) {}
+  rpc UpdateBot(UpdateBotRequest) returns (Bot) {}
+  rpc DeleteBot(BotIdRequest) returns (StatusResponse) {}
+  rpc ListBots(Empty) returns (BotList) {}
+  rpc StartBot(BotIdRequest) returns (StatusResponse) {}
+  rpc StopBot(BotIdRequest) returns (StatusResponse) {}
+  rpc GetBotStatus(BotIdRequest) returns (Bot) {}
+  rpc StreamBotStatus(BotIdRequest) returns (stream Bot) {} // realtime updates
+}
+
+message Bot {
+    string bot_id = 1;
+    string symbol = 2;
+    string strategy = 3;
+    map<string, string> parameters = 4;
+    bool is_active = 5;
+    int64 created_at_unix_ms = 6;
+    string name = 7;
+    string user_id = 8;
+    double account_value = 9;
+    string description = 10;
+    DecimalValue initial_account_value = 11;
+    DecimalValue current_account_value = 12;
+    bool is_live = 13;
+    google.protobuf.Timestamp created_at = 14;
+    google.protobuf.Timestamp updated_at = 15;
+}
+ 
+message UpdateBotRequest {
+    string bot_id = 1;
+    optional string name = 2;
+    optional string description = 3;
+    optional bool is_active = 4;
+}
+message CreateBotRequest {
     string symbol = 1;
+    string strategy = 2;
+    map<string, string> parameters = 3;
+    string name = 4;
+    double account_value = 5;
+}
+ 
+message BotIdRequest {
+    string bot_id = 1;
 }
 
-// --- Momentum Scanner (server-side aggregation) ---
-// Request momentum metrics for specified symbols. If symbols empty, server returns all tracked symbols.
+message ListBotsRequest {
+    string user_id = 1;
+}
+ 
+message BotList {
+    repeated Bot bots = 1;
+}
+
+// =================================================================
+// RISK SERVICE
+// =================================================================
+
+// Service for performing risk calculations
+service RiskService {
+    // Calculates the Value at Risk for a given portfolio
+    rpc CalculateVaR(VaRRequest) returns (VaRResponse) {}
+}
+
+message VaRRequest {
+    PortfolioResponse current_portfolio = 1;
+    string risk_model = 2; // e.g. "historical", "monte_carlo"
+    double confidence_level = 3; // e.g. 0.95
+    double horizon_days = 4;
+}
+
+message VaRResponse {
+    DecimalValue value_at_risk = 1;
+    repeated string asset_names = 2;
+    repeated double correlation_matrix = 3;
+    repeated double volatility_per_asset = 4;
+    string simulation_mode = 5;
+    google.protobuf.Timestamp last_update = 6;
+}
+
+// ==================================================================
+// Misc.
+// ==================================================================
+
+// Service definition
+service TradingService {
+    rpc StreamOrderBook(OrderBookRequest) returns (stream OrderBook) {}
+    rpc GetPrice(Tick) returns (Tick) {}
+    rpc StartStrategy(StrategyRequest) returns (StatusResponse) {}
+    rpc StopStrategy(StrategyRequest) returns (StatusResponse) {}
+    rpc SubscribeTicks(StrategyRequest) returns (stream Tick) {}
+    rpc StreamPrice(TickStreamRequest) returns (stream Tick) {}
+    rpc AddSymbol(SymbolRequest) returns (StatusResponse) {}
+    rpc RemoveSymbol(SymbolRequest) returns (StatusResponse) {}
+    rpc ListSymbols(Empty) returns (SymbolList) {}
+    rpc GetMomentum(MomentumRequest) returns (MomentumResponse) {}
+}
+
 message MomentumRequest {
     repeated string symbols = 1; // optional filter list
 }
 
-// Per-symbol momentum & volatility metrics (short-term heuristic)
 message MomentumMetric {
     string symbol = 1;
     double last_price = 2;
@@ -147,130 +388,69 @@ message MomentumResponse {
     int64 generated_at_unix_ms = 2;
 }
 
-// --- Bot / Strategy Management ---
-// Canonical bot configuration & runtime status
-
-// --- Authentication & User Management ---
-// Request to register a new user
-message RegisterRequest {
-    string username = 1;
-    string password = 2; // Plaintext over TLS; will be hashed server-side
-    string email = 3;
-}
-
-// Request to login
-message AuthRequest {
-    string username = 1;
-    string password = 2;
-}
-
-// Response containing JWT token
-message AuthResponse {
-    bool success = 1;
-    string message = 2;
-    string token = 3;           // JWT bearer token
-    int64 expires_at_unix = 4;   // Expiration timestamp (seconds since epoch)
-}
-
-// Service definition
-service TradingService {
-    // Stream order book updates
-    rpc StreamOrderBook(OrderBookRequest) returns (stream OrderBook) {}
-    
-    // Get current price for a symbol
-    rpc GetPrice(Tick) returns (Tick) {}
-    
-    // Start a trading strategy
-    rpc StartStrategy(StrategyRequest) returns (StatusResponse) {}
-    
-    // Stop a trading strategy
-    rpc StopStrategy(StrategyRequest) returns (StatusResponse) {}
-    
-    // Gets the current portfolio status
-    rpc GetPortfolio(PortfolioRequest) returns (Portfolio) {}
-    
-    // Subscribes to a real-time feed of market data
-    rpc SubscribeTicks(StrategyRequest) returns (stream Tick) {}
-
-    // Streams live ticks from internal event bus (websocket sourced)
-    rpc StreamPrice(TickStreamRequest) returns (stream Tick) {}
-
-    // Dynamically add a symbol to market data feed
-    rpc AddSymbol(SymbolRequest) returns (StatusResponse) {}
-    // Dynamically remove a symbol from market data feed
-    rpc RemoveSymbol(SymbolRequest) returns (StatusResponse) {}
-    // List currently subscribed symbols in market data feed
-    rpc ListSymbols(Empty) returns (SymbolList) {}
-    // Aggregate short-term momentum metrics for symbols (server-side analog of client scanner)
-    rpc GetMomentum(MomentumRequest) returns (MomentumResponse) {}
-
-    // Execute a trade (simplified demo endpoint)
-    rpc ExecuteTrade(TradeRequest) returns (TradeResponse) {}
-
-    // Get trade history for a user
-    rpc GetTradeHistory(TradeHistoryRequest) returns (TradeHistoryResponse) {}
-}
-
-// Service for performing risk calculations
-service RiskService {
-    // Calculates the Value at Risk for a given portfolio
-    rpc CalculateVaR(VaRRequest) returns (VaRResponse) {}
-}
-
-message GetUserRequest {
-  string username = 1;
-}
-
-message UserInfo {
-  string username = 1;
-  string email = 2;
-  int64 created_at_unix = 3;
-}
-
-// Service for authentication
-service AuthService {
-    rpc Register(RegisterRequest) returns (AuthResponse) {}
-    rpc Login(AuthRequest) returns (AuthResponse) {}
-    rpc GetUser(GetUserRequest) returns (UserInfo);
-}
-
-message BotConfig {
-    string bot_id = 1;
-    string symbol = 2;
-    string strategy = 3;
-    map<string, string> parameters = 4;
-    bool is_active = 5;
-    int64 created_at_unix_ms = 6;
-    string name = 7;
-    string user_id = 8;
-    double account_value = 9; // <-- Add this line
-}
-
-// Request to create a new trading bot.
-message CreateBotRequest {
+message Tick {
     string symbol = 1;
-    string strategy = 2;
+    double price = 2;
+    int64 timestamp_ns = 3; // Nanosecond precision timestamp
+}
+
+message TickStreamRequest {
+    string symbol = 1;
+}
+
+message SymbolRequest {
+    string symbol = 1;
+}
+
+message SymbolList {
+    repeated string symbols = 1;
+}
+
+message StrategyRequest {
+    string strategy_id = 1;
+    string symbol = 2;
     map<string, string> parameters = 3;
-    string name = 4;
+    string user_id = 4;
 }
 
-// Request based on a bot's unique ID.
-message BotIdRequest {
-    string bot_id = 1;
+// =================================================================
+// SUBSCRIPTION SERVICE
+// =================================================================
+
+service SubscriptionService {
+    rpc GetProducts(Empty) returns (GetProductsResponse) {}
+    rpc CreateCheckoutSession(CreateCheckoutSessionRequest) returns (CreateCheckoutSessionResponse) {}
+    rpc GetUserSubscription(Empty) returns (Subscription) {}
+    rpc CancelUserSubscription(Empty) returns (StatusResponse) {}
 }
 
-// Response containing a list of all configured bots.
-message BotList {
-    repeated BotConfig bots = 1;
+message Product {
+    string id = 1;
+    string name = 2;
+    string description = 3;
+    string stripe_product_id = 4;
+    double price_monthly = 5;
+    string stripe_price_id_monthly = 6;
+    double price_yearly = 7;
+    string stripe_price_id_yearly = 8;
+    repeated string features = 9;
 }
 
+message Subscription {
+    string id = 1;
+    string product_id = 2;
+    string status = 3;
+    int64 current_period_end = 4;
+}
 
-// BotService provides a focused interface for bot lifecycle operations.
-service BotService {
-  rpc CreateBot(CreateBotRequest) returns (StatusResponse) {}
-  rpc DeleteBot(BotIdRequest) returns (StatusResponse) {}
-  rpc ListBots(Empty) returns (BotList) {}
-  rpc StartBot(BotIdRequest) returns (StatusResponse) {}
-  rpc StopBot(BotIdRequest) returns (StatusResponse) {}
-  rpc GetBotStatus(BotIdRequest) returns (BotConfig) {}
+message GetProductsResponse {
+    repeated Product products = 1;
+}
+
+message CreateCheckoutSessionRequest {
+    string price_id = 1;
+}
+
+message CreateCheckoutSessionResponse {
+    string session_id = 1;
 }

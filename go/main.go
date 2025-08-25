@@ -18,10 +18,11 @@ import (
 	"syscall"
 	"time"
 
+	pb "aetherion/gen"
+
 	"github.com/google/uuid"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
-	pb "github.com/rwh9609-bit/multilanguage/go/gen"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/keepalive"
@@ -224,11 +225,27 @@ func (s *Strategy) Run(ctx context.Context, server *tradingServer) {
 	}
 }
 
-// server implements the TradingService
+//	service PortfolioService {
+//	    rpc GetPortfolio(PortfolioRequest) returns (PortfolioResponse) {}
+//	    rpc StreamPortfolio(PortfolioRequest) returns (stream PortfolioResponse) {}
+//	    rpc GetPerformanceHistory(PerformanceHistoryRequest) returns (PerformanceHistoryResponse) {}
+//	}
+//
+// server implements the PortfolioService
+type portfolioServer struct {
+	pb.UnimplementedPortfolioServiceServer
+	dbService *DBService
+}
+
+func newPortfolioServer(dbService *DBService) *portfolioServer {
+	return &portfolioServer{
+		dbService: dbService,
+	}
+}
+
 type tradingServer struct {
-	pb.TradingServiceServer
+	pb.UnimplementedTradingServiceServer
 	orderBooks    map[string]*OrderBookManager // symbol -> order book
-	portfolios    map[string]*pb.Portfolio     // account -> portfolio
 	activeSymbols map[string]bool              // currently tracked symbols
 	strategies    map[string]*Strategy         // active strategies
 	mu            sync.RWMutex                 // protects concurrent access
@@ -250,7 +267,6 @@ type histPoint struct {
 func newTradingServer() *tradingServer {
 	return &tradingServer{
 		orderBooks:    make(map[string]*OrderBookManager),
-		portfolios:    make(map[string]*pb.Portfolio),
 		activeSymbols: make(map[string]bool),
 		strategies:    make(map[string]*Strategy),
 		eventBus:      NewEventBus(),
@@ -308,30 +324,40 @@ func (s *tradingServer) StartStrategy(ctx context.Context, req *pb.StrategyReque
 	}, nil
 }
 
+// Service level RPC
 func (s *tradingServer) GetTradeHistory(ctx context.Context, req *pb.TradeHistoryRequest) (*pb.TradeHistoryResponse, error) {
 	if s.dbService == nil {
 		return nil, fmt.Errorf("trade history unavailable")
 	}
+
+	// Extract user ID from context (set by auth interceptor)
 	userID := req.GetUserId()
-	if userID == "" {
-		return nil, status.Error(codes.InvalidArgument, "user_id is required")
-	}
-	trades, err := s.dbService.GetTradesByUserID(ctx, userID)
-	if err != nil {
-		log.Error().Err(err).Msg("Failed to get trade history")
-		return nil, err
+
+	// Extract bot ID from request
+	botID := req.GetBotId()
+
+	// Validate request
+	if userID == "" && botID == "" {
+		return nil, status.Error(codes.InvalidArgument, "user_id or bot_id are required")
 	}
 
-	// Convert []*Trade to []*pb.Trade
-	pbTrades := make([]*pb.Trade, len(trades))
-	for i, trade := range trades {
-		pbTrades[i] = &pb.Trade{
-			TradeId: trade.ID, StrategyId: trade.StrategyID,
-			Symbol: trade.Symbol, Side: trade.Side, Quantity: trade.Quantity,
-			Price: trade.Price, ExecutedAt: trade.ExecutedAt.UnixNano()}
-	}
-	return &pb.TradeHistoryResponse{Trades: pbTrades}, nil
+	if botID != "" {
+		trades, err := s.dbService.GetTradesByBotID(ctx, botID)
+		if err != nil {
+			log.Error().Err(err).Msg("Failed to get trade history")
+			return nil, err
+		}
 
+		pbTrades := make([]*pb.Trade, len(trades))
+		for i, trade := range trades {
+			pbTrades[i] = &pb.Trade{
+				TradeId: trade.TradeId, BotId: trade.BotId,
+				Symbol: trade.Symbol, Side: trade.Side, Quantity: trade.Quantity,
+				Price: trade.Price, ExecutedAt: trade.ExecutedAt}
+		}
+		return &pb.TradeHistoryResponse{Trades: pbTrades}, nil
+	}
+	return nil, status.Error(codes.Internal, "bot_id is required")
 }
 
 // StopStrategy stops a running strategy
@@ -343,31 +369,6 @@ func (s *tradingServer) StopStrategy(ctx context.Context, req *pb.StrategyReques
 	s.mu.Unlock()
 
 	return &pb.StatusResponse{Success: true, Message: "Strategy stopped"}, nil
-}
-
-// --- Bot Management RPCs ---
-
-// GetPortfolio returns the current portfolio status
-func (s *tradingServer) GetPortfolio(ctx context.Context, req *pb.PortfolioRequest) (*pb.Portfolio, error) {
-	s.mu.RLock()
-	portfolio, exists := s.portfolios[req.AccountId]
-	s.mu.RUnlock()
-
-	if !exists {
-		// Create a new portfolio with some mock data
-		portfolio = &pb.Portfolio{
-			Positions: map[string]float64{
-				"BTC": 1.5,
-				"USD": 50000.0,
-			},
-			TotalValueUsd: 10000005.0,
-		}
-		s.mu.Lock()
-		s.portfolios[req.AccountId] = portfolio
-		s.mu.Unlock()
-	}
-
-	return portfolio, nil
 }
 
 // StreamOrderBook streams order book updates
@@ -645,7 +646,27 @@ func (s *tradingServer) ListSymbols(ctx context.Context, _ *pb.Empty) (*pb.Symbo
 	return &pb.SymbolList{Symbols: symbols}, nil
 }
 
-// Add to tradingServer methods
+///////////////////////////////////////
+// PortfolioServiceServer
+///////////////////////////////////////
+
+func (s *portfolioServer) GetPortfolio(ctx context.Context, req *pb.PortfolioRequest) (*pb.PortfolioResponse, error) {
+	// TODO: Implement actual portfolio retrieval logic
+	return &pb.PortfolioResponse{}, nil
+}
+
+func (s *portfolioServer) StreamPortfolio(req *pb.PortfolioRequest, stream pb.PortfolioService_StreamPortfolioServer) error {
+	// TODO: Implement actual portfolio streaming logic
+	return nil
+}
+
+func (s *portfolioServer) GetPerformanceHistory(ctx context.Context, req *pb.PerformanceHistoryRequest) (*pb.PerformanceHistoryResponse, error) {
+	// Implementation here
+	return &pb.PerformanceHistoryResponse{}, nil
+}
+
+// ExecuteTrade executes a trade for the given request.
+// This function is called whenever a trade is initiated.
 func (s *tradingServer) ExecuteTrade(ctx context.Context, req *pb.TradeRequest) (*pb.TradeResponse, error) {
 	// Basic validation
 	if req.Symbol == "" || req.Size <= 0 {
@@ -655,10 +676,17 @@ func (s *tradingServer) ExecuteTrade(ctx context.Context, req *pb.TradeRequest) 
 	if side != "BUY" && side != "SELL" {
 		return &pb.TradeResponse{Accepted: false, Message: "side must be BUY or SELL"}, nil
 	}
+
 	// Validate user ID is a UUID
 	if _, err := uuid.Parse(req.UserId); err != nil {
 		return &pb.TradeResponse{Accepted: false, Message: "user_id must be a valid UUID"}, nil
 	}
+
+	// Validate bot ID
+	if _, err := uuid.Parse(req.BotId); err != nil {
+		return &pb.TradeResponse{Accepted: false, Message: "bot_id must be a valid UUID"}, nil
+	}
+
 	// Get reference price (use provided price if >0 else fetch current)
 	execPrice := req.Price
 	if execPrice <= 0 {
@@ -670,60 +698,25 @@ func (s *tradingServer) ExecuteTrade(ctx context.Context, req *pb.TradeRequest) 
 		execPrice = tick.Price
 	}
 
-	accountID := "default"
-	s.mu.Lock()
-	portfolio, exists := s.portfolios[accountID]
-	if !exists {
-		portfolio = &pb.Portfolio{Positions: map[string]float64{"USD": 10000004}}
-		s.portfolios[accountID] = portfolio
-	}
-	// Initialize symbol position if absent
-	if _, ok := portfolio.Positions[req.Symbol]; !ok {
-		portfolio.Positions[req.Symbol] = 0
-	}
-	// Simple cash/position update (no fees, slippage)
-	qty := req.Size
-	notional := qty * execPrice
-	if side == "BUY" {
-		// Ensure sufficient USD
-		if portfolio.Positions["USD"] < notional {
-			s.mu.Unlock()
-			return &pb.TradeResponse{Accepted: false, Message: "insufficient USD balance"}, nil
-		}
-		portfolio.Positions[req.Symbol] += qty
-		portfolio.Positions["USD"] -= notional
-	} else { // SELL
-		if portfolio.Positions[req.Symbol] < qty {
-			s.mu.Unlock()
-			return &pb.TradeResponse{Accepted: false, Message: "insufficient position"}, nil
-		}
-		portfolio.Positions[req.Symbol] -= qty
-		portfolio.Positions["USD"] += notional
-	}
-	s.mu.Unlock()
+	// Implement portfolio update logic
 
-	// PnL simplified: positive for SELL, negative for BUY relative to notional (placeholder)
-	pnl := 0.0
-	if side == "SELL" {
-		pnl = notional * 0.0 // placeholder for realized PnL tracking
-	}
-	// After updating portfolio, record the trade:
-	trade := &Trade{
-		ID:         uuid.New().String(),
-		UserID:     req.UserId,     // Make sure this is set by the bot/user
-		StrategyID: req.StrategyId, // Set by bot if applicable
+	trade := &pb.Trade{
+		TradeId:    uuid.New().String(),
 		Symbol:     req.Symbol,
 		Side:       req.Side,
 		Quantity:   req.Size,
 		Price:      execPrice,
-		ExecutedAt: time.Now(),
-		PnL:        pnl,
+		ExecutedAt: time.Now().UnixNano(),
+		StrategyId: req.StrategyId,
+		BotId:      req.BotId,
 	}
 	if s.dbService != nil {
 		if err := s.dbService.RecordTrade(ctx, trade); err != nil {
 			log.Error().Err(err).Msg("failed to record trade")
 		}
 	}
+
+	pnl := 0.0
 
 	return &pb.TradeResponse{Accepted: true, Message: "executed", ExecutedPrice: execPrice, Pnl: pnl}, nil
 }
@@ -772,21 +765,50 @@ func main() {
 		)),
 	)
 
-	// Initialize DBService
+	/////////////////////////
+	// Initialize services //
+	/////////////////////////
+
 	dbService, err := NewDBService(cfg.PostgresDSN)
 	if err != nil {
 		log.Fatal().Err(err).Msg("failed to initialize DBService")
 	}
 
-	// Create and register our trading service
+	portfolioService := newPortfolioServer(dbService)
+	pb.RegisterPortfolioServiceServer(grpcServer, portfolioService)
+
 	tradingService := newTradingServer()
 	tradingService.dbService = dbService
 	pb.RegisterTradingServiceServer(grpcServer, tradingService)
 
-	// Bot service (in-memory)
 	reg := newBotRegistry()
 	botSvc := newBotServiceServer(reg, tradingService, dbService)
 	pb.RegisterBotServiceServer(grpcServer, botSvc)
+
+	authSvc := newAuthServer(secret)
+	pb.RegisterAuthServiceServer(grpcServer, authSvc)
+
+	orderSvc := newOrderServiceServer(dbService)
+	pb.RegisterOrderServiceServer(grpcServer, orderSvc)
+
+	subscriptionSvc := newSubscriptionServer()
+	pb.RegisterSubscriptionServiceServer(grpcServer, subscriptionSvc)
+
+	// HTTP server for Stripe webhook and health endpoint with CORS
+	go func(addr string) {
+		mux := http.NewServeMux()
+		mux.HandleFunc("/healthz", func(w http.ResponseWriter, r *http.Request) {
+			w.WriteHeader(http.StatusOK)
+			_, _ = w.Write([]byte("ok"))
+		})
+		mux.HandleFunc("/stripe/webhook", handleStripeWebhook)
+		handler := corsMiddleware().Handler(mux)
+		log.Info().Msgf("HTTP server with CORS listening on %s", addr)
+		srv := &http.Server{Addr: addr, Handler: handler}
+		if err := srv.ListenAndServe(); err != nil {
+			log.Warn().Err(err).Msg("HTTP server exited")
+		}
+	}(":8081")
 
 	reflection.Register(grpcServer) // Register reflection service for gRPC CLI tools
 
@@ -817,10 +839,6 @@ func main() {
 	log.Info().Strs("symbols", feedSymbols).Msg("market data feed started")
 	tradingService.feed = feed
 
-	// Auth service
-	authSvc := newAuthServer(secret)
-	pb.RegisterAuthServiceServer(grpcServer, authSvc)
-
 	// Lightweight HTTP health endpoint (separate listener) for container health checks
 	go func(addr string) {
 		mux := http.NewServeMux()
@@ -828,6 +846,9 @@ func main() {
 			w.WriteHeader(http.StatusOK)
 			_, _ = w.Write([]byte("ok"))
 		})
+		// Add the Stripe webhook handler
+		mux.HandleFunc("/stripe-webhook", handleStripeWebhook)
+
 		srv := &http.Server{Addr: addr, Handler: mux}
 		if err := srv.ListenAndServe(); err != nil {
 			log.Warn().Err(err).Msg("health server exited")

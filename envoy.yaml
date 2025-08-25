@@ -51,6 +51,11 @@ static_resources:
                       cluster: trading_service
                       timeout: 0s
                       max_stream_duration: { grpc_timeout_header_max: 0s }
+                  - match: { prefix: "/trading.OrderService/" }
+                    route:
+                      cluster: trading_service
+                      timeout: 0s
+                      max_stream_duration: { grpc_timeout_header_max: 0s }
                   - match: { prefix: "/trading.RiskService/" }
                     route:
                       cluster: risk_service
@@ -79,14 +84,14 @@ static_resources:
             common_tls_context:
               alpn_protocols: ["h2", "http/1.1"]
               tls_certificates: 
-                # - certificate_chain:
-                #     filename: /etc/letsencrypt/live/aetherion.cloud/fullchain.pem
-                #   private_key:
-                #     filename: /etc/letsencrypt/live/aetherion.cloud/privkey.pem
                 - certificate_chain:
-                    filename: /etc/envoy/certs/server.crt
+                    filename: /etc/letsencrypt/live/aetherion.cloud/fullchain.pem
                   private_key:
-                    filename: /etc/envoy/certs/server.key
+                    filename: /etc/letsencrypt/live/aetherion.cloud/privkey.pem
+                # - certificate_chain:
+                #     filename: /etc/envoy/certs/server.crt
+                #   private_key:
+                #     filename: /etc/envoy/certs/server.key
             require_client_certificate: false
         filters:
           - name: envoy.filters.network.http_connection_manager
@@ -165,6 +170,15 @@ static_resources:
                       - match: { prefix: "/" }
                         route:
                           cluster: frontend
+                      - match: { prefix: "/stripe-webhook" }
+                        route:
+                          cluster: trading_http
+                          timeout: 15s
+                      - match: { prefix: "/api/create-checkout-session" }
+                        route:
+                          cluster: trading_http
+                          timeout: 15s
+
                   - name: root_domain_passthrough
                     domains: ["aetherion.cloud"]
                     routes:
@@ -271,3 +285,16 @@ static_resources:
                     socket_address:
                       address: acme-challenge
                       port_value: 8080
+    - name: trading_http
+      connect_timeout: 0.5s
+      type: STRICT_DNS
+      lb_policy: ROUND_ROBIN
+      load_assignment:
+        cluster_name: trading_http
+        endpoints:
+          - lb_endpoints:
+              - endpoint:
+                  address:
+                    socket_address:
+                      address: trading
+                      port_value: 8081

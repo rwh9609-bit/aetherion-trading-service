@@ -1,78 +1,71 @@
-# API Overview (2024)
+# Aetherion API Documentation
 
----
-## Open Source & Developer Community
+This document provides an overview of the gRPC API for the Aetherion Trading Platform. All services and messages are defined in the `protos/trading_api.proto` file.
 
-This API and platform are fully open source. We welcome contributors! See DEVELOPER.md and the Careers page for details.
+## Production Endpoint
 
----
-
-Primary external interaction: gRPC/gRPC-Web. Proto files: `protos/trading_api.proto`, `protos/bot.proto`.
+*   **URL:** `https://api.aetherion.cloud`
+*   **Protocol:** gRPC-Web over HTTPS
 
 ## Services
 
-- TradingService: pricing, order book, momentum, portfolio, strategies, symbols, trade execution
-## 2025-08: HTTPS & Security Upgrade
+The Aetherion API is organized into the following services:
 
-Production API endpoint: https://api.aetherion.cloud
-All traffic is now secured via Envoy TLS termination (port 443).
-- BotService: lifecycle for stored bots (create/list/start/stop/status)
-- AuthService: user registration + JWT issuance
-- RiskService: (Rust) risk calculations (Monte Carlo VaR, confidence/horizon params)
+*   [AuthService](#authservice)
+*   [TradingService](#tradingservice)
+*   [BotService](#botservice)
+*   [RiskService](#riskservice)
+*   [PortfolioService](#portfolioservice)
+*   [OrderService](#orderservice)
+*   [Backtesting API (REST)](#backtesting-api-rest)
 
-## Authentication
+### AuthService
 
-- Register/Login return JWT token (HS256). Supply via `authorization: Bearer <token>` metadata header.
-- `AUTH_DISABLED=1` bypasses auth (dev only).
+Handles user authentication and registration.
 
-## Bot Lifecycle
+*   **RPCs:** `Register`, `Login`, `GetUser`, `RefreshToken`
+*   **Authentication:** The `Login` and `Register` RPCs return a JWT token. This token must be included in the `authorization` metadata header for all other RPC calls (e.g., `authorization: Bearer <token>`).
 
-1. CreateBot → returns bot id
-2. StartBot → launches strategy, stores `strategy_id`
-3. GetBotStatus → returns active flag + parameters
-4. StopBot → attempts strategy stop, marks inactive
+### TradingService
 
-## Strategy Start Parameters
+Provides core trading functionalities.
 
-`StrategyRequest` expects `parameters["type"]` (strategy implementation), optional `threshold`/`period` values.
+*   **RPCs:** `StreamOrderBook`, `GetPrice`, `StartStrategy`, `StopStrategy`, `SubscribeTicks`, `StreamPrice`, `AddSymbol`, `RemoveSymbol`, `ListSymbols`, `GetMomentum`
+*   **Momentum Metrics:** The `GetMomentum` RPC returns a list of momentum metrics for various symbols, including price changes, volatility, and a composite momentum score.
 
-## Momentum Metrics
+### BotService
 
-`GetMomentum` returns metrics over 1m/5m windows, volatility, composite `momentum_score`.
-See proto comments for field details.
+Manages the lifecycle of trading bots.
 
-## Trade Execution (Experimental)
+*   **RPCs:** `CreateBot`, `GetBot`, `UpdateBot`, `DeleteBot`, `ListBots`, `StartBot`, `StopBot`, `GetBotStatus`, `StreamBotStatus`
+*   **Bot Lifecycle:**
+    1.  `CreateBot`: Creates a new bot and returns its ID.
+    2.  `StartBot`: Starts a bot's trading strategy.
+    3.  `GetBotStatus`: Retrieves the current status of a bot.
+    4.  `StopBot`: Stops a bot's trading strategy.
 
-`ExecuteTrade(TradeRequest) → TradeResponse` updates demo portfolio in-memory.
+### RiskService
 
-Fields (TradeRequest):
+Performs risk calculations.
 
-- symbol (string) e.g. `BTC-USD`
-- side (string) `BUY` or `SELL`
-- size (double) base asset quantity
-- price (double) optional; if 0, server fetches current price
+*   **RPCs:** `CalculateVaR`
+*   **Value at Risk (VaR):** The `CalculateVaR` RPC calculates the potential loss of a portfolio based on a given confidence level and time horizon.
 
-Response (TradeResponse):
+### PortfolioService
 
-- accepted (bool)
-- message (string)
-- executed_price (double)
-- pnl (double) placeholder
+Provides access to portfolio information.
 
-Balances: single demo portfolio, no persistence/fees yet.
+*   **RPCs:** `GetPortfolio`, `StreamPortfolio`, `GetPerformanceHistory`
 
-## Value at Risk (VaR)
+### OrderService
 
-`CalculateVaR(VaRRequest)` accepts:
+Manages trading orders.
 
-- current_portfolio (Portfolio)
-- risk_model (string) e.g. `monte_carlo`
-- confidence_level (double, default 0.95)
-- horizon_days (double, default 1)
+*   **RPCs:** `CreateOrder`, `CancelOrder`, `GetOrder`, `GetTradeHistory`, `ListOrders`
 
-Rust implementation: simulates 10k returns using historical volatility (fallback 2%). Future: richer fields, horizon scaling.
+### Backtesting API (REST)
 
-## Troubleshooting
+The backtesting API is a separate REST API provided by the `backend` service (a Python FastAPI application). It allows you to test your trading strategies against historical data.
 
-- If you see CORS or login errors, check Envoy is running and not blocked by nginx.
-- See About/Update pages for latest stack and troubleshooting tips.
+*   **Framework:** FastAPI
+*   **Documentation:** The API documentation is available through the FastAPI instance itself (usually at `/docs` or `/redoc`).

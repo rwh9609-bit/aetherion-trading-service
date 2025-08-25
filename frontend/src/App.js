@@ -13,6 +13,7 @@ import AccountPage from './components/AccountPage';
 import LandingPage from './components/LandingPage';
 import ErrorBoundary from './components/ErrorBoundary';
 import BacktestRunner from './components/BacktestRunner';
+import PricingPage from './components/PricingPage';
 import './App.css';
 
 const darkTheme = createTheme({
@@ -59,9 +60,10 @@ function App() {
   const handleMenuClose = () => {
     setAnchorEl(null);
   };
-  const handleSelectBot = (botConfig) => {
-  setSelectedBot(botConfig);
-  localStorage.setItem('selectedBot', JSON.stringify(botConfig)); // Save to localStorage
+  
+  const handleSelectBot = (bot) => {
+  setSelectedBot(bot);
+  localStorage.setItem('selectedBot', JSON.stringify(bot)); // Save to localStorage
   setView('dashboard');
   };
 
@@ -120,8 +122,11 @@ function App() {
     return () => { clearInterval(intervalId); };
   }, [user]);
   
-  const handleGetStarted = () => {
-    setView('news');
+  const handleGetStarted = () => {  if (!user) {
+    setView('login');
+  } else {
+    setView('news');  
+  }
   };
   
   return (
@@ -161,7 +166,7 @@ function App() {
                         <MenuItem onClick={() => handleMenuItemClick('operations')}>Operations</MenuItem>
                       </Menu>
                       <Button color="inherit" onClick={()=>setView('bots')} sx={{ mr:1 }}>Bots</Button>
-                      <Button color="inherit" onClick={()=> { setUser(null); setView('landing'); }}>Logout</Button>
+                      <Button color="inherit" onClick={()=> { setUser(null);setSelectedBot(null);localStorage.removeItem('authToken'); localStorage.removeItem('selectedBot'); setView('landing'); } }>Logout</Button>
                     </>
                   ) : (
                     <Button color="inherit" onClick={()=>setView('login')}>Login</Button>
@@ -192,9 +197,10 @@ function App() {
               alignItems: 'center',
               justifyContent: 'center'
             }}>
-              <Login onAuth={(u)=> { setUser(u); setView('dashboard'); }} onBack={() => setView('landing')} />
+              <Login onAuth={(u)=> { setUser(u); setView('pricing'); }} onBack={() => setView('landing')} />
             </Box>
           )}
+          {view === 'pricing' && <PricingPage setView={setView} />}
           {user && view === 'dashboard' && (
             <div style={{ padding: '24px' }}>
               <TradingDashboard user={user} selectedBot={selectedBot} setUser={setUser} setView={setView} />
@@ -222,7 +228,16 @@ function App() {
           )}
           {user && view === 'account' && (
             <div style={{ padding: '24px' }}>
-              <AccountPage user={user} onLogout={() => { setUser(null); setView('landing'); }} />
+              <AccountPage
+                user={user}
+                onLogout={() => {
+                  setUser(null);
+                  setSelectedBot(null);
+                  localStorage.removeItem('selectedBot'); 
+                  localStorage.removeItem('authToken');
+                  setView('landing');
+                }}
+              />
             </div>
           )}
           {view === 'about' && <AboutPage />}

@@ -8,3 +8,4 @@ requests
 uvicorn
 fastapi
 PyJWT
+stripe

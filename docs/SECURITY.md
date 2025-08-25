@@ -1,82 +1,45 @@
+# Security Guide
 
-# Security & TLS Hardening (2024)
+This document outlines the security measures in place for the Aetherion Trading Platform.
 
----
-## Open Source & Developer Community
+## TLS/SSL
 
-This security guide is for an open-source project. We welcome contributors! See DEVELOPER.md and the Careers page for details.
+Transport Layer Security (TLS) is used to encrypt all public-facing traffic. TLS is terminated at the Envoy proxy on port `443`.
 
----
+### Development Certificate
 
-Envoy terminates TLS for gRPC-Web on port 8080 using:
-
-```text
-/etc/envoy/tls/server.crt
-/etc/envoy/tls/server.key
-```
-
-Provide via bind mount or place in `certs/` before build.
-If no valid certs, Docker build will not fail but Envoy will serve TLS errors.
-
-
-## Dev Self-Signed Cert
+For local development, you can generate a self-signed certificate using the following command:
 
 ```bash
 mkdir -p certs
 openssl req -x509 -newkey rsa:4096 -sha256 -days 365 -nodes \
   -keyout certs/server.key -out certs/server.crt \
-  -subj "/CN=api.aetherion.cloud" -addext "subjectAltName=DNS:api.aetherion.cloud,DNS:localhost"
+  -subj "/CN=localhost" -addext "subjectAltName=DNS:localhost"
 ```
 
+## Authentication & Authorization
 
-## Hardened Settings
+Aetherion uses JSON Web Tokens (JWTs) for authentication and authorization. All gRPC calls (except for `Login` and `Register`) must include a valid JWT in the `authorization` metadata header.
 
-| Area        | Measure                                              |
-|-------------|-----------------------------------------------------|
-| CORS        | Strict: localhost:3000, aetherion.cloud             |
-| Headers     | HSTS, CSP, X-Frame-Options, etc.                    |
-| Compression | gRPC-Web gzip compression                           |
-| Health      | `/healthz` direct response                          |
-| Logging     | Structured access log to stdout                     |
-| Upstreams   | STRICT_DNS service names (trading, risk)            |
-| Health Chk  | gRPC health checks                                  |
-| Timeouts    | 15s request timeout, streaming unlimited            |
-| TLS         | ALPN h2/http1; mTLS ready                           |
+## Security Headers
 
-## 2025-08: HTTPS & Security Upgrade
+The Envoy proxy is configured to send the following security headers to clients:
 
-Production now uses Let’s Encrypt certificates for all domains. Envoy terminates TLS on port 443.
-- Certs: /etc/letsencrypt/live/aetherion.cloud/fullchain.pem, privkey.pem
-- Domains: aetherion.cloud, api.aetherion.cloud, www.aetherion.cloud
-- Troubleshooting: Remove duplicate domains in envoy.yaml, verify cert paths and permissions.
+*   `Strict-Transport-Security`: Enforces the use of HTTPS.
+*   `X-Content-Type-Options`: Prevents browsers from MIME-sniffing a response away from the declared content-type.
+*   `X-Frame-Options`: Protects against clickjacking attacks.
+*   `Content-Security-Policy`: Helps prevent cross-site scripting (XSS) and other code injection attacks.
 
+## Other Considerations
 
-## Adjust CORS
+### CORS
 
-Edit `envoy.yaml` allow_origin_string_match.
+The Cross-Origin Resource Sharing (CORS) policy is configured in `envoy.yaml` to restrict which domains can access the API.
 
+### mTLS
 
-## mTLS (Future)
+Mutual TLS (mTLS) is not yet implemented but is planned for future releases.
 
-Add client CA and set `require_client_certificate: true`.
+### Admin Port
 
-
-## Admin Port
-
-Exposed on 9901; restrict externally.
-
-
-## Troubleshooting
-
-- If you see CORS or login errors, check Envoy is running and not blocked by nginx.
-- See About/Update pages in the UI for latest stack and troubleshooting tips.
-
-
-## Next Steps
-
-1. Add rate limiting filter.
-2. Add request size limits & WAF style rules.
-3. Central metrics/tracing (OTel).
-4. Automated cert renewal.
-
-Keep this file updated with future changes.
+The Envoy admin interface is exposed on port `9901`. This port should be firewalled and not exposed to the public internet.

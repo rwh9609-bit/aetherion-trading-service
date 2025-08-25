@@ -61,15 +61,15 @@ class TradingOrchestrator:
         }
         return jwt.encode(claims, self.auth_secret, algorithm='HS256')
     
-    def fetch_trade_history(self, trading_stub, bot_id, metadata):
-        try:
-            history_req = trading_api_pb2.TradeHistoryRequest(user_id=bot_id)
-            history_resp = trading_stub.GetTradeHistory(history_req, metadata=metadata)
-            print(f"Trade history for bot {bot_id}:")
-            for trade in history_resp.trades:
-                print(f"  {trade.trade_id}: {trade.side} {trade.quantity} {trade.symbol} @ {trade.price} on {datetime.fromtimestamp(trade.executed_at)}")
-        except grpc.RpcError as e:
-            print(f"Error fetching trade history for bot {bot_id}: {e.details()}")
+    # def fetch_trade_history(self, trading_stub, bot_id, metadata):
+    #     try:
+    #         history_req = trading_api_pb2.TradeHistoryRequest(user_id, bot_id)
+    #         history_resp = trading_stub.GetTradeHistory(history_req, metadata=metadata)
+    #         print(f"Trade history for bot {bot_id}:")
+    #         for trade in history_resp.trades:
+    #             print(f"  {trade.trade_id}: {trade.side} {trade.quantity} {trade.symbol} @ {trade.price} on {datetime.fromtimestamp(trade.executed_at)}")
+    #     except grpc.RpcError as e:
+    #         print(f"Error fetching trade history for bot {bot_id}: {e.details()}")
 
     def run(self):
         """Main orchestrator loop: fetch bots and execute trades for each bot."""
@@ -85,7 +85,7 @@ class TradingOrchestrator:
                     metadata = []
                     if token:
                         metadata.append(('authorization', f'Bearer {token}'))
-                    print(f"[DEBUG] gRPC metadata: {metadata}")
+                    # print(f"[DEBUG] gRPC metadata: {metadata}")
 
                     # 1. Fetch all bots from Go backend
                     bot_stub = trading_api_pb2_grpc.BotServiceStub(trading_channel)
@@ -94,17 +94,16 @@ class TradingOrchestrator:
                     # print(f"[DEBUG] Bot list: {bot_list}")
                     for bot in bot_list.bots:
                         if not getattr(bot, "is_active", False):
-                            print(f"[Orchestrator] Skipping inactive bot: {bot.name} ({bot.bot_id})")
+                            # print(f"[Orchestrator] Skipping inactive bot: {bot.name} ({bot.bot_id})")
                             continue  # Skip inactive bots
-                        print(f"[Orchestrator] Processing bot: {bot.name} ({bot.bot_id})")
-                        print(f"[Orchestrator] Processing bot: {bot.name} ({bot.bot_id})")
+                        # print(f"[Orchestrator] Processing bot: {bot.name} ({bot.bot_id})")
                         # 2. Fetch current price for bot's symbol
                         price = fetch_binance_price(bot.symbol.replace("-", ""))
-                        print(f"Current price for {bot.symbol}: ${price:,.2f}")
+                        # print(f"Current price for {bot.symbol}: ${price:,.2f}")
                         # 3. Generate trading signal (replace with bot-specific strategy)
                         # For demo, use mean reversion for all
                         signal = self.strategy.generate_signal(price, bot.account_value)
-                        print(f"[DEBUG] Signal details: {signal}")
+                        # print(f"[DEBUG] Signal details: {signal}")
                         if signal['action'] == 'hold':
                             print(f"[INFO] No trade signal for bot {bot.name}: zscore={signal.get('zscore')}, price={price}, reason=Hold action")
                         elif signal['size'] == 0:
@@ -115,8 +114,21 @@ class TradingOrchestrator:
                         if signal['action'] != 'hold' and signal['size'] > 0:
                             print(f"Generated signal for bot {bot.name}: {json.dumps(signal)}")
                             positions_map = {bot.symbol: signal['size'] if signal['action']=='buy' else -signal['size']}
-                            portfolio = trading_api_pb2.Portfolio(positions=positions_map, total_value_usd=self.account_value)
-                            print(f"[DEBUG] VaR request: positions={positions_map}, total_value_usd={self.account_value}")
+                            portfolio = trading_api_pb2.PortfolioResponse(
+                                bot_id=bot.bot_id,
+                                total_portfolio_value=trading_api_pb2.DecimalValue(units=int(self.account_value), nanos=int((self.account_value % 1) * 1e9)),
+                                positions=[
+                                    trading_api_pb2.PortfolioPosition(
+                                        symbol=bot.symbol,
+                                        quantity=trading_api_pb2.DecimalValue(units=int(signal['size']), nanos=int((signal['size'] % 1) * 1e9)),
+                                        average_price=trading_api_pb2.DecimalValue(units=int(price), nanos=int((price % 1) * 1e9)),
+                                        market_value=trading_api_pb2.DecimalValue(units=int(price * signal['size']), nanos=int(((price * signal['size']) % 1) * 1e9)),
+                                        unrealized_pnl=trading_api_pb2.DecimalValue(units=0, nanos=0),
+                                        exposure_pct=trading_api_pb2.DecimalValue(units=0, nanos=0)
+                                    )
+                                ],
+                                cash_balance=trading_api_pb2.DecimalValue(units=0, nanos=0)
+                            )
                             var_request = trading_api_pb2.VaRRequest(
                                 current_portfolio=portfolio,
                                 risk_model="monte_carlo",
@@ -128,43 +140,45 @@ class TradingOrchestrator:
                                 var_response = risk_stub.CalculateVaR(var_request, metadata=metadata)
                                 print(f"[DEBUG] VaR response: {var_response.value_at_risk}")
                                 if var_response.value_at_risk is not None and bot.account_value is not None:
-                                    risk_ok = float(var_response.value_at_risk) <= (bot.account_value * 0.10)
+                                    def decimal_value_to_float(decimal_value):
+                                        return float(decimal_value.units) + float(decimal_value.nanos) / 1e9
+
+                                    risk_value = decimal_value_to_float(var_response.value_at_risk)
+                                    risk_ok = risk_value <= (bot.account_value * 0.10)
                                 else:
                                     risk_ok = False
-                                print(f"Risk check: VaR {var_response.value_at_risk:.2f}, OK: {risk_ok}")
+                                def decimal_value_to_float(decimal_value):
+                                    return float(decimal_value.units) + float(decimal_value.nanos) / 1e9
+
+                                risk_value = decimal_value_to_float(var_response.value_at_risk)
+                                print(f"Risk check: VaR {risk_value:.2f}, OK: {risk_ok}")
                                 if risk_ok:
-                                    strategy_id = getattr(bot, "strategy_id", None) 
-                                    if not strategy_id or strategy_id == "":
-                                        print(f"[WARNING] Strategy ID is missing for bot {bot.name}, generating a new one.")
-                                        # Generate a random UUID if missing
-                                        strategy_id = str(uuid.uuid4())
-                                    trade_request = trading_api_pb2.TradeRequest(
+                                    strategy = getattr(bot, "strategy_id", None)
+                                    order_stub = trading_api_pb2_grpc.OrderServiceStub(trading_channel)
+                                    order_request = trading_api_pb2.CreateOrderRequest(
+                                        bot_id=bot.bot_id,
                                         symbol=bot.symbol,
-                                        side=signal['action'].upper(),
-                                        size=float(signal['size']),
-                                        price=float(price),
-                                        user_id=bot.bot_id,
-                                        strategy_id=strategy_id
+                                        side=trading_api_pb2.BUY if signal['action'].lower() == 'buy' else trading_api_pb2.SELL,
+                                        type=trading_api_pb2.MARKET,  # or LIMIT/STOP as needed
+                                        quantity=trading_api_pb2.DecimalValue(
+                                            units=int(signal['size']),
+                                            nanos=int((signal['size'] % 1) * 1e9)
+                                        ),
+                                        # limit_price=...,  # set if needed
+                                        # stop_price=...,   # set if needed
                                     )
-                                    try:
-                                        trade_response = trading_stub.ExecuteTrade(trade_request, metadata=metadata)
-                                        print(f"Trade executed for bot {bot.name} @ {trade_response.executed_price:.2f}: {trade_response.message}")
-                                        print(f"Signal: {json.dumps(signal)}  VaR: {var_response.value_at_risk:.2f}")
-                                        if hasattr(trade_response, 'pnl'):
-                                            self.account_value += float(trade_response.pnl)
-                                            print(f"Account value: ${self.account_value:,.2f}")
-                                    except grpc.RpcError as e:
-                                        print(f"Error executing trade for bot {bot.name}: {e.details()}")
+                                    order_response = order_stub.CreateOrder(order_request, metadata=metadata)
+                                    print(f"Order submitted for bot {bot.name}: {order_response.status}")
                                 else:
-                                    print(f"Trade blocked for bot {bot.name}: VaR {var_response.value_at_risk:.2f} over limit")
+                                    print(f"Order blocked for bot {bot.name}: VaR {risk_value:.2f} over limit")
                             except grpc.RpcError as e:
                                 print(f"Error calculating VaR for bot {bot.name}: {e.details()}")
                         # Add logging for trade execution
 
                         # After trading logic, fetch trade history:
-                        self.fetch_trade_history(trading_stub, bot.bot_id, metadata)
+                        # self.fetch_trade_history(trading_stub, bot.bot_id, metadata)
 
-                    time.sleep(20)
+                    time.sleep(1)
 
                 except Exception as e:
                     print(f"Error in orchestrator loop: {str(e)}")

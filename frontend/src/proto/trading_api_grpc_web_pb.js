@@ -19,8 +19,1602 @@
 const grpc = {};
 grpc.web = require('grpc-web');
 
+
+var google_protobuf_timestamp_pb = require('google-protobuf/google/protobuf/timestamp_pb.js')
 const proto = {};
 proto.trading = require('./trading_api_pb.js');
+
+/**
+ * @param {string} hostname
+ * @param {?Object} credentials
+ * @param {?grpc.web.ClientOptions} options
+ * @constructor
+ * @struct
+ * @final
+ */
+proto.trading.PortfolioServiceClient =
+    function(hostname, credentials, options) {
+  if (!options) options = {};
+  options.format = 'text';
+
+  /**
+   * @private @const {!grpc.web.GrpcWebClientBase} The client
+   */
+  this.client_ = new grpc.web.GrpcWebClientBase(options);
+
+  /**
+   * @private @const {string} The hostname
+   */
+  this.hostname_ = hostname.replace(/\/+$/, '');
+
+};
+
+
+/**
+ * @param {string} hostname
+ * @param {?Object} credentials
+ * @param {?grpc.web.ClientOptions} options
+ * @constructor
+ * @struct
+ * @final
+ */
+proto.trading.PortfolioServicePromiseClient =
+    function(hostname, credentials, options) {
+  if (!options) options = {};
+  options.format = 'text';
+
+  /**
+   * @private @const {!grpc.web.GrpcWebClientBase} The client
+   */
+  this.client_ = new grpc.web.GrpcWebClientBase(options);
+
+  /**
+   * @private @const {string} The hostname
+   */
+  this.hostname_ = hostname.replace(/\/+$/, '');
+
+};
+
+
+/**
+ * @const
+ * @type {!grpc.web.MethodDescriptor<
+ *   !proto.trading.PortfolioRequest,
+ *   !proto.trading.PortfolioResponse>}
+ */
+const methodDescriptor_PortfolioService_GetPortfolio = new grpc.web.MethodDescriptor(
+  '/trading.PortfolioService/GetPortfolio',
+  grpc.web.MethodType.UNARY,
+  proto.trading.PortfolioRequest,
+  proto.trading.PortfolioResponse,
+  /**
+   * @param {!proto.trading.PortfolioRequest} request
+   * @return {!Uint8Array}
+   */
+  function(request) {
+    return request.serializeBinary();
+  },
+  proto.trading.PortfolioResponse.deserializeBinary
+);
+
+
+/**
+ * @param {!proto.trading.PortfolioRequest} request The
+ *     request proto
+ * @param {?Object<string, string>} metadata User defined
+ *     call metadata
+ * @param {function(?grpc.web.RpcError, ?proto.trading.PortfolioResponse)}
+ *     callback The callback function(error, response)
+ * @return {!grpc.web.ClientReadableStream<!proto.trading.PortfolioResponse>|undefined}
+ *     The XHR Node Readable Stream
+ */
+proto.trading.PortfolioServiceClient.prototype.getPortfolio =
+    function(request, metadata, callback) {
+  return this.client_.rpcCall(this.hostname_ +
+      '/trading.PortfolioService/GetPortfolio',
+      request,
+      metadata || {},
+      methodDescriptor_PortfolioService_GetPortfolio,
+      callback);
+};
+
+
+/**
+ * @param {!proto.trading.PortfolioRequest} request The
+ *     request proto
+ * @param {?Object<string, string>=} metadata User defined
+ *     call metadata
+ * @return {!Promise<!proto.trading.PortfolioResponse>}
+ *     Promise that resolves to the response
+ */
+proto.trading.PortfolioServicePromiseClient.prototype.getPortfolio =
+    function(request, metadata) {
+  return this.client_.unaryCall(this.hostname_ +
+      '/trading.PortfolioService/GetPortfolio',
+      request,
+      metadata || {},
+      methodDescriptor_PortfolioService_GetPortfolio);
+};
+
+
+/**
+ * @const
+ * @type {!grpc.web.MethodDescriptor<
+ *   !proto.trading.PortfolioRequest,
+ *   !proto.trading.PortfolioResponse>}
+ */
+const methodDescriptor_PortfolioService_StreamPortfolio = new grpc.web.MethodDescriptor(
+  '/trading.PortfolioService/StreamPortfolio',
+  grpc.web.MethodType.SERVER_STREAMING,
+  proto.trading.PortfolioRequest,
+  proto.trading.PortfolioResponse,
+  /**
+   * @param {!proto.trading.PortfolioRequest} request
+   * @return {!Uint8Array}
+   */
+  function(request) {
+    return request.serializeBinary();
+  },
+  proto.trading.PortfolioResponse.deserializeBinary
+);
+
+
+/**
+ * @param {!proto.trading.PortfolioRequest} request The request proto
+ * @param {?Object<string, string>=} metadata User defined
+ *     call metadata
+ * @return {!grpc.web.ClientReadableStream<!proto.trading.PortfolioResponse>}
+ *     The XHR Node Readable Stream
+ */
+proto.trading.PortfolioServiceClient.prototype.streamPortfolio =
+    function(request, metadata) {
+  return this.client_.serverStreaming(this.hostname_ +
+      '/trading.PortfolioService/StreamPortfolio',
+      request,
+      metadata || {},
+      methodDescriptor_PortfolioService_StreamPortfolio);
+};
+
+
+/**
+ * @param {!proto.trading.PortfolioRequest} request The request proto
+ * @param {?Object<string, string>=} metadata User defined
+ *     call metadata
+ * @return {!grpc.web.ClientReadableStream<!proto.trading.PortfolioResponse>}
+ *     The XHR Node Readable Stream
+ */
+proto.trading.PortfolioServicePromiseClient.prototype.streamPortfolio =
+    function(request, metadata) {
+  return this.client_.serverStreaming(this.hostname_ +
+      '/trading.PortfolioService/StreamPortfolio',
+      request,
+      metadata || {},
+      methodDescriptor_PortfolioService_StreamPortfolio);
+};
+
+
+/**
+ * @const
+ * @type {!grpc.web.MethodDescriptor<
+ *   !proto.trading.PerformanceHistoryRequest,
+ *   !proto.trading.PerformanceHistoryResponse>}
+ */
+const methodDescriptor_PortfolioService_GetPerformanceHistory = new grpc.web.MethodDescriptor(
+  '/trading.PortfolioService/GetPerformanceHistory',
+  grpc.web.MethodType.UNARY,
+  proto.trading.PerformanceHistoryRequest,
+  proto.trading.PerformanceHistoryResponse,
+  /**
+   * @param {!proto.trading.PerformanceHistoryRequest} request
+   * @return {!Uint8Array}
+   */
+  function(request) {
+    return request.serializeBinary();
+  },
+  proto.trading.PerformanceHistoryResponse.deserializeBinary
+);
+
+
+/**
+ * @param {!proto.trading.PerformanceHistoryRequest} request The
+ *     request proto
+ * @param {?Object<string, string>} metadata User defined
+ *     call metadata
+ * @param {function(?grpc.web.RpcError, ?proto.trading.PerformanceHistoryResponse)}
+ *     callback The callback function(error, response)
+ * @return {!grpc.web.ClientReadableStream<!proto.trading.PerformanceHistoryResponse>|undefined}
+ *     The XHR Node Readable Stream
+ */
+proto.trading.PortfolioServiceClient.prototype.getPerformanceHistory =
+    function(request, metadata, callback) {
+  return this.client_.rpcCall(this.hostname_ +
+      '/trading.PortfolioService/GetPerformanceHistory',
+      request,
+      metadata || {},
+      methodDescriptor_PortfolioService_GetPerformanceHistory,
+      callback);
+};
+
+
+/**
+ * @param {!proto.trading.PerformanceHistoryRequest} request The
+ *     request proto
+ * @param {?Object<string, string>=} metadata User defined
+ *     call metadata
+ * @return {!Promise<!proto.trading.PerformanceHistoryResponse>}
+ *     Promise that resolves to the response
+ */
+proto.trading.PortfolioServicePromiseClient.prototype.getPerformanceHistory =
+    function(request, metadata) {
+  return this.client_.unaryCall(this.hostname_ +
+      '/trading.PortfolioService/GetPerformanceHistory',
+      request,
+      metadata || {},
+      methodDescriptor_PortfolioService_GetPerformanceHistory);
+};
+
+
+/**
+ * @param {string} hostname
+ * @param {?Object} credentials
+ * @param {?grpc.web.ClientOptions} options
+ * @constructor
+ * @struct
+ * @final
+ */
+proto.trading.OrderServiceClient =
+    function(hostname, credentials, options) {
+  if (!options) options = {};
+  options.format = 'text';
+
+  /**
+   * @private @const {!grpc.web.GrpcWebClientBase} The client
+   */
+  this.client_ = new grpc.web.GrpcWebClientBase(options);
+
+  /**
+   * @private @const {string} The hostname
+   */
+  this.hostname_ = hostname.replace(/\/+$/, '');
+
+};
+
+
+/**
+ * @param {string} hostname
+ * @param {?Object} credentials
+ * @param {?grpc.web.ClientOptions} options
+ * @constructor
+ * @struct
+ * @final
+ */
+proto.trading.OrderServicePromiseClient =
+    function(hostname, credentials, options) {
+  if (!options) options = {};
+  options.format = 'text';
+
+  /**
+   * @private @const {!grpc.web.GrpcWebClientBase} The client
+   */
+  this.client_ = new grpc.web.GrpcWebClientBase(options);
+
+  /**
+   * @private @const {string} The hostname
+   */
+  this.hostname_ = hostname.replace(/\/+$/, '');
+
+};
+
+
+/**
+ * @const
+ * @type {!grpc.web.MethodDescriptor<
+ *   !proto.trading.CreateOrderRequest,
+ *   !proto.trading.Order>}
+ */
+const methodDescriptor_OrderService_CreateOrder = new grpc.web.MethodDescriptor(
+  '/trading.OrderService/CreateOrder',
+  grpc.web.MethodType.UNARY,
+  proto.trading.CreateOrderRequest,
+  proto.trading.Order,
+  /**
+   * @param {!proto.trading.CreateOrderRequest} request
+   * @return {!Uint8Array}
+   */
+  function(request) {
+    return request.serializeBinary();
+  },
+  proto.trading.Order.deserializeBinary
+);
+
+
+/**
+ * @param {!proto.trading.CreateOrderRequest} request The
+ *     request proto
+ * @param {?Object<string, string>} metadata User defined
+ *     call metadata
+ * @param {function(?grpc.web.RpcError, ?proto.trading.Order)}
+ *     callback The callback function(error, response)
+ * @return {!grpc.web.ClientReadableStream<!proto.trading.Order>|undefined}
+ *     The XHR Node Readable Stream
+ */
+proto.trading.OrderServiceClient.prototype.createOrder =
+    function(request, metadata, callback) {
+  return this.client_.rpcCall(this.hostname_ +
+      '/trading.OrderService/CreateOrder',
+      request,
+      metadata || {},
+      methodDescriptor_OrderService_CreateOrder,
+      callback);
+};
+
+
+/**
+ * @param {!proto.trading.CreateOrderRequest} request The
+ *     request proto
+ * @param {?Object<string, string>=} metadata User defined
+ *     call metadata
+ * @return {!Promise<!proto.trading.Order>}
+ *     Promise that resolves to the response
+ */
+proto.trading.OrderServicePromiseClient.prototype.createOrder =
+    function(request, metadata) {
+  return this.client_.unaryCall(this.hostname_ +
+      '/trading.OrderService/CreateOrder',
+      request,
+      metadata || {},
+      methodDescriptor_OrderService_CreateOrder);
+};
+
+
+/**
+ * @const
+ * @type {!grpc.web.MethodDescriptor<
+ *   !proto.trading.CancelOrderRequest,
+ *   !proto.trading.Order>}
+ */
+const methodDescriptor_OrderService_CancelOrder = new grpc.web.MethodDescriptor(
+  '/trading.OrderService/CancelOrder',
+  grpc.web.MethodType.UNARY,
+  proto.trading.CancelOrderRequest,
+  proto.trading.Order,
+  /**
+   * @param {!proto.trading.CancelOrderRequest} request
+   * @return {!Uint8Array}
+   */
+  function(request) {
+    return request.serializeBinary();
+  },
+  proto.trading.Order.deserializeBinary
+);
+
+
+/**
+ * @param {!proto.trading.CancelOrderRequest} request The
+ *     request proto
+ * @param {?Object<string, string>} metadata User defined
+ *     call metadata
+ * @param {function(?grpc.web.RpcError, ?proto.trading.Order)}
+ *     callback The callback function(error, response)
+ * @return {!grpc.web.ClientReadableStream<!proto.trading.Order>|undefined}
+ *     The XHR Node Readable Stream
+ */
+proto.trading.OrderServiceClient.prototype.cancelOrder =
+    function(request, metadata, callback) {
+  return this.client_.rpcCall(this.hostname_ +
+      '/trading.OrderService/CancelOrder',
+      request,
+      metadata || {},
+      methodDescriptor_OrderService_CancelOrder,
+      callback);
+};
+
+
+/**
+ * @param {!proto.trading.CancelOrderRequest} request The
+ *     request proto
+ * @param {?Object<string, string>=} metadata User defined
+ *     call metadata
+ * @return {!Promise<!proto.trading.Order>}
+ *     Promise that resolves to the response
+ */
+proto.trading.OrderServicePromiseClient.prototype.cancelOrder =
+    function(request, metadata) {
+  return this.client_.unaryCall(this.hostname_ +
+      '/trading.OrderService/CancelOrder',
+      request,
+      metadata || {},
+      methodDescriptor_OrderService_CancelOrder);
+};
+
+
+/**
+ * @const
+ * @type {!grpc.web.MethodDescriptor<
+ *   !proto.trading.GetOrderRequest,
+ *   !proto.trading.Order>}
+ */
+const methodDescriptor_OrderService_GetOrder = new grpc.web.MethodDescriptor(
+  '/trading.OrderService/GetOrder',
+  grpc.web.MethodType.UNARY,
+  proto.trading.GetOrderRequest,
+  proto.trading.Order,
+  /**
+   * @param {!proto.trading.GetOrderRequest} request
+   * @return {!Uint8Array}
+   */
+  function(request) {
+    return request.serializeBinary();
+  },
+  proto.trading.Order.deserializeBinary
+);
+
+
+/**
+ * @param {!proto.trading.GetOrderRequest} request The
+ *     request proto
+ * @param {?Object<string, string>} metadata User defined
+ *     call metadata
+ * @param {function(?grpc.web.RpcError, ?proto.trading.Order)}
+ *     callback The callback function(error, response)
+ * @return {!grpc.web.ClientReadableStream<!proto.trading.Order>|undefined}
+ *     The XHR Node Readable Stream
+ */
+proto.trading.OrderServiceClient.prototype.getOrder =
+    function(request, metadata, callback) {
+  return this.client_.rpcCall(this.hostname_ +
+      '/trading.OrderService/GetOrder',
+      request,
+      metadata || {},
+      methodDescriptor_OrderService_GetOrder,
+      callback);
+};
+
+
+/**
+ * @param {!proto.trading.GetOrderRequest} request The
+ *     request proto
+ * @param {?Object<string, string>=} metadata User defined
+ *     call metadata
+ * @return {!Promise<!proto.trading.Order>}
+ *     Promise that resolves to the response
+ */
+proto.trading.OrderServicePromiseClient.prototype.getOrder =
+    function(request, metadata) {
+  return this.client_.unaryCall(this.hostname_ +
+      '/trading.OrderService/GetOrder',
+      request,
+      metadata || {},
+      methodDescriptor_OrderService_GetOrder);
+};
+
+
+/**
+ * @const
+ * @type {!grpc.web.MethodDescriptor<
+ *   !proto.trading.TradeHistoryRequest,
+ *   !proto.trading.TradeHistoryResponse>}
+ */
+const methodDescriptor_OrderService_GetTradeHistory = new grpc.web.MethodDescriptor(
+  '/trading.OrderService/GetTradeHistory',
+  grpc.web.MethodType.UNARY,
+  proto.trading.TradeHistoryRequest,
+  proto.trading.TradeHistoryResponse,
+  /**
+   * @param {!proto.trading.TradeHistoryRequest} request
+   * @return {!Uint8Array}
+   */
+  function(request) {
+    return request.serializeBinary();
+  },
+  proto.trading.TradeHistoryResponse.deserializeBinary
+);
+
+
+/**
+ * @param {!proto.trading.TradeHistoryRequest} request The
+ *     request proto
+ * @param {?Object<string, string>} metadata User defined
+ *     call metadata
+ * @param {function(?grpc.web.RpcError, ?proto.trading.TradeHistoryResponse)}
+ *     callback The callback function(error, response)
+ * @return {!grpc.web.ClientReadableStream<!proto.trading.TradeHistoryResponse>|undefined}
+ *     The XHR Node Readable Stream
+ */
+proto.trading.OrderServiceClient.prototype.getTradeHistory =
+    function(request, metadata, callback) {
+  return this.client_.rpcCall(this.hostname_ +
+      '/trading.OrderService/GetTradeHistory',
+      request,
+      metadata || {},
+      methodDescriptor_OrderService_GetTradeHistory,
+      callback);
+};
+
+
+/**
+ * @param {!proto.trading.TradeHistoryRequest} request The
+ *     request proto
+ * @param {?Object<string, string>=} metadata User defined
+ *     call metadata
+ * @return {!Promise<!proto.trading.TradeHistoryResponse>}
+ *     Promise that resolves to the response
+ */
+proto.trading.OrderServicePromiseClient.prototype.getTradeHistory =
+    function(request, metadata) {
+  return this.client_.unaryCall(this.hostname_ +
+      '/trading.OrderService/GetTradeHistory',
+      request,
+      metadata || {},
+      methodDescriptor_OrderService_GetTradeHistory);
+};
+
+
+/**
+ * @const
+ * @type {!grpc.web.MethodDescriptor<
+ *   !proto.trading.ListOrdersRequest,
+ *   !proto.trading.ListOrdersResponse>}
+ */
+const methodDescriptor_OrderService_ListOrders = new grpc.web.MethodDescriptor(
+  '/trading.OrderService/ListOrders',
+  grpc.web.MethodType.UNARY,
+  proto.trading.ListOrdersRequest,
+  proto.trading.ListOrdersResponse,
+  /**
+   * @param {!proto.trading.ListOrdersRequest} request
+   * @return {!Uint8Array}
+   */
+  function(request) {
+    return request.serializeBinary();
+  },
+  proto.trading.ListOrdersResponse.deserializeBinary
+);
+
+
+/**
+ * @param {!proto.trading.ListOrdersRequest} request The
+ *     request proto
+ * @param {?Object<string, string>} metadata User defined
+ *     call metadata
+ * @param {function(?grpc.web.RpcError, ?proto.trading.ListOrdersResponse)}
+ *     callback The callback function(error, response)
+ * @return {!grpc.web.ClientReadableStream<!proto.trading.ListOrdersResponse>|undefined}
+ *     The XHR Node Readable Stream
+ */
+proto.trading.OrderServiceClient.prototype.listOrders =
+    function(request, metadata, callback) {
+  return this.client_.rpcCall(this.hostname_ +
+      '/trading.OrderService/ListOrders',
+      request,
+      metadata || {},
+      methodDescriptor_OrderService_ListOrders,
+      callback);
+};
+
+
+/**
+ * @param {!proto.trading.ListOrdersRequest} request The
+ *     request proto
+ * @param {?Object<string, string>=} metadata User defined
+ *     call metadata
+ * @return {!Promise<!proto.trading.ListOrdersResponse>}
+ *     Promise that resolves to the response
+ */
+proto.trading.OrderServicePromiseClient.prototype.listOrders =
+    function(request, metadata) {
+  return this.client_.unaryCall(this.hostname_ +
+      '/trading.OrderService/ListOrders',
+      request,
+      metadata || {},
+      methodDescriptor_OrderService_ListOrders);
+};
+
+
+/**
+ * @param {string} hostname
+ * @param {?Object} credentials
+ * @param {?grpc.web.ClientOptions} options
+ * @constructor
+ * @struct
+ * @final
+ */
+proto.trading.AuthServiceClient =
+    function(hostname, credentials, options) {
+  if (!options) options = {};
+  options.format = 'text';
+
+  /**
+   * @private @const {!grpc.web.GrpcWebClientBase} The client
+   */
+  this.client_ = new grpc.web.GrpcWebClientBase(options);
+
+  /**
+   * @private @const {string} The hostname
+   */
+  this.hostname_ = hostname.replace(/\/+$/, '');
+
+};
+
+
+/**
+ * @param {string} hostname
+ * @param {?Object} credentials
+ * @param {?grpc.web.ClientOptions} options
+ * @constructor
+ * @struct
+ * @final
+ */
+proto.trading.AuthServicePromiseClient =
+    function(hostname, credentials, options) {
+  if (!options) options = {};
+  options.format = 'text';
+
+  /**
+   * @private @const {!grpc.web.GrpcWebClientBase} The client
+   */
+  this.client_ = new grpc.web.GrpcWebClientBase(options);
+
+  /**
+   * @private @const {string} The hostname
+   */
+  this.hostname_ = hostname.replace(/\/+$/, '');
+
+};
+
+
+/**
+ * @const
+ * @type {!grpc.web.MethodDescriptor<
+ *   !proto.trading.RegisterRequest,
+ *   !proto.trading.AuthResponse>}
+ */
+const methodDescriptor_AuthService_Register = new grpc.web.MethodDescriptor(
+  '/trading.AuthService/Register',
+  grpc.web.MethodType.UNARY,
+  proto.trading.RegisterRequest,
+  proto.trading.AuthResponse,
+  /**
+   * @param {!proto.trading.RegisterRequest} request
+   * @return {!Uint8Array}
+   */
+  function(request) {
+    return request.serializeBinary();
+  },
+  proto.trading.AuthResponse.deserializeBinary
+);
+
+
+/**
+ * @param {!proto.trading.RegisterRequest} request The
+ *     request proto
+ * @param {?Object<string, string>} metadata User defined
+ *     call metadata
+ * @param {function(?grpc.web.RpcError, ?proto.trading.AuthResponse)}
+ *     callback The callback function(error, response)
+ * @return {!grpc.web.ClientReadableStream<!proto.trading.AuthResponse>|undefined}
+ *     The XHR Node Readable Stream
+ */
+proto.trading.AuthServiceClient.prototype.register =
+    function(request, metadata, callback) {
+  return this.client_.rpcCall(this.hostname_ +
+      '/trading.AuthService/Register',
+      request,
+      metadata || {},
+      methodDescriptor_AuthService_Register,
+      callback);
+};
+
+
+/**
+ * @param {!proto.trading.RegisterRequest} request The
+ *     request proto
+ * @param {?Object<string, string>=} metadata User defined
+ *     call metadata
+ * @return {!Promise<!proto.trading.AuthResponse>}
+ *     Promise that resolves to the response
+ */
+proto.trading.AuthServicePromiseClient.prototype.register =
+    function(request, metadata) {
+  return this.client_.unaryCall(this.hostname_ +
+      '/trading.AuthService/Register',
+      request,
+      metadata || {},
+      methodDescriptor_AuthService_Register);
+};
+
+
+/**
+ * @const
+ * @type {!grpc.web.MethodDescriptor<
+ *   !proto.trading.AuthRequest,
+ *   !proto.trading.AuthResponse>}
+ */
+const methodDescriptor_AuthService_Login = new grpc.web.MethodDescriptor(
+  '/trading.AuthService/Login',
+  grpc.web.MethodType.UNARY,
+  proto.trading.AuthRequest,
+  proto.trading.AuthResponse,
+  /**
+   * @param {!proto.trading.AuthRequest} request
+   * @return {!Uint8Array}
+   */
+  function(request) {
+    return request.serializeBinary();
+  },
+  proto.trading.AuthResponse.deserializeBinary
+);
+
+
+/**
+ * @param {!proto.trading.AuthRequest} request The
+ *     request proto
+ * @param {?Object<string, string>} metadata User defined
+ *     call metadata
+ * @param {function(?grpc.web.RpcError, ?proto.trading.AuthResponse)}
+ *     callback The callback function(error, response)
+ * @return {!grpc.web.ClientReadableStream<!proto.trading.AuthResponse>|undefined}
+ *     The XHR Node Readable Stream
+ */
+proto.trading.AuthServiceClient.prototype.login =
+    function(request, metadata, callback) {
+  return this.client_.rpcCall(this.hostname_ +
+      '/trading.AuthService/Login',
+      request,
+      metadata || {},
+      methodDescriptor_AuthService_Login,
+      callback);
+};
+
+
+/**
+ * @param {!proto.trading.AuthRequest} request The
+ *     request proto
+ * @param {?Object<string, string>=} metadata User defined
+ *     call metadata
+ * @return {!Promise<!proto.trading.AuthResponse>}
+ *     Promise that resolves to the response
+ */
+proto.trading.AuthServicePromiseClient.prototype.login =
+    function(request, metadata) {
+  return this.client_.unaryCall(this.hostname_ +
+      '/trading.AuthService/Login',
+      request,
+      metadata || {},
+      methodDescriptor_AuthService_Login);
+};
+
+
+/**
+ * @const
+ * @type {!grpc.web.MethodDescriptor<
+ *   !proto.trading.GetUserRequest,
+ *   !proto.trading.UserInfo>}
+ */
+const methodDescriptor_AuthService_GetUser = new grpc.web.MethodDescriptor(
+  '/trading.AuthService/GetUser',
+  grpc.web.MethodType.UNARY,
+  proto.trading.GetUserRequest,
+  proto.trading.UserInfo,
+  /**
+   * @param {!proto.trading.GetUserRequest} request
+   * @return {!Uint8Array}
+   */
+  function(request) {
+    return request.serializeBinary();
+  },
+  proto.trading.UserInfo.deserializeBinary
+);
+
+
+/**
+ * @param {!proto.trading.GetUserRequest} request The
+ *     request proto
+ * @param {?Object<string, string>} metadata User defined
+ *     call metadata
+ * @param {function(?grpc.web.RpcError, ?proto.trading.UserInfo)}
+ *     callback The callback function(error, response)
+ * @return {!grpc.web.ClientReadableStream<!proto.trading.UserInfo>|undefined}
+ *     The XHR Node Readable Stream
+ */
+proto.trading.AuthServiceClient.prototype.getUser =
+    function(request, metadata, callback) {
+  return this.client_.rpcCall(this.hostname_ +
+      '/trading.AuthService/GetUser',
+      request,
+      metadata || {},
+      methodDescriptor_AuthService_GetUser,
+      callback);
+};
+
+
+/**
+ * @param {!proto.trading.GetUserRequest} request The
+ *     request proto
+ * @param {?Object<string, string>=} metadata User defined
+ *     call metadata
+ * @return {!Promise<!proto.trading.UserInfo>}
+ *     Promise that resolves to the response
+ */
+proto.trading.AuthServicePromiseClient.prototype.getUser =
+    function(request, metadata) {
+  return this.client_.unaryCall(this.hostname_ +
+      '/trading.AuthService/GetUser',
+      request,
+      metadata || {},
+      methodDescriptor_AuthService_GetUser);
+};
+
+
+/**
+ * @const
+ * @type {!grpc.web.MethodDescriptor<
+ *   !proto.trading.RefreshTokenRequest,
+ *   !proto.trading.AuthResponse>}
+ */
+const methodDescriptor_AuthService_RefreshToken = new grpc.web.MethodDescriptor(
+  '/trading.AuthService/RefreshToken',
+  grpc.web.MethodType.UNARY,
+  proto.trading.RefreshTokenRequest,
+  proto.trading.AuthResponse,
+  /**
+   * @param {!proto.trading.RefreshTokenRequest} request
+   * @return {!Uint8Array}
+   */
+  function(request) {
+    return request.serializeBinary();
+  },
+  proto.trading.AuthResponse.deserializeBinary
+);
+
+
+/**
+ * @param {!proto.trading.RefreshTokenRequest} request The
+ *     request proto
+ * @param {?Object<string, string>} metadata User defined
+ *     call metadata
+ * @param {function(?grpc.web.RpcError, ?proto.trading.AuthResponse)}
+ *     callback The callback function(error, response)
+ * @return {!grpc.web.ClientReadableStream<!proto.trading.AuthResponse>|undefined}
+ *     The XHR Node Readable Stream
+ */
+proto.trading.AuthServiceClient.prototype.refreshToken =
+    function(request, metadata, callback) {
+  return this.client_.rpcCall(this.hostname_ +
+      '/trading.AuthService/RefreshToken',
+      request,
+      metadata || {},
+      methodDescriptor_AuthService_RefreshToken,
+      callback);
+};
+
+
+/**
+ * @param {!proto.trading.RefreshTokenRequest} request The
+ *     request proto
+ * @param {?Object<string, string>=} metadata User defined
+ *     call metadata
+ * @return {!Promise<!proto.trading.AuthResponse>}
+ *     Promise that resolves to the response
+ */
+proto.trading.AuthServicePromiseClient.prototype.refreshToken =
+    function(request, metadata) {
+  return this.client_.unaryCall(this.hostname_ +
+      '/trading.AuthService/RefreshToken',
+      request,
+      metadata || {},
+      methodDescriptor_AuthService_RefreshToken);
+};
+
+
+/**
+ * @param {string} hostname
+ * @param {?Object} credentials
+ * @param {?grpc.web.ClientOptions} options
+ * @constructor
+ * @struct
+ * @final
+ */
+proto.trading.BotServiceClient =
+    function(hostname, credentials, options) {
+  if (!options) options = {};
+  options.format = 'text';
+
+  /**
+   * @private @const {!grpc.web.GrpcWebClientBase} The client
+   */
+  this.client_ = new grpc.web.GrpcWebClientBase(options);
+
+  /**
+   * @private @const {string} The hostname
+   */
+  this.hostname_ = hostname.replace(/\/+$/, '');
+
+};
+
+
+/**
+ * @param {string} hostname
+ * @param {?Object} credentials
+ * @param {?grpc.web.ClientOptions} options
+ * @constructor
+ * @struct
+ * @final
+ */
+proto.trading.BotServicePromiseClient =
+    function(hostname, credentials, options) {
+  if (!options) options = {};
+  options.format = 'text';
+
+  /**
+   * @private @const {!grpc.web.GrpcWebClientBase} The client
+   */
+  this.client_ = new grpc.web.GrpcWebClientBase(options);
+
+  /**
+   * @private @const {string} The hostname
+   */
+  this.hostname_ = hostname.replace(/\/+$/, '');
+
+};
+
+
+/**
+ * @const
+ * @type {!grpc.web.MethodDescriptor<
+ *   !proto.trading.CreateBotRequest,
+ *   !proto.trading.StatusResponse>}
+ */
+const methodDescriptor_BotService_CreateBot = new grpc.web.MethodDescriptor(
+  '/trading.BotService/CreateBot',
+  grpc.web.MethodType.UNARY,
+  proto.trading.CreateBotRequest,
+  proto.trading.StatusResponse,
+  /**
+   * @param {!proto.trading.CreateBotRequest} request
+   * @return {!Uint8Array}
+   */
+  function(request) {
+    return request.serializeBinary();
+  },
+  proto.trading.StatusResponse.deserializeBinary
+);
+
+
+/**
+ * @param {!proto.trading.CreateBotRequest} request The
+ *     request proto
+ * @param {?Object<string, string>} metadata User defined
+ *     call metadata
+ * @param {function(?grpc.web.RpcError, ?proto.trading.StatusResponse)}
+ *     callback The callback function(error, response)
+ * @return {!grpc.web.ClientReadableStream<!proto.trading.StatusResponse>|undefined}
+ *     The XHR Node Readable Stream
+ */
+proto.trading.BotServiceClient.prototype.createBot =
+    function(request, metadata, callback) {
+  return this.client_.rpcCall(this.hostname_ +
+      '/trading.BotService/CreateBot',
+      request,
+      metadata || {},
+      methodDescriptor_BotService_CreateBot,
+      callback);
+};
+
+
+/**
+ * @param {!proto.trading.CreateBotRequest} request The
+ *     request proto
+ * @param {?Object<string, string>=} metadata User defined
+ *     call metadata
+ * @return {!Promise<!proto.trading.StatusResponse>}
+ *     Promise that resolves to the response
+ */
+proto.trading.BotServicePromiseClient.prototype.createBot =
+    function(request, metadata) {
+  return this.client_.unaryCall(this.hostname_ +
+      '/trading.BotService/CreateBot',
+      request,
+      metadata || {},
+      methodDescriptor_BotService_CreateBot);
+};
+
+
+/**
+ * @const
+ * @type {!grpc.web.MethodDescriptor<
+ *   !proto.trading.BotIdRequest,
+ *   !proto.trading.Bot>}
+ */
+const methodDescriptor_BotService_GetBot = new grpc.web.MethodDescriptor(
+  '/trading.BotService/GetBot',
+  grpc.web.MethodType.UNARY,
+  proto.trading.BotIdRequest,
+  proto.trading.Bot,
+  /**
+   * @param {!proto.trading.BotIdRequest} request
+   * @return {!Uint8Array}
+   */
+  function(request) {
+    return request.serializeBinary();
+  },
+  proto.trading.Bot.deserializeBinary
+);
+
+
+/**
+ * @param {!proto.trading.BotIdRequest} request The
+ *     request proto
+ * @param {?Object<string, string>} metadata User defined
+ *     call metadata
+ * @param {function(?grpc.web.RpcError, ?proto.trading.Bot)}
+ *     callback The callback function(error, response)
+ * @return {!grpc.web.ClientReadableStream<!proto.trading.Bot>|undefined}
+ *     The XHR Node Readable Stream
+ */
+proto.trading.BotServiceClient.prototype.getBot =
+    function(request, metadata, callback) {
+  return this.client_.rpcCall(this.hostname_ +
+      '/trading.BotService/GetBot',
+      request,
+      metadata || {},
+      methodDescriptor_BotService_GetBot,
+      callback);
+};
+
+
+/**
+ * @param {!proto.trading.BotIdRequest} request The
+ *     request proto
+ * @param {?Object<string, string>=} metadata User defined
+ *     call metadata
+ * @return {!Promise<!proto.trading.Bot>}
+ *     Promise that resolves to the response
+ */
+proto.trading.BotServicePromiseClient.prototype.getBot =
+    function(request, metadata) {
+  return this.client_.unaryCall(this.hostname_ +
+      '/trading.BotService/GetBot',
+      request,
+      metadata || {},
+      methodDescriptor_BotService_GetBot);
+};
+
+
+/**
+ * @const
+ * @type {!grpc.web.MethodDescriptor<
+ *   !proto.trading.UpdateBotRequest,
+ *   !proto.trading.Bot>}
+ */
+const methodDescriptor_BotService_UpdateBot = new grpc.web.MethodDescriptor(
+  '/trading.BotService/UpdateBot',
+  grpc.web.MethodType.UNARY,
+  proto.trading.UpdateBotRequest,
+  proto.trading.Bot,
+  /**
+   * @param {!proto.trading.UpdateBotRequest} request
+   * @return {!Uint8Array}
+   */
+  function(request) {
+    return request.serializeBinary();
+  },
+  proto.trading.Bot.deserializeBinary
+);
+
+
+/**
+ * @param {!proto.trading.UpdateBotRequest} request The
+ *     request proto
+ * @param {?Object<string, string>} metadata User defined
+ *     call metadata
+ * @param {function(?grpc.web.RpcError, ?proto.trading.Bot)}
+ *     callback The callback function(error, response)
+ * @return {!grpc.web.ClientReadableStream<!proto.trading.Bot>|undefined}
+ *     The XHR Node Readable Stream
+ */
+proto.trading.BotServiceClient.prototype.updateBot =
+    function(request, metadata, callback) {
+  return this.client_.rpcCall(this.hostname_ +
+      '/trading.BotService/UpdateBot',
+      request,
+      metadata || {},
+      methodDescriptor_BotService_UpdateBot,
+      callback);
+};
+
+
+/**
+ * @param {!proto.trading.UpdateBotRequest} request The
+ *     request proto
+ * @param {?Object<string, string>=} metadata User defined
+ *     call metadata
+ * @return {!Promise<!proto.trading.Bot>}
+ *     Promise that resolves to the response
+ */
+proto.trading.BotServicePromiseClient.prototype.updateBot =
+    function(request, metadata) {
+  return this.client_.unaryCall(this.hostname_ +
+      '/trading.BotService/UpdateBot',
+      request,
+      metadata || {},
+      methodDescriptor_BotService_UpdateBot);
+};
+
+
+/**
+ * @const
+ * @type {!grpc.web.MethodDescriptor<
+ *   !proto.trading.BotIdRequest,
+ *   !proto.trading.StatusResponse>}
+ */
+const methodDescriptor_BotService_DeleteBot = new grpc.web.MethodDescriptor(
+  '/trading.BotService/DeleteBot',
+  grpc.web.MethodType.UNARY,
+  proto.trading.BotIdRequest,
+  proto.trading.StatusResponse,
+  /**
+   * @param {!proto.trading.BotIdRequest} request
+   * @return {!Uint8Array}
+   */
+  function(request) {
+    return request.serializeBinary();
+  },
+  proto.trading.StatusResponse.deserializeBinary
+);
+
+
+/**
+ * @param {!proto.trading.BotIdRequest} request The
+ *     request proto
+ * @param {?Object<string, string>} metadata User defined
+ *     call metadata
+ * @param {function(?grpc.web.RpcError, ?proto.trading.StatusResponse)}
+ *     callback The callback function(error, response)
+ * @return {!grpc.web.ClientReadableStream<!proto.trading.StatusResponse>|undefined}
+ *     The XHR Node Readable Stream
+ */
+proto.trading.BotServiceClient.prototype.deleteBot =
+    function(request, metadata, callback) {
+  return this.client_.rpcCall(this.hostname_ +
+      '/trading.BotService/DeleteBot',
+      request,
+      metadata || {},
+      methodDescriptor_BotService_DeleteBot,
+      callback);
+};
+
+
+/**
+ * @param {!proto.trading.BotIdRequest} request The
+ *     request proto
+ * @param {?Object<string, string>=} metadata User defined
+ *     call metadata
+ * @return {!Promise<!proto.trading.StatusResponse>}
+ *     Promise that resolves to the response
+ */
+proto.trading.BotServicePromiseClient.prototype.deleteBot =
+    function(request, metadata) {
+  return this.client_.unaryCall(this.hostname_ +
+      '/trading.BotService/DeleteBot',
+      request,
+      metadata || {},
+      methodDescriptor_BotService_DeleteBot);
+};
+
+
+/**
+ * @const
+ * @type {!grpc.web.MethodDescriptor<
+ *   !proto.trading.Empty,
+ *   !proto.trading.BotList>}
+ */
+const methodDescriptor_BotService_ListBots = new grpc.web.MethodDescriptor(
+  '/trading.BotService/ListBots',
+  grpc.web.MethodType.UNARY,
+  proto.trading.Empty,
+  proto.trading.BotList,
+  /**
+   * @param {!proto.trading.Empty} request
+   * @return {!Uint8Array}
+   */
+  function(request) {
+    return request.serializeBinary();
+  },
+  proto.trading.BotList.deserializeBinary
+);
+
+
+/**
+ * @param {!proto.trading.Empty} request The
+ *     request proto
+ * @param {?Object<string, string>} metadata User defined
+ *     call metadata
+ * @param {function(?grpc.web.RpcError, ?proto.trading.BotList)}
+ *     callback The callback function(error, response)
+ * @return {!grpc.web.ClientReadableStream<!proto.trading.BotList>|undefined}
+ *     The XHR Node Readable Stream
+ */
+proto.trading.BotServiceClient.prototype.listBots =
+    function(request, metadata, callback) {
+  return this.client_.rpcCall(this.hostname_ +
+      '/trading.BotService/ListBots',
+      request,
+      metadata || {},
+      methodDescriptor_BotService_ListBots,
+      callback);
+};
+
+
+/**
+ * @param {!proto.trading.Empty} request The
+ *     request proto
+ * @param {?Object<string, string>=} metadata User defined
+ *     call metadata
+ * @return {!Promise<!proto.trading.BotList>}
+ *     Promise that resolves to the response
+ */
+proto.trading.BotServicePromiseClient.prototype.listBots =
+    function(request, metadata) {
+  return this.client_.unaryCall(this.hostname_ +
+      '/trading.BotService/ListBots',
+      request,
+      metadata || {},
+      methodDescriptor_BotService_ListBots);
+};
+
+
+/**
+ * @const
+ * @type {!grpc.web.MethodDescriptor<
+ *   !proto.trading.BotIdRequest,
+ *   !proto.trading.StatusResponse>}
+ */
+const methodDescriptor_BotService_StartBot = new grpc.web.MethodDescriptor(
+  '/trading.BotService/StartBot',
+  grpc.web.MethodType.UNARY,
+  proto.trading.BotIdRequest,
+  proto.trading.StatusResponse,
+  /**
+   * @param {!proto.trading.BotIdRequest} request
+   * @return {!Uint8Array}
+   */
+  function(request) {
+    return request.serializeBinary();
+  },
+  proto.trading.StatusResponse.deserializeBinary
+);
+
+
+/**
+ * @param {!proto.trading.BotIdRequest} request The
+ *     request proto
+ * @param {?Object<string, string>} metadata User defined
+ *     call metadata
+ * @param {function(?grpc.web.RpcError, ?proto.trading.StatusResponse)}
+ *     callback The callback function(error, response)
+ * @return {!grpc.web.ClientReadableStream<!proto.trading.StatusResponse>|undefined}
+ *     The XHR Node Readable Stream
+ */
+proto.trading.BotServiceClient.prototype.startBot =
+    function(request, metadata, callback) {
+  return this.client_.rpcCall(this.hostname_ +
+      '/trading.BotService/StartBot',
+      request,
+      metadata || {},
+      methodDescriptor_BotService_StartBot,
+      callback);
+};
+
+
+/**
+ * @param {!proto.trading.BotIdRequest} request The
+ *     request proto
+ * @param {?Object<string, string>=} metadata User defined
+ *     call metadata
+ * @return {!Promise<!proto.trading.StatusResponse>}
+ *     Promise that resolves to the response
+ */
+proto.trading.BotServicePromiseClient.prototype.startBot =
+    function(request, metadata) {
+  return this.client_.unaryCall(this.hostname_ +
+      '/trading.BotService/StartBot',
+      request,
+      metadata || {},
+      methodDescriptor_BotService_StartBot);
+};
+
+
+/**
+ * @const
+ * @type {!grpc.web.MethodDescriptor<
+ *   !proto.trading.BotIdRequest,
+ *   !proto.trading.StatusResponse>}
+ */
+const methodDescriptor_BotService_StopBot = new grpc.web.MethodDescriptor(
+  '/trading.BotService/StopBot',
+  grpc.web.MethodType.UNARY,
+  proto.trading.BotIdRequest,
+  proto.trading.StatusResponse,
+  /**
+   * @param {!proto.trading.BotIdRequest} request
+   * @return {!Uint8Array}
+   */
+  function(request) {
+    return request.serializeBinary();
+  },
+  proto.trading.StatusResponse.deserializeBinary
+);
+
+
+/**
+ * @param {!proto.trading.BotIdRequest} request The
+ *     request proto
+ * @param {?Object<string, string>} metadata User defined
+ *     call metadata
+ * @param {function(?grpc.web.RpcError, ?proto.trading.StatusResponse)}
+ *     callback The callback function(error, response)
+ * @return {!grpc.web.ClientReadableStream<!proto.trading.StatusResponse>|undefined}
+ *     The XHR Node Readable Stream
+ */
+proto.trading.BotServiceClient.prototype.stopBot =
+    function(request, metadata, callback) {
+  return this.client_.rpcCall(this.hostname_ +
+      '/trading.BotService/StopBot',
+      request,
+      metadata || {},
+      methodDescriptor_BotService_StopBot,
+      callback);
+};
+
+
+/**
+ * @param {!proto.trading.BotIdRequest} request The
+ *     request proto
+ * @param {?Object<string, string>=} metadata User defined
+ *     call metadata
+ * @return {!Promise<!proto.trading.StatusResponse>}
+ *     Promise that resolves to the response
+ */
+proto.trading.BotServicePromiseClient.prototype.stopBot =
+    function(request, metadata) {
+  return this.client_.unaryCall(this.hostname_ +
+      '/trading.BotService/StopBot',
+      request,
+      metadata || {},
+      methodDescriptor_BotService_StopBot);
+};
+
+
+/**
+ * @const
+ * @type {!grpc.web.MethodDescriptor<
+ *   !proto.trading.BotIdRequest,
+ *   !proto.trading.Bot>}
+ */
+const methodDescriptor_BotService_GetBotStatus = new grpc.web.MethodDescriptor(
+  '/trading.BotService/GetBotStatus',
+  grpc.web.MethodType.UNARY,
+  proto.trading.BotIdRequest,
+  proto.trading.Bot,
+  /**
+   * @param {!proto.trading.BotIdRequest} request
+   * @return {!Uint8Array}
+   */
+  function(request) {
+    return request.serializeBinary();
+  },
+  proto.trading.Bot.deserializeBinary
+);
+
+
+/**
+ * @param {!proto.trading.BotIdRequest} request The
+ *     request proto
+ * @param {?Object<string, string>} metadata User defined
+ *     call metadata
+ * @param {function(?grpc.web.RpcError, ?proto.trading.Bot)}
+ *     callback The callback function(error, response)
+ * @return {!grpc.web.ClientReadableStream<!proto.trading.Bot>|undefined}
+ *     The XHR Node Readable Stream
+ */
+proto.trading.BotServiceClient.prototype.getBotStatus =
+    function(request, metadata, callback) {
+  return this.client_.rpcCall(this.hostname_ +
+      '/trading.BotService/GetBotStatus',
+      request,
+      metadata || {},
+      methodDescriptor_BotService_GetBotStatus,
+      callback);
+};
+
+
+/**
+ * @param {!proto.trading.BotIdRequest} request The
+ *     request proto
+ * @param {?Object<string, string>=} metadata User defined
+ *     call metadata
+ * @return {!Promise<!proto.trading.Bot>}
+ *     Promise that resolves to the response
+ */
+proto.trading.BotServicePromiseClient.prototype.getBotStatus =
+    function(request, metadata) {
+  return this.client_.unaryCall(this.hostname_ +
+      '/trading.BotService/GetBotStatus',
+      request,
+      metadata || {},
+      methodDescriptor_BotService_GetBotStatus);
+};
+
+
+/**
+ * @const
+ * @type {!grpc.web.MethodDescriptor<
+ *   !proto.trading.BotIdRequest,
+ *   !proto.trading.Bot>}
+ */
+const methodDescriptor_BotService_StreamBotStatus = new grpc.web.MethodDescriptor(
+  '/trading.BotService/StreamBotStatus',
+  grpc.web.MethodType.SERVER_STREAMING,
+  proto.trading.BotIdRequest,
+  proto.trading.Bot,
+  /**
+   * @param {!proto.trading.BotIdRequest} request
+   * @return {!Uint8Array}
+   */
+  function(request) {
+    return request.serializeBinary();
+  },
+  proto.trading.Bot.deserializeBinary
+);
+
+
+/**
+ * @param {!proto.trading.BotIdRequest} request The request proto
+ * @param {?Object<string, string>=} metadata User defined
+ *     call metadata
+ * @return {!grpc.web.ClientReadableStream<!proto.trading.Bot>}
+ *     The XHR Node Readable Stream
+ */
+proto.trading.BotServiceClient.prototype.streamBotStatus =
+    function(request, metadata) {
+  return this.client_.serverStreaming(this.hostname_ +
+      '/trading.BotService/StreamBotStatus',
+      request,
+      metadata || {},
+      methodDescriptor_BotService_StreamBotStatus);
+};
+
+
+/**
+ * @param {!proto.trading.BotIdRequest} request The request proto
+ * @param {?Object<string, string>=} metadata User defined
+ *     call metadata
+ * @return {!grpc.web.ClientReadableStream<!proto.trading.Bot>}
+ *     The XHR Node Readable Stream
+ */
+proto.trading.BotServicePromiseClient.prototype.streamBotStatus =
+    function(request, metadata) {
+  return this.client_.serverStreaming(this.hostname_ +
+      '/trading.BotService/StreamBotStatus',
+      request,
+      metadata || {},
+      methodDescriptor_BotService_StreamBotStatus);
+};
+
+
+/**
+ * @param {string} hostname
+ * @param {?Object} credentials
+ * @param {?grpc.web.ClientOptions} options
+ * @constructor
+ * @struct
+ * @final
+ */
+proto.trading.RiskServiceClient =
+    function(hostname, credentials, options) {
+  if (!options) options = {};
+  options.format = 'text';
+
+  /**
+   * @private @const {!grpc.web.GrpcWebClientBase} The client
+   */
+  this.client_ = new grpc.web.GrpcWebClientBase(options);
+
+  /**
+   * @private @const {string} The hostname
+   */
+  this.hostname_ = hostname.replace(/\/+$/, '');
+
+};
+
+
+/**
+ * @param {string} hostname
+ * @param {?Object} credentials
+ * @param {?grpc.web.ClientOptions} options
+ * @constructor
+ * @struct
+ * @final
+ */
+proto.trading.RiskServicePromiseClient =
+    function(hostname, credentials, options) {
+  if (!options) options = {};
+  options.format = 'text';
+
+  /**
+   * @private @const {!grpc.web.GrpcWebClientBase} The client
+   */
+  this.client_ = new grpc.web.GrpcWebClientBase(options);
+
+  /**
+   * @private @const {string} The hostname
+   */
+  this.hostname_ = hostname.replace(/\/+$/, '');
+
+};
+
+
+/**
+ * @const
+ * @type {!grpc.web.MethodDescriptor<
+ *   !proto.trading.VaRRequest,
+ *   !proto.trading.VaRResponse>}
+ */
+const methodDescriptor_RiskService_CalculateVaR = new grpc.web.MethodDescriptor(
+  '/trading.RiskService/CalculateVaR',
+  grpc.web.MethodType.UNARY,
+  proto.trading.VaRRequest,
+  proto.trading.VaRResponse,
+  /**
+   * @param {!proto.trading.VaRRequest} request
+   * @return {!Uint8Array}
+   */
+  function(request) {
+    return request.serializeBinary();
+  },
+  proto.trading.VaRResponse.deserializeBinary
+);
+
+
+/**
+ * @param {!proto.trading.VaRRequest} request The
+ *     request proto
+ * @param {?Object<string, string>} metadata User defined
+ *     call metadata
+ * @param {function(?grpc.web.RpcError, ?proto.trading.VaRResponse)}
+ *     callback The callback function(error, response)
+ * @return {!grpc.web.ClientReadableStream<!proto.trading.VaRResponse>|undefined}
+ *     The XHR Node Readable Stream
+ */
+proto.trading.RiskServiceClient.prototype.calculateVaR =
+    function(request, metadata, callback) {
+  return this.client_.rpcCall(this.hostname_ +
+      '/trading.RiskService/CalculateVaR',
+      request,
+      metadata || {},
+      methodDescriptor_RiskService_CalculateVaR,
+      callback);
+};
+
+
+/**
+ * @param {!proto.trading.VaRRequest} request The
+ *     request proto
+ * @param {?Object<string, string>=} metadata User defined
+ *     call metadata
+ * @return {!Promise<!proto.trading.VaRResponse>}
+ *     Promise that resolves to the response
+ */
+proto.trading.RiskServicePromiseClient.prototype.calculateVaR =
+    function(request, metadata) {
+  return this.client_.unaryCall(this.hostname_ +
+      '/trading.RiskService/CalculateVaR',
+      request,
+      metadata || {},
+      methodDescriptor_RiskService_CalculateVaR);
+};
+
 
 /**
  * @param {string} hostname
@@ -310,67 +1904,6 @@ proto.trading.TradingServicePromiseClient.prototype.stopStrategy =
       request,
       metadata || {},
       methodDescriptor_TradingService_StopStrategy);
-};
-
-
-/**
- * @const
- * @type {!grpc.web.MethodDescriptor<
- *   !proto.trading.PortfolioRequest,
- *   !proto.trading.Portfolio>}
- */
-const methodDescriptor_TradingService_GetPortfolio = new grpc.web.MethodDescriptor(
-  '/trading.TradingService/GetPortfolio',
-  grpc.web.MethodType.UNARY,
-  proto.trading.PortfolioRequest,
-  proto.trading.Portfolio,
-  /**
-   * @param {!proto.trading.PortfolioRequest} request
-   * @return {!Uint8Array}
-   */
-  function(request) {
-    return request.serializeBinary();
-  },
-  proto.trading.Portfolio.deserializeBinary
-);
-
-
-/**
- * @param {!proto.trading.PortfolioRequest} request The
- *     request proto
- * @param {?Object<string, string>} metadata User defined
- *     call metadata
- * @param {function(?grpc.web.RpcError, ?proto.trading.Portfolio)}
- *     callback The callback function(error, response)
- * @return {!grpc.web.ClientReadableStream<!proto.trading.Portfolio>|undefined}
- *     The XHR Node Readable Stream
- */
-proto.trading.TradingServiceClient.prototype.getPortfolio =
-    function(request, metadata, callback) {
-  return this.client_.rpcCall(this.hostname_ +
-      '/trading.TradingService/GetPortfolio',
-      request,
-      metadata || {},
-      methodDescriptor_TradingService_GetPortfolio,
-      callback);
-};
-
-
-/**
- * @param {!proto.trading.PortfolioRequest} request The
- *     request proto
- * @param {?Object<string, string>=} metadata User defined
- *     call metadata
- * @return {!Promise<!proto.trading.Portfolio>}
- *     Promise that resolves to the response
- */
-proto.trading.TradingServicePromiseClient.prototype.getPortfolio =
-    function(request, metadata) {
-  return this.client_.unaryCall(this.hostname_ +
-      '/trading.TradingService/GetPortfolio',
-      request,
-      metadata || {},
-      methodDescriptor_TradingService_GetPortfolio);
 };
 
 
@@ -731,128 +2264,6 @@ proto.trading.TradingServicePromiseClient.prototype.getMomentum =
 
 
 /**
- * @const
- * @type {!grpc.web.MethodDescriptor<
- *   !proto.trading.TradeRequest,
- *   !proto.trading.TradeResponse>}
- */
-const methodDescriptor_TradingService_ExecuteTrade = new grpc.web.MethodDescriptor(
-  '/trading.TradingService/ExecuteTrade',
-  grpc.web.MethodType.UNARY,
-  proto.trading.TradeRequest,
-  proto.trading.TradeResponse,
-  /**
-   * @param {!proto.trading.TradeRequest} request
-   * @return {!Uint8Array}
-   */
-  function(request) {
-    return request.serializeBinary();
-  },
-  proto.trading.TradeResponse.deserializeBinary
-);
-
-
-/**
- * @param {!proto.trading.TradeRequest} request The
- *     request proto
- * @param {?Object<string, string>} metadata User defined
- *     call metadata
- * @param {function(?grpc.web.RpcError, ?proto.trading.TradeResponse)}
- *     callback The callback function(error, response)
- * @return {!grpc.web.ClientReadableStream<!proto.trading.TradeResponse>|undefined}
- *     The XHR Node Readable Stream
- */
-proto.trading.TradingServiceClient.prototype.executeTrade =
-    function(request, metadata, callback) {
-  return this.client_.rpcCall(this.hostname_ +
-      '/trading.TradingService/ExecuteTrade',
-      request,
-      metadata || {},
-      methodDescriptor_TradingService_ExecuteTrade,
-      callback);
-};
-
-
-/**
- * @param {!proto.trading.TradeRequest} request The
- *     request proto
- * @param {?Object<string, string>=} metadata User defined
- *     call metadata
- * @return {!Promise<!proto.trading.TradeResponse>}
- *     Promise that resolves to the response
- */
-proto.trading.TradingServicePromiseClient.prototype.executeTrade =
-    function(request, metadata) {
-  return this.client_.unaryCall(this.hostname_ +
-      '/trading.TradingService/ExecuteTrade',
-      request,
-      metadata || {},
-      methodDescriptor_TradingService_ExecuteTrade);
-};
-
-
-/**
- * @const
- * @type {!grpc.web.MethodDescriptor<
- *   !proto.trading.TradeHistoryRequest,
- *   !proto.trading.TradeHistoryResponse>}
- */
-const methodDescriptor_TradingService_GetTradeHistory = new grpc.web.MethodDescriptor(
-  '/trading.TradingService/GetTradeHistory',
-  grpc.web.MethodType.UNARY,
-  proto.trading.TradeHistoryRequest,
-  proto.trading.TradeHistoryResponse,
-  /**
-   * @param {!proto.trading.TradeHistoryRequest} request
-   * @return {!Uint8Array}
-   */
-  function(request) {
-    return request.serializeBinary();
-  },
-  proto.trading.TradeHistoryResponse.deserializeBinary
-);
-
-
-/**
- * @param {!proto.trading.TradeHistoryRequest} request The
- *     request proto
- * @param {?Object<string, string>} metadata User defined
- *     call metadata
- * @param {function(?grpc.web.RpcError, ?proto.trading.TradeHistoryResponse)}
- *     callback The callback function(error, response)
- * @return {!grpc.web.ClientReadableStream<!proto.trading.TradeHistoryResponse>|undefined}
- *     The XHR Node Readable Stream
- */
-proto.trading.TradingServiceClient.prototype.getTradeHistory =
-    function(request, metadata, callback) {
-  return this.client_.rpcCall(this.hostname_ +
-      '/trading.TradingService/GetTradeHistory',
-      request,
-      metadata || {},
-      methodDescriptor_TradingService_GetTradeHistory,
-      callback);
-};
-
-
-/**
- * @param {!proto.trading.TradeHistoryRequest} request The
- *     request proto
- * @param {?Object<string, string>=} metadata User defined
- *     call metadata
- * @return {!Promise<!proto.trading.TradeHistoryResponse>}
- *     Promise that resolves to the response
- */
-proto.trading.TradingServicePromiseClient.prototype.getTradeHistory =
-    function(request, metadata) {
-  return this.client_.unaryCall(this.hostname_ +
-      '/trading.TradingService/GetTradeHistory',
-      request,
-      metadata || {},
-      methodDescriptor_TradingService_GetTradeHistory);
-};
-
-
-/**
  * @param {string} hostname
  * @param {?Object} credentials
  * @param {?grpc.web.ClientOptions} options
@@ -860,7 +2271,7 @@ proto.trading.TradingServicePromiseClient.prototype.getTradeHistory =
  * @struct
  * @final
  */
-proto.trading.RiskServiceClient =
+proto.trading.SubscriptionServiceClient =
     function(hostname, credentials, options) {
   if (!options) options = {};
   options.format = 'text';
@@ -886,7 +2297,7 @@ proto.trading.RiskServiceClient =
  * @struct
  * @final
  */
-proto.trading.RiskServicePromiseClient =
+proto.trading.SubscriptionServicePromiseClient =
     function(hostname, credentials, options) {
   if (!options) options = {};
   options.format = 'text';
@@ -901,476 +2312,6 @@ proto.trading.RiskServicePromiseClient =
    */
   this.hostname_ = hostname.replace(/\/+$/, '');
 
-};
-
-
-/**
- * @const
- * @type {!grpc.web.MethodDescriptor<
- *   !proto.trading.VaRRequest,
- *   !proto.trading.VaRResponse>}
- */
-const methodDescriptor_RiskService_CalculateVaR = new grpc.web.MethodDescriptor(
-  '/trading.RiskService/CalculateVaR',
-  grpc.web.MethodType.UNARY,
-  proto.trading.VaRRequest,
-  proto.trading.VaRResponse,
-  /**
-   * @param {!proto.trading.VaRRequest} request
-   * @return {!Uint8Array}
-   */
-  function(request) {
-    return request.serializeBinary();
-  },
-  proto.trading.VaRResponse.deserializeBinary
-);
-
-
-/**
- * @param {!proto.trading.VaRRequest} request The
- *     request proto
- * @param {?Object<string, string>} metadata User defined
- *     call metadata
- * @param {function(?grpc.web.RpcError, ?proto.trading.VaRResponse)}
- *     callback The callback function(error, response)
- * @return {!grpc.web.ClientReadableStream<!proto.trading.VaRResponse>|undefined}
- *     The XHR Node Readable Stream
- */
-proto.trading.RiskServiceClient.prototype.calculateVaR =
-    function(request, metadata, callback) {
-  return this.client_.rpcCall(this.hostname_ +
-      '/trading.RiskService/CalculateVaR',
-      request,
-      metadata || {},
-      methodDescriptor_RiskService_CalculateVaR,
-      callback);
-};
-
-
-/**
- * @param {!proto.trading.VaRRequest} request The
- *     request proto
- * @param {?Object<string, string>=} metadata User defined
- *     call metadata
- * @return {!Promise<!proto.trading.VaRResponse>}
- *     Promise that resolves to the response
- */
-proto.trading.RiskServicePromiseClient.prototype.calculateVaR =
-    function(request, metadata) {
-  return this.client_.unaryCall(this.hostname_ +
-      '/trading.RiskService/CalculateVaR',
-      request,
-      metadata || {},
-      methodDescriptor_RiskService_CalculateVaR);
-};
-
-
-/**
- * @param {string} hostname
- * @param {?Object} credentials
- * @param {?grpc.web.ClientOptions} options
- * @constructor
- * @struct
- * @final
- */
-proto.trading.AuthServiceClient =
-    function(hostname, credentials, options) {
-  if (!options) options = {};
-  options.format = 'text';
-
-  /**
-   * @private @const {!grpc.web.GrpcWebClientBase} The client
-   */
-  this.client_ = new grpc.web.GrpcWebClientBase(options);
-
-  /**
-   * @private @const {string} The hostname
-   */
-  this.hostname_ = hostname.replace(/\/+$/, '');
-
-};
-
-
-/**
- * @param {string} hostname
- * @param {?Object} credentials
- * @param {?grpc.web.ClientOptions} options
- * @constructor
- * @struct
- * @final
- */
-proto.trading.AuthServicePromiseClient =
-    function(hostname, credentials, options) {
-  if (!options) options = {};
-  options.format = 'text';
-
-  /**
-   * @private @const {!grpc.web.GrpcWebClientBase} The client
-   */
-  this.client_ = new grpc.web.GrpcWebClientBase(options);
-
-  /**
-   * @private @const {string} The hostname
-   */
-  this.hostname_ = hostname.replace(/\/+$/, '');
-
-};
-
-
-/**
- * @const
- * @type {!grpc.web.MethodDescriptor<
- *   !proto.trading.RegisterRequest,
- *   !proto.trading.AuthResponse>}
- */
-const methodDescriptor_AuthService_Register = new grpc.web.MethodDescriptor(
-  '/trading.AuthService/Register',
-  grpc.web.MethodType.UNARY,
-  proto.trading.RegisterRequest,
-  proto.trading.AuthResponse,
-  /**
-   * @param {!proto.trading.RegisterRequest} request
-   * @return {!Uint8Array}
-   */
-  function(request) {
-    return request.serializeBinary();
-  },
-  proto.trading.AuthResponse.deserializeBinary
-);
-
-
-/**
- * @param {!proto.trading.RegisterRequest} request The
- *     request proto
- * @param {?Object<string, string>} metadata User defined
- *     call metadata
- * @param {function(?grpc.web.RpcError, ?proto.trading.AuthResponse)}
- *     callback The callback function(error, response)
- * @return {!grpc.web.ClientReadableStream<!proto.trading.AuthResponse>|undefined}
- *     The XHR Node Readable Stream
- */
-proto.trading.AuthServiceClient.prototype.register =
-    function(request, metadata, callback) {
-  return this.client_.rpcCall(this.hostname_ +
-      '/trading.AuthService/Register',
-      request,
-      metadata || {},
-      methodDescriptor_AuthService_Register,
-      callback);
-};
-
-
-/**
- * @param {!proto.trading.RegisterRequest} request The
- *     request proto
- * @param {?Object<string, string>=} metadata User defined
- *     call metadata
- * @return {!Promise<!proto.trading.AuthResponse>}
- *     Promise that resolves to the response
- */
-proto.trading.AuthServicePromiseClient.prototype.register =
-    function(request, metadata) {
-  return this.client_.unaryCall(this.hostname_ +
-      '/trading.AuthService/Register',
-      request,
-      metadata || {},
-      methodDescriptor_AuthService_Register);
-};
-
-
-/**
- * @const
- * @type {!grpc.web.MethodDescriptor<
- *   !proto.trading.AuthRequest,
- *   !proto.trading.AuthResponse>}
- */
-const methodDescriptor_AuthService_Login = new grpc.web.MethodDescriptor(
-  '/trading.AuthService/Login',
-  grpc.web.MethodType.UNARY,
-  proto.trading.AuthRequest,
-  proto.trading.AuthResponse,
-  /**
-   * @param {!proto.trading.AuthRequest} request
-   * @return {!Uint8Array}
-   */
-  function(request) {
-    return request.serializeBinary();
-  },
-  proto.trading.AuthResponse.deserializeBinary
-);
-
-
-/**
- * @param {!proto.trading.AuthRequest} request The
- *     request proto
- * @param {?Object<string, string>} metadata User defined
- *     call metadata
- * @param {function(?grpc.web.RpcError, ?proto.trading.AuthResponse)}
- *     callback The callback function(error, response)
- * @return {!grpc.web.ClientReadableStream<!proto.trading.AuthResponse>|undefined}
- *     The XHR Node Readable Stream
- */
-proto.trading.AuthServiceClient.prototype.login =
-    function(request, metadata, callback) {
-  return this.client_.rpcCall(this.hostname_ +
-      '/trading.AuthService/Login',
-      request,
-      metadata || {},
-      methodDescriptor_AuthService_Login,
-      callback);
-};
-
-
-/**
- * @param {!proto.trading.AuthRequest} request The
- *     request proto
- * @param {?Object<string, string>=} metadata User defined
- *     call metadata
- * @return {!Promise<!proto.trading.AuthResponse>}
- *     Promise that resolves to the response
- */
-proto.trading.AuthServicePromiseClient.prototype.login =
-    function(request, metadata) {
-  return this.client_.unaryCall(this.hostname_ +
-      '/trading.AuthService/Login',
-      request,
-      metadata || {},
-      methodDescriptor_AuthService_Login);
-};
-
-
-/**
- * @const
- * @type {!grpc.web.MethodDescriptor<
- *   !proto.trading.GetUserRequest,
- *   !proto.trading.UserInfo>}
- */
-const methodDescriptor_AuthService_GetUser = new grpc.web.MethodDescriptor(
-  '/trading.AuthService/GetUser',
-  grpc.web.MethodType.UNARY,
-  proto.trading.GetUserRequest,
-  proto.trading.UserInfo,
-  /**
-   * @param {!proto.trading.GetUserRequest} request
-   * @return {!Uint8Array}
-   */
-  function(request) {
-    return request.serializeBinary();
-  },
-  proto.trading.UserInfo.deserializeBinary
-);
-
-
-/**
- * @param {!proto.trading.GetUserRequest} request The
- *     request proto
- * @param {?Object<string, string>} metadata User defined
- *     call metadata
- * @param {function(?grpc.web.RpcError, ?proto.trading.UserInfo)}
- *     callback The callback function(error, response)
- * @return {!grpc.web.ClientReadableStream<!proto.trading.UserInfo>|undefined}
- *     The XHR Node Readable Stream
- */
-proto.trading.AuthServiceClient.prototype.getUser =
-    function(request, metadata, callback) {
-  return this.client_.rpcCall(this.hostname_ +
-      '/trading.AuthService/GetUser',
-      request,
-      metadata || {},
-      methodDescriptor_AuthService_GetUser,
-      callback);
-};
-
-
-/**
- * @param {!proto.trading.GetUserRequest} request The
- *     request proto
- * @param {?Object<string, string>=} metadata User defined
- *     call metadata
- * @return {!Promise<!proto.trading.UserInfo>}
- *     Promise that resolves to the response
- */
-proto.trading.AuthServicePromiseClient.prototype.getUser =
-    function(request, metadata) {
-  return this.client_.unaryCall(this.hostname_ +
-      '/trading.AuthService/GetUser',
-      request,
-      metadata || {},
-      methodDescriptor_AuthService_GetUser);
-};
-
-
-/**
- * @param {string} hostname
- * @param {?Object} credentials
- * @param {?grpc.web.ClientOptions} options
- * @constructor
- * @struct
- * @final
- */
-proto.trading.BotServiceClient =
-    function(hostname, credentials, options) {
-  if (!options) options = {};
-  options.format = 'text';
-
-  /**
-   * @private @const {!grpc.web.GrpcWebClientBase} The client
-   */
-  this.client_ = new grpc.web.GrpcWebClientBase(options);
-
-  /**
-   * @private @const {string} The hostname
-   */
-  this.hostname_ = hostname.replace(/\/+$/, '');
-
-};
-
-
-/**
- * @param {string} hostname
- * @param {?Object} credentials
- * @param {?grpc.web.ClientOptions} options
- * @constructor
- * @struct
- * @final
- */
-proto.trading.BotServicePromiseClient =
-    function(hostname, credentials, options) {
-  if (!options) options = {};
-  options.format = 'text';
-
-  /**
-   * @private @const {!grpc.web.GrpcWebClientBase} The client
-   */
-  this.client_ = new grpc.web.GrpcWebClientBase(options);
-
-  /**
-   * @private @const {string} The hostname
-   */
-  this.hostname_ = hostname.replace(/\/+$/, '');
-
-};
-
-
-/**
- * @const
- * @type {!grpc.web.MethodDescriptor<
- *   !proto.trading.CreateBotRequest,
- *   !proto.trading.StatusResponse>}
- */
-const methodDescriptor_BotService_CreateBot = new grpc.web.MethodDescriptor(
-  '/trading.BotService/CreateBot',
-  grpc.web.MethodType.UNARY,
-  proto.trading.CreateBotRequest,
-  proto.trading.StatusResponse,
-  /**
-   * @param {!proto.trading.CreateBotRequest} request
-   * @return {!Uint8Array}
-   */
-  function(request) {
-    return request.serializeBinary();
-  },
-  proto.trading.StatusResponse.deserializeBinary
-);
-
-
-/**
- * @param {!proto.trading.CreateBotRequest} request The
- *     request proto
- * @param {?Object<string, string>} metadata User defined
- *     call metadata
- * @param {function(?grpc.web.RpcError, ?proto.trading.StatusResponse)}
- *     callback The callback function(error, response)
- * @return {!grpc.web.ClientReadableStream<!proto.trading.StatusResponse>|undefined}
- *     The XHR Node Readable Stream
- */
-proto.trading.BotServiceClient.prototype.createBot =
-    function(request, metadata, callback) {
-  return this.client_.rpcCall(this.hostname_ +
-      '/trading.BotService/CreateBot',
-      request,
-      metadata || {},
-      methodDescriptor_BotService_CreateBot,
-      callback);
-};
-
-
-/**
- * @param {!proto.trading.CreateBotRequest} request The
- *     request proto
- * @param {?Object<string, string>=} metadata User defined
- *     call metadata
- * @return {!Promise<!proto.trading.StatusResponse>}
- *     Promise that resolves to the response
- */
-proto.trading.BotServicePromiseClient.prototype.createBot =
-    function(request, metadata) {
-  return this.client_.unaryCall(this.hostname_ +
-      '/trading.BotService/CreateBot',
-      request,
-      metadata || {},
-      methodDescriptor_BotService_CreateBot);
-};
-
-
-/**
- * @const
- * @type {!grpc.web.MethodDescriptor<
- *   !proto.trading.BotIdRequest,
- *   !proto.trading.StatusResponse>}
- */
-const methodDescriptor_BotService_DeleteBot = new grpc.web.MethodDescriptor(
-  '/trading.BotService/DeleteBot',
-  grpc.web.MethodType.UNARY,
-  proto.trading.BotIdRequest,
-  proto.trading.StatusResponse,
-  /**
-   * @param {!proto.trading.BotIdRequest} request
-   * @return {!Uint8Array}
-   */
-  function(request) {
-    return request.serializeBinary();
-  },
-  proto.trading.StatusResponse.deserializeBinary
-);
-
-
-/**
- * @param {!proto.trading.BotIdRequest} request The
- *     request proto
- * @param {?Object<string, string>} metadata User defined
- *     call metadata
- * @param {function(?grpc.web.RpcError, ?proto.trading.StatusResponse)}
- *     callback The callback function(error, response)
- * @return {!grpc.web.ClientReadableStream<!proto.trading.StatusResponse>|undefined}
- *     The XHR Node Readable Stream
- */
-proto.trading.BotServiceClient.prototype.deleteBot =
-    function(request, metadata, callback) {
-  return this.client_.rpcCall(this.hostname_ +
-      '/trading.BotService/DeleteBot',
-      request,
-      metadata || {},
-      methodDescriptor_BotService_DeleteBot,
-      callback);
-};
-
-
-/**
- * @param {!proto.trading.BotIdRequest} request The
- *     request proto
- * @param {?Object<string, string>=} metadata User defined
- *     call metadata
- * @return {!Promise<!proto.trading.StatusResponse>}
- *     Promise that resolves to the response
- */
-proto.trading.BotServicePromiseClient.prototype.deleteBot =
-    function(request, metadata) {
-  return this.client_.unaryCall(this.hostname_ +
-      '/trading.BotService/DeleteBot',
-      request,
-      metadata || {},
-      methodDescriptor_BotService_DeleteBot);
 };
 
 
@@ -1378,13 +2319,13 @@ proto.trading.BotServicePromiseClient.prototype.deleteBot =
  * @const
  * @type {!grpc.web.MethodDescriptor<
  *   !proto.trading.Empty,
- *   !proto.trading.BotList>}
+ *   !proto.trading.GetProductsResponse>}
  */
-const methodDescriptor_BotService_ListBots = new grpc.web.MethodDescriptor(
-  '/trading.BotService/ListBots',
+const methodDescriptor_SubscriptionService_GetProducts = new grpc.web.MethodDescriptor(
+  '/trading.SubscriptionService/GetProducts',
   grpc.web.MethodType.UNARY,
   proto.trading.Empty,
-  proto.trading.BotList,
+  proto.trading.GetProductsResponse,
   /**
    * @param {!proto.trading.Empty} request
    * @return {!Uint8Array}
@@ -1392,7 +2333,7 @@ const methodDescriptor_BotService_ListBots = new grpc.web.MethodDescriptor(
   function(request) {
     return request.serializeBinary();
   },
-  proto.trading.BotList.deserializeBinary
+  proto.trading.GetProductsResponse.deserializeBinary
 );
 
 
@@ -1401,18 +2342,18 @@ const methodDescriptor_BotService_ListBots = new grpc.web.MethodDescriptor(
  *     request proto
  * @param {?Object<string, string>} metadata User defined
  *     call metadata
- * @param {function(?grpc.web.RpcError, ?proto.trading.BotList)}
+ * @param {function(?grpc.web.RpcError, ?proto.trading.GetProductsResponse)}
  *     callback The callback function(error, response)
- * @return {!grpc.web.ClientReadableStream<!proto.trading.BotList>|undefined}
+ * @return {!grpc.web.ClientReadableStream<!proto.trading.GetProductsResponse>|undefined}
  *     The XHR Node Readable Stream
  */
-proto.trading.BotServiceClient.prototype.listBots =
+proto.trading.SubscriptionServiceClient.prototype.getProducts =
     function(request, metadata, callback) {
   return this.client_.rpcCall(this.hostname_ +
-      '/trading.BotService/ListBots',
+      '/trading.SubscriptionService/GetProducts',
       request,
       metadata || {},
-      methodDescriptor_BotService_ListBots,
+      methodDescriptor_SubscriptionService_GetProducts,
       callback);
 };
 
@@ -1422,32 +2363,154 @@ proto.trading.BotServiceClient.prototype.listBots =
  *     request proto
  * @param {?Object<string, string>=} metadata User defined
  *     call metadata
- * @return {!Promise<!proto.trading.BotList>}
+ * @return {!Promise<!proto.trading.GetProductsResponse>}
  *     Promise that resolves to the response
  */
-proto.trading.BotServicePromiseClient.prototype.listBots =
+proto.trading.SubscriptionServicePromiseClient.prototype.getProducts =
     function(request, metadata) {
   return this.client_.unaryCall(this.hostname_ +
-      '/trading.BotService/ListBots',
+      '/trading.SubscriptionService/GetProducts',
       request,
       metadata || {},
-      methodDescriptor_BotService_ListBots);
+      methodDescriptor_SubscriptionService_GetProducts);
 };
 
 
 /**
  * @const
  * @type {!grpc.web.MethodDescriptor<
- *   !proto.trading.BotIdRequest,
+ *   !proto.trading.CreateCheckoutSessionRequest,
+ *   !proto.trading.CreateCheckoutSessionResponse>}
+ */
+const methodDescriptor_SubscriptionService_CreateCheckoutSession = new grpc.web.MethodDescriptor(
+  '/trading.SubscriptionService/CreateCheckoutSession',
+  grpc.web.MethodType.UNARY,
+  proto.trading.CreateCheckoutSessionRequest,
+  proto.trading.CreateCheckoutSessionResponse,
+  /**
+   * @param {!proto.trading.CreateCheckoutSessionRequest} request
+   * @return {!Uint8Array}
+   */
+  function(request) {
+    return request.serializeBinary();
+  },
+  proto.trading.CreateCheckoutSessionResponse.deserializeBinary
+);
+
+
+/**
+ * @param {!proto.trading.CreateCheckoutSessionRequest} request The
+ *     request proto
+ * @param {?Object<string, string>} metadata User defined
+ *     call metadata
+ * @param {function(?grpc.web.RpcError, ?proto.trading.CreateCheckoutSessionResponse)}
+ *     callback The callback function(error, response)
+ * @return {!grpc.web.ClientReadableStream<!proto.trading.CreateCheckoutSessionResponse>|undefined}
+ *     The XHR Node Readable Stream
+ */
+proto.trading.SubscriptionServiceClient.prototype.createCheckoutSession =
+    function(request, metadata, callback) {
+  return this.client_.rpcCall(this.hostname_ +
+      '/trading.SubscriptionService/CreateCheckoutSession',
+      request,
+      metadata || {},
+      methodDescriptor_SubscriptionService_CreateCheckoutSession,
+      callback);
+};
+
+
+/**
+ * @param {!proto.trading.CreateCheckoutSessionRequest} request The
+ *     request proto
+ * @param {?Object<string, string>=} metadata User defined
+ *     call metadata
+ * @return {!Promise<!proto.trading.CreateCheckoutSessionResponse>}
+ *     Promise that resolves to the response
+ */
+proto.trading.SubscriptionServicePromiseClient.prototype.createCheckoutSession =
+    function(request, metadata) {
+  return this.client_.unaryCall(this.hostname_ +
+      '/trading.SubscriptionService/CreateCheckoutSession',
+      request,
+      metadata || {},
+      methodDescriptor_SubscriptionService_CreateCheckoutSession);
+};
+
+
+/**
+ * @const
+ * @type {!grpc.web.MethodDescriptor<
+ *   !proto.trading.Empty,
+ *   !proto.trading.Subscription>}
+ */
+const methodDescriptor_SubscriptionService_GetUserSubscription = new grpc.web.MethodDescriptor(
+  '/trading.SubscriptionService/GetUserSubscription',
+  grpc.web.MethodType.UNARY,
+  proto.trading.Empty,
+  proto.trading.Subscription,
+  /**
+   * @param {!proto.trading.Empty} request
+   * @return {!Uint8Array}
+   */
+  function(request) {
+    return request.serializeBinary();
+  },
+  proto.trading.Subscription.deserializeBinary
+);
+
+
+/**
+ * @param {!proto.trading.Empty} request The
+ *     request proto
+ * @param {?Object<string, string>} metadata User defined
+ *     call metadata
+ * @param {function(?grpc.web.RpcError, ?proto.trading.Subscription)}
+ *     callback The callback function(error, response)
+ * @return {!grpc.web.ClientReadableStream<!proto.trading.Subscription>|undefined}
+ *     The XHR Node Readable Stream
+ */
+proto.trading.SubscriptionServiceClient.prototype.getUserSubscription =
+    function(request, metadata, callback) {
+  return this.client_.rpcCall(this.hostname_ +
+      '/trading.SubscriptionService/GetUserSubscription',
+      request,
+      metadata || {},
+      methodDescriptor_SubscriptionService_GetUserSubscription,
+      callback);
+};
+
+
+/**
+ * @param {!proto.trading.Empty} request The
+ *     request proto
+ * @param {?Object<string, string>=} metadata User defined
+ *     call metadata
+ * @return {!Promise<!proto.trading.Subscription>}
+ *     Promise that resolves to the response
+ */
+proto.trading.SubscriptionServicePromiseClient.prototype.getUserSubscription =
+    function(request, metadata) {
+  return this.client_.unaryCall(this.hostname_ +
+      '/trading.SubscriptionService/GetUserSubscription',
+      request,
+      metadata || {},
+      methodDescriptor_SubscriptionService_GetUserSubscription);
+};
+
+
+/**
+ * @const
+ * @type {!grpc.web.MethodDescriptor<
+ *   !proto.trading.Empty,
  *   !proto.trading.StatusResponse>}
  */
-const methodDescriptor_BotService_StartBot = new grpc.web.MethodDescriptor(
-  '/trading.BotService/StartBot',
+const methodDescriptor_SubscriptionService_CancelUserSubscription = new grpc.web.MethodDescriptor(
+  '/trading.SubscriptionService/CancelUserSubscription',
   grpc.web.MethodType.UNARY,
-  proto.trading.BotIdRequest,
+  proto.trading.Empty,
   proto.trading.StatusResponse,
   /**
-   * @param {!proto.trading.BotIdRequest} request
+   * @param {!proto.trading.Empty} request
    * @return {!Uint8Array}
    */
   function(request) {
@@ -1458,7 +2521,7 @@ const methodDescriptor_BotService_StartBot = new grpc.web.MethodDescriptor(
 
 
 /**
- * @param {!proto.trading.BotIdRequest} request The
+ * @param {!proto.trading.Empty} request The
  *     request proto
  * @param {?Object<string, string>} metadata User defined
  *     call metadata
@@ -1467,154 +2530,32 @@ const methodDescriptor_BotService_StartBot = new grpc.web.MethodDescriptor(
  * @return {!grpc.web.ClientReadableStream<!proto.trading.StatusResponse>|undefined}
  *     The XHR Node Readable Stream
  */
-proto.trading.BotServiceClient.prototype.startBot =
+proto.trading.SubscriptionServiceClient.prototype.cancelUserSubscription =
     function(request, metadata, callback) {
   return this.client_.rpcCall(this.hostname_ +
-      '/trading.BotService/StartBot',
+      '/trading.SubscriptionService/CancelUserSubscription',
       request,
       metadata || {},
-      methodDescriptor_BotService_StartBot,
+      methodDescriptor_SubscriptionService_CancelUserSubscription,
       callback);
 };
 
 
 /**
- * @param {!proto.trading.BotIdRequest} request The
+ * @param {!proto.trading.Empty} request The
  *     request proto
  * @param {?Object<string, string>=} metadata User defined
  *     call metadata
  * @return {!Promise<!proto.trading.StatusResponse>}
  *     Promise that resolves to the response
  */
-proto.trading.BotServicePromiseClient.prototype.startBot =
+proto.trading.SubscriptionServicePromiseClient.prototype.cancelUserSubscription =
     function(request, metadata) {
   return this.client_.unaryCall(this.hostname_ +
-      '/trading.BotService/StartBot',
+      '/trading.SubscriptionService/CancelUserSubscription',
       request,
       metadata || {},
-      methodDescriptor_BotService_StartBot);
-};
-
-
-/**
- * @const
- * @type {!grpc.web.MethodDescriptor<
- *   !proto.trading.BotIdRequest,
- *   !proto.trading.StatusResponse>}
- */
-const methodDescriptor_BotService_StopBot = new grpc.web.MethodDescriptor(
-  '/trading.BotService/StopBot',
-  grpc.web.MethodType.UNARY,
-  proto.trading.BotIdRequest,
-  proto.trading.StatusResponse,
-  /**
-   * @param {!proto.trading.BotIdRequest} request
-   * @return {!Uint8Array}
-   */
-  function(request) {
-    return request.serializeBinary();
-  },
-  proto.trading.StatusResponse.deserializeBinary
-);
-
-
-/**
- * @param {!proto.trading.BotIdRequest} request The
- *     request proto
- * @param {?Object<string, string>} metadata User defined
- *     call metadata
- * @param {function(?grpc.web.RpcError, ?proto.trading.StatusResponse)}
- *     callback The callback function(error, response)
- * @return {!grpc.web.ClientReadableStream<!proto.trading.StatusResponse>|undefined}
- *     The XHR Node Readable Stream
- */
-proto.trading.BotServiceClient.prototype.stopBot =
-    function(request, metadata, callback) {
-  return this.client_.rpcCall(this.hostname_ +
-      '/trading.BotService/StopBot',
-      request,
-      metadata || {},
-      methodDescriptor_BotService_StopBot,
-      callback);
-};
-
-
-/**
- * @param {!proto.trading.BotIdRequest} request The
- *     request proto
- * @param {?Object<string, string>=} metadata User defined
- *     call metadata
- * @return {!Promise<!proto.trading.StatusResponse>}
- *     Promise that resolves to the response
- */
-proto.trading.BotServicePromiseClient.prototype.stopBot =
-    function(request, metadata) {
-  return this.client_.unaryCall(this.hostname_ +
-      '/trading.BotService/StopBot',
-      request,
-      metadata || {},
-      methodDescriptor_BotService_StopBot);
-};
-
-
-/**
- * @const
- * @type {!grpc.web.MethodDescriptor<
- *   !proto.trading.BotIdRequest,
- *   !proto.trading.BotConfig>}
- */
-const methodDescriptor_BotService_GetBotStatus = new grpc.web.MethodDescriptor(
-  '/trading.BotService/GetBotStatus',
-  grpc.web.MethodType.UNARY,
-  proto.trading.BotIdRequest,
-  proto.trading.BotConfig,
-  /**
-   * @param {!proto.trading.BotIdRequest} request
-   * @return {!Uint8Array}
-   */
-  function(request) {
-    return request.serializeBinary();
-  },
-  proto.trading.BotConfig.deserializeBinary
-);
-
-
-/**
- * @param {!proto.trading.BotIdRequest} request The
- *     request proto
- * @param {?Object<string, string>} metadata User defined
- *     call metadata
- * @param {function(?grpc.web.RpcError, ?proto.trading.BotConfig)}
- *     callback The callback function(error, response)
- * @return {!grpc.web.ClientReadableStream<!proto.trading.BotConfig>|undefined}
- *     The XHR Node Readable Stream
- */
-proto.trading.BotServiceClient.prototype.getBotStatus =
-    function(request, metadata, callback) {
-  return this.client_.rpcCall(this.hostname_ +
-      '/trading.BotService/GetBotStatus',
-      request,
-      metadata || {},
-      methodDescriptor_BotService_GetBotStatus,
-      callback);
-};
-
-
-/**
- * @param {!proto.trading.BotIdRequest} request The
- *     request proto
- * @param {?Object<string, string>=} metadata User defined
- *     call metadata
- * @return {!Promise<!proto.trading.BotConfig>}
- *     Promise that resolves to the response
- */
-proto.trading.BotServicePromiseClient.prototype.getBotStatus =
-    function(request, metadata) {
-  return this.client_.unaryCall(this.hostname_ +
-      '/trading.BotService/GetBotStatus',
-      request,
-      metadata || {},
-      methodDescriptor_BotService_GetBotStatus);
+      methodDescriptor_SubscriptionService_CancelUserSubscription);
 };
 
 
