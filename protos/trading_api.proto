@@ -4,58 +4,29 @@ package aetherion;
 
 import "google/protobuf/timestamp.proto";
 
-option go_package = "package/gen";
+option go_package = "github.com/rwh9609-bit/aetherion-trading-service/gen";
 
 // =================================================================
 // COMMON & UTILITY MESSAGES
 // =================================================================
 
-// High-precision financial values (avoids float rounding issues)
+// ADDED: A dedicated message for handling decimal values to avoid floating-point
+// inaccuracies with financial data. This is a critical best practice.
+// Represents a decimal value as (units + nanos / 1,000,000,000).
 message DecimalValue {
-    int64 units = 1;   // Whole part
-    sfixed32 nanos = 2; // Fractional part, -999,999,999 .. +999,999,999
+    int64 units = 1; // The whole part of the decimal value.
+    sfixed32 nanos = 2; // The fractional part, from -999,999,999 to +999,999,999.
 }
 
-// Generic operation response
+// Generic response for operations like create, delete, start, stop.
 message StatusResponse {
     bool success = 1;
     string message = 2;
-    string id = 3; // e.g., bot_id, order_id
+    string id = 3; // optional identifier (e.g., bot_id, order_id)
 }
 
+// Empty request placeholder
 message Empty {}
-
-message Pagination {
-    int32 limit = 1;
-    int32 offset = 2;
-}
-
-// =================================================================
-// ENUMS
-// =================================================================
-
-enum OrderSide {
-    ORDER_SIDE_UNSPECIFIED = 0;
-    BUY = 1;
-    SELL = 2;
-}
-
-enum OrderType {
-    ORDER_TYPE_UNSPECIFIED = 0;
-    MARKET = 1;
-    LIMIT = 2;
-    STOP = 3;
-}
-
-enum OrderStatus {
-    ORDER_STATUS_UNSPECIFIED = 0;
-    NEW = 1;
-    SUBMITTED = 2;
-    PARTIALLY_FILLED = 3;
-    FILLED = 4;
-    CANCELED = 5;
-    REJECTED = 6;
-}
 
 // =================================================================
 // AUTH & USER SERVICE
@@ -65,7 +36,6 @@ service AuthService {
     rpc Register(RegisterRequest) returns (AuthResponse) {}
     rpc Login(AuthRequest) returns (AuthResponse) {}
     rpc GetUser(GetUserRequest) returns (UserInfo) {}
-    rpc RefreshToken(RefreshTokenRequest) returns (AuthResponse) {}
 }
 
 message RegisterRequest {
@@ -79,28 +49,24 @@ message AuthRequest {
     string password = 2;
 }
 
-message RefreshTokenRequest {
-    string refresh_token = 1;
-}
-
 message AuthResponse {
     bool success = 1;
     string message = 2;
     string token = 3;
-    string refresh_token = 4;
-    google.protobuf.Timestamp expires_at = 5;
+    google.protobuf.Timestamp expires_at = 4; // CHANGED: Use Timestamp for clarity.
 }
 
 message GetUserRequest {
-  string user_id = 1;
+  string user_id = 1; // CHANGED: Query by UUID is more robust.
 }
 
 message UserInfo {
   string id = 1;
   string username = 2;
   string email = 3;
-  google.protobuf.Timestamp created_at = 4;
+  google.protobuf.Timestamp created_at = 4; // CHANGED: Use Timestamp.
 }
+
 
 // =================================================================
 // BOT MANAGEMENT SERVICE
@@ -108,40 +74,39 @@ message UserInfo {
 
 service BotService {
   rpc CreateBot(CreateBotRequest) returns (StatusResponse) {}
-  rpc GetBot(BotIdRequest) returns (Bot) {}
+  rpc GetBot(BotIdRequest) returns (Bot) {} // CHANGED: Renamed from GetBotStatus
   rpc ListBots(ListBotsRequest) returns (BotList) {}
-  rpc UpdateBot(UpdateBotRequest) returns (Bot) {}
+  rpc UpdateBot(UpdateBotRequest) returns (Bot) {} // ADDED: For changing bot params
   rpc DeleteBot(BotIdRequest) returns (StatusResponse) {}
   rpc StartBot(BotIdRequest) returns (StatusResponse) {}
   rpc StopBot(BotIdRequest) returns (StatusResponse) {}
-  rpc StreamBotStatus(BotIdRequest) returns (stream Bot) {} // realtime updates
 }
 
+// CHANGED: Renamed to "Bot" and fields updated to match the database schema precisely.
 message Bot {
     string id = 1;
     string user_id = 2;
     string name = 3;
-    string description = 4;
+    string description = 4; // ADDED
     repeated string symbols = 5;
-    string strategy_name = 6;
-    map<string, string> strategy_parameters = 7; // safer than JSON string
-    DecimalValue initial_account_value = 8;
-    DecimalValue current_account_value = 9;
+    string strategy_name = 6; // CHANGED: from "strategy"
+    string strategy_parameters = 7; // CHANGED: from map to JSON string for flexibility
+    DecimalValue initial_account_value = 8; // ADDED & CHANGED to DecimalValue
+    DecimalValue current_account_value = 9; // ADDED & CHANGED to DecimalValue
     bool is_active = 10;
-    bool is_live = 11;
+    bool is_live = 11; // ADDED
     google.protobuf.Timestamp created_at = 12;
     google.protobuf.Timestamp updated_at = 13;
 }
 
 message CreateBotRequest {
-    string user_id = 1;
-    string name = 2;
-    string description = 3;
-    repeated string symbols = 4;
-    string strategy_name = 5;
-    map<string, string> strategy_parameters = 6;
-    DecimalValue initial_account_value = 7;
-    bool is_live = 8;
+    string name = 1; // ADDED
+    string description = 2; // ADDED
+    repeated string symbols = 3;
+    string strategy_name = 4;
+    string strategy_parameters = 5; // JSON string
+    DecimalValue initial_account_value = 6;
+    bool is_live = 7;
 }
 
 message UpdateBotRequest {
@@ -156,7 +121,7 @@ message BotIdRequest {
 }
 
 message ListBotsRequest {
-    string user_id = 1;
+    string user_id = 1; // List bots for a specific user.
 }
 
 message BotList {
@@ -164,37 +129,46 @@ message BotList {
 }
 
 // =================================================================
-// ORDER & TRADE SERVICE
+// ORDER & TRADE SERVICE (REPLACES TradingService)
 // =================================================================
 
+// CHANGED: This service now correctly models the order lifecycle.
 service OrderService {
+    // Create a new order (intent to trade)
     rpc CreateOrder(CreateOrderRequest) returns (Order) {}
+
+    // Cancel a pending or partially filled order
     rpc CancelOrder(CancelOrderRequest) returns (Order) {}
+
+    // Get the status and details of a specific order
     rpc GetOrder(GetOrderRequest) returns (Order) {}
+
+    // Get trade history for a bot
     rpc GetTradeHistory(TradeHistoryRequest) returns (TradeHistoryResponse) {}
 }
 
+// ADDED: A comprehensive Order message that mirrors the database.
 message Order {
     string id = 1;
     string bot_id = 2;
     string symbol = 3;
-    OrderSide side = 4;
-    OrderType type = 5;
-    OrderStatus status = 6;
+    string side = 4; // "BUY" or "SELL"
+    string type = 5; // "MARKET", "LIMIT", "STOP"
+    string status = 6; // "NEW", "SUBMITTED", "PARTIALLY_FILLED", "FILLED", "CANCELED", "REJECTED"
     DecimalValue quantity_requested = 7;
     DecimalValue quantity_filled = 8;
     optional DecimalValue limit_price = 9;
     optional DecimalValue stop_price = 10;
     google.protobuf.Timestamp created_at = 11;
     google.protobuf.Timestamp updated_at = 12;
-    repeated Trade trades = 13;
+    repeated Trade trades = 13; // ADDED: Trades that have filled this order
 }
 
 message CreateOrderRequest {
     string bot_id = 1;
     string symbol = 2;
-    OrderSide side = 3;
-    OrderType type = 4;
+    string side = 3;
+    string type = 4;
     DecimalValue quantity = 5;
     optional DecimalValue limit_price = 6;
     optional DecimalValue stop_price = 7;
@@ -202,22 +176,23 @@ message CreateOrderRequest {
 
 message CancelOrderRequest {
     string order_id = 1;
-    string bot_id = 2;
+    string bot_id = 2; // For authorization
 }
 
 message GetOrderRequest {
     string order_id = 1;
 }
 
+// CHANGED: Trade now belongs to an Order.
 message Trade {
     string id = 1;
-    string order_id = 2;
+    string order_id = 2; // ADDED
     string bot_id = 3;
     string symbol = 4;
-    OrderSide side = 5;
+    string side = 5;
     DecimalValue quantity = 6;
     DecimalValue price = 7;
-    optional DecimalValue commission = 8;
+    optional DecimalValue commission = 8; // ADDED
     google.protobuf.Timestamp executed_at = 9;
     optional DecimalValue pnl_realized = 10;
 }
@@ -226,21 +201,22 @@ message TradeHistoryRequest {
     string bot_id = 1;
     optional google.protobuf.Timestamp start_time = 2;
     optional google.protobuf.Timestamp end_time = 3;
-    Pagination pagination = 4;
 }
 
 message TradeHistoryResponse {
     repeated Trade trades = 1;
-    int32 total_count = 2;
 }
 
 // =================================================================
 // PORTFOLIO & PERFORMANCE SERVICE
 // =================================================================
 
+// ADDED: A new service to handle portfolio and performance data.
 service PortfolioService {
+    // Gets the current portfolio status for a bot
     rpc GetPortfolio(PortfolioRequest) returns (PortfolioResponse) {}
-    rpc StreamPortfolio(PortfolioRequest) returns (stream PortfolioResponse) {}
+
+    // Gets historical performance snapshots for charting
     rpc GetPerformanceHistory(PerformanceHistoryRequest) returns (PerformanceHistoryResponse) {}
 }
 
@@ -248,23 +224,24 @@ message PortfolioRequest {
     string bot_id = 1;
 }
 
+// ADDED: A detailed position, replacing the simple map.
 message PortfolioPosition {
     string symbol = 1;
     DecimalValue quantity = 2;
     DecimalValue average_price = 3;
     DecimalValue market_value = 4;
     DecimalValue unrealized_pnl = 5;
-    DecimalValue exposure_pct = 6;
 }
 
 message PortfolioResponse {
     string bot_id = 1;
     repeated PortfolioPosition positions = 2;
-    DecimalValue total_portfolio_value = 3;
+    DecimalValue total_portfolio_value = 3; // Equity value
     DecimalValue cash_balance = 4;
     google.protobuf.Timestamp updated_at = 5;
 }
 
+// ADDED: Messages for the new performance snapshot feature.
 message PerformanceHistoryRequest {
     string bot_id = 1;
     google.protobuf.Timestamp start_time = 2;
@@ -280,28 +257,4 @@ message BotPerformanceSnapshot {
 
 message PerformanceHistoryResponse {
     repeated BotPerformanceSnapshot snapshots = 1;
-}
-
-// =================================================================
-// RISK SERVICE
-// =================================================================
-
-service RiskService {
-    rpc CalculateVaR(VaRRequest) returns (VaRResponse) {}
-}
-
-message VaRRequest {
-    PortfolioResponse current_portfolio = 1;
-    string risk_model = 2; // e.g. "historical", "monte_carlo"
-    double confidence_level = 3; // e.g. 0.95
-    double horizon_days = 4;
-}
-
-message VaRResponse {
-    DecimalValue value_at_risk = 1;
-    repeated string asset_names = 2;
-    repeated double correlation_matrix = 3;
-    repeated double volatility_per_asset = 4;
-    string simulation_mode = 5;
-    google.protobuf.Timestamp last_update = 6;
 }
