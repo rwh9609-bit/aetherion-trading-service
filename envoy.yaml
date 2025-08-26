@@ -139,7 +139,7 @@ static_resources:
                         append_action: OVERWRITE_IF_EXISTS_OR_ADD
                       - header: { key: Referrer-Policy, value: "strict-origin-when-cross-origin" }
                         append_action: OVERWRITE_IF_EXISTS_OR_ADD
-                      - header: { key: Content-Security-Policy, value: "default-src 'self'; connect-src 'self' https://api.aetherion.cloud http://localhost:8080; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; frame-ancestors 'none';" }
+                      - header: { key: Content-Security-Policy, value: "default-src 'self'; connect-src 'self' https://api.aetherion.cloud http://localhost:8080; script-src 'self' https://js.stripe.com; style-src 'self' 'unsafe-inline'; img-src 'self' data:; frame-ancestors 'none';" }
                         append_action: OVERWRITE_IF_EXISTS_OR_ADD
                     routes:
                       - match: { prefix: "/trading.TradingService/" }
