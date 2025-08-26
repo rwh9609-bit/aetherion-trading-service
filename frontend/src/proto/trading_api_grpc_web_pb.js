@@ -1504,6 +1504,67 @@ proto.trading.BotServicePromiseClient.prototype.streamBotStatus =
 
 
 /**
+ * @const
+ * @type {!grpc.web.MethodDescriptor<
+ *   !proto.trading.UpdateBotStateRequest,
+ *   !proto.trading.StatusResponse>}
+ */
+const methodDescriptor_BotService_UpdateBotState = new grpc.web.MethodDescriptor(
+  '/trading.BotService/UpdateBotState',
+  grpc.web.MethodType.UNARY,
+  proto.trading.UpdateBotStateRequest,
+  proto.trading.StatusResponse,
+  /**
+   * @param {!proto.trading.UpdateBotStateRequest} request
+   * @return {!Uint8Array}
+   */
+  function(request) {
+    return request.serializeBinary();
+  },
+  proto.trading.StatusResponse.deserializeBinary
+);
+
+
+/**
+ * @param {!proto.trading.UpdateBotStateRequest} request The
+ *     request proto
+ * @param {?Object<string, string>} metadata User defined
+ *     call metadata
+ * @param {function(?grpc.web.RpcError, ?proto.trading.StatusResponse)}
+ *     callback The callback function(error, response)
+ * @return {!grpc.web.ClientReadableStream<!proto.trading.StatusResponse>|undefined}
+ *     The XHR Node Readable Stream
+ */
+proto.trading.BotServiceClient.prototype.updateBotState =
+    function(request, metadata, callback) {
+  return this.client_.rpcCall(this.hostname_ +
+      '/trading.BotService/UpdateBotState',
+      request,
+      metadata || {},
+      methodDescriptor_BotService_UpdateBotState,
+      callback);
+};
+
+
+/**
+ * @param {!proto.trading.UpdateBotStateRequest} request The
+ *     request proto
+ * @param {?Object<string, string>=} metadata User defined
+ *     call metadata
+ * @return {!Promise<!proto.trading.StatusResponse>}
+ *     Promise that resolves to the response
+ */
+proto.trading.BotServicePromiseClient.prototype.updateBotState =
+    function(request, metadata) {
+  return this.client_.unaryCall(this.hostname_ +
+      '/trading.BotService/UpdateBotState',
+      request,
+      metadata || {},
+      methodDescriptor_BotService_UpdateBotState);
+};
+
+
+/**
  * @param {string} hostname
  * @param {?Object} credentials
  * @param {?grpc.web.ClientOptions} options

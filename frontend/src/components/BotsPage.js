@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Container, Box, Typography, Card, CardContent, Button, Stack, Dialog, DialogTitle, DialogContent, DialogActions, Chip, CircularProgress, Alert } from '@mui/material';
 import { listBots, startBot, stopBot, getBotStatus, deleteBot } from '../services/grpcClient'; // <-- import deleteBot
-
+import BotView from './BotView';
 const statusColor = (active) => active ? 'success.main' : 'text.secondary';
 
 const BotsPage = ({ onNavigate, onSelectBot, selectedBot }) => {
@@ -29,7 +29,14 @@ const BotsPage = ({ onNavigate, onSelectBot, selectedBot }) => {
 
   const handleStart = async (id) => { setActionBusy(id); try { await startBot(id); await refresh(); } finally { setActionBusy(null); } };
   const handleStop = async (id) => { setActionBusy(id); try { await stopBot(id); await refresh(); } finally { setActionBusy(null); } };
-  const handleView = async (bot) => { try { const status = await getBotStatus(bot.botId); setViewBot(status); } catch { setViewBot(bot); } };
+  const handleView = async (bot) => {
+  try {
+    const status = await getBotStatus(bot.botId);
+    setViewBot({ ...bot, ...status }); // Merge bot info with live status
+  } catch {
+    setViewBot(bot);
+  }
+};
   const handleDelete = async (id) => {
     if (!window.confirm('Delete this bot?')) return;
     setActionBusy(id);
@@ -109,25 +116,19 @@ const BotsPage = ({ onNavigate, onSelectBot, selectedBot }) => {
           </CardContent>
         </Card>
       )}
-      <Dialog open={!!viewBot} onClose={()=>setViewBot(null)} maxWidth="sm" fullWidth>
-        <DialogTitle>Bot Details</DialogTitle>
-        <DialogContent dividers>
-          {viewBot && (
-            <Box sx={{ display:'flex', flexDirection:'column', gap:1 }}>
-              <Typography variant="body2"><strong>ID:</strong> {viewBot.botId}</Typography>
-              <Typography variant="body2"><strong>Name:</strong> {viewBot.name}</Typography>
-              <Typography variant="body2"><strong>Symbol:</strong> {viewBot.symbol}</Typography>
-              <Typography variant="body2"><strong>Strategy:</strong> {viewBot.strategy}</Typography>
-              <Typography variant="body2"><strong>Status:</strong> <Chip size="small" color={viewBot.isActive? 'success':'default'} label={viewBot.isActive? 'running':'stopped'} /></Typography>
-              <Typography variant="subtitle2" sx={{ mt:1 }}>Parameters</Typography>
-              <Box component="pre" sx={{ p:1, bgcolor:'rgba(255,255,255,0.05)', borderRadius:1, fontSize:12, maxHeight:180, overflow:'auto' }}>{JSON.stringify(viewBot.parameters || {}, null, 2)}</Box>
-            </Box>
-          )}
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={()=>setViewBot(null)}>Close</Button>
-        </DialogActions>
-      </Dialog>
+      
+<Dialog open={!!viewBot} onClose={()=>setViewBot(null)} maxWidth="sm" fullWidth>
+  <DialogTitle>Bot Details</DialogTitle>
+  <DialogContent dividers>
+    {viewBot && (
+      <BotView bot={viewBot} />
+    )}
+  </DialogContent>
+  <DialogActions>
+    <Button onClick={()=>setViewBot(null)}>Close</Button>
+  </DialogActions>
+</Dialog>
+
     </Container>
   );
 };

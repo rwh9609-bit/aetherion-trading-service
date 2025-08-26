@@ -51,7 +51,7 @@ const handleSubmit = async () => {
     console.log('[DevelopBotPage] createBot response:', resp);
     if (resp.success) {
       setAlert({ type:'success', msg: `Bot created (id=${resp.id})` });
-      setTimeout(()=> onNavigate && onNavigate('bots'), 900);
+      setTimeout(()=> onNavigate && onNavigate('bots_free'), 900); // <-- change 'bots' to 'bots_free'
     } else {
       setAlert({ type:'error', msg: resp.message || 'Failed to create bot' });
     }

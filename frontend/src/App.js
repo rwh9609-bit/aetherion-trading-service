@@ -4,6 +4,7 @@ import TradingDashboard from './components/TradingDashboard';
 
 import TradingOperations from './components/TradingOperations';
 import BotsFreePage from './components/BotsFreePage';
+import BotsPage from './components/BotsPage';
 import DevelopBotPage from './components/DevelopBotPage';
 import AboutPage from './components/AboutPage'; 
 import ContactPage from './components/ContactPage';
@@ -214,7 +215,10 @@ function App() {
           )}
           {user && view === 'bots_free' && (
             <div style={{ padding: '24px' }}>
-              <BotsFreePage user={user} onNavigate={setView} onSelectBot={handleSelectBot} selectedBot={selectedBot} />
+              {user.role === 'superuser'
+                ? <BotsPage onNavigate={setView} onSelectBot={handleSelectBot} selectedBot={selectedBot} />
+                : <BotsFreePage user={user} onNavigate={setView} onSelectBot={handleSelectBot} selectedBot={selectedBot} />
+              }
             </div>
           )}
           

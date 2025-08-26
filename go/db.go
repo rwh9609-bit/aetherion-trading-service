@@ -186,8 +186,12 @@ func (s *DBService) ListOrders(ctx context.Context, botID string, limit, offset 
 
 func (s *DBService) CreateBot(ctx context.Context, bot *pb.Bot) (string, error) {
 	var id string
-	query := `INSERT INTO bots (id, user_id, name, symbol, strategy, parameters, is_active, account_value) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id`
-	err := s.pool.QueryRow(ctx, query, bot.BotId, bot.UserId, bot.Name, bot.Symbol, bot.Strategy, bot.Parameters, bot.IsActive, bot.AccountValue).Scan(&id)
+	// Always marshal bot.State to JSON, even if empty
+	stateJSON, _ := json.Marshal(bot.State)
+	parametersJSON, _ := json.Marshal(bot.Parameters)
+	query := `INSERT INTO bots (id, user_id, name, symbol, strategy, parameters, is_active, account_value, state)
+              VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING id`
+	err := s.pool.QueryRow(ctx, query, bot.BotId, bot.UserId, bot.Name, bot.Symbol, bot.Strategy, parametersJSON, bot.IsActive, bot.AccountValue, stateJSON).Scan(&id)
 	if err != nil {
 		log.Error().Err(err).Msg("Failed to create bot")
 		return "", fmt.Errorf("failed to create bot: %w", err)
@@ -208,7 +212,7 @@ func (s *DBService) DeleteBot(ctx context.Context, botID string) error {
 }
 func (s *DBService) GetBotsByUserID(ctx context.Context, userID string) ([]*pb.Bot, error) {
 	var bots []*pb.Bot
-	query := `SELECT id, user_id, name, symbol, strategy, parameters, is_active, account_value FROM bots WHERE user_id = $1`
+	query := `SELECT id, user_id, name, symbol, strategy, parameters, is_active, account_value, state FROM bots WHERE user_id = $1`
 	rows, err := s.pool.Query(ctx, query, userID)
 	if err != nil {
 		log.Error().Err(err).Str("user_id", userID).Msg("Failed to get bots by user ID")
@@ -219,11 +223,11 @@ func (s *DBService) GetBotsByUserID(ctx context.Context, userID string) ([]*pb.B
 	for rows.Next() {
 		var (
 			id, userID, name, symbol, strategy string
-			parametersStr                      string
+			parametersStr, stateStr            string
 			isActive                           bool
 			accountValue                       float64
 		)
-		err := rows.Scan(&id, &userID, &name, &symbol, &strategy, &parametersStr, &isActive, &accountValue)
+		err := rows.Scan(&id, &userID, &name, &symbol, &strategy, &parametersStr, &isActive, &accountValue, &stateStr)
 		if err != nil {
 			log.Error().Err(err).Msg("Failed to scan bot row")
 			return nil, fmt.Errorf("failed to scan bot row: %w", err)
@@ -233,19 +237,44 @@ func (s *DBService) GetBotsByUserID(ctx context.Context, userID string) ([]*pb.B
 			log.Error().Err(err).Msg("Failed to unmarshal bot parameters")
 			parameters = map[string]interface{}{}
 		}
+		var state map[string]interface{}
+		if err := json.Unmarshal([]byte(stateStr), &state); err != nil {
+			log.Error().Err(err).Msg("Failed to unmarshal bot state")
+			state = map[string]interface{}{}
+		}
 		bot := &pb.Bot{
 			BotId:        id,
 			UserId:       userID,
 			Name:         name,
-			Symbol:       symbol, // Assuming symbol is a string
+			Symbol:       symbol,
 			Strategy:     strategy,
 			Parameters:   convertMapInterfaceToString(parameters),
 			IsActive:     isActive,
 			AccountValue: accountValue,
+			State:        convertMapInterfaceToString(state), // <-- Add this line
 		}
 		bots = append(bots, bot)
 	}
 	return bots, nil
+}
+
+func (s *DBService) SaveBotState(ctx context.Context, botID string, state map[string]interface{}) error {
+	stateJSON, _ := json.Marshal(state)
+	query := `UPDATE bots SET state = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2`
+	_, err := s.pool.Exec(ctx, query, stateJSON, botID)
+	return err
+}
+
+func (s *DBService) LoadBotState(ctx context.Context, botID string) (map[string]interface{}, error) {
+	var stateJSON string
+	query := `SELECT state FROM bots WHERE id = $1`
+	err := s.pool.QueryRow(ctx, query, botID).Scan(&stateJSON)
+	if err != nil {
+		return nil, err
+	}
+	var state map[string]interface{}
+	json.Unmarshal([]byte(stateJSON), &state)
+	return state, nil
 }
 
 // -----------------------

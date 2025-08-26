@@ -61,6 +61,7 @@ CREATE TABLE IF NOT EXISTS bots (
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     account_value NUMERIC(20, 8) DEFAULT 1000003
 );
+ALTER TABLE bots ADD COLUMN IF NOT EXISTS state JSONB; -- Store the current state of the bot
 
 CREATE TABLE IF NOT EXISTS portfolios (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),

@@ -63,46 +63,9 @@ func newBotRegistry() *botRegistry {
 	r.loadFromFile()
 	return r
 }
-
-func (r *botRegistry) loadFromPg(ctx context.Context) {
-	rows, err := r.pg.Query(ctx, `SELECT id, user_id, name, symbol, strategy, parameters, is_active, extract(epoch from created_at)::bigint FROM bots`)
-	if err != nil {
-		log.Printf("bot load pg err: %v", err)
-		return
-	}
-	log.Printf("bot load pg ok")
-	defer rows.Close()
-	for rows.Next() {
-		var id, userID, name, symbol, strategy string
-		var paramsBytes []byte
-		var active bool
-		var created int64
-		if err := rows.Scan(&id, &userID, &name, &symbol, &strategy, &paramsBytes, &active, &created); err != nil {
-			log.Printf("bot load pg scan err: %v", err)
-			continue
-		}
-		m := map[string]string{}
-		_ = json.Unmarshal(paramsBytes, &m)
-		// Need to get real UserId for this.
-		// This is what actually sets bot's account value. Initially it seems to be docker compose.
-		r.bots[id] = &pb.Bot{BotId: id, Name: name, Symbol: symbol, Strategy: strategy, Parameters: m, IsActive: active, UserId: userID, CreatedAtUnixMs: created, AccountValue: 1000007}
-	}
-}
-
-func (r *botRegistry) loadFromFile() {
-	b, err := os.ReadFile(r.path)
-	if err != nil {
-		return
-	}
-	var arr []*pb.Bot
-	if err := json.Unmarshal(b, &arr); err != nil {
-		log.Printf("bot registry load error: %v", err)
-		return
-	}
-	r.mu.Lock()
-	defer r.mu.Unlock()
-	for _, bot := range arr {
-		r.bots[bot.BotId] = bot
+func ensureBotState(b *pb.Bot) {
+	if b.State == nil {
+		b.State = make(map[string]string)
 	}
 }
 
@@ -139,46 +102,94 @@ func (s *botServiceServer) DeleteBot(ctx context.Context, req *pb.BotIdRequest) 
 	return &pb.StatusResponse{Success: true, Message: "bot deleted"}, nil
 }
 
+// Update loadFromPg to ensure State is always set
+func (r *botRegistry) loadFromPg(ctx context.Context) {
+	rows, err := r.pg.Query(ctx, `SELECT id, user_id, name, symbol, strategy, parameters, is_active, extract(epoch from created_at)::bigint, state FROM bots`)
+	if err != nil {
+		log.Printf("bot load pg err: %v", err)
+		return
+	}
+	log.Printf("bot load pg ok")
+	defer rows.Close()
+	for rows.Next() {
+		var id, userID, name, symbol, strategy string
+		var paramsBytes, stateBytes []byte
+		var active bool
+		var created int64
+		if err := rows.Scan(&id, &userID, &name, &symbol, &strategy, &paramsBytes, &active, &created, &stateBytes); err != nil {
+			log.Printf("bot load pg scan err: %v", err)
+			continue
+		}
+		m := map[string]string{}
+		_ = json.Unmarshal(paramsBytes, &m)
+		state := map[string]string{}
+		_ = json.Unmarshal(stateBytes, &state)
+		bot := &pb.Bot{
+			BotId: id, Name: name, Symbol: symbol, Strategy: strategy,
+			Parameters: m, IsActive: active, UserId: userID,
+			CreatedAtUnixMs: created, AccountValue: 1000007,
+			State: state,
+		}
+		ensureBotState(bot)
+		r.bots[id] = bot
+	}
+}
+
+// Update loadFromFile to ensure State is always set
+func (r *botRegistry) loadFromFile() {
+	b, err := os.ReadFile(r.path)
+	if err != nil {
+		return
+	}
+	var arr []*pb.Bot
+	if err := json.Unmarshal(b, &arr); err != nil {
+		log.Printf("bot registry load error: %v", err)
+		return
+	}
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	for _, bot := range arr {
+		ensureBotState(bot)
+		r.bots[bot.BotId] = bot
+	}
+}
+
 func (s *botServiceServer) CreateBot(ctx context.Context, req *pb.CreateBotRequest) (*pb.StatusResponse, error) {
 	if req.GetName() == "" {
 		return &pb.StatusResponse{Success: false, Message: "name, symbol, strategy required"}, nil
 	}
 
-	// Generate a new bot ID
 	id := uuid.New().String()
-
-	// Extract user ID from context (set by auth interceptor)
 	userID, ok := ctx.Value("user_id").(string)
 	if !ok || userID == "" {
 		log.Printf("[CreateBot] user_id missing from context")
 		return &pb.StatusResponse{Success: false, Message: "auth required"}, nil
 	}
-
-	// Validate userID is a UUID
 	if _, err := uuid.Parse(userID); err != nil {
 		log.Printf("[CreateBot] user_id is not a valid UUID: %s", userID)
 		return &pb.StatusResponse{Success: false, Message: "user_id must be a valid UUID"}, nil
 	}
-
-	// Set default parameters if not provided
 	params := req.GetParameters()
 	if params == nil {
 		params = map[string]string{}
 	}
 
-	if s.dbclient != nil {
-		_, err := s.dbclient.CreateBot(ctx, &pb.Bot{
-			BotId:           id,
-			Symbol:          req.GetSymbol(),
-			Strategy:        req.GetStrategy(),
-			Parameters:      params,
-			IsActive:        false,
-			Name:            req.GetName(),
-			UserId:          userID,
-			AccountValue:    req.GetAccountValue(), // <-- use this instead
-			CreatedAtUnixMs: time.Now().UnixMilli(),
-		})
+	// Always initialize State
+	bot := &pb.Bot{
+		BotId:           id,
+		Name:            req.GetName(),
+		Symbol:          req.GetSymbol(),
+		Strategy:        req.GetStrategy(),
+		Parameters:      params,
+		IsActive:        false,
+		UserId:          userID,
+		AccountValue:    req.GetAccountValue(),
+		CreatedAtUnixMs: time.Now().UnixMilli(),
+		State:           make(map[string]string), // Always set State
+	}
 
+	if s.dbclient != nil {
+		_, err := s.dbclient.CreateBot(ctx, bot)
 		log.Printf("[CreateBot] Added bot to database with ID: %s", id)
 		if err != nil {
 			log.Printf("[CreateBot] Error adding bot to database: %v", err)
@@ -186,28 +197,11 @@ func (s *botServiceServer) CreateBot(ctx context.Context, req *pb.CreateBotReque
 		}
 	}
 
-	// Create bot entry in registry
-	bot := &pb.Bot{BotId: id, Name: req.GetName(), Symbol: req.GetSymbol(), Strategy: req.GetStrategy(), Parameters: params, IsActive: false}
-
 	// Add bot to registry
 	s.reg.mu.Lock()
 	s.reg.bots[id] = bot
 	s.reg.mu.Unlock()
 
-	// Persist to file if using file storage
-	// if s.dbclient != nil {
-	// 	portfolio := &pb.Portfolio{
-	// 		Positions:     make(map[string]float64),
-	// 		TotalValueUsd: req.GetAccountValue(),
-	// 		BotId:         id,
-	// 	}
-	// 	if err := s.dbclient.SavePortfolio(ctx, portfolio); err != nil {
-	// 		log.Printf("[CreateBot] Error creating portfolio in database: %v", err)
-	// 		return &pb.StatusResponse{Success: false, Message: err.Error()}, nil
-	// 	}
-	// }
-
-	// Return success response
 	return &pb.StatusResponse{Success: true, Message: "bot created", Id: id}, nil
 }
 
@@ -276,4 +270,33 @@ func (s *botServiceServer) GetBotStatus(ctx context.Context, req *pb.BotIdReques
 		return &pb.Bot{}, nil
 	}
 	return bot, nil
+}
+
+func (s *botServiceServer) UpdateBotState(ctx context.Context, req *pb.UpdateBotStateRequest) (*pb.StatusResponse, error) {
+	botID := req.GetBotId()
+	state := req.GetState()
+
+	s.reg.mu.Lock()
+	bot, ok := s.reg.bots[botID]
+	if !ok {
+		s.reg.mu.Unlock()
+		return &pb.StatusResponse{Success: false, Message: "bot not found"}, nil
+	}
+	// Update in-memory state
+	bot.State = state
+	s.reg.mu.Unlock()
+
+	// Persist to DB if available
+	if s.dbclient != nil {
+		// Convert map[string]string to map[string]interface{}
+		stateMap := make(map[string]interface{})
+		for k, v := range state {
+			stateMap[k] = v
+		}
+		if err := s.dbclient.SaveBotState(ctx, botID, stateMap); err != nil {
+			return &pb.StatusResponse{Success: false, Message: "failed to save state"}, err
+		}
+	}
+
+	return &pb.StatusResponse{Success: true, Message: "state updated", Id: botID}, nil
 }

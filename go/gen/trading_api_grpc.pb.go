@@ -680,6 +680,7 @@ const (
 	BotService_StopBot_FullMethodName         = "/trading.BotService/StopBot"
 	BotService_GetBotStatus_FullMethodName    = "/trading.BotService/GetBotStatus"
 	BotService_StreamBotStatus_FullMethodName = "/trading.BotService/StreamBotStatus"
+	BotService_UpdateBotState_FullMethodName  = "/trading.BotService/UpdateBotState"
 )
 
 // BotServiceClient is the client API for BotService service.
@@ -697,6 +698,7 @@ type BotServiceClient interface {
 	StopBot(ctx context.Context, in *BotIdRequest, opts ...grpc.CallOption) (*StatusResponse, error)
 	GetBotStatus(ctx context.Context, in *BotIdRequest, opts ...grpc.CallOption) (*Bot, error)
 	StreamBotStatus(ctx context.Context, in *BotIdRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[Bot], error)
+	UpdateBotState(ctx context.Context, in *UpdateBotStateRequest, opts ...grpc.CallOption) (*StatusResponse, error)
 }
 
 type botServiceClient struct {
@@ -806,6 +808,16 @@ func (c *botServiceClient) StreamBotStatus(ctx context.Context, in *BotIdRequest
 // This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
 type BotService_StreamBotStatusClient = grpc.ServerStreamingClient[Bot]
 
+func (c *botServiceClient) UpdateBotState(ctx context.Context, in *UpdateBotStateRequest, opts ...grpc.CallOption) (*StatusResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(StatusResponse)
+	err := c.cc.Invoke(ctx, BotService_UpdateBotState_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // BotServiceServer is the server API for BotService service.
 // All implementations must embed UnimplementedBotServiceServer
 // for forward compatibility.
@@ -821,6 +833,7 @@ type BotServiceServer interface {
 	StopBot(context.Context, *BotIdRequest) (*StatusResponse, error)
 	GetBotStatus(context.Context, *BotIdRequest) (*Bot, error)
 	StreamBotStatus(*BotIdRequest, grpc.ServerStreamingServer[Bot]) error
+	UpdateBotState(context.Context, *UpdateBotStateRequest) (*StatusResponse, error)
 	mustEmbedUnimplementedBotServiceServer()
 }
 
@@ -857,6 +870,9 @@ func (UnimplementedBotServiceServer) GetBotStatus(context.Context, *BotIdRequest
 }
 func (UnimplementedBotServiceServer) StreamBotStatus(*BotIdRequest, grpc.ServerStreamingServer[Bot]) error {
 	return status.Errorf(codes.Unimplemented, "method StreamBotStatus not implemented")
+}
+func (UnimplementedBotServiceServer) UpdateBotState(context.Context, *UpdateBotStateRequest) (*StatusResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method UpdateBotState not implemented")
 }
 func (UnimplementedBotServiceServer) mustEmbedUnimplementedBotServiceServer() {}
 func (UnimplementedBotServiceServer) testEmbeddedByValue()                    {}
@@ -1034,6 +1050,24 @@ func _BotService_StreamBotStatus_Handler(srv interface{}, stream grpc.ServerStre
 // This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
 type BotService_StreamBotStatusServer = grpc.ServerStreamingServer[Bot]
 
+func _BotService_UpdateBotState_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UpdateBotStateRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(BotServiceServer).UpdateBotState(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: BotService_UpdateBotState_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(BotServiceServer).UpdateBotState(ctx, req.(*UpdateBotStateRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // BotService_ServiceDesc is the grpc.ServiceDesc for BotService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -1072,6 +1106,10 @@ var BotService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetBotStatus",
 			Handler:    _BotService_GetBotStatus_Handler,
+		},
+		{
+			MethodName: "UpdateBotState",
+			Handler:    _BotService_UpdateBotState_Handler,
 		},
 	},
 	Streams: []grpc.StreamDesc{

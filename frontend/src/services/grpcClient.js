@@ -226,6 +226,33 @@ export async function fetchRiskMetrics(bot) {
 //     Bot Service Helpers      //
 //                              //
 //////////////////////////////////
+export const getBotState = async (botId) => {
+  const { BotIdRequest } = await import('../proto/trading_api_pb.js');
+  const req = new BotIdRequest();
+  req.setBotId(botId);
+  return new Promise((resolve, reject) => {
+    botClient.getBotStatus(req, createMetadata(), (err, resp) => {
+      if (err) return reject(err);
+      const obj = resp.toObject();
+      // Convert stateMap to state object
+      if (Array.isArray(obj.stateMap)) {
+        obj.state = Object.fromEntries(obj.stateMap);
+      }
+      // Patch: If no 'state' field, but live fields exist at top level, nest them under 'state'
+      if (!obj.state) {
+        obj.state = {
+          last_signal: obj.last_signal,
+          zscore: obj.zscore,
+          price: obj.price,
+          timestamp: obj.timestamp,
+          size: obj.size,
+          account_value: obj.account_value
+        };
+      }
+      resolve(obj);
+    });
+  });
+};
 
 export const createBot = async ({ name, symbol, strategy, parameters, userId, account_value }) => {
   const { CreateBotRequest } = await import('../proto/trading_api_grpc_web_pb.js');

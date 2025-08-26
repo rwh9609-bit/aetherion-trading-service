@@ -1,7 +1,9 @@
 #!/usr/bin/env python3
 import os
+import traceback
 import grpc
 import pandas as pd
+import numpy as np
 import sys
 import json
 import time
@@ -20,6 +22,47 @@ def load_backfill_prices(csv_path, lookback_period):
     df = pd.read_csv(csv_path)
     prices = df['price'].tolist()  # <-- fix: use 'price' instead of 'close'
     return prices[-lookback_period:]
+
+def convert_numpy(obj):
+    if isinstance(obj, np.generic):
+        return obj.item()
+    elif isinstance(obj, dict):
+        return {k: convert_numpy(v) for k, v in obj.items()}
+    elif isinstance(obj, list):
+        return [convert_numpy(v) for v in obj]
+    elif isinstance(obj, tuple):
+        return tuple(convert_numpy(v) for v in obj)
+    else:
+        return obj
+
+def update_bot_state(bot_stub, bot_id, state_dict, metadata):
+    from protos import trading_api_pb2
+    # Ensure all values are strings for protobuf map<string, string>
+    # FIX: Use "" for None values, not "None"
+    state_dict = {str(k): "" if v is None else str(v) for k, v in convert_numpy(state_dict).items()}
+    req = trading_api_pb2.UpdateBotStateRequest(
+        bot_id=bot_id,
+        state=state_dict
+    )
+    # ...existing metadata sanitization...
+    if metadata is None:
+        metadata = []
+    elif isinstance(metadata, dict):
+        metadata = list(metadata.items())
+    elif isinstance(metadata, list):
+        sanitized = []
+        for m in metadata:
+            if isinstance(m, (list, tuple)) and len(m) == 2:
+                sanitized.append(tuple(m))
+            elif isinstance(m, str) and ':' in m:
+                k, v = m.split(':', 1)
+                sanitized.append((k.strip(), v.strip()))
+            elif isinstance(m, str):
+                print(f"[WARN] Skipping malformed metadata string: {m!r}")
+                continue
+        metadata = sanitized
+    resp = bot_stub.UpdateBotState(req, metadata=metadata)
+    return resp
 
 class TradingOrchestrator:
     def __init__(self):
@@ -177,11 +220,25 @@ class TradingOrchestrator:
 
                         # After trading logic, fetch trade history:
                         # self.fetch_trade_history(trading_stub, bot.bot_id, metadata)
+                        state = {
+                            "last_signal": signal.get('action'),
+                            "zscore": float(signal.get('zscore')) if signal.get('zscore') is not None else None,
+                            "size": float(signal.get('size')) if signal.get('size') is not None else None,
+                            "timestamp": int(time.time()),
+                            "price": float(price),
+                            "bot_name": bot.name,
+                            "strategy": bot.strategy,
+                            "account_value": float(bot.account_value),
+                            # add more fields as needed
+                        }
+                        print(f"Bot {bot.name} state updated: {state}")
+                        update_bot_state(bot_stub, bot.bot_id, state, metadata)
 
                     time.sleep(1)
 
                 except Exception as e:
                     print(f"Error in orchestrator loop: {str(e)}")
+                    traceback.print_exc()
                     time.sleep(60)
 
 if __name__ == "__main__":
@@ -198,5 +255,10 @@ params = MeanReversionParams(lookback_period=20, entry_std_dev=2.0, exit_std_dev
 strategy = MeanReversionStrategy(params)
 historical_data = load_historical_data("data/BTCUSD_1min.csv")
 engine = BacktestEngine(strategy, historical_data)
-trades, equity_curve = engine.run()
-print(f"Backtest complete: {len(trades)} trades, {len(equity_curve)} equity points.")
+result = engine.run()
+if isinstance(result, tuple) and len(result) == 2:
+    trades, equity_curve = result
+else:
+    trades = result
+    equity_curve = None
+print(f"Backtest complete: {len(trades)} trades, {len(equity_curve) if equity_curve is not None else 0} equity points.")

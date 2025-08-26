@@ -282,6 +282,7 @@ service BotService {
   rpc StopBot(BotIdRequest) returns (StatusResponse) {}
   rpc GetBotStatus(BotIdRequest) returns (Bot) {}
   rpc StreamBotStatus(BotIdRequest) returns (stream Bot) {} // realtime updates
+  rpc UpdateBotState(UpdateBotStateRequest) returns (StatusResponse) {}
 }
 
 message Bot {
@@ -300,6 +301,12 @@ message Bot {
     bool is_live = 13;
     google.protobuf.Timestamp created_at = 14;
     google.protobuf.Timestamp updated_at = 15;
+    map<string, string> state = 16;
+}
+
+message UpdateBotStateRequest {
+    string bot_id = 1;
+    map<string, string> state = 2;
 }
  
 message UpdateBotRequest {
