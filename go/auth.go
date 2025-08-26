@@ -235,16 +235,20 @@ func (a *authServer) Login(ctx context.Context, req *pb.AuthRequest) (*pb.AuthRe
 	if err != nil || !verifyPassword(stored, req.Password) {
 		return &pb.AuthResponse{Success: false, Message: "invalid credentials"}, nil
 	}
-	var userID, role string
+	var userID, role, email string
 	if pgStore, ok := a.store.(*pgUserStore); ok {
 		userID, _ = pgStore.GetUserByUsername(ctx, req.Username)
 		role, _ = pgStore.GetUserRole(ctx, req.Username)
+		// Fetch email
+		_ = pgStore.db.QueryRow(ctx, `SELECT email FROM users WHERE username=$1`, req.Username).Scan(&email)
 	} else if memStore, ok := a.store.(*memUserStore); ok {
 		userID = req.Username
 		role, _ = memStore.GetUserRole(ctx, req.Username)
+		email = memStore.users[req.Username].Email
 	} else {
 		userID = req.Username
 		role = "user"
+		email = ""
 	}
 	exp := time.Now().Add(1 * time.Hour)
 	claims := jwt.MapClaims{"sub": userID, "exp": exp.Unix(), "role": role}
@@ -254,7 +258,15 @@ func (a *authServer) Login(ctx context.Context, req *pb.AuthRequest) (*pb.AuthRe
 		return nil, status.Errorf(codes.Internal, "token signing failed: %v", err)
 	}
 	log.Printf("[Login] Generated JWT token for user: %s", req.Username)
-	return &pb.AuthResponse{Success: true, Message: "ok", Token: signed, ExpiresAtUnix: exp.Unix(), Role: role}, nil
+	return &pb.AuthResponse{
+		Success:       true,
+		Message:       "ok",
+		Token:         signed,
+		ExpiresAtUnix: exp.Unix(),
+		Role:          role,
+		Username:      req.Username,
+		Email:         email,
+	}, nil
 }
 
 // Add GetUser handler to authServer

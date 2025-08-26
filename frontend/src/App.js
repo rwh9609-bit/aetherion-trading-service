@@ -145,18 +145,11 @@ function App() {
                   <Button color="inherit" onClick={()=>setView('about')} sx={{ mr:1 }}>About</Button> 
                   <Button color="inherit" onClick={()=>setView('contact')} sx={{ mr:1 }}>Contact</Button>
                   <Button color="inherit" onClick={()=>setView('news')} sx={{ mr:1 }}>News</Button>
-
                   {user ? (
                     <>
                       <Button color="inherit" onClick={()=>setView('account')} sx={{ mr:1 }}>Account</Button>
                       <Button color="inherit" onClick={()=>setView('bots_free')} sx={{ mr:1 }}>Bots</Button>
-                      <Button
-                        color="inherit"
-                        onClick={handleMenuClick}
-                        sx={{ mr: 1 }}
-                      >
-                        Simulator
-                      </Button>
+                      <Button color="inherit" onClick={handleMenuClick} sx={{ mr: 1 }}>Simulator</Button>
                       <Menu
                         anchorEl={anchorEl}
                         open={Boolean(anchorEl)}
@@ -166,9 +159,10 @@ function App() {
                         <MenuItem onClick={() => handleMenuItemClick('backtest')}>Backtesting</MenuItem>
                         <MenuItem onClick={() => handleMenuItemClick('operations')}>Operations</MenuItem>
                       </Menu>
-                      {/* <Button color="inherit" onClick={()=>setView('bots')} sx={{ mr:1 }}>Bots</Button> */}
-
-                      <Button color="inherit" onClick={()=> { setUser(null);setSelectedBot(null);localStorage.removeItem('authToken'); localStorage.removeItem('selectedBot'); setView('landing'); } }>Logout</Button>
+                      <Button color="inherit" onClick={()=> { setUser(null); setSelectedBot(null); localStorage.removeItem('authToken'); localStorage.removeItem('selectedBot'); setView('landing'); }}>Logout</Button>
+                      {user.role === 'superuser' && (
+                        <Button color="inherit" onClick={()=>setView('developBot')}>Develop Bot</Button>
+                      )}
                     </>
                   ) : (
                     <Button color="inherit" onClick={()=>setView('login')}>Login</Button>
@@ -223,7 +217,8 @@ function App() {
               <BotsFreePage onNavigate={setView} onSelectBot={handleSelectBot} selectedBot={selectedBot} />
             </div>
           )}
-          {user && view === 'developBot' && (
+          
+          {user && (user.role === 'superuser' || user.role === 'admin') && view === 'developBot' && (
             <div style={{ padding: '24px' }}>
               <DevelopBotPage onNavigate={setView} />
             </div>

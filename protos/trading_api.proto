@@ -238,12 +238,13 @@ message AuthRequest {
 }
 
 message AuthResponse {
-    bool success = 1;
-    string message = 2;
-    string token = 3;           // JWT bearer token
-    int64 expires_at_unix = 4;   // Expiration timestamp (seconds since epoch)
-    string refresh_token = 5;
-    string role = 6;
+  bool success = 1;
+  string message = 2;
+  string token = 3;
+  int64 expires_at_unix = 4;
+  string role = 5;
+  string username = 6;
+  string email = 7;
 }
 
 message GetUserRequest {

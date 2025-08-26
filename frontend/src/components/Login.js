@@ -19,55 +19,55 @@ const Login = ({ onAuth, onBack }) => {
     event.preventDefault();
   };
 
-  const submit = async (e) => {
-    e.preventDefault();
-    setError(null);
-    setPasswordError(false);
+const submit = async (e) => {
+  e.preventDefault();
+  setError(null);
+  setPasswordError(false);
 
-    if (mode === 'register' && password.length < MIN_PASSWORD_LENGTH) {
-      setPasswordError(true);
-      setError(`Password must be at least ${MIN_PASSWORD_LENGTH} characters long.`);
-      return;
-    }
-    if (mode === 'register' && !email) {
-      setError('Email is required.');
-      return;
-    }
+  if (mode === 'register' && password.length < MIN_PASSWORD_LENGTH) {
+    setPasswordError(true);
+    setError(`Password must be at least ${MIN_PASSWORD_LENGTH} characters long.`);
+    return;
+  }
+  if (mode === 'register' && !email) {
+    setError('Email is required.');
+    return;
+  }
 
-    setLoading(true);
-    try {
-      let res;
-      if (mode === 'login') {
-        res = await loginUser(username, password);
-      } else {
-        res = await registerUser(username, email, password); // <-- Pass email
-      }
-      if (!res.success) {
-        setError(res.message || 'Authentication failed');
-      } else {
-        let token;
-        if (mode === 'register') {
-          const loginRes = await loginUser(username, password);
-          if (!loginRes.success) {
-            setError(loginRes.message || 'Auto-login failed');
-            setLoading(false);
-            return;
-          }
-          token = loginRes.token;
-        } else {
-          token = res.token;
+  setLoading(true);
+  try {
+    let res;
+    if (mode === 'login') {
+      res = await loginUser(username, password);
+    } else {
+      res = await registerUser(username, email, password); 
+    }
+    if (!res.success) {
+      setError(res.message || 'Authentication failed');
+    } else {
+      let token, userObj;
+      if (mode === 'register') {
+        const loginRes = await loginUser(username, password);
+        if (!loginRes.success) {
+          setError(loginRes.message || 'Auto-login failed');
+          setLoading(false);
+          return;
         }
-        // Store token in localStorage
-        localStorage.setItem('authToken', token);
-        onAuth(username);
+        token = loginRes.token;
+        userObj = { username: loginRes.username, role: loginRes.role, email: loginRes.email };
+      } else {
+        token = res.token;
+        userObj = { username: res.username, role: res.role, email: res.email };
       }
-    } catch (err) {
-      setError(err.message || 'Request failed');
-    } finally {
-      setLoading(false);
+      localStorage.setItem('authToken', token);
+      onAuth(userObj);
     }
-  };
-
+  } catch (err) {
+    setError(err.message || 'Request failed');
+  } finally {
+    setLoading(false);
+  }
+};
   return (
     <Card sx={{ maxWidth: 420, margin: '48px auto' }}>
       <CardContent>
