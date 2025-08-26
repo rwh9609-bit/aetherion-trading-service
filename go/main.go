@@ -357,6 +357,10 @@ func (s *tradingServer) GetTradeHistory(ctx context.Context, req *pb.TradeHistor
 		}
 		return &pb.TradeHistoryResponse{Trades: pbTrades}, nil
 	}
+	// If userID is provided but botID is empty, return an empty trade history response
+	if userID != "" && botID == "" {
+		return &pb.TradeHistoryResponse{Trades: []*pb.Trade{}}, nil
+	}
 	return nil, status.Error(codes.Internal, "bot_id is required")
 }
 
@@ -651,13 +655,91 @@ func (s *tradingServer) ListSymbols(ctx context.Context, _ *pb.Empty) (*pb.Symbo
 ///////////////////////////////////////
 
 func (s *portfolioServer) GetPortfolio(ctx context.Context, req *pb.PortfolioRequest) (*pb.PortfolioResponse, error) {
-	// TODO: Implement actual portfolio retrieval logic
-	return &pb.PortfolioResponse{}, nil
+	// Extract user ID from context (set by auth interceptor)
+	userID, ok := ctx.Value("userID").(string)
+	if !ok || userID == "" {
+		return nil, status.Error(codes.Unauthenticated, "missing user ID")
+	}
+
+	// For now, we'll just get the portfolio for the first bot associated with the user.
+	// In a real application, you might want to specify a bot ID in the request.
+	bots, err := s.dbService.GetBotsByUserID(ctx, userID)
+	if err != nil {
+		log.Error().Err(err).Msg("Failed to get bots for user")
+		return nil, status.Error(codes.Internal, "failed to get bots for user")
+	}
+
+	if len(bots) == 0 {
+		return &pb.PortfolioResponse{}, nil
+	}
+
+	botID := bots[0].BotId
+
+	portfolio, err := s.dbService.GetPortfolioByBotID(ctx, botID)
+	if err != nil {
+		log.Error().Err(err).Msg("Failed to get portfolio")
+		return nil, status.Error(codes.Internal, "failed to get portfolio")
+	}
+// type PortfolioResponse struct {
+// 	state               protoimpl.MessageState `protogen:"open.v1"`
+// 	BotId               string                 `protobuf:"bytes,1,opt,name=bot_id,json=botId,proto3" json:"bot_id,omitempty"`
+// 	Positions           []*PortfolioPosition   `protobuf:"bytes,2,rep,name=positions,proto3" json:"positions,omitempty"`
+// 	TotalPortfolioValue *DecimalValue          `protobuf:"bytes,3,opt,name=total_portfolio_value,json=totalPortfolioValue,proto3" json:"total_portfolio_value,omitempty"`
+// 	CashBalance         *DecimalValue          `protobuf:"bytes,4,opt,name=cash_balance,json=cashBalance,proto3" json:"cash_balance,omitempty"`
+// 	UpdatedAt           *timestamppb.Timestamp `protobuf:"bytes,5,opt,name=updated_at,json=updatedAt,proto3" json:"updated_at,omitempty"`
+// 	unknownFields       protoimpl.UnknownFields
+// 	sizeCache           protoimpl.SizeCache
+// }
+	return &pb.PortfolioResponse{
+		BotId:               botID,
+		Positions:           portfolio.Positions,
+		TotalPortfolioValue: portfolio.TotalPortfolioValue,
+		CashBalance:         portfolio.CashBalance,
+		UpdatedAt:           portfolio.UpdatedAt,
+	}, nil
 }
 
 func (s *portfolioServer) StreamPortfolio(req *pb.PortfolioRequest, stream pb.PortfolioService_StreamPortfolioServer) error {
-	// TODO: Implement actual portfolio streaming logic
-	return nil
+	// Extract user ID from context
+	userID, ok := stream.Context().Value("userID").(string)
+	if !ok || userID == "" {
+		return status.Error(codes.Unauthenticated, "missing user ID")
+	}
+
+	ticker := time.NewTicker(5 * time.Second)
+	defer ticker.Stop()
+
+	for {
+		select {
+		case <-ticker.C:
+			bots, err := s.dbService.GetBotsByUserID(stream.Context(), userID)
+			if err != nil {
+				log.Error().Err(err).Msg("Failed to get bots for user")
+				return status.Error(codes.Internal, "failed to get bots for user")
+			}
+
+			if len(bots) == 0 {
+				if err := stream.Send(&pb.PortfolioResponse{}); err != nil {
+					return err
+				}
+				continue
+			}
+
+			botID := bots[0].BotId
+
+			portfolio, err := s.dbService.GetPortfolioByBotID(stream.Context(), botID)
+			if err != nil {
+				log.Error().Err(err).Msg("Failed to get portfolio")
+				return status.Error(codes.Internal, "failed to get portfolio")
+			}
+
+			if err := stream.Send(portfolio); err != nil {
+				return err
+			}
+		case <-stream.Context().Done():
+			return nil
+		}
+	}
 }
 
 func (s *portfolioServer) GetPerformanceHistory(ctx context.Context, req *pb.PerformanceHistoryRequest) (*pb.PerformanceHistoryResponse, error) {
@@ -700,7 +782,8 @@ func (s *tradingServer) ExecuteTrade(ctx context.Context, req *pb.TradeRequest) 
 
 	// Implement portfolio update logic
 
-	trade := &pb.Trade{
+
+trade := &pb.Trade{
 		TradeId:    uuid.New().String(),
 		Symbol:     req.Symbol,
 		Side:       req.Side,
@@ -777,9 +860,10 @@ func main() {
 	portfolioService := newPortfolioServer(dbService)
 	pb.RegisterPortfolioServiceServer(grpcServer, portfolioService)
 
-	tradingService := newTradingServer()
-	tradingService.dbService = dbService
-	pb.RegisterTradingServiceServer(grpcServer, tradingService)
+
+tradingService := newTradingServer()
+tradingService.dbService = dbService
+pb.RegisterTradingServiceServer(grpcServer, tradingService)
 
 	reg := newBotRegistry()
 	botSvc := newBotServiceServer(reg, tradingService, dbService)

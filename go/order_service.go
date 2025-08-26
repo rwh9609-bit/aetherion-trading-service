@@ -142,6 +142,14 @@ func (s *OrderServiceServer) ListOrders(ctx context.Context, req *pb.ListOrdersR
 }
 
 func (s *OrderServiceServer) GetTradeHistory(ctx context.Context, req *pb.TradeHistoryRequest) (*pb.TradeHistoryResponse, error) {
-	// TODO: Return trades for user/bot
-	return &pb.TradeHistoryResponse{}, nil
+	if req.BotId == "" {
+		return nil, fmt.Errorf("bot_id is required")
+	}
+
+	trades, err := s.dbclient.GetTradesByBotID(ctx, req.BotId)
+	if err != nil {
+		return nil, err
+	}
+
+	return &pb.TradeHistoryResponse{Trades: trades}, nil
 }

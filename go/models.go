@@ -50,3 +50,15 @@ type Strategy struct {
 	UpdatedAt    time.Time
 	mu           sync.Mutex
 }
+
+type Portfolio struct {
+	ID     string
+	UserID string
+	Assets []PortfolioAsset
+}
+
+type PortfolioAsset struct {
+	Symbol string
+	Amount float64
+	Price  float64
+}

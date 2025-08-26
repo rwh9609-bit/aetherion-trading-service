@@ -2,20 +2,31 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"time"
 
 	pb "aetherion/gen"
 
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/rs/zerolog/log"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
+type PgxPool interface {
+	Exec(context.Context, string, ...interface{}) (pgconn.CommandTag, error)
+	Query(context.Context, string, ...interface{}) (pgx.Rows, error)
+	QueryRow(context.Context, string, ...interface{}) pgx.Row
+	Ping(context.Context) error
+	Close()
+}
+
 // DBService provides methods for interacting with the PostgreSQL database.
 type DBService struct {
-	pool *pgxpool.Pool
+	pool PgxPool
 }
 
 // NewDBService creates a new DBService instance.
@@ -195,6 +206,47 @@ func (s *DBService) DeleteBot(ctx context.Context, botID string) error {
 	log.Info().Str("bot_id", botID).Msg("Bot deleted successfully")
 	return nil
 }
+func (s *DBService) GetBotsByUserID(ctx context.Context, userID string) ([]*pb.Bot, error) {
+	var bots []*pb.Bot
+	query := `SELECT id, user_id, name, symbol, strategy, parameters, is_active, account_value FROM bots WHERE user_id = $1`
+	rows, err := s.pool.Query(ctx, query, userID)
+	if err != nil {
+		log.Error().Err(err).Str("user_id", userID).Msg("Failed to get bots by user ID")
+		return nil, fmt.Errorf("failed to get bots by user ID: %w", err)
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var (
+			id, userID, name, symbol, strategy string
+			parametersStr                      string
+			isActive                           bool
+			accountValue                       float64
+		)
+		err := rows.Scan(&id, &userID, &name, &symbol, &strategy, &parametersStr, &isActive, &accountValue)
+		if err != nil {
+			log.Error().Err(err).Msg("Failed to scan bot row")
+			return nil, fmt.Errorf("failed to scan bot row: %w", err)
+		}
+		var parameters map[string]interface{}
+		if err := json.Unmarshal([]byte(parametersStr), &parameters); err != nil {
+			log.Error().Err(err).Msg("Failed to unmarshal bot parameters")
+			parameters = map[string]interface{}{}
+		}
+		bot := &pb.Bot{
+			BotId:        id,
+			UserId:       userID,
+			Name:         name,
+			Symbol:       symbol, // Assuming symbol is a string
+			Strategy:     strategy,
+			Parameters:   convertMapInterfaceToString(parameters),
+			IsActive:     isActive,
+			AccountValue: accountValue,
+		}
+		bots = append(bots, bot)
+	}
+	return bots, nil
+}
 
 // -----------------------
 // --- User Management ---
@@ -209,6 +261,57 @@ func (s *DBService) CreateUser(ctx context.Context, username, passwordHash strin
 		return "", fmt.Errorf("failed to create user: %w", err)
 	}
 	return id, nil
+}
+
+// GetPortfolioByBotID retrieves the portfolio for a given bot.
+func (s *DBService) GetPortfolioByBotID(ctx context.Context, botID string) (*pb.PortfolioResponse, error) {
+	portfolio := &pb.PortfolioResponse{
+		Positions: []*pb.PortfolioPosition{},
+	}
+	query := `SELECT symbol, quantity, average_price FROM portfolios WHERE bot_id = $1`
+	rows, err := s.pool.Query(ctx, query, botID)
+	if err != nil {
+		log.Error().Err(err).Str("bot_id", botID).Msg("Failed to get portfolio by bot ID")
+		return nil, fmt.Errorf("failed to get portfolio by bot ID: %w", err)
+	}
+	defer rows.Close()
+
+	var totalValue float64
+	for rows.Next() {
+		var symbol string
+		var quantity float64
+		var averagePrice float64
+		if err := rows.Scan(&symbol, &quantity, &averagePrice); err != nil {
+			log.Error().Err(err).Msg("Failed to scan portfolio row")
+			return nil, fmt.Errorf("failed to scan portfolio row: %w", err)
+		}
+		portfolio.Positions = append(portfolio.Positions, &pb.PortfolioPosition{
+			Symbol:       symbol,
+			Quantity:     float64ToDecimalValue(quantity),
+			AveragePrice: float64ToDecimalValue(averagePrice),
+		})
+		totalValue += quantity * averagePrice
+	}
+
+	// message PortfolioResponse {
+	//     string bot_id = 1;
+	//     repeated PortfolioPosition positions = 2;
+	//     DecimalValue total_portfolio_value = 3;
+	//     DecimalValue cash_balance = 4;
+	//     google.protobuf.Timestamp updated_at = 5;
+	// }
+	// message PortfolioPosition {
+	//     string symbol = 1;
+	//     DecimalValue quantity = 2;
+	//     DecimalValue average_price = 3;
+	//     DecimalValue market_value = 4;
+	//     DecimalValue unrealized_pnl = 5;
+	//     DecimalValue exposure_pct = 6;
+	// }
+	portfolio.TotalPortfolioValue = float64ToDecimalValue(totalValue)
+	portfolio.BotId = botID
+
+	return portfolio, nil
 }
 
 // ---------------------------- //
@@ -377,4 +480,30 @@ func (s *DBService) GetTradesByBotID(ctx context.Context, botID string) ([]*pb.T
 		trades = append(trades, &t)
 	}
 	return trades, nil
+}
+
+// ------------------------- //
+// --- Utility Functions --- //
+// ------------------------- //
+
+// convertMapInterfaceToString converts map[string]interface{} to map[string]string.
+func convertMapInterfaceToString(m map[string]interface{}) map[string]string {
+	result := make(map[string]string)
+	for k, v := range m {
+		result[k] = fmt.Sprintf("%v", v)
+	}
+	return result
+}
+
+//	message DecimalValue {
+//	    int64 units = 1;   // Whole part
+//	    sfixed32 nanos = 2; // Fractional part, -999,999,999 .. +999,999,999
+//	}
+//
+// float64ToDecimalValue converts a float64 to a *pb.DecimalValue.
+func float64ToDecimalValue(val float64) *pb.DecimalValue {
+	return &pb.DecimalValue{
+		Units: int64(val),
+		Nanos: int32((val - float64(int64(val))) * 1e9),
+	}
 }
