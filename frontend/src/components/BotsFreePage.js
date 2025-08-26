@@ -4,9 +4,8 @@ import { listBots, startBot, stopBot, getBotStatus, deleteBot } from '../service
 
 const statusColor = (active) => active ? 'success.main' : 'text.secondary';
 
-const BotsFreePage = () => {
+const BotsFreePage = ({ onNavigate, onSelectBot, selectedBot }) => {
   const [bots, setBots] = useState([]);
-  const [selectedBot, setSelectedBot] = useState(null);
   const [viewBot, setViewBot] = useState(null);
   const [actionBusy, setActionBusy] = useState(null);
   const [alert, setAlert] = useState(null);
@@ -15,26 +14,18 @@ const BotsFreePage = () => {
 
   const botsToShow = bots.length > 0 ? bots : [];
 
-  const refresh = async () => {
+const refresh = async () => {
   console.log('[BotsFreePage] refresh called');
   setLoading(true);
   setError(null);
   try {
     const resp = await listBots();
-    if (!resp.botsList || resp.botsList.length === 0) {
-      setBots([
-        {
-          botId: 'example-bot-1',
-          name: 'Example Bot',
-          symbol: 'BTC-USD',
-          strategy: 'MEAN_REVERSION',
-          isActive: false,
-          parameters: { lookback: 20, threshold: 0.5 },
-        }
-      ]);
-    } else {
-      setBots(resp.botsList);
-    }
+    console.log('listBots response:', resp); // <--- Add this line
+    const bots = (resp.botsList || []).map(bot => ({
+      ...bot,
+      botId: bot.botId || bot.id,
+    }));
+    setBots(bots);
   } catch (e) {
     setError(e.message || 'Failed to load bots');
   } finally {
@@ -73,24 +64,7 @@ const BotsFreePage = () => {
     } catch {
       setViewBot(bot);
     }
-  };
-
-  const handleDelete = async (id) => {
-    if (!window.confirm('Delete this bot?')) return;
-    setActionBusy(id);
-    try {
-      await deleteBot(id);
-      setAlert({ type: 'success', msg: 'Bot deleted' });
-      if (selectedBot && selectedBot.botId === id) {
-        setSelectedBot(null);
-      }
-      await refresh();
-    } catch (e) {
-      setAlert({ type: 'error', msg: e.message || 'Failed to delete bot' });
-    } finally {
-      setActionBusy(null);
-    }
-  };
+  }; 
 
   return (
     <Container maxWidth="lg" sx={{ mt:4, mb:4 }}>
@@ -129,18 +103,9 @@ const BotsFreePage = () => {
                 <Button
                   size="small"
                   variant={selectedBot && selectedBot.botId === bot.botId ? "contained" : "outlined"}
-                  onClick={() => setSelectedBot(bot)}
+                  onClick={() => onSelectBot(bot)}
                 >
                   {selectedBot && selectedBot.botId === bot.botId ? "Selected" : "Select"}
-                </Button>
-                <Button
-                  size="small"
-                  variant="outlined"
-                  color="error"
-                  disabled={actionBusy===bot.botId}
-                  onClick={() => handleDelete(bot.botId)}
-                >
-                  Delete
                 </Button>
               </Stack>
             </CardContent>
