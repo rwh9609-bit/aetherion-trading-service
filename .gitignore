@@ -37,3 +37,6 @@ frontend/build/
 *.out
 test_load
 test_orderbook
+
+# Data
+/data/BTCUSD_1min.csv

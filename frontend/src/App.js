@@ -218,7 +218,7 @@ function App() {
               <TradingOperations onNavigate={setView} selectedBot={selectedBot} />
             </div>
           )}
-          {user && view === 'bots' && (
+          {user && view === 'bots_free' && (
             <div style={{ padding: '24px' }}>
               <BotsFreePage onNavigate={setView} onSelectBot={handleSelectBot} selectedBot={selectedBot} />
             </div>
