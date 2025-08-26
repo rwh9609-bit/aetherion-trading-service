@@ -4,9 +4,10 @@ import { listBots, startBot, stopBot, getBotStatus, deleteBot } from '../service
 
 const statusColor = (active) => active ? 'success.main' : 'text.secondary';
 
-const BotsFreePage = ({ onNavigate, onSelectBot, selectedBot }) => {
+const BotsFreePage = ({ user, onNavigate, onSelectBot, selectedBot }) => {
   const [bots, setBots] = useState([]);
   const [viewBot, setViewBot] = useState(null);
+  const [deleteConfirm, setDeleteConfirm] = useState(null);
   const [actionBusy, setActionBusy] = useState(null);
   const [alert, setAlert] = useState(null);
   const [error, setError] = useState(null);
@@ -14,24 +15,24 @@ const BotsFreePage = ({ onNavigate, onSelectBot, selectedBot }) => {
 
   const botsToShow = bots.length > 0 ? bots : [];
 
-const refresh = async () => {
-  console.log('[BotsFreePage] refresh called');
-  setLoading(true);
-  setError(null);
-  try {
-    const resp = await listBots();
-    console.log('listBots response:', resp); // <--- Add this line
-    const bots = (resp.botsList || []).map(bot => ({
-      ...bot,
-      botId: bot.botId || bot.id,
-    }));
-    setBots(bots);
-  } catch (e) {
-    setError(e.message || 'Failed to load bots');
-  } finally {
-    setLoading(false);
-  }
-};
+  const refresh = async () => {
+    console.log('[BotsFreePage] refresh called');
+    setLoading(true);
+    setError(null);
+    try {
+      const resp = await listBots();
+      console.log('listBots response:', resp); // <--- Add this line
+      const bots = (resp.botsList || []).map(bot => ({
+        ...bot,
+        botId: bot.botId || bot.id,
+      }));
+      setBots(bots);
+    } catch (e) {
+      setError(e.message || 'Failed to load bots');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
     refresh();
@@ -54,6 +55,22 @@ const refresh = async () => {
       await refresh();
     } finally {
       setActionBusy(null);
+    }
+  };
+
+  const handleDelete = (bot) => {
+    setDeleteConfirm(bot);
+  };
+
+  const confirmDelete = async () => {
+    if (!deleteConfirm) return;
+    setActionBusy(deleteConfirm.botId);
+    try {
+      await deleteBot(deleteConfirm.botId);
+      await refresh();
+    } finally {
+      setActionBusy(null);
+      setDeleteConfirm(null);
     }
   };
 
@@ -107,6 +124,9 @@ const refresh = async () => {
                 >
                   {selectedBot && selectedBot.botId === bot.botId ? "Selected" : "Select"}
                 </Button>
+                {user && user.role === 'superuser' && (
+                  <Button size="small" variant="contained" color="error" disabled={actionBusy===bot.botId} onClick={()=>handleDelete(bot)}>Delete</Button>
+                )}
               </Stack>
             </CardContent>
           </Card>
@@ -132,6 +152,18 @@ const refresh = async () => {
           <Button onClick={()=>setViewBot(null)}>Close</Button>
         </DialogActions>
       </Dialog>
+
+      <Dialog open={!!deleteConfirm} onClose={() => setDeleteConfirm(null)}>
+        <DialogTitle>Delete Bot?</DialogTitle>
+        <DialogContent>
+          <Typography>Are you sure you want to delete the bot "{deleteConfirm?.name}"?</Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setDeleteConfirm(null)}>Cancel</Button>
+          <Button onClick={confirmDelete} color="error">Delete</Button>
+        </DialogActions>
+      </Dialog>
+
     </Container>
   );
 };

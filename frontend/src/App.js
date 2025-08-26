@@ -214,7 +214,7 @@ function App() {
           )}
           {user && view === 'bots_free' && (
             <div style={{ padding: '24px' }}>
-              <BotsFreePage onNavigate={setView} onSelectBot={handleSelectBot} selectedBot={selectedBot} />
+              <BotsFreePage user={user} onNavigate={setView} onSelectBot={handleSelectBot} selectedBot={selectedBot} />
             </div>
           )}
           
