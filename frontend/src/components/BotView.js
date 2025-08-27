@@ -23,7 +23,7 @@ function BotView({ bot }) {
     }
 
     const handleStateUpdate = (newState) => {
-      setBotState({ ...bot, ...Object.fromEntries(Object.entries(newState).filter(([_, v]) => v !== '' && v !== null && v !== undefined)) });
+      setBotState(prevBotState => ({ ...prevBotState, ...newState }));
 
       setHistory(prev => {
         const entry = {

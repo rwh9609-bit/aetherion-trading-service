@@ -100,8 +100,7 @@ func (s *botServiceServer) DeleteBot(ctx context.Context, req *pb.BotIdRequest) 
 }
 
 // Update loadFromPg to ensure State is always set
-func (r *botRegistry) loadFromPg(ctx context.Context) {
-	rows, err := r.pg.Query(ctx, `SELECT id, user_id, name, symbol, strategy, parameters, is_active, extract(epoch from created_at)::bigint, state FROM bots`)
+func (r *botRegistry) loadFromPg(ctx context.Context) {rows, err := r.pg.Query(ctx, `SELECT id, user_id, name, symbol, strategy, parameters, is_active, extract(epoch from created_at)::bigint, state, account_value FROM bots`)
 	if err != nil {
 		log.Printf("bot load pg err: %v", err)
 		return
@@ -113,7 +112,8 @@ func (r *botRegistry) loadFromPg(ctx context.Context) {
 		var paramsBytes, stateBytes []byte
 		var active bool
 		var created int64
-		if err := rows.Scan(&id, &userID, &name, &symbol, &strategy, &paramsBytes, &active, &created, &stateBytes); err != nil {
+		var accountValue float64
+		if err := rows.Scan(&id, &userID, &name, &symbol, &strategy, &paramsBytes, &active, &created, &stateBytes, &accountValue); err != nil {
 			log.Printf("bot load pg scan err: %v", err)
 			continue
 		}
@@ -124,7 +124,7 @@ func (r *botRegistry) loadFromPg(ctx context.Context) {
 		bot := &pb.Bot{
 			BotId: id, Name: name, Symbol: symbol, Strategy: strategy,
 			Parameters: m, IsActive: active, UserId: userID,
-			CreatedAtUnixMs: created, AccountValue: 1000007,
+			CreatedAtUnixMs: created, AccountValue: accountValue,
 			State: state,
 		}
 		ensureBotState(bot)
@@ -326,6 +326,11 @@ func (s *botServiceServer) UpdateBotState(ctx context.Context, req *pb.UpdateBot
 	}
 	// Update in-memory state
 	bot.State = state
+
+	// Update account value if provided
+	if req.GetAccountValue() > 0 {
+		bot.AccountValue = req.GetAccountValue()
+	}
 	s.reg.mu.Unlock()
 
 	// Persist to DB if available
@@ -335,7 +340,7 @@ func (s *botServiceServer) UpdateBotState(ctx context.Context, req *pb.UpdateBot
 		for k, v := range state {
 			stateMap[k] = v
 		}
-		if err := s.dbclient.SaveBotState(ctx, botID, stateMap); err != nil {
+		if err := s.dbclient.SaveBotState(ctx, botID, stateMap, bot.AccountValue); err != nil {
 			return &pb.StatusResponse{Success: false, Message: "failed to save state"}, err
 		}
 	}

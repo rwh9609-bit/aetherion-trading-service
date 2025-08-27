@@ -307,6 +307,7 @@ message Bot {
 message UpdateBotStateRequest {
     string bot_id = 1;
     map<string, string> state = 2;
+    optional double account_value = 3;
 }
  
 message UpdateBotRequest {

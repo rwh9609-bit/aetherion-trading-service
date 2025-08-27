@@ -46,14 +46,13 @@ def calculate_returns(prices):
     returns = np.diff(prices) / prices[:-1]
     return returns.tolist()
 
-async def update_bot_state(bot_stub, bot_id, state_dict, metadata):
+async def update_bot_state(bot_stub, bot_id, state_dict, metadata, account_value=None):
     from protos import trading_api_pb2
-    # Ensure all values are strings for protobuf map<string, string>
-    # FIX: Use "" for None values, not "None"
     state_dict = {str(k): "" if v is None else str(v) for k, v in convert_numpy(state_dict).items()}
     req = trading_api_pb2.UpdateBotStateRequest(
         bot_id=bot_id,
-        state=state_dict
+        state=state_dict,
+        account_value=account_value
     )
     # ...existing metadata sanitization...
     if metadata is None:
@@ -210,6 +209,15 @@ class TradingOrchestrator:
                             )
                             order_response = await order_stub.CreateOrder(order_request, metadata=metadata)
                             print(f"Order submitted for bot {bot.name}: {order_response.status}")
+                            # --- PATCH: update account_value after trade ---
+                            # Example: subtract cost for buy, add for sell (simplified)
+                            trade_value = float(price) * float(signal['size'])
+                            if signal['action'].lower() == 'buy':
+                                bot.account_value -= trade_value
+                            elif signal['action'].lower() == 'sell':
+                                bot.account_value += trade_value
+                            # You may want to use actual PnL/cash from order_response if available
+                            # ----------------------------------------------
                         else:
                             print(f"Order blocked for bot {bot.name}: VaR {risk_value:.2f} over limit")
                     except grpc.aio.AioRpcError as e:
@@ -226,7 +234,7 @@ class TradingOrchestrator:
                 "account_value": float(bot.account_value),
             }
             # print(f"Bot {bot.name} state updated: {state}")
-            await update_bot_state(bot_stub, bot.bot_id, state, metadata)
+            await update_bot_state(bot_stub, bot.bot_id, state, metadata, account_value=float(bot.account_value))
 
         except Exception as e:
             print(f"Error processing bot {bot.name} ({bot.bot_id}): {e}")

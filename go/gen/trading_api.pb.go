@@ -2281,6 +2281,7 @@ type UpdateBotStateRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	BotId         string                 `protobuf:"bytes,1,opt,name=bot_id,json=botId,proto3" json:"bot_id,omitempty"`
 	State         map[string]string      `protobuf:"bytes,2,rep,name=state,proto3" json:"state,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+	AccountValue  *float64               `protobuf:"fixed64,3,opt,name=account_value,json=accountValue,proto3,oneof" json:"account_value,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -2327,6 +2328,13 @@ func (x *UpdateBotStateRequest) GetState() map[string]string {
 		return x.State
 	}
 	return nil
+}
+
+func (x *UpdateBotStateRequest) GetAccountValue() float64 {
+	if x != nil && x.AccountValue != nil {
+		return *x.AccountValue
+	}
+	return 0
 }
 
 type UpdateBotRequest struct {
@@ -3751,14 +3759,16 @@ const file_trading_api_proto_rawDesc = "" +
 	"\n" +
 	"StateEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
-	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\xa9\x01\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\xe5\x01\n" +
 	"\x15UpdateBotStateRequest\x12\x15\n" +
 	"\x06bot_id\x18\x01 \x01(\tR\x05botId\x12?\n" +
-	"\x05state\x18\x02 \x03(\v2).trading.UpdateBotStateRequest.StateEntryR\x05state\x1a8\n" +
+	"\x05state\x18\x02 \x03(\v2).trading.UpdateBotStateRequest.StateEntryR\x05state\x12(\n" +
+	"\raccount_value\x18\x03 \x01(\x01H\x00R\faccountValue\x88\x01\x01\x1a8\n" +
 	"\n" +
 	"StateEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
-	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\xb2\x01\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01B\x10\n" +
+	"\x0e_account_value\"\xb2\x01\n" +
 	"\x10UpdateBotRequest\x12\x15\n" +
 	"\x06bot_id\x18\x01 \x01(\tR\x05botId\x12\x17\n" +
 	"\x04name\x18\x02 \x01(\tH\x00R\x04name\x88\x01\x01\x12%\n" +
@@ -4158,6 +4168,7 @@ func file_trading_api_proto_init() {
 	file_trading_api_proto_msgTypes[12].OneofWrappers = []any{}
 	file_trading_api_proto_msgTypes[13].OneofWrappers = []any{}
 	file_trading_api_proto_msgTypes[19].OneofWrappers = []any{}
+	file_trading_api_proto_msgTypes[31].OneofWrappers = []any{}
 	file_trading_api_proto_msgTypes[32].OneofWrappers = []any{}
 	type x struct{}
 	out := protoimpl.TypeBuilder{

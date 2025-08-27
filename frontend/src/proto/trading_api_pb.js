@@ -8848,7 +8848,8 @@ proto.trading.UpdateBotStateRequest.prototype.toObject = function(opt_includeIns
 proto.trading.UpdateBotStateRequest.toObject = function(includeInstance, msg) {
   var f, obj = {
 botId: jspb.Message.getFieldWithDefault(msg, 1, ""),
-stateMap: (f = msg.getStateMap()) ? f.toObject(includeInstance, undefined) : []
+stateMap: (f = msg.getStateMap()) ? f.toObject(includeInstance, undefined) : [],
+accountValue: (f = jspb.Message.getOptionalFloatingPointField(msg, 3)) == null ? undefined : f
   };
 
   if (includeInstance) {
@@ -8895,6 +8896,10 @@ proto.trading.UpdateBotStateRequest.deserializeBinaryFromReader = function(msg, 
         jspb.Map.deserializeBinary(message, reader, jspb.BinaryReader.prototype.readString, jspb.BinaryReader.prototype.readString, null, "", "");
          });
       break;
+    case 3:
+      var value = /** @type {number} */ (reader.readDouble());
+      msg.setAccountValue(value);
+      break;
     default:
       reader.skipField();
       break;
@@ -8934,6 +8939,13 @@ proto.trading.UpdateBotStateRequest.serializeBinaryToWriter = function(message, 
   f = message.getStateMap(true);
   if (f && f.getLength() > 0) {
     f.serializeBinary(2, writer, jspb.BinaryWriter.prototype.writeString, jspb.BinaryWriter.prototype.writeString);
+  }
+  f = /** @type {number} */ (jspb.Message.getField(message, 3));
+  if (f != null) {
+    writer.writeDouble(
+      3,
+      f
+    );
   }
 };
 
@@ -8976,6 +8988,42 @@ proto.trading.UpdateBotStateRequest.prototype.getStateMap = function(opt_noLazyC
 proto.trading.UpdateBotStateRequest.prototype.clearStateMap = function() {
   this.getStateMap().clear();
   return this;
+};
+
+
+/**
+ * optional double account_value = 3;
+ * @return {number}
+ */
+proto.trading.UpdateBotStateRequest.prototype.getAccountValue = function() {
+  return /** @type {number} */ (jspb.Message.getFloatingPointFieldWithDefault(this, 3, 0.0));
+};
+
+
+/**
+ * @param {number} value
+ * @return {!proto.trading.UpdateBotStateRequest} returns this
+ */
+proto.trading.UpdateBotStateRequest.prototype.setAccountValue = function(value) {
+  return jspb.Message.setField(this, 3, value);
+};
+
+
+/**
+ * Clears the field making it undefined.
+ * @return {!proto.trading.UpdateBotStateRequest} returns this
+ */
+proto.trading.UpdateBotStateRequest.prototype.clearAccountValue = function() {
+  return jspb.Message.setField(this, 3, undefined);
+};
+
+
+/**
+ * Returns whether this field is set.
+ * @return {boolean}
+ */
+proto.trading.UpdateBotStateRequest.prototype.hasAccountValue = function() {
+  return jspb.Message.getField(this, 3) != null;
 };
 
 

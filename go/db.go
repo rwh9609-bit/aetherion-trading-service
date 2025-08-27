@@ -258,10 +258,10 @@ func (s *DBService) GetBotsByUserID(ctx context.Context, userID string) ([]*pb.B
 	return bots, nil
 }
 
-func (s *DBService) SaveBotState(ctx context.Context, botID string, state map[string]interface{}) error {
+func (s *DBService) SaveBotState(ctx context.Context, botID string, state map[string]interface{}, accountValue float64) error {
 	stateJSON, _ := json.Marshal(state)
-	query := `UPDATE bots SET state = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2`
-	_, err := s.pool.Exec(ctx, query, stateJSON, botID)
+	query := `UPDATE bots SET state = $1, account_value = $3, updated_at = CURRENT_TIMESTAMP WHERE id = $2`
+	_, err := s.pool.Exec(ctx, query, stateJSON, botID, accountValue)
 	return err
 }
 
