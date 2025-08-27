@@ -35,6 +35,7 @@ static_resources:
                   expose_headers: grpc-status,grpc-message
                   max_age: "86400"
                   allow_credentials: false
+                  allow_private_network_access: true
                 routes:
                   - match: { prefix: "/trading.TradingService/" }
                     route:

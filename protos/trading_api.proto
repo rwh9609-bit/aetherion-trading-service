@@ -350,6 +350,11 @@ message VaRRequest {
     string risk_model = 2; // e.g. "historical", "monte_carlo"
     double confidence_level = 3; // e.g. 0.95
     double horizon_days = 4;
+  map<string, AssetHistory> asset_histories = 5; 
+}
+
+message AssetHistory {
+  repeated double returns = 1;
 }
 
 message VaRResponse {

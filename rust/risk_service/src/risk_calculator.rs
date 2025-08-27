@@ -1,25 +1,51 @@
-
-use rand::rngs::StdRng;
-use rand::SeedableRng;
+use rand::rngs::StdRng; 
 use rand_distr::{Distribution, Normal};
 use std::collections::HashMap;
 use nalgebra::{DMatrix, DVector, Cholesky};
+use std::fs::File;
+use std::io::{BufRead, BufReader};
+use std::path::Path;
 
+// Helper function to select Docker or local CSV path
+pub fn get_csv_path() -> String {
+    let docker_path = "/app/data/BTCUSD_1min.csv";
+    let local_path = "data/BTCUSD_1min.csv";
+    if Path::new(docker_path).exists() {
+        docker_path.to_string()
+    } else {
+        local_path.to_string()
+    }
+}
+
+pub fn load_log_returns_from_csv(path: &str, asset_name: &str) -> HashMap<String, Vec<f64>> {
+    let file = File::open(path).expect("CSV file not found");
+    let reader = BufReader::new(file);
+    let mut returns = Vec::new();
+
+    for line in reader.lines().skip(1) { // skip header
+        let line = line.unwrap();
+        let parts: Vec<&str> = line.split(',').collect();
+        if parts.len() == 2 {
+            if let Ok(ret) = parts[1].parse::<f64>() {
+                returns.push(ret);
+            }
+        }
+    }
+
+    let mut map = HashMap::new();
+    map.insert(asset_name.to_string(), returns);
+
+    map
+}
 
 pub struct RiskCalculator {
-    /// Random number generator for Monte Carlo simulation
-    rng: StdRng,
-    /// Historical daily returns for each asset
-    pub asset_returns: HashMap<String, Vec<f64>>, // asset -> daily returns
+    // No state needed here anymore
 }
 
 
 impl Default for RiskCalculator {
     fn default() -> Self {
-        Self {
-            rng: StdRng::from_entropy(),
-            asset_returns: HashMap::new(),
-        }
+        Self {}
     }
 }
 
@@ -27,13 +53,19 @@ impl Default for RiskCalculator {
 impl RiskCalculator {
 
     /// Calculate portfolio VaR using correlated Monte Carlo simulation
-    pub fn calculate_var(&mut self, positions: &HashMap<String, f64>, total_value: f64, confidence_level: f64) -> f64 {
+    pub fn calculate_var(
+        rng: &mut StdRng,
+        asset_returns: &HashMap<String, Vec<f64>>,
+        positions: &HashMap<String, f64>,
+        total_value: f64,
+        confidence_level: f64,
+    ) -> f64 {
         let assets: Vec<String> = positions.keys().cloned().collect();
         let n = assets.len();
         if n == 0 { return 0.0; }
 
         // Build matrix of returns (rows: days, cols: assets)
-        let min_len = assets.iter().map(|a| self.asset_returns.get(a).map(|v| v.len()).unwrap_or(0)).min().unwrap_or(0);
+        let min_len = assets.iter().map(|a| asset_returns.get(a).map(|v| v.len()).unwrap_or(0)).min().unwrap_or(0);
         if min_len < 2 {
             // Not enough data, fallback to static volatility
             let fallback_vol = 0.02;
@@ -41,7 +73,7 @@ impl RiskCalculator {
             let num_simulations = 10_000;
             let mut portfolio_values = Vec::with_capacity(num_simulations);
             for _ in 0..num_simulations {
-                let shock = normal.sample(&mut self.rng);
+                let shock = normal.sample(rng);
                 let simulated_value = total_value * (1.0 + shock);
                 portfolio_values.push(simulated_value);
             }
@@ -53,7 +85,7 @@ impl RiskCalculator {
         // Build returns matrix
         let mut returns_matrix = DMatrix::zeros(min_len, n);
         for (j, asset) in assets.iter().enumerate() {
-            let rets = &self.asset_returns[asset];
+            let rets = &asset_returns[asset];
             for i in 0..min_len {
                 returns_matrix[(i, j)] = rets[i];
             }
@@ -82,7 +114,7 @@ impl RiskCalculator {
         if let Some(chol) = Cholesky::new(cov_matrix.clone()) {
             for _ in 0..num_simulations {
                 // Generate independent standard normals
-                let z: DVector<f64> = DVector::from_iterator(n, (0..n).map(|_| Normal::new(0.0, 1.0).unwrap().sample(&mut self.rng)));
+                let z: DVector<f64> = DVector::from_iterator(n, (0..n).map(|_| Normal::new(0.0, 1.0).unwrap().sample(rng)));
                 // Correlated returns
                 let correlated = &chol.l() * z + DVector::from_vec(mean_vec.clone());
                 // Portfolio return
@@ -96,7 +128,7 @@ impl RiskCalculator {
                 let mut port_ret = 0.0;
                 for (j, w) in weights.iter().enumerate() {
                     let var = cov_matrix[(j, j)].abs();
-                    let r = Normal::new(mean_vec[j], var.sqrt()).unwrap().sample(&mut self.rng);
+                    let r = Normal::new(mean_vec[j], var.sqrt()).unwrap().sample(rng);
                     port_ret += r * w;
                 }
                 let simulated_value = total_value * (1.0 + port_ret);
@@ -106,10 +138,5 @@ impl RiskCalculator {
         portfolio_values.sort_by(|a, b| a.partial_cmp(b).unwrap());
         let var_index = ((1.0 - confidence_level) * num_simulations as f64) as usize;
         total_value - portfolio_values[var_index]
-    }
-
-    #[cfg(test)]
-    pub fn inject_asset_history(&mut self, asset: &str, samples: &[f64]) {
-        self.add_asset_history(asset, samples);
     }
 }

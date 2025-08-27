@@ -203,9 +203,9 @@ const withRetry = async (operation, operationName = 'Operation', retries = MAX_R
 
 export async function fetchRiskMetrics(bot) {
   if (!bot) return {};
-  // Fetch the bot's portfolio first
-  const portfolioResp = await getPortfolioForBot(bot.bot_id);
-  // VaRRequest expects a PortfolioResponse message
+  const botId = bot.botId || bot.bot_id;
+  if (!botId) throw new Error('Bot ID missing');
+  const portfolioResp = await getPortfolioForBot(botId);
   const varReq = new VaRRequest();
   varReq.setCurrentPortfolio(portfolioResp);
   varReq.setRiskModel("monte_carlo");
@@ -214,7 +214,15 @@ export async function fetchRiskMetrics(bot) {
 
   return new Promise((resolve, reject) => {
     riskClient.calculateVaR(varReq, createMetadata(), (err, resp) => {
-      if (err) return reject(err);
+      if (err) {
+        console.error('gRPC RiskService error:', err);
+        // Optionally show a user-friendly error in the UI
+        return reject(err);
+      }
+      if (!resp) {
+        console.error('No response from RiskService (network/protocol error)');
+        return reject(new Error('No response from RiskService'));
+      }
       const obj = resp.toObject();
       resolve({
         valueAtRisk: decimalToNumber(obj.valueAtRisk),

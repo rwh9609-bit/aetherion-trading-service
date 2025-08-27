@@ -3,7 +3,7 @@
 import grpc
 import warnings
 
-from . import trading_api_pb2 as trading__api__pb2
+import trading_api_pb2 as trading__api__pb2
 
 GRPC_GENERATED_VERSION = '1.74.0'
 GRPC_VERSION = grpc.__version__

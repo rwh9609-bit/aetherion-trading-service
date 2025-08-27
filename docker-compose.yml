@@ -8,6 +8,8 @@ services:
       - RUST_LOG=info
     expose:
       - "50052"
+    ports:
+      - "50052:50052"
   trading:
     build:
       context: .

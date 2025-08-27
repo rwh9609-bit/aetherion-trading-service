@@ -40,6 +40,11 @@ def convert_numpy(obj):
         return tuple(convert_numpy(v) for v in obj)
     else:
         return obj
+    
+def calculate_returns(prices):
+    prices = np.array(prices)
+    returns = np.diff(prices) / prices[:-1]
+    return returns.tolist()
 
 async def update_bot_state(bot_stub, bot_id, state_dict, metadata):
     from protos import trading_api_pb2
@@ -149,11 +154,35 @@ class TradingOrchestrator:
                         ],
                         cash_balance=trading_api_pb2.DecimalValue(units=0, nanos=0)
                     )
+
+                    # ...existing code...
+                    portfolio = trading_api_pb2.PortfolioResponse(
+                        bot_id=bot.bot_id,
+                        total_portfolio_value=trading_api_pb2.DecimalValue(units=int(self.account_value), nanos=int((self.account_value % 1) * 1e9)),
+                        positions=[
+                            trading_api_pb2.PortfolioPosition(
+                                symbol=bot.symbol,
+                                quantity=trading_api_pb2.DecimalValue(units=int(signal['size']), nanos=int((signal['size'] % 1) * 1e9)),
+                                average_price=trading_api_pb2.DecimalValue(units=int(price), nanos=int((price % 1) * 1e9)),
+                                market_value=trading_api_pb2.DecimalValue(units=int(price * signal['size']), nanos=int(((price * signal['size']) % 1) * 1e9)),
+                                unrealized_pnl=trading_api_pb2.DecimalValue(units=0, nanos=0),
+                                exposure_pct=trading_api_pb2.DecimalValue(units=0, nanos=0)
+                            )
+                        ],
+                        cash_balance=trading_api_pb2.DecimalValue(units=0, nanos=0)
+                    )
+                    # Load historical prices and calculate returns
+                    hist_prices = load_backfill_prices(f"data/BTCUSD_1min.csv", 30)
+                    asset_returns = calculate_returns(hist_prices)
+                    asset_history = trading_api_pb2.AssetHistory(returns=asset_returns)
+                    asset_histories = {bot.symbol: asset_history}
+
                     var_request = trading_api_pb2.VaRRequest(
                         current_portfolio=portfolio,
                         risk_model="monte_carlo",
                         confidence_level=0.95,
-                        horizon_days=1
+                        horizon_days=1,
+                        asset_histories=asset_histories
                     )
                     # print(f"Calculating VaR for bot {bot.name} with portfolio: {portfolio}")
                     try:
