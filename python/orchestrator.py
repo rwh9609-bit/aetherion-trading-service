@@ -100,6 +100,7 @@ class TradingOrchestrator:
         if not self.orchestrator_user_id:
             print("Error: ORCHESTRATOR_USER_ID environment variable not set.")
             exit(1)
+        self.positions = {}  # bot_id -> position size
 
     def _generate_jwt(self):
         if not self.auth_secret:
@@ -135,8 +136,11 @@ class TradingOrchestrator:
             else:
                 print(f"[INFO] Trade signal for bot {bot.name}: action={signal['action']}, size={signal['size']}, stop_loss={signal.get('stop_loss')}")
 
+                bot_id = bot.bot_id
+                position = self.positions.get(bot_id, 0.0)
                 if signal['action'] != 'hold' and signal['size'] > 0:
                     print(f"Generated signal for bot {bot.name}: {json.dumps(signal)}")
+
                     
                     portfolio = trading_api_pb2.PortfolioResponse(
                         bot_id=bot.bot_id,
@@ -207,15 +211,27 @@ class TradingOrchestrator:
                                     nanos=int((signal['size'] % 1) * 1e9)
                                 ),
                             )
+                            if signal['action'].lower() == 'buy' and bot.account_value <= 0:
+                                print(f"[WARN] Bot {bot.name} tried to buy with no funds. Buy blocked.")
+                                return
+                            if signal['action'].lower() == 'sell' and position <= 0:
+                                print(f"[WARN] Bot {bot.name} tried to sell with no position. Sell blocked.")
+                                return
+
                             order_response = await order_stub.CreateOrder(order_request, metadata=metadata)
                             print(f"Order submitted for bot {bot.name}: {order_response.status}")
-                            # --- PATCH: update account_value after trade ---
-                            # Example: subtract cost for buy, add for sell (simplified)
+
+                                # --- PATCH: update account_value after trade ---
+                                # Example: subtract cost for buy, add for sell (simplified)
                             trade_value = float(price) * float(signal['size'])
                             if signal['action'].lower() == 'buy':
-                                bot.account_value -= trade_value
+                                position += signal['size']
+                                bot.account_value -= float(price) * float(signal['size'])
                             elif signal['action'].lower() == 'sell':
-                                bot.account_value += trade_value
+                                position -= signal['size']
+                                bot.account_value += float(price) * float(signal['size'])
+
+                            self.positions[bot_id] = position
                             # You may want to use actual PnL/cash from order_response if available
                             # ----------------------------------------------
                         else:
@@ -232,8 +248,8 @@ class TradingOrchestrator:
                 "bot_name": bot.name,
                 "strategy": bot.strategy,
                 "account_value": float(bot.account_value),
+                "position": float(self.positions.get(bot.bot_id, 0.0)),  # <-- persist position
             }
-            # print(f"Bot {bot.name} state updated: {state}")
             await update_bot_state(bot_stub, bot.bot_id, state, metadata, account_value=float(bot.account_value))
 
         except Exception as e:
@@ -259,18 +275,22 @@ class TradingOrchestrator:
                         metadata.append(('authorization', f'Bearer {token}'))
 
                     bot_list = await bot_stub.ListBots(trading_api_pb2.Empty(), metadata=metadata)
-                    
                     tasks = []
                     for bot in bot_list.bots:
+                        # Restore position from bot.state if present
+                        pos = 0.0
+                        if hasattr(bot, "state") and "position" in bot.state:
+                            try:
+                                pos = float(bot.state["position"])
+                            except Exception:
+                                pos = 0.0
+                        self.positions[bot.bot_id] = pos  # <-- restore position before processing
                         task = asyncio.create_task(
                             self.process_bot(bot, trading_channel, risk_channel, metadata, http_session)
                         )
                         tasks.append(task)
-                    
                     await asyncio.gather(*tasks)
-
                     await asyncio.sleep(1)
-
                 except Exception as e:
                     print(f"Error in orchestrator loop: {str(e)}")
                     traceback.print_exc()
