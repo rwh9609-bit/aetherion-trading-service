@@ -84,7 +84,7 @@ We welcome contributors! Aetherion is an open-source project, and we'd love your
 
 ## Community & Support
 
-*   **Discord:** Join our [Discord server](https://discord.gg/aetherion) to chat with other users and developers.
+*   **Discord:** Join our [Discord server](https://discord.gg/Kjd3c6h3My) to chat with other users and developers.
 *   **GitHub Issues:** If you encounter a bug or have a feature request, please [file an issue](https://github.com/xeratooth/multilanguage/issues).
 
 ## License
