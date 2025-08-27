@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Box, Typography, Chip } from '@mui/material';
-import { getBotState } from '../services/grpcClient';  
+import { streamBotState } from '../services/grpcClient';
 
 function BotView({ bot }) {
   const [botState, setBotState] = useState(bot || null);
@@ -12,18 +12,24 @@ function BotView({ bot }) {
       setBotState(bot || null);
       return;
     }
-    async function fetchBotState() {
-      const state = await getBotState(bot.botId);
-      console.log("Fetched bot state:", state); 
-      // Merge static info with live state, only overwrite if value is present
-      setBotState({ ...bot, ...Object.fromEntries(Object.entries(state).filter(([_, v]) => v !== '' && v !== null && v !== undefined)) });
-      if (state.last_signal === "hold") {
+
+    const handleStateUpdate = (newState) => {
+      console.log("Streamed bot state:", newState);
+      setBotState({ ...bot, ...Object.fromEntries(Object.entries(newState).filter(([_, v]) => v !== '' && v !== null && v !== undefined)) });
+      if (newState.state && newState.state.last_signal === "hold") {
         setHoldCount(count => count + 1);
       }
-    }
-    fetchBotState();
-    const interval = setInterval(fetchBotState, 5000);
-    return () => clearInterval(interval);
+    };
+
+    const handleError = (error) => {
+      console.error('Error streaming bot state:', error);
+    };
+
+    const cleanup = streamBotState(bot.botId, handleStateUpdate, handleError);
+
+    return () => {
+      cleanup();
+    };
   }, [bot]);
 
   useEffect(() => {

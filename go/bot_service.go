@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"log"
 	"os"
-	"path/filepath"
 	"sync"
 	"time"
 
@@ -13,6 +12,8 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
+
+	"google.golang.org/grpc/metadata"
 )
 
 type botRegistry struct {
@@ -54,15 +55,11 @@ func newBotRegistry() *botRegistry {
 		} else {
 			log.Printf("bot registry postgres connect failed: %v", err)
 		}
-	} else {
-		log.Printf("bot registry postgres dsn not set, using file storage")
 	}
-	dir := "data"
-	_ = os.MkdirAll(dir, 0o755)
-	r.path = filepath.Join(dir, "bots.json")
-	r.loadFromFile()
+	// There is no file storage
 	return r
 }
+
 func ensureBotState(b *pb.Bot) {
 	if b.State == nil {
 		b.State = make(map[string]string)
@@ -160,9 +157,15 @@ func (s *botServiceServer) CreateBot(ctx context.Context, req *pb.CreateBotReque
 	}
 
 	id := uuid.New().String()
-	userID, ok := ctx.Value("user_id").(string)
-	if !ok || userID == "" {
-		log.Printf("[CreateBot] user_id missing from context")
+	var userID string
+	if md, ok := metadata.FromIncomingContext(ctx); ok {
+		vals := md.Get("user_id")
+		if len(vals) > 0 {
+			userID = vals[0]
+		}
+	}
+	if userID == "" {
+		log.Printf("[CreateBot] user_id missing from metadata")
 		return &pb.StatusResponse{Success: false, Message: "auth required"}, nil
 	}
 	if _, err := uuid.Parse(userID); err != nil {
@@ -270,6 +273,45 @@ func (s *botServiceServer) GetBotStatus(ctx context.Context, req *pb.BotIdReques
 		return &pb.Bot{}, nil
 	}
 	return bot, nil
+}
+
+func (s *botServiceServer) StreamBotStatus(req *pb.BotIdRequest, stream pb.BotService_StreamBotStatusServer) error {
+	botID := req.GetBotId()
+	log.Printf("Starting stream for bot %s", botID)
+
+	// Initial send
+	s.reg.mu.RLock()
+	bot, ok := s.reg.bots[botID]
+	s.reg.mu.RUnlock()
+	if !ok {
+		return nil // Or an error
+	}
+	if err := stream.Send(bot); err != nil {
+		return err
+	}
+
+	ticker := time.NewTicker(1 * time.Second)
+	defer ticker.Stop()
+
+	for {
+		select {
+		case <-ticker.C:
+			s.reg.mu.RLock()
+			bot, ok := s.reg.bots[botID]
+			s.reg.mu.RUnlock()
+			if !ok {
+				log.Printf("Stopping stream for bot %s, bot not found", botID)
+				return nil
+			}
+			if err := stream.Send(bot); err != nil {
+				log.Printf("Error sending bot status to stream for bot %s: %v", botID, err)
+				return err
+			}
+		case <-stream.Context().Done():
+			log.Printf("Stopping stream for bot %s, client disconnected", botID)
+			return nil
+		}
+	}
 }
 
 func (s *botServiceServer) UpdateBotState(ctx context.Context, req *pb.UpdateBotStateRequest) (*pb.StatusResponse, error) {

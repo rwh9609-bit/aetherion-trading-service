@@ -20,10 +20,10 @@ func TestGetBotsByUserID(t *testing.T) {
 	dbService := &DBService{pool: mock}
 
 	userID := "test-user-id"
-	rows := pgxmock.NewRows([]string{"id", "user_id", "name", "symbol", "strategy", "parameters", "is_active", "account_value"}).
-		AddRow("bot1", userID, "Test Bot 1", "BTC/USD", "Mean Reversion", "{\"threshold\":1.0}", true, 1000.0)
+	var rows = pgxmock.NewRows([]string{"id", "user_id", "name", "symbol", "strategy", "parameters", "is_active", "account_value", "state"}).
+		AddRow("bot1", userID, "Test Bot 1", "BTC/USD", "Mean Reversion", "{\"threshold\":1.0}", true, 1000.0, "{}")
 
-	mock.ExpectQuery(`SELECT id, user_id, name, symbol, strategy, parameters, is_active, account_value FROM bots WHERE user_id = \$1`).WithArgs(userID).WillReturnRows(rows)
+	mock.ExpectQuery(`SELECT id, user_id, name, symbol, strategy, parameters, is_active, account_value, state FROM bots WHERE user_id = $1.*`).WithArgs(userID).WillReturnRows(rows)
 
 	bots, err := dbService.GetBotsByUserID(context.Background(), userID)
 
@@ -43,10 +43,10 @@ func TestGetPortfolioByBotID(t *testing.T) {
 	dbService := &DBService{pool: mock}
 
 	botID := "test-bot-id"
-	rows := pgxmock.NewRows([]string{"symbol", "quantity", "average_price"}).
+	var rows = pgxmock.NewRows([]string{"symbol", "quantity", "average_price"}).
 		AddRow("BTC/USD", 1.5, 50000.0)
 
-	mock.ExpectQuery(`SELECT symbol, quantity, average_price FROM portfolios WHERE bot_id = \$1`).WithArgs(botID).WillReturnRows(rows)
+	mock.ExpectQuery(`SELECT symbol, quantity, average_price FROM portfolios WHERE bot_id = $1.*`).WithArgs(botID).WillReturnRows(rows)
 
 	portfolio, err := dbService.GetPortfolioByBotID(context.Background(), botID)
 

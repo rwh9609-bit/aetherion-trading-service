@@ -11,7 +11,13 @@ import {
   TickStreamRequest,
   SymbolRequest,
   OrderRequest,
-  OrderResponse
+  OrderResponse,
+  BotIdRequest,
+  Empty,
+  MomentumRequest,
+  GetOrderRequest,
+  ListOrdersRequest,
+  CreateBotRequest
 } from '../proto/trading_api_pb.js'; // explicit extension already present
 
 // Determine gRPC-web host.
@@ -226,8 +232,7 @@ export async function fetchRiskMetrics(bot) {
 //     Bot Service Helpers      //
 //                              //
 //////////////////////////////////
-export const getBotState = async (botId) => {
-  const { BotIdRequest } = await import('../proto/trading_api_pb.js');
+export const getBotState = (botId) => {
   const req = new BotIdRequest();
   req.setBotId(botId);
   return new Promise((resolve, reject) => {
@@ -254,8 +259,35 @@ export const getBotState = async (botId) => {
   });
 };
 
+export const streamBotState = (botId, onData, onError) => {
+  const req = new BotIdRequest();
+  req.setBotId(botId);
+
+  const stream = botClient.streamBotStatus(req, createMetadata());
+
+  stream.on('data', (resp) => {
+    const obj = resp.toObject();
+    if (Array.isArray(obj.stateMap)) {
+      obj.state = Object.fromEntries(obj.stateMap);
+    }
+    onData(obj);
+  });
+
+  stream.on('error', (err) => {
+    console.error('Bot state stream error:', err);
+    onError && onError(err);
+  });
+
+  stream.on('end', () => {
+    console.log('Bot state stream ended.');
+  });
+
+  return () => {
+    stream.cancel();
+  };
+};
+
 export const createBot = async ({ name, symbol, strategy, parameters, userId, account_value }) => {
-  const { CreateBotRequest } = await import('../proto/trading_api_grpc_web_pb.js');
   console.log('[grpcClient] Sending createBot request:', { name, symbol, strategy, parameters, userId, account_value });
   return new Promise((resolve, reject) => {
     const req = new CreateBotRequest();
@@ -274,9 +306,8 @@ export const createBot = async ({ name, symbol, strategy, parameters, userId, ac
   });
 };
 
-export const listBots = async () => {
+export const listBots = () => {
   console.log('[grpcClient] Calling listBots...');
-  const { Empty } = await import('../proto/trading_api_pb.js');
   const req = new Empty();
   return new Promise((resolve, reject) => {
     botClient.listBots(req, createMetadata(), (err, resp) => {
@@ -290,9 +321,8 @@ export const listBots = async () => {
   });
 };
 
-export const startBot = async (id) => {
-  const { BotIdRequest } = await import('../proto/trading_api_pb.js'); // Corrected import
-  const req = new BotIdRequest(); req.setBotId(id); // Corrected setter
+export const startBot = (id) => {
+  const req = new BotIdRequest(); req.setBotId(id);
   return new Promise((resolve, reject) => {
     botClient.startBot(req, createMetadata(), (err, resp) => {
       if (err) return reject(err);
@@ -301,9 +331,8 @@ export const startBot = async (id) => {
   });
 };
 
-export const stopBot = async (id) => {
-  const { BotIdRequest } = await import('../proto/trading_api_pb.js'); // Corrected import
-  const req = new BotIdRequest(); req.setBotId(id); // Corrected setter
+export const stopBot = (id) => {
+  const req = new BotIdRequest(); req.setBotId(id);
   return new Promise((resolve, reject) => {
     botClient.stopBot(req, createMetadata(), (err, resp) => {
       if (err) return reject(err);
@@ -312,9 +341,8 @@ export const stopBot = async (id) => {
   });
 };
 
-export const getBotStatus = async (id) => {
-  const { BotIdRequest } = await import('../proto/trading_api_pb.js'); // Corrected import
-  const req = new BotIdRequest(); req.setBotId(id); // Corrected setter
+export const getBotStatus = (id) => {
+  const req = new BotIdRequest(); req.setBotId(id);
   return new Promise((resolve, reject) => {
     botClient.getBotStatus(req, createMetadata(), (err, resp) => {
       if (err) return reject(err);
@@ -323,8 +351,7 @@ export const getBotStatus = async (id) => {
   });
 };
 
-export const deleteBot = async (id) => {
-  const { BotIdRequest } = await import('../proto/trading_api_pb.js');
+export const deleteBot = (id) => {
   const req = new BotIdRequest(); req.setBotId(id);
   return new Promise((resolve, reject) => {
     botClient.deleteBot(req, createMetadata(), (err, resp) => {
@@ -340,8 +367,7 @@ export const deleteBot = async (id) => {
 //                              //
 //////////////////////////////////
 
-export const getOrder = async (bot_id) => {
-  const { GetOrderRequest } = await import('../proto/trading_api_pb.js');
+export const getOrder = (bot_id) => {
   const req = new GetOrderRequest(); req.setBotId(bot_id);
   return new Promise((resolve, reject) => {
     orderClient.getOrder(req, createMetadata(), (err, resp) => {
@@ -351,8 +377,7 @@ export const getOrder = async (bot_id) => {
   });
 };
 
-export const listOrders = async ({ bot_id, limit = 20, offset = 0 }) => {
-  const { ListOrdersRequest } = await import('../proto/trading_api_pb.js');
+export const listOrders = ({ bot_id, limit = 20, offset = 0 }) => {
   const req = new ListOrdersRequest();
   if (bot_id) req.setBotId(bot_id); // Only set if non-empty
   req.setLimit(limit);
@@ -413,8 +438,7 @@ export const removeSymbol = async (symbol) => {
   });
 };
 
-export const listSymbols = async () => {
-  const { Empty } = await import('../proto/trading_api_pb.js');
+export const listSymbols = () => {
   const req = new Empty();
   return new Promise((resolve, reject) => {
     tradingClient.listSymbols(req, createMetadata(), (err, resp) => {
@@ -425,8 +449,7 @@ export const listSymbols = async () => {
 };
 
 // Fetch server-side momentum metrics (optional symbol filter array)
-export const getMomentum = async (symbols=[]) => {
-  const { MomentumRequest } = await import('../proto/trading_api_pb.js');
+export const getMomentum = (symbols=[]) => {
   const req = new MomentumRequest();
   req.setSymbolsList(symbols);
   return new Promise((resolve, reject) => {
@@ -546,4 +569,3 @@ export const streamOrderBook = (symbol, onData, onError) => {
 
   return setupStream();
 };
-
