@@ -1,24 +1,40 @@
 import React, { useState, useEffect } from 'react';
-import { Box, Typography, Chip } from '@mui/material';
+import { Box, Typography, Table, TableBody, TableCell, TableHead, TableRow, Divider } from '@mui/material';
 import { streamBotState } from '../services/grpcClient';
+import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 
 function BotView({ bot }) {
   const [botState, setBotState] = useState(bot || null);
-  const [holdCount, setHoldCount] = useState(0);
+  const [history, setHistory] = useState([]);
+  // Count signals in history
+  const signalCounts = history.reduce((acc, entry) => {
+    const signal = (entry.signal || '').toUpperCase();
+    if (signal === "BUY") acc.buy += 1;
+    else if (signal === "SELL") acc.sell += 1;
+    else if (signal === "HOLD") acc.hold += 1;
+    return acc;
+  }, { buy: 0, sell: 0, hold: 0 });
+
 
   useEffect(() => {
     if (!bot || !bot.botId) {
-      console.warn('[BotView] Invalid bot or botId:', bot);
       setBotState(bot || null);
       return;
     }
 
     const handleStateUpdate = (newState) => {
-      console.log("Streamed bot state:", newState);
       setBotState({ ...bot, ...Object.fromEntries(Object.entries(newState).filter(([_, v]) => v !== '' && v !== null && v !== undefined)) });
-      if (newState.state && newState.state.last_signal === "hold") {
-        setHoldCount(count => count + 1);
-      }
+
+      setHistory(prev => {
+        const entry = {
+          signal: newState.state?.last_signal || '',
+          zscore: Number(newState.state?.zscore) || 0,
+          price: Number(newState.state?.price) || 0,
+          size: Number(newState.state?.size) || 0,
+          timestamp: newState.state?.timestamp || Date.now()/1000,
+        };
+        return [entry, ...prev].slice(0, 20);
+      });
     };
 
     const handleError = (error) => {
@@ -32,25 +48,13 @@ function BotView({ bot }) {
     };
   }, [bot]);
 
-  useEffect(() => {
-    const style = document.createElement('style');
-    style.innerHTML = `
-      @keyframes flash {
-        0% { opacity: 1; }
-        50% { opacity: 0.2; }
-        100% { opacity: 1; }
-      }
-    `;
-    document.head.appendChild(style);
-    return () => {
-      document.head.removeChild(style);
-    };
-  }, []);
-
   if (!botState) return <Box sx={{ p:2 }}><Typography>Loading...</Typography></Box>;
 
   const state = botState.state && Object.keys(botState.state).length > 0 ? botState.state : botState;
   const hasLiveState = !!state.last_signal || !!state.zscore || !!state.price;
+
+  // Portfolio rendering (if available)
+  const portfolio = botState.portfolio || bot.portfolio;
 
   return (
     <Box sx={{ p:2 }}>
@@ -61,39 +65,95 @@ function BotView({ bot }) {
       <Typography variant="body2"><strong>Symbol:</strong> {botState.symbol || "N/A"}</Typography>
       <Typography variant="body2"><strong>Status:</strong> {botState.isActive ? "running" : "stopped"}</Typography>
       <Typography variant="body2"><strong>Account Value:</strong> {state.account_value || botState.accountValue || "N/A"}</Typography>
+
+      {/* Live Metrics Panel */}
+      {hasLiveState && (
+        <Box sx={{ mt:2, mb:2, p:2, bgcolor: "#212121", borderRadius: 2, color: "#fff" }}>
+          <Typography variant="subtitle1" fontWeight={600}>Live Metrics</Typography>
+          <Typography variant="body2">Signal: <strong>{state.last_signal}</strong></Typography>
+          <Typography variant="body2">Z-Score: <strong>{state.zscore}</strong></Typography>
+          <Typography variant="body2">Price: <strong>{state.price}</strong></Typography>
+          <Typography variant="body2">Size: <strong>{state.size}</strong></Typography>
+          <Typography variant="body2">Timestamp: <strong>{state.timestamp ? new Date(Number(state.timestamp) * 1000).toLocaleTimeString() : '-'}</strong></Typography>
+          <Divider sx={{ my:1, bgcolor: "#555" }} />
+          <Typography variant="body2">
+            <strong>Buys:</strong> {signalCounts.buy} &nbsp;
+            <strong>Sells:</strong> {signalCounts.sell} &nbsp;
+            <strong>Holds:</strong> {signalCounts.hold}
+          </Typography>
+        </Box>
+      )}
+
+      {/* Portfolio Section */}
+      {portfolio && (
+        <>
+          <Divider sx={{ my:2 }} />
+          <Typography variant="subtitle1" fontWeight={600}>Portfolio</Typography>
+          <Table size="small">
+            <TableHead>
+              <TableRow>
+                <TableCell>Asset</TableCell>
+                <TableCell>Amount</TableCell>
+                <TableCell>Value</TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {Object.entries(portfolio).map(([asset, info]) => (
+                <TableRow key={asset}>
+                  <TableCell>{asset}</TableCell>
+                  <TableCell>{info.amount}</TableCell>
+                  <TableCell>{info.value}</TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </>
+      )}
+
+      {/* Graphs Section */}
+      {history.length > 1 && (
+        <>
+          <Divider sx={{ my:2 }} />
+          <Typography variant="subtitle1" fontWeight={600}>Metrics Over Time</Typography>
+          <ResponsiveContainer width="100%" height={200}>
+            <LineChart data={[...history].reverse()}>
+              <XAxis dataKey="timestamp" tickFormatter={ts => new Date(ts * 1000).toLocaleTimeString()} />
+              <YAxis />
+              <Tooltip labelFormatter={ts => new Date(ts * 1000).toLocaleTimeString()} />
+              <Line type="monotone" dataKey="price" stroke="#1976d2" name="Price" />
+              <Line type="monotone" dataKey="zscore" stroke="#ff9800" name="Z-Score" />
+            </LineChart>
+          </ResponsiveContainer>
+        </>
+      )}
+
+      {/* History Table */}
       {hasLiveState ? (
         <>
-          <Typography variant="body2" sx={{ display:'flex', alignItems:'center', gap:1 }}>
-            <strong>Last Signal:</strong> {state.last_signal || "N/A"}
-            {state.last_signal === "hold" && (
-              <>
-                <span
-                  style={{
-                    display: 'inline-block',
-                    width: 14,
-                    height: 14,
-                    borderRadius: '50%',
-                    background: 'radial-gradient(circle at 40% 40%, #ff1744 70%, #b71c1c 100%)',
-                    boxShadow: '0 0 8px 2px #ff1744',
-                    marginLeft: 8,
-                    animation: 'flash 1s infinite'
-                  }}
-                />
-                <Chip
-                  label={`Hold count: ${holdCount}`}
-                  color="error"
-                  size="small"
-                  sx={{ ml:1, fontWeight:600, bgcolor:'#ffebee', color:'#b71c1c' }}
-                />
-              </>
-            )}
-          </Typography>
-          <Typography variant="body2"><strong>Z-Score:</strong> {state.zscore || "N/A"}</Typography>
-          <Typography variant="body2"><strong>Size:</strong> {state.size || "N/A"}</Typography>
-          <Typography variant="body2"><strong>Price:</strong> {state.price || "N/A"}</Typography>
-          <Typography variant="body2">
-            <strong>Timestamp:</strong> {state.timestamp ? new Date(Number(state.timestamp) * 1000).toLocaleString() : "N/A"}
-          </Typography>
+          <Divider sx={{ my:2 }} />
+          <Typography variant="body2" sx={{ mb:1, fontWeight:600 }}>Recent Signals & Metrics</Typography>
+          <Table size="small">
+            <TableHead>
+              <TableRow>
+                <TableCell>Time</TableCell>
+                <TableCell>Signal</TableCell>
+                <TableCell>Z-Score</TableCell>
+                <TableCell>Size</TableCell>
+                <TableCell>Price</TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {history.map((entry, idx) => (
+                <TableRow key={idx}>
+                  <TableCell>{entry.timestamp ? new Date(Number(entry.timestamp) * 1000).toLocaleTimeString() : '-'}</TableCell>
+                  <TableCell>{entry.signal}</TableCell>
+                  <TableCell>{entry.zscore}</TableCell>
+                  <TableCell>{entry.size}</TableCell>
+                  <TableCell>{entry.price}</TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
         </>
       ) : (
         <Typography variant="body2" sx={{ mt:2, color: 'text.secondary' }}>
