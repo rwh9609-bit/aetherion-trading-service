@@ -54,13 +54,15 @@ const submit = async (e) => {
           return;
         }
         token = loginRes.token;
-        userObj = { username: loginRes.username, role: loginRes.role, email: loginRes.email };
+        userObj = { username: loginRes.username, role: loginRes.role, email: loginRes.email, user_id: loginRes.user_id };
       } else {
         token = res.token;
-        userObj = { username: res.username, role: res.role, email: res.email };
+        userObj = { username: res.username, role: res.role, email: res.email, user_id: res.user_id  };
       }
       localStorage.setItem('authToken', token);
-      onAuth(userObj);
+      localStorage.setItem('user', JSON.stringify(userObj)); // <-- FIX: use userObj
+      localStorage.setItem('userRole', userObj.role);        // <-- FIX: use userObj 
+      onAuth && onAuth(userObj);
     }
   } catch (err) {
     setError(err.message || 'Request failed');
@@ -68,6 +70,7 @@ const submit = async (e) => {
     setLoading(false);
   }
 };
+
   return (
     <Card sx={{ maxWidth: 420, margin: '48px auto' }}>
       <CardContent>

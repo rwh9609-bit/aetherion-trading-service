@@ -89,8 +89,14 @@ const createMetadata = () => {
     'X-Grpc-Web': '1',
     'Content-Type': 'application/grpc-web+proto',
   };
+  const authToken = localStorage.getItem('authToken');
   if (authToken) {
     meta['authorization'] = `Bearer ${authToken}`;
+  }
+  // Add user_id if available
+  const user = JSON.parse(localStorage.getItem('user') || '{}');
+  if (user && user.user_id) {
+    meta['user_id'] = user.user_id;
   }
   return meta;
 };
@@ -137,7 +143,10 @@ export const loginUser = async (username, password) => {
     authClient.login(req, createMetadata(), (err, resp) => {
       if (err) return resolve({ success:false, message: err.message });
       const obj = resp.toObject();
-      if (obj.success && obj.token) setAuthToken(obj.token);
+      if (obj.success && obj.token) {
+        setAuthToken(obj.token);
+        if (obj.role) localStorage.setItem('userRole', obj.role); // <-- Save role
+      }
       resolve(obj);
     });
   });
@@ -295,15 +304,16 @@ export const streamBotState = (botId, onData, onError) => {
   };
 };
 
-export const createBot = async ({ name, symbol, strategy, parameters, userId, account_value }) => {
-  console.log('[grpcClient] Sending createBot request:', { name, symbol, strategy, parameters, userId, account_value });
+export const createBot = async ({ name, symbol, strategy, parameters, account_value }) => {
+  console.log('[grpcClient] Sending createBot request:', { name, symbol, strategy, parameters, account_value });
   return new Promise((resolve, reject) => {
     const req = new CreateBotRequest();
-    req.setName(name); req.setSymbol(symbol); req.setStrategy(strategy);
-    if (userId) req.setUserId(userId);
-    const map = req.getParametersMap();
+    req.setName(name);
+    req.setSymbol(symbol);
+    req.setStrategy(strategy);
     req.setAccountValue(account_value);
-    Object.entries(parameters || {}).forEach(([k,v]) => map.set(k, String(v)));
+    const map = req.getParametersMap();
+    Object.entries(parameters || {}).forEach(([k, v]) => map.set(k, String(v)));
     botClient.createBot(req, createMetadata(), (err, resp) => {
       if (err) {
         console.error('[grpcClient] createBot error:', err);

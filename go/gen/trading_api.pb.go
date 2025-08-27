@@ -1822,6 +1822,7 @@ type AuthResponse struct {
 	Role          string                 `protobuf:"bytes,5,opt,name=role,proto3" json:"role,omitempty"`
 	Username      string                 `protobuf:"bytes,6,opt,name=username,proto3" json:"username,omitempty"`
 	Email         string                 `protobuf:"bytes,7,opt,name=email,proto3" json:"email,omitempty"`
+	UserId        string                 `protobuf:"bytes,8,opt,name=UserId,proto3" json:"UserId,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1901,6 +1902,13 @@ func (x *AuthResponse) GetUsername() string {
 func (x *AuthResponse) GetEmail() string {
 	if x != nil {
 		return x.Email
+	}
+	return ""
+}
+
+func (x *AuthResponse) GetUserId() string {
+	if x != nil {
+		return x.UserId
 	}
 	return ""
 }
@@ -3710,7 +3718,7 @@ const file_trading_api_proto_rawDesc = "" +
 	"totalCount\"E\n" +
 	"\vAuthRequest\x12\x1a\n" +
 	"\busername\x18\x01 \x01(\tR\busername\x12\x1a\n" +
-	"\bpassword\x18\x02 \x01(\tR\bpassword\"\xc6\x01\n" +
+	"\bpassword\x18\x02 \x01(\tR\bpassword\"\xde\x01\n" +
 	"\fAuthResponse\x12\x18\n" +
 	"\asuccess\x18\x01 \x01(\bR\asuccess\x12\x18\n" +
 	"\amessage\x18\x02 \x01(\tR\amessage\x12\x14\n" +
@@ -3718,7 +3726,8 @@ const file_trading_api_proto_rawDesc = "" +
 	"\x0fexpires_at_unix\x18\x04 \x01(\x03R\rexpiresAtUnix\x12\x12\n" +
 	"\x04role\x18\x05 \x01(\tR\x04role\x12\x1a\n" +
 	"\busername\x18\x06 \x01(\tR\busername\x12\x14\n" +
-	"\x05email\x18\a \x01(\tR\x05email\",\n" +
+	"\x05email\x18\a \x01(\tR\x05email\x12\x16\n" +
+	"\x06UserId\x18\b \x01(\tR\x06UserId\",\n" +
 	"\x0eGetUserRequest\x12\x1a\n" +
 	"\busername\x18\x01 \x01(\tR\busername\"_\n" +
 	"\x0fRegisterRequest\x12\x1a\n" +

@@ -35,6 +35,7 @@ const darkTheme = createTheme({
 
 function App() {
   const [user, setUser] = useState(null);
+  const [userRole, setUserRole] = useState(localStorage.getItem('userRole') || 'user');
   const [view, setView] = useState('landing'); // Start with landing page
   const [health, setHealth] = useState({ status:'unknown', ts:null, fails:0 });
   const [showHealthWarn, setShowHealthWarn] = useState(false);
@@ -46,11 +47,14 @@ function App() {
   // Restore user session from localStorage on app load
   useEffect(() => {
     const token = localStorage.getItem('authToken');
-    if (token) {
-      // Optionally decode token to get username, or fetch user info from backend
-      // For now, just set a placeholder user
-      setUser('logged-in');
-      setView('dashboard');
+    const savedUser = localStorage.getItem('user');
+    if (token && savedUser) {
+      try {
+        setUser(JSON.parse(savedUser)); // <-- restore full user object
+        setView('dashboard');
+      } catch {
+        setUser(null);
+      }
     }
   }, []);
 
@@ -235,7 +239,8 @@ function App() {
                   setUser(null);
                   setSelectedBot(null);
                   localStorage.removeItem('selectedBot'); 
-                  localStorage.removeItem('authToken');
+                  localStorage.removeItem('authToken'); 
+                  localStorage.removeItem('userRole');  
                   setView('landing');
                 }}
               />

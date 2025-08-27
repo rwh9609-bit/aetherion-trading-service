@@ -35,6 +35,12 @@ type memUserStore struct {
 		Role  string
 	}
 }
+type ctxKey string
+
+const (
+	ctxKeyUserID  ctxKey = "userID"
+	ctxKeyUser_id ctxKey = "user_id"
+)
 
 func newMemUserStore() *memUserStore {
 	return &memUserStore{users: make(map[string]struct {
@@ -63,9 +69,6 @@ func (m *memUserStore) GetUserRole(_ context.Context, username string) (string, 
 	}
 	return v.Role, nil
 }
-
-// context key for user hash
-type ctxKeyUserHash struct{}
 
 func (m *memUserStore) GetUserHash(_ context.Context, u string) (string, error) {
 	v, ok := m.users[u]
@@ -227,7 +230,7 @@ func (a *authServer) Register(ctx context.Context, req *pb.RegisterRequest) (*pb
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "token signing failed: %v", err)
 	}
-	return &pb.AuthResponse{Success: true, Message: "registered", Token: signed, ExpiresAtUnix: exp.Unix(), Role: role}, nil
+	return &pb.AuthResponse{Success: true, Message: "registered", Token: signed, ExpiresAtUnix: exp.Unix(), Role: role, UserId: userID}, nil
 }
 
 func (a *authServer) Login(ctx context.Context, req *pb.AuthRequest) (*pb.AuthResponse, error) {
@@ -266,6 +269,7 @@ func (a *authServer) Login(ctx context.Context, req *pb.AuthRequest) (*pb.AuthRe
 		Role:          role,
 		Username:      req.Username,
 		Email:         email,
+		UserId:        userID,
 	}, nil
 }
 
@@ -336,7 +340,8 @@ func authUnaryInterceptor(secret []byte) grpc.UnaryServerInterceptor {
 			log.Println("Missing sub claim in JWT")
 			return nil, status.Error(codes.Unauthenticated, "missing sub claim")
 		}
-		ctx = context.WithValue(ctx, "user_id", sub)
+		ctx = context.WithValue(ctx, ctxKeyUser_id, sub)
+		ctx = context.WithValue(ctx, ctxKeyUserID, sub)
 		return handler(ctx, req)
 	}
 }

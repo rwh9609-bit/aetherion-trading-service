@@ -7231,7 +7231,8 @@ token: jspb.Message.getFieldWithDefault(msg, 3, ""),
 expiresAtUnix: jspb.Message.getFieldWithDefault(msg, 4, 0),
 role: jspb.Message.getFieldWithDefault(msg, 5, ""),
 username: jspb.Message.getFieldWithDefault(msg, 6, ""),
-email: jspb.Message.getFieldWithDefault(msg, 7, "")
+email: jspb.Message.getFieldWithDefault(msg, 7, ""),
+userid: jspb.Message.getFieldWithDefault(msg, 8, "")
   };
 
   if (includeInstance) {
@@ -7295,6 +7296,10 @@ proto.trading.AuthResponse.deserializeBinaryFromReader = function(msg, reader) {
     case 7:
       var value = /** @type {string} */ (reader.readString());
       msg.setEmail(value);
+      break;
+    case 8:
+      var value = /** @type {string} */ (reader.readString());
+      msg.setUserid(value);
       break;
     default:
       reader.skipField();
@@ -7371,6 +7376,13 @@ proto.trading.AuthResponse.serializeBinaryToWriter = function(message, writer) {
   if (f.length > 0) {
     writer.writeString(
       7,
+      f
+    );
+  }
+  f = message.getUserid();
+  if (f.length > 0) {
+    writer.writeString(
+      8,
       f
     );
   }
@@ -7500,6 +7512,24 @@ proto.trading.AuthResponse.prototype.getEmail = function() {
  */
 proto.trading.AuthResponse.prototype.setEmail = function(value) {
   return jspb.Message.setProto3StringField(this, 7, value);
+};
+
+
+/**
+ * optional string UserId = 8;
+ * @return {string}
+ */
+proto.trading.AuthResponse.prototype.getUserid = function() {
+  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 8, ""));
+};
+
+
+/**
+ * @param {string} value
+ * @return {!proto.trading.AuthResponse} returns this
+ */
+proto.trading.AuthResponse.prototype.setUserid = function(value) {
+  return jspb.Message.setProto3StringField(this, 8, value);
 };
 
 

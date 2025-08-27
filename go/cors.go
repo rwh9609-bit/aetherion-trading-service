@@ -46,6 +46,7 @@ func corsMiddleware() *cors.Cors {
 			"Authorization",
 			"X-Grpc-Web",
 			"X-User-Agent",
+			"user_id",
 			"*",
 		},
 		ExposedHeaders: []string{

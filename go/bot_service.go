@@ -12,8 +12,6 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
-
-	"google.golang.org/grpc/metadata"
 )
 
 type botRegistry struct {
@@ -100,7 +98,8 @@ func (s *botServiceServer) DeleteBot(ctx context.Context, req *pb.BotIdRequest) 
 }
 
 // Update loadFromPg to ensure State is always set
-func (r *botRegistry) loadFromPg(ctx context.Context) {rows, err := r.pg.Query(ctx, `SELECT id, user_id, name, symbol, strategy, parameters, is_active, extract(epoch from created_at)::bigint, state, account_value FROM bots`)
+func (r *botRegistry) loadFromPg(ctx context.Context) {
+	rows, err := r.pg.Query(ctx, `SELECT id, user_id, name, symbol, strategy, parameters, is_active, extract(epoch from created_at)::bigint, state, account_value FROM bots`)
 	if err != nil {
 		log.Printf("bot load pg err: %v", err)
 		return
@@ -150,22 +149,16 @@ func (r *botRegistry) loadFromFile() {
 		r.bots[bot.BotId] = bot
 	}
 }
-
 func (s *botServiceServer) CreateBot(ctx context.Context, req *pb.CreateBotRequest) (*pb.StatusResponse, error) {
 	if req.GetName() == "" {
 		return &pb.StatusResponse{Success: false, Message: "name, symbol, strategy required"}, nil
 	}
 
 	id := uuid.New().String()
-	var userID string
-	if md, ok := metadata.FromIncomingContext(ctx); ok {
-		vals := md.Get("user_id")
-		if len(vals) > 0 {
-			userID = vals[0]
-		}
-	}
-	if userID == "" {
-		log.Printf("[CreateBot] user_id missing from metadata")
+	// Extract user ID from context (set by authUnaryInterceptor)
+	userID, ok := ctx.Value(ctxKeyUser_id).(string)
+	if !ok || userID == "" {
+		log.Printf("[CreateBot] user_id missing from context")
 		return &pb.StatusResponse{Success: false, Message: "auth required"}, nil
 	}
 	if _, err := uuid.Parse(userID); err != nil {

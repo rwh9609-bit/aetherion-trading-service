@@ -5,7 +5,14 @@ import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'rec
 
 function BotView({ bot }) {
   const [botState, setBotState] = useState(bot || null);
-  const [history, setHistory] = useState([]);
+  const [history, setHistory] = useState(() => {
+    // Load all-time history from localStorage if available
+    if (bot && bot.botId) {
+      const saved = localStorage.getItem(`bot_history_${bot.botId}`);
+      return saved ? JSON.parse(saved) : [];
+    }
+    return [];
+  });
   // Count signals in history
   const signalCounts = history.reduce((acc, entry) => {
     const signal = (entry.signal || '').toUpperCase();
@@ -31,12 +38,16 @@ function BotView({ bot }) {
           zscore: Number(newState.state?.zscore) || 0,
           price: Number(newState.state?.price) || 0,
           size: Number(newState.state?.size) || 0,
+          account_value: Number(newState.state?.account_value) || Number(newState.accountValue) || 0,
           timestamp: newState.state?.timestamp || Date.now()/1000,
         };
-        return [entry, ...prev].slice(0, 20);
+        // Save all-time history to localStorage
+        const updated = [entry, ...prev].slice(0, 1000); // keep last 1000 for sanity
+        localStorage.setItem(`bot_history_${bot.botId}`, JSON.stringify(updated));
+        return updated;
       });
     };
-
+        
     const handleError = (error) => {
       console.error('Error streaming bot state:', error);
     };
@@ -56,6 +67,10 @@ function BotView({ bot }) {
   // Portfolio rendering (if available)
   const portfolio = botState.portfolio || bot.portfolio;
 
+  // Filter out HOLD signals for the Recent Signals & Metrics table
+  const filteredHistory = history.filter(entry => (entry.signal || '').toUpperCase() !== "HOLD").slice(0, 10);
+
+
   return (
     <Box sx={{ p:2 }}>
       <Typography variant="h6" fontWeight={600} sx={{ mb:1 }}>
@@ -64,6 +79,8 @@ function BotView({ bot }) {
       <Typography variant="body2"><strong>Strategy:</strong> {botState.strategy || "N/A"}</Typography>
       <Typography variant="body2"><strong>Symbol:</strong> {botState.symbol || "N/A"}</Typography>
       <Typography variant="body2"><strong>Status:</strong> {botState.isActive ? "running" : "stopped"}</Typography>
+      <Typography variant="body2"><strong>Initial Account Value:</strong> {state.initial_account_value || botState.initialAccountValue || "N/A"}</Typography>
+      <Typography variant="body2"><strong>Current Account Value:</strong> {state.current_account_value || botState.currentAccountValue || "N/A"}</Typography>
       <Typography variant="body2"><strong>Account Value:</strong> {state.account_value || botState.accountValue || "N/A"}</Typography>
 
       {/* Live Metrics Panel */}
@@ -110,56 +127,57 @@ function BotView({ bot }) {
         </>
       )}
 
-      {/* Graphs Section */}
-      {history.length > 1 && (
-        <>
-          <Divider sx={{ my:2 }} />
-          <Typography variant="subtitle1" fontWeight={600}>Metrics Over Time</Typography>
-          <ResponsiveContainer width="100%" height={200}>
-            <LineChart data={[...history].reverse()}>
-              <XAxis dataKey="timestamp" tickFormatter={ts => new Date(ts * 1000).toLocaleTimeString()} />
-              <YAxis />
-              <Tooltip labelFormatter={ts => new Date(ts * 1000).toLocaleTimeString()} />
-              <Line type="monotone" dataKey="price" stroke="#1976d2" name="Price" />
-              <Line type="monotone" dataKey="zscore" stroke="#ff9800" name="Z-Score" />
-            </LineChart>
-          </ResponsiveContainer>
-        </>
-      )}
+  {/* Graphs Section */}
+  {history.length > 1 && (
+    <>
+      <Divider sx={{ my:2 }} />
+      <Typography variant="subtitle1" fontWeight={600}>Account Value Over Time</Typography>
+      <ResponsiveContainer width="100%" height={200}>
+        <LineChart data={[...history].reverse()}>
+          <XAxis dataKey="timestamp" tickFormatter={ts => new Date(ts * 1000).toLocaleTimeString()} />
+          <YAxis />
+          <Tooltip labelFormatter={ts => new Date(ts * 1000).toLocaleTimeString()} />
+          <Line type="monotone" dataKey="account_value" stroke="#43a047" name="Account Value" />
+        </LineChart>
+      </ResponsiveContainer>
+    </>
+  )}
 
-      {/* History Table */}
-      {hasLiveState ? (
-        <>
-          <Divider sx={{ my:2 }} />
-          <Typography variant="body2" sx={{ mb:1, fontWeight:600 }}>Recent Signals & Metrics</Typography>
-          <Table size="small">
-            <TableHead>
-              <TableRow>
-                <TableCell>Time</TableCell>
-                <TableCell>Signal</TableCell>
-                <TableCell>Z-Score</TableCell>
-                <TableCell>Size</TableCell>
-                <TableCell>Price</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {history.map((entry, idx) => (
-                <TableRow key={idx}>
-                  <TableCell>{entry.timestamp ? new Date(Number(entry.timestamp) * 1000).toLocaleTimeString() : '-'}</TableCell>
-                  <TableCell>{entry.signal}</TableCell>
-                  <TableCell>{entry.zscore}</TableCell>
-                  <TableCell>{entry.size}</TableCell>
-                  <TableCell>{entry.price}</TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </>
-      ) : (
-        <Typography variant="body2" sx={{ mt:2, color: 'text.secondary' }}>
-          No live state available. Start the bot to see trading signals and metrics.
-        </Typography>
-      )}
+
+  {/* History Table */}
+  {hasLiveState ? (
+    <>
+      <Divider sx={{ my:2 }} />
+      <Typography variant="body2" sx={{ mb:1, fontWeight:600 }}>Recent Signals & Metrics</Typography>
+      <Table size="small">
+        <TableHead>
+          <TableRow>
+            <TableCell>Time</TableCell>
+            <TableCell>Signal</TableCell>
+            <TableCell>Z-Score</TableCell>
+            <TableCell>Size</TableCell>
+            <TableCell>Price</TableCell>
+          </TableRow>
+        </TableHead>
+        <TableBody>
+          {filteredHistory.map((entry, idx) => (
+            <TableRow key={idx}>
+              <TableCell>{entry.timestamp ? new Date(Number(entry.timestamp) * 1000).toLocaleTimeString() : '-'}</TableCell>
+              <TableCell>{entry.signal}</TableCell>
+              <TableCell>{entry.zscore}</TableCell>
+              <TableCell>{entry.size}</TableCell>
+              <TableCell>{entry.price}</TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+    </>
+  ) : (
+    <Typography variant="body2" sx={{ mt:2, color: 'text.secondary' }}>
+      No live state available. Start the bot to see trading signals and metrics.
+    </Typography>
+  )}
+
     </Box>
   );
 }
