@@ -1,6 +1,6 @@
 import unittest
-from python.backtest_engine import BacktestEngine, load_historical_data
-from python.strategies.mean_reversion import MeanReversionStrategy, MeanReversionParams
+from backtest_engine import BacktestEngine, load_historical_data
+from strategies.mean_reversion import MeanReversionStrategy, MeanReversionParams
 
 class TestBacktestEngine(unittest.TestCase):
     def test_no_trades_when_no_signal(self):

@@ -9,3 +9,7 @@ uvicorn
 fastapi
 PyJWT
 stripe
+aiohttp
+python-dotenv
+pytest
+pytest-asyncio

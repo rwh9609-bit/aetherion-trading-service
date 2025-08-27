@@ -29,8 +29,13 @@ class BacktestEngine:
 
     def run(self):
         for tick in self.data:
-            action = self.strategy.on_tick(tick)
-            if action:
+            account_value = self.cash + self.position * tick['price']
+            signal = self.strategy.generate_signal(tick['price'], account_value)
+            if signal and signal['action'] != 'hold':
+                action = {
+                    'side': signal['action'].upper(),
+                    'size': signal['size']
+                }
                 self.execute_trade(action, tick)
             self.update_equity(tick)
         return self.trades, self.equity_curve
