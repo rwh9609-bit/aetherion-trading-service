@@ -3,8 +3,8 @@ import { Container, Box, ToggleButtonGroup, ToggleButton, Typography } from '@mu
 import OhlcPriceChart from './OhlcPriceChart';
 import CryptoScanner from './CryptoScanner';
 import ServerMomentum from './ServerMomentum';
-import SymbolManager from './SymbolManager';
-import RiskMetrics from './RiskMetrics';
+import SymbolManager from './SymbolManager'; 
+import BotView from './BotView';
 import RecentOrders from './RecentOrders';
 import { listSymbols, handleGrpcError } from '../services/grpcClient';
 
@@ -61,7 +61,7 @@ const TradingDashboard = ({ user, selectedBot, setUser, setView }) => {
     <Container maxWidth={false} sx={{ mt:4, mb:4 }}> 
       {selectedBot && (
         <Box sx={{ mb: 3, p: 2, border: '1px solid rgba(255,255,255,0.1)', borderRadius: 1, display: 'flex', gap: 4 }}>
-          <Box>
+          {/* <Box>
             <Typography variant="h6" gutterBottom>Selected Bot:</Typography>
             <Typography variant="body1"><strong>Name:</strong> {selectedBot.name}</Typography>
             <Typography variant="body1"><strong>Symbol:</strong> {selectedBot.symbol}</Typography>
@@ -71,21 +71,21 @@ const TradingDashboard = ({ user, selectedBot, setUser, setView }) => {
             {selectedBot.account_value !== undefined && (
               <Typography variant="body1"><strong>Account Value:</strong> {selectedBot.account_value}</Typography>
             )}
-          </Box>
+          </Box> */}
           <Box>
               {selectedBot && (
-                <RiskMetrics bot={selectedBot} />
+                <BotView bot={selectedBot} />
               )}
           </Box>
         </Box>
       )}
  
       
-      <Box>
+      {/* <Box>
         {selectedBot && (
           <RecentOrders user={user} bot={selectedBot} limit={5} />
         )}
-      </Box>
+      </Box> */}
       <Box sx={{ display:'grid', gap:3, gridTemplateColumns: { xs:'1fr' }, alignItems:'start' }}>
         <Box sx={{ gridColumn:'1 / -1', display:'flex', flexDirection:'column', gap:1 }}>
           <Box sx={{ display:'flex', alignItems:{ xs:'stretch', sm:'center' }, flexWrap:'wrap', gap:2, justifyContent:'space-between' }}>

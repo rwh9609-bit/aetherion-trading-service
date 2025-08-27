@@ -216,7 +216,7 @@ const RustInteractive = () => {
   // Run simulation on initial load
   useEffect(() => {
     runSimulation();
-  },); // Empty dependency array ensures it only runs once on mount
+  }, []); // Empty dependency array ensures it only runs once on mount
 
   return (
     <Box sx={{ background: defaultTheme.bg, color: defaultTheme.text, py: 4, borderRadius: 2 }}>

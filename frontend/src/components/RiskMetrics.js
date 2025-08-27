@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { Card, CardContent, Typography, Box, CircularProgress } from '@mui/material';
 import { fetchRiskMetrics } from '../services/grpcClient';
 
-
 const RiskMetrics = ({ bot }) => {
   const [metrics, setMetrics] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -17,13 +16,10 @@ const RiskMetrics = ({ bot }) => {
     const fetchMetrics = async () => {
       try {
         setLoading(true);
-        // Pass bot info to fetchRiskMetrics
         const data = await fetchRiskMetrics(bot);
         setMetrics({
+          ...data,
           valueAtRisk: data.valueAtRisk || 0,
-          positionSize: data.positionSize || 0,
-          accountValue: data.accountValue || 0,
-          dailyPnL: data.dailyPnL || 0,
           assetNames: data.assetNames || [],
           correlationMatrix: data.correlationMatrix || [],
           volatilityPerAsset: data.volatilityPerAsset || [],
@@ -38,15 +34,19 @@ const RiskMetrics = ({ bot }) => {
     };
 
     fetchMetrics();
-    const interval = setInterval(fetchMetrics, 5000);
+    const interval = setInterval(fetchMetrics, 30000); // Fetched every 30s, more reasonable
 
     return () => clearInterval(interval);
   }, [bot]);
 
   if (loading) return <CircularProgress />;
   if (error) return <Typography color="error">{error}</Typography>;
-  if (!metrics) return null;
+  if (!metrics || !bot) return null;
 
+  // Extract base currency from symbol (e.g., BTC from BTC/USD)
+  const baseCurrency = bot.symbol ? bot.symbol.split('/')[0] : '';
+  const positionSize = bot.portfolio && bot.portfolio[baseCurrency] ? bot.portfolio[baseCurrency].amount : 0;
+  const accountValue = bot.accountValue || bot.state?.account_value || 0;
 
   return (
     <Card>
@@ -68,7 +68,7 @@ const RiskMetrics = ({ bot }) => {
               Position Size
             </Typography>
             <Typography variant="h6">
-              {metrics.positionSize.toFixed(4)} BTC
+              {positionSize.toFixed(4)} {baseCurrency}
             </Typography>
           </Box>
           <Box>
@@ -76,15 +76,7 @@ const RiskMetrics = ({ bot }) => {
               Account Value
             </Typography>
             <Typography variant="h6">
-              ${metrics.accountValue.toFixed(2)}
-            </Typography>
-          </Box>
-          <Box>
-            <Typography variant="subtitle2" color="textSecondary">
-              Daily P&L
-            </Typography>
-            <Typography variant="h6" color={metrics.dailyPnL >= 0 ? 'success.main' : 'error.main'}>
-              ${metrics.dailyPnL.toFixed(2)}
+              ${accountValue.toFixed(2)}
             </Typography>
           </Box>
         </Box>
@@ -97,7 +89,7 @@ const RiskMetrics = ({ bot }) => {
             Simulation Mode: <b>{metrics.simulationMode}</b>
           </Typography>
           <Typography variant="body2" color="textSecondary">
-            Last Update: {metrics.lastUpdate}
+            Last Update: {new Date(metrics.lastUpdate).toLocaleString()}
           </Typography>
           {/* Correlation Matrix Table */}
           {metrics.assetNames.length > 0 && metrics.correlationMatrix.length > 0 && (

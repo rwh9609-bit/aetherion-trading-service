@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Box, Typography, Table, TableBody, TableCell, TableHead, TableRow, Divider } from '@mui/material';
+import { Box, Typography, Table, TableBody, TableCell, TableHead, TableRow, Divider, Grid } from '@mui/material';
 import { streamBotState } from '../services/grpcClient';
-import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
+import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 
 function BotView({ bot }) {
   const [botState, setBotState] = useState(bot || null);
@@ -72,7 +72,7 @@ function BotView({ bot }) {
 
 
   return (
-    <Box sx={{ p:2 }}>
+    <Box sx={{ p: 2, maxWidth: '100%', boxSizing: 'border-box' }}>
       <Typography variant="h6" fontWeight={600} sx={{ mb:1 }}>
         Bot: {botState.name || botState.bot_name || "N/A"}
       </Typography>
@@ -83,101 +83,84 @@ function BotView({ bot }) {
       <Typography variant="body2"><strong>Current Account Value:</strong> {state.current_account_value || botState.currentAccountValue || "N/A"}</Typography>
       <Typography variant="body2"><strong>Account Value:</strong> {state.account_value || botState.accountValue || "N/A"}</Typography>
 
-      {/* Live Metrics Panel */}
-      {hasLiveState && (
-        <Box sx={{ mt:2, mb:2, p:2, bgcolor: "#212121", borderRadius: 2, color: "#fff" }}>
-          <Typography variant="subtitle1" fontWeight={600}>Live Metrics</Typography>
-          <Typography variant="body2">Signal: <strong>{state.last_signal}</strong></Typography>
-          <Typography variant="body2">Z-Score: <strong>{state.zscore}</strong></Typography>
-          <Typography variant="body2">Price: <strong>{state.price}</strong></Typography>
-          <Typography variant="body2">Size: <strong>{state.size}</strong></Typography>
-          <Typography variant="body2">Timestamp: <strong>{state.timestamp ? new Date(Number(state.timestamp) * 1000).toLocaleTimeString() : '-'}</strong></Typography>
-          <Divider sx={{ my:1, bgcolor: "#555" }} />
-          <Typography variant="body2">
-            <strong>Buys:</strong> {signalCounts.buy} &nbsp;
-            <strong>Sells:</strong> {signalCounts.sell} &nbsp;
-            <strong>Holds:</strong> {signalCounts.hold}
-          </Typography>
+      <Grid container spacing={2} sx={{ mt: 2 }}>
+        {/* Live Metrics Panel */}
+        <Grid item xs={12} md={6}>
+          {hasLiveState && (
+            <Box sx={{ p:2, bgcolor: "#212121", borderRadius: 2, color: "#fff", height: '100%' }}>
+              <Typography variant="subtitle1" fontWeight={600}>Live Metrics</Typography>
+              <Typography variant="body2">Signal: <strong>{state.last_signal}</strong></Typography>
+              <Typography variant="body2">Z-Score: <strong>{state.zscore}</strong></Typography>
+              <Typography variant="body2">Price: <strong>{state.price}</strong></Typography>
+              <Typography variant="body2">Size: <strong>{state.size}</strong></Typography>
+              <Typography variant="body2">Timestamp: <strong>{state.timestamp ? new Date(Number(state.timestamp) * 1000).toLocaleTimeString() : '-'}</strong></Typography>
+              <Divider sx={{ my:1, bgcolor: "#555" }} />
+              <Typography variant="body2">
+                <strong>Buys:</strong> {signalCounts.buy} &nbsp;
+                <strong>Sells:</strong> {signalCounts.sell} &nbsp;
+                <strong>Holds:</strong> {signalCounts.hold}
+              </Typography>
+            </Box>
+          )}
+        </Grid>
+
+        {/* History Table */}
+        <Grid item xs={12} md={6}>
+          {hasLiveState ? (
+            <Box sx={{ height: '100%' }}>
+              <Typography variant="body2" sx={{ mb:1, fontWeight:600 }}>Recent Signals & Metrics</Typography>
+              <Table size="small">
+                <TableHead>
+                  <TableRow>
+                    <TableCell>Time</TableCell>
+                    <TableCell>Signal</TableCell>
+                    <TableCell>Z-Score</TableCell>
+                    <TableCell>Size</TableCell>
+                    <TableCell>Price</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {filteredHistory.map((entry, idx) => (
+                    <TableRow key={idx}>
+                      <TableCell>{entry.timestamp ? new Date(Number(entry.timestamp) * 1000).toLocaleTimeString() : '-'}</TableCell>
+                      <TableCell>{entry.signal}</TableCell>
+                      <TableCell>{entry.zscore}</TableCell>
+                      <TableCell>{entry.size}</TableCell>
+                      <TableCell>{entry.price}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </Box>
+          ) : (
+            <Typography variant="body2" sx={{ mt:2, color: 'text.secondary' }}>
+              No live state available. Start the bot to see trading signals and metrics.
+            </Typography>
+          )}
+        </Grid>
+      </Grid>
+
+      {/* Graphs Section */}
+      {history.length > 1 && (
+        <Box sx={{ mt: 4, width: '100%' }}>
+          <Divider sx={{ my:2 }} />
+          <Typography variant="subtitle1" fontWeight={600}>Account Value Over Time</Typography>
+          <ResponsiveContainer width="100%" height={200}>
+            <AreaChart data={[...history].reverse()}>
+              <defs>
+                <linearGradient id="colorUv" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="#43a047" stopOpacity={0.8}/>
+                  <stop offset="95%" stopColor="#43a047" stopOpacity={0}/>
+                </linearGradient>
+              </defs>
+              <XAxis dataKey="timestamp" tickFormatter={ts => new Date(ts * 1000).toLocaleTimeString()} />
+              <YAxis />
+              <Tooltip labelFormatter={ts => new Date(ts * 1000).toLocaleTimeString()} />
+              <Area type="monotone" dataKey="account_value" stroke="#43a047" fillOpacity={1} fill="url(#colorUv)" name="Account Value" />
+            </AreaChart>
+          </ResponsiveContainer>
         </Box>
       )}
-
-      {/* Portfolio Section */}
-      {portfolio && (
-        <>
-          <Divider sx={{ my:2 }} />
-          <Typography variant="subtitle1" fontWeight={600}>Portfolio</Typography>
-          <Table size="small">
-            <TableHead>
-              <TableRow>
-                <TableCell>Asset</TableCell>
-                <TableCell>Amount</TableCell>
-                <TableCell>Value</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {Object.entries(portfolio).map(([asset, info]) => (
-                <TableRow key={asset}>
-                  <TableCell>{asset}</TableCell>
-                  <TableCell>{info.amount}</TableCell>
-                  <TableCell>{info.value}</TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </>
-      )}
-
-  {/* Graphs Section */}
-  {history.length > 1 && (
-    <>
-      <Divider sx={{ my:2 }} />
-      <Typography variant="subtitle1" fontWeight={600}>Account Value Over Time</Typography>
-      <ResponsiveContainer width="100%" height={200}>
-        <LineChart data={[...history].reverse()}>
-          <XAxis dataKey="timestamp" tickFormatter={ts => new Date(ts * 1000).toLocaleTimeString()} />
-          <YAxis />
-          <Tooltip labelFormatter={ts => new Date(ts * 1000).toLocaleTimeString()} />
-          <Line type="monotone" dataKey="account_value" stroke="#43a047" name="Account Value" />
-        </LineChart>
-      </ResponsiveContainer>
-    </>
-  )}
-
-
-  {/* History Table */}
-  {hasLiveState ? (
-    <>
-      <Divider sx={{ my:2 }} />
-      <Typography variant="body2" sx={{ mb:1, fontWeight:600 }}>Recent Signals & Metrics</Typography>
-      <Table size="small">
-        <TableHead>
-          <TableRow>
-            <TableCell>Time</TableCell>
-            <TableCell>Signal</TableCell>
-            <TableCell>Z-Score</TableCell>
-            <TableCell>Size</TableCell>
-            <TableCell>Price</TableCell>
-          </TableRow>
-        </TableHead>
-        <TableBody>
-          {filteredHistory.map((entry, idx) => (
-            <TableRow key={idx}>
-              <TableCell>{entry.timestamp ? new Date(Number(entry.timestamp) * 1000).toLocaleTimeString() : '-'}</TableCell>
-              <TableCell>{entry.signal}</TableCell>
-              <TableCell>{entry.zscore}</TableCell>
-              <TableCell>{entry.size}</TableCell>
-              <TableCell>{entry.price}</TableCell>
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
-    </>
-  ) : (
-    <Typography variant="body2" sx={{ mt:2, color: 'text.secondary' }}>
-      No live state available. Start the bot to see trading signals and metrics.
-    </Typography>
-  )}
-
     </Box>
   );
 }

@@ -15,6 +15,8 @@ import LandingPage from './components/LandingPage';
 import ErrorBoundary from './components/ErrorBoundary';
 import BacktestRunner from './components/BacktestRunner';
 import PricingPage from './components/PricingPage';
+import BotView from './components/BotView';
+import RiskServiceSimulation from './components/RiskServiceSimulation';
 import './App.css';
 
 const darkTheme = createTheme({
@@ -154,19 +156,17 @@ function App() {
                     <>
                       <Button color="inherit" onClick={()=>setView('account')} sx={{ mr:1 }}>Account</Button>
                       <Button color="inherit" onClick={()=>setView('bots_free')} sx={{ mr:1 }}>Bots</Button>
-                      <Button color="inherit" onClick={handleMenuClick} sx={{ mr: 1 }}>Simulator</Button>
-                      <Menu
-                        anchorEl={anchorEl}
-                        open={Boolean(anchorEl)}
-                        onClose={handleMenuClose}
-                      >
-                        <MenuItem onClick={() => handleMenuItemClick('dashboard')}>Dashboard</MenuItem>
-                        <MenuItem onClick={() => handleMenuItemClick('backtest')}>Backtesting</MenuItem>
-                        <MenuItem onClick={() => handleMenuItemClick('operations')}>Operations</MenuItem>
-                      </Menu>
+                      <Button color="inherit" onClick={()=>setView('dashboard')} sx={{ mr:1 }}>Dashboard</Button>
+                      <Button color="inherit" onClick={()=>setView('risk_simulation')} sx={{ mr:1 }}>Risk</Button>
                       <Button color="inherit" onClick={()=> { setUser(null); setSelectedBot(null); localStorage.removeItem('authToken'); localStorage.removeItem('selectedBot'); setView('landing'); }}>Logout</Button>
                       {user.role === 'superuser' && (
                         <Button color="inherit" onClick={()=>setView('developBot')}>Develop Bot</Button>
+                      )}
+                      {/* if user.role === 'user' then display Text instead of a Button for "Develop Bot" */}
+                      {user.role === 'user' && (
+                        <Button color="inherit" onClick={handleMenuClick}>
+                          Develop Bot
+                        </Button>
                       )}
                     </>
                   ) : (
@@ -205,6 +205,16 @@ function App() {
           {user && view === 'dashboard' && (
             <div style={{ padding: '24px' }}>
               <TradingDashboard user={user} selectedBot={selectedBot} setUser={setUser} setView={setView} />
+            </div>
+          )}
+          {user && view === 'botview' && (
+            <div style={{ padding: '24px' }}>
+              <BotView bot={selectedBot} />
+            </div>
+          )}
+          {user && view === 'risk_simulation' && (
+            <div style={{ padding: '24px' }}>
+              <RiskServiceSimulation />
             </div>
           )}
           {user && view === 'backtest' && (

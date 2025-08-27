@@ -221,6 +221,12 @@ export async function fetchRiskMetrics(bot) {
   varReq.setConfidenceLevel(0.95);
   varReq.setHorizonDays(1.0);
 
+  // TODO: Fetch and provide real asset history data.
+  // The risk service may require historical data for assets in the portfolio
+  // to perform calculations like Monte Carlo VaR. The following lines are placeholders
+  // and should be replaced with logic to fetch data for each asset in the portfolio.
+  // varReq.getAssetHistoriesMap().set('BTC-USD', btcHistory);
+  // varReq.getAssetHistoriesMap().set('ETH-USD', ethHistory);
   return new Promise((resolve, reject) => {
     riskClient.calculateVaR(varReq, createMetadata(), (err, resp) => {
       if (err) {
