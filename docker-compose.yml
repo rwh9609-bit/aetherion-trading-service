@@ -116,7 +116,7 @@ services:
       - GO_SERVICE_ADDR=trading:50051
       - RUST_SERVICE_ADDR=risk:50052
       # This is the initial account value for new bots
-      - INITIAL_ACCOUNT_VALUE=1000011.0
+      # - INITIAL_ACCOUNT_VALUE=1000011.0
     restart: unless-stopped
     volumes:
       - ./data/BTCUSD_1min.csv:/app/data/BTCUSD_1min.csv:ro

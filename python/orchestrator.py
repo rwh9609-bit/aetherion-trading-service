@@ -78,7 +78,7 @@ class TradingOrchestrator:
     def __init__(self):
         self.go_service_addr = os.environ.get('GO_SERVICE_ADDR', 'localhost:50051')
         self.rust_service_addr = os.environ.get('RUST_SERVICE_ADDR', 'localhost:50052')
-        self.account_value = float(os.environ.get('INITIAL_ACCOUNT_VALUE', '1000000.0'))
+        # self.account_value = float(os.environ.get('INITIAL_ACCOUNT_VALUE', '1000000.0'))
         self.auth_secret = os.environ.get('AUTH_SECRET', None)
         if self.auth_secret:
             masked_secret = self.auth_secret[:4] + '...' + self.auth_secret[-4:] if len(self.auth_secret) > 8 else '***'
@@ -144,7 +144,7 @@ class TradingOrchestrator:
                     
                     portfolio = trading_api_pb2.PortfolioResponse(
                         bot_id=bot.bot_id,
-                        total_portfolio_value=trading_api_pb2.DecimalValue(units=int(self.account_value), nanos=int((self.account_value % 1) * 1e9)),
+                        total_portfolio_value=trading_api_pb2.DecimalValue(units=int(bot.account_value), nanos=int((bot.account_value % 1) * 1e9)),
                         positions=[
                             trading_api_pb2.PortfolioPosition(
                                 symbol=bot.symbol,
@@ -161,7 +161,7 @@ class TradingOrchestrator:
                     # ...existing code...
                     portfolio = trading_api_pb2.PortfolioResponse(
                         bot_id=bot.bot_id,
-                        total_portfolio_value=trading_api_pb2.DecimalValue(units=int(self.account_value), nanos=int((self.account_value % 1) * 1e9)),
+                        total_portfolio_value=trading_api_pb2.DecimalValue(units=int(bot.account_value), nanos=int((bot.account_value % 1) * 1e9)),
                         positions=[
                             trading_api_pb2.PortfolioPosition(
                                 symbol=bot.symbol,
