@@ -230,7 +230,7 @@ function App() {
             </div>
           )}
           
-          {user && (user.role === 'superuser' || user.role === 'admin') && view === 'developBot' && (
+          {user && (user.role === 'user' || user.role === 'admin') && view === 'developBot' && (
             <div style={{ padding: '24px' }}>
               <DevelopBotPage onNavigate={setView} />
             </div>
