@@ -27,12 +27,36 @@ To run Aetherion locally for development:
 
 3.  **Run the stack with Docker Compose:**
     ```sh
-    docker-compose up --build
+    docker compose up --build
     ```
     This will start all services defined in `docker-compose.yml`.
 
 4.  **Access the frontend:**
     Open [http://localhost:3000](http://localhost:3000) in your browser.
+
+## Generating an AUTH_SECRET on Windows
+
+To generate a secure `AUTH_SECRET` for JWT authentication on Windows:
+
+1. **Install OpenSSL using Chocolatey:**
+
+   Open **PowerShell as Administrator** (right-click the PowerShell icon and select "Run as administrator"), then run:
+
+   ```powershell
+   choco install openssl
+   ```
+
+2. **Generate a random secret:**
+
+   In PowerShell, run:
+
+   ```powershell
+   openssl rand -base64 32
+   ```
+
+   Copy the output and set it as your `AUTH_SECRET` in your `.env` file. `.env` should be .gitignored. 
+
+**Note:** Always keep your secrets private and never commit them to version control.
 
 ### Secure JWT Token Generation & Usage
 
