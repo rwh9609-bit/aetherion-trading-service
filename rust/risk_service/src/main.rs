@@ -10,6 +10,7 @@ use prost_types::Timestamp;
 use rand::rngs::StdRng;
 use rand::SeedableRng;
 use tracing_subscriber;
+use tracing::{info, warn, error, debug};
 
 // Import generated protobuf code
 pub mod trading_api {
@@ -36,10 +37,16 @@ impl Default for MyRiskService {
 impl trading_api::risk_service_server::RiskService for MyRiskService {
     async fn calculate_va_r(&self, request: Request<VaRRequest>,
     ) -> Result<Response<VaRResponse>, Status> {
+        let start_time = std::time::Instant::now(); // Start timing
+
         let req = request.into_inner();
+        info!("Received VaR request: confidence_level={}, horizon_days={}", req.confidence_level, req.horizon_days);
+
         let portfolio = req.current_portfolio.ok_or_else(|| {
+            warn!("Portfolio missing in request");
             Status::invalid_argument("Portfolio is required")
         })?;
+
 
         // Convert positions to HashMap<String, f64>
         let positions_map: HashMap<String, f64> = portfolio.positions
@@ -50,14 +57,22 @@ impl trading_api::risk_service_server::RiskService for MyRiskService {
             })
             .collect();
 
+        debug!("Positions map: {:?}", positions_map);
+
         // Get total portfolio value as f64
         let total_value = portfolio.total_portfolio_value.as_ref()
             .map(|v| v.units as f64 + v.nanos as f64 / 1_000_000_000.0)
             .unwrap_or(0.0);
 
+
+        debug!("Total portfolio value: {}", total_value);
+
         // Use provided confidence level & horizon (defaults if zero)
         let confidence = if req.confidence_level > 0.0 { req.confidence_level } else { 0.95 };
         let _horizon = if req.horizon_days > 0.0 { req.horizon_days } else { 1.0 };
+
+        debug!("Using confidence level: {}", confidence);
+        debug!("Using horizon: {}", _horizon);
 
         // Initialize RNG for this request
         let mut rng = StdRng::from_entropy();
@@ -72,7 +87,21 @@ impl trading_api::risk_service_server::RiskService for MyRiskService {
             }
         }
         if asset_returns.is_empty() {
+            error!("No asset return histories provided");
             return Err(Status::failed_precondition("No asset return histories provided"));
+        }
+
+        debug!("Positions map: {:?}", positions_map);
+        debug!("Total portfolio value: {}", total_value);
+        for (symbol, returns) in &asset_returns {
+            let min = returns.iter().cloned().fold(f64::INFINITY, f64::min);
+            let max = returns.iter().cloned().fold(f64::NEG_INFINITY, f64::max);
+            let mean = if !returns.is_empty() {
+                returns.iter().sum::<f64>() / returns.len() as f64
+            } else {
+                0.0
+            };
+            debug!("Asset: {}, returns count: {}, min: {:.6}, max: {:.6}, mean: {:.6}", symbol, returns.len(), min, max, mean);
         }
 
         // Call the stateless calculate_var function
@@ -128,6 +157,10 @@ impl trading_api::risk_service_server::RiskService for MyRiskService {
             corr
         };
         let volatility_per_asset: Vec<f64> = (0..ncols).map(|i| cov_matrix[(i, i)].abs().sqrt()).collect();
+        info!("Calculated VaR: {}", var);
+        debug!("Simulation mode: {}", simulation_mode);
+        debug!("Correlation matrix: {:?}", correlation_matrix);
+        debug!("Volatility per asset: {:?}", volatility_per_asset);
         let now = chrono::Utc::now();
         let last_update = Some(Timestamp {
             seconds: now.timestamp(),
@@ -138,6 +171,15 @@ impl trading_api::risk_service_server::RiskService for MyRiskService {
             units: var.trunc() as i64,
             nanos: ((var.fract()) * 1_000_000_000.0) as i32,
         };
+
+
+        let elapsed = start_time.elapsed(); // End timing
+        info!("VaR calculation latency: {:.3?}", elapsed);
+
+        // Optionally, add latency to notes
+        let mut notes = Vec::new();
+        notes.push(format!("VaR calculation latency: {:.3?}", elapsed));
+
         let response = VaRResponse {
             value_at_risk: Some(var_decimal),
             asset_names: assets,
@@ -145,6 +187,15 @@ impl trading_api::risk_service_server::RiskService for MyRiskService {
             volatility_per_asset,
             simulation_mode: simulation_mode.to_string(),
             last_update,
+            notes, // <-- Now defined!
+            num_simulations: 10_000,
+            parameters: HashMap::new(),
+            portfolio_value: Some(trading_api::DecimalValue {
+                units: total_value.trunc() as i64,
+                nanos: ((total_value.fract()) * 1_000_000_000.0) as i32,
+            }),
+            positions: portfolio.positions.clone(),
+            risk_model_used: req.risk_model.clone(),
         };
         Ok(Response::new(response))
     }

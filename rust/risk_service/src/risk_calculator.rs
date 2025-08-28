@@ -5,6 +5,7 @@ use nalgebra::{DMatrix, DVector, Cholesky};
 use std::fs::File;
 use std::io::{BufRead, BufReader};
 use std::path::Path;
+use tracing::{info, debug, warn, error};
 
 // Helper function to select Docker or local CSV path
 pub fn get_csv_path() -> String {
@@ -60,13 +61,24 @@ impl RiskCalculator {
         total_value: f64,
         confidence_level: f64,
     ) -> f64 {
+        let timer = std::time::Instant::now(); // Start timing
+
         let assets: Vec<String> = positions.keys().cloned().collect();
         let n = assets.len();
-        if n == 0 { return 0.0; }
+
+        info!("RiskCalculator: Starting VaR calculation for {} assets, total_value={:.2}, confidence_level={:.2}", n, total_value, confidence_level);
+
+        if n == 0 {
+            warn!("RiskCalculator: No assets in portfolio, returning VaR=0");
+            return 0.0;
+        }
 
         // Build matrix of returns (rows: days, cols: assets)
         let min_len = assets.iter().map(|a| asset_returns.get(a).map(|v| v.len()).unwrap_or(0)).min().unwrap_or(0);
+        debug!("RiskCalculator: Minimum return history length across assets: {}", min_len);
+        
         if min_len < 2 {
+            warn!("RiskCalculator: Not enough data for simulation, using fallback volatility");
             // Not enough data, fallback to static volatility
             let fallback_vol = 0.02;
             let normal = Normal::new(0.0, fallback_vol).unwrap();
@@ -79,10 +91,13 @@ impl RiskCalculator {
             }
             portfolio_values.sort_by(|a, b| a.partial_cmp(b).unwrap());
             let var_index = ((1.0 - confidence_level) * num_simulations as f64) as usize;
+            let elapsed = timer.elapsed();
+            info!("RiskCalculator: Fallback VaR calculation latency: {:.3?}", elapsed);
             return total_value - portfolio_values[var_index];
         }
 
         // Build returns matrix
+        debug!("RiskCalculator: Building returns matrix ({} rows x {} cols)", min_len, n);
         let mut returns_matrix = DMatrix::zeros(min_len, n);
         for (j, asset) in assets.iter().enumerate() {
             let rets = &asset_returns[asset];
@@ -92,8 +107,10 @@ impl RiskCalculator {
         }
 
         // Compute mean vector
+        debug!("RiskCalculator: Computing mean vector");
         let mean_vec = returns_matrix.column_iter().map(|col| col.mean()).collect::<Vec<_>>();
         // Compute covariance matrix manually
+        debug!("RiskCalculator: Computing covariance matrix");
         let n = returns_matrix.ncols();
         let m = returns_matrix.nrows();
         let mut cov_matrix = DMatrix::zeros(n, n);
@@ -109,9 +126,11 @@ impl RiskCalculator {
 
         // Cholesky decomposition for correlated shocks
         let num_simulations = 10_000;
+        debug!("RiskCalculator: Running Monte Carlo simulation with {} iterations", num_simulations);
         let mut portfolio_values = Vec::with_capacity(num_simulations);
         let weights: Vec<f64> = assets.iter().map(|a| positions[a] / total_value).collect();
         if let Some(chol) = Cholesky::new(cov_matrix.clone()) {
+            debug!("RiskCalculator: Cholesky decomposition succeeded, simulating correlated returns");
             for _ in 0..num_simulations {
                 // Generate independent standard normals
                 let z: DVector<f64> = DVector::from_iterator(n, (0..n).map(|_| Normal::new(0.0, 1.0).unwrap().sample(rng)));
@@ -124,6 +143,7 @@ impl RiskCalculator {
             }
         } else {
             // Fallback: use only diagonal variance (uncorrelated)
+            warn!("RiskCalculator: Cholesky decomposition failed, simulating uncorrelated returns");
             for _ in 0..num_simulations {
                 let mut port_ret = 0.0;
                 for (j, w) in weights.iter().enumerate() {
@@ -137,6 +157,11 @@ impl RiskCalculator {
         }
         portfolio_values.sort_by(|a, b| a.partial_cmp(b).unwrap());
         let var_index = ((1.0 - confidence_level) * num_simulations as f64) as usize;
-        total_value - portfolio_values[var_index]
+        let result = total_value - portfolio_values[var_index];
+
+        let elapsed = timer.elapsed();
+        info!("RiskCalculator: VaR calculation completed in {:.3?}, result={:.6}", elapsed, result);
+
+        result
     }
 }

@@ -10444,7 +10444,7 @@ proto.trading.AssetHistory.prototype.clearReturnsList = function() {
  * @private {!Array<number>}
  * @const
  */
-proto.trading.VaRResponse.repeatedFields_ = [2,3,4];
+proto.trading.VaRResponse.repeatedFields_ = [2,3,4,8,11];
 
 
 
@@ -10482,7 +10482,14 @@ assetNamesList: (f = jspb.Message.getRepeatedField(msg, 2)) == null ? undefined 
 correlationMatrixList: (f = jspb.Message.getRepeatedFloatingPointField(msg, 3)) == null ? undefined : f,
 volatilityPerAssetList: (f = jspb.Message.getRepeatedFloatingPointField(msg, 4)) == null ? undefined : f,
 simulationMode: jspb.Message.getFieldWithDefault(msg, 5, ""),
-lastUpdate: (f = msg.getLastUpdate()) && google_protobuf_timestamp_pb.Timestamp.toObject(includeInstance, f)
+lastUpdate: (f = msg.getLastUpdate()) && google_protobuf_timestamp_pb.Timestamp.toObject(includeInstance, f),
+portfolioValue: (f = msg.getPortfolioValue()) && proto.trading.DecimalValue.toObject(includeInstance, f),
+positionsList: jspb.Message.toObjectList(msg.getPositionsList(),
+    proto.trading.PortfolioPosition.toObject, includeInstance),
+riskModelUsed: jspb.Message.getFieldWithDefault(msg, 9, ""),
+numSimulations: jspb.Message.getFieldWithDefault(msg, 10, 0),
+notesList: (f = jspb.Message.getRepeatedField(msg, 11)) == null ? undefined : f,
+parametersMap: (f = msg.getParametersMap()) ? f.toObject(includeInstance, undefined) : []
   };
 
   if (includeInstance) {
@@ -10548,6 +10555,34 @@ proto.trading.VaRResponse.deserializeBinaryFromReader = function(msg, reader) {
       var value = new google_protobuf_timestamp_pb.Timestamp;
       reader.readMessage(value,google_protobuf_timestamp_pb.Timestamp.deserializeBinaryFromReader);
       msg.setLastUpdate(value);
+      break;
+    case 7:
+      var value = new proto.trading.DecimalValue;
+      reader.readMessage(value,proto.trading.DecimalValue.deserializeBinaryFromReader);
+      msg.setPortfolioValue(value);
+      break;
+    case 8:
+      var value = new proto.trading.PortfolioPosition;
+      reader.readMessage(value,proto.trading.PortfolioPosition.deserializeBinaryFromReader);
+      msg.addPositions(value);
+      break;
+    case 9:
+      var value = /** @type {string} */ (reader.readString());
+      msg.setRiskModelUsed(value);
+      break;
+    case 10:
+      var value = /** @type {number} */ (reader.readInt32());
+      msg.setNumSimulations(value);
+      break;
+    case 11:
+      var value = /** @type {string} */ (reader.readString());
+      msg.addNotes(value);
+      break;
+    case 12:
+      var value = msg.getParametersMap();
+      reader.readMessage(value, function(message, reader) {
+        jspb.Map.deserializeBinary(message, reader, jspb.BinaryReader.prototype.readString, jspb.BinaryReader.prototype.readString, null, "", "");
+         });
       break;
     default:
       reader.skipField();
@@ -10621,6 +10656,47 @@ proto.trading.VaRResponse.serializeBinaryToWriter = function(message, writer) {
       f,
       google_protobuf_timestamp_pb.Timestamp.serializeBinaryToWriter
     );
+  }
+  f = message.getPortfolioValue();
+  if (f != null) {
+    writer.writeMessage(
+      7,
+      f,
+      proto.trading.DecimalValue.serializeBinaryToWriter
+    );
+  }
+  f = message.getPositionsList();
+  if (f.length > 0) {
+    writer.writeRepeatedMessage(
+      8,
+      f,
+      proto.trading.PortfolioPosition.serializeBinaryToWriter
+    );
+  }
+  f = message.getRiskModelUsed();
+  if (f.length > 0) {
+    writer.writeString(
+      9,
+      f
+    );
+  }
+  f = message.getNumSimulations();
+  if (f !== 0) {
+    writer.writeInt32(
+      10,
+      f
+    );
+  }
+  f = message.getNotesList();
+  if (f.length > 0) {
+    writer.writeRepeatedString(
+      11,
+      f
+    );
+  }
+  f = message.getParametersMap(true);
+  if (f && f.getLength() > 0) {
+    f.serializeBinary(12, writer, jspb.BinaryWriter.prototype.writeString, jspb.BinaryWriter.prototype.writeString);
   }
 };
 
@@ -10825,6 +10901,177 @@ proto.trading.VaRResponse.prototype.clearLastUpdate = function() {
  */
 proto.trading.VaRResponse.prototype.hasLastUpdate = function() {
   return jspb.Message.getField(this, 6) != null;
+};
+
+
+/**
+ * optional DecimalValue portfolio_value = 7;
+ * @return {?proto.trading.DecimalValue}
+ */
+proto.trading.VaRResponse.prototype.getPortfolioValue = function() {
+  return /** @type{?proto.trading.DecimalValue} */ (
+    jspb.Message.getWrapperField(this, proto.trading.DecimalValue, 7));
+};
+
+
+/**
+ * @param {?proto.trading.DecimalValue|undefined} value
+ * @return {!proto.trading.VaRResponse} returns this
+*/
+proto.trading.VaRResponse.prototype.setPortfolioValue = function(value) {
+  return jspb.Message.setWrapperField(this, 7, value);
+};
+
+
+/**
+ * Clears the message field making it undefined.
+ * @return {!proto.trading.VaRResponse} returns this
+ */
+proto.trading.VaRResponse.prototype.clearPortfolioValue = function() {
+  return this.setPortfolioValue(undefined);
+};
+
+
+/**
+ * Returns whether this field is set.
+ * @return {boolean}
+ */
+proto.trading.VaRResponse.prototype.hasPortfolioValue = function() {
+  return jspb.Message.getField(this, 7) != null;
+};
+
+
+/**
+ * repeated PortfolioPosition positions = 8;
+ * @return {!Array<!proto.trading.PortfolioPosition>}
+ */
+proto.trading.VaRResponse.prototype.getPositionsList = function() {
+  return /** @type{!Array<!proto.trading.PortfolioPosition>} */ (
+    jspb.Message.getRepeatedWrapperField(this, proto.trading.PortfolioPosition, 8));
+};
+
+
+/**
+ * @param {!Array<!proto.trading.PortfolioPosition>} value
+ * @return {!proto.trading.VaRResponse} returns this
+*/
+proto.trading.VaRResponse.prototype.setPositionsList = function(value) {
+  return jspb.Message.setRepeatedWrapperField(this, 8, value);
+};
+
+
+/**
+ * @param {!proto.trading.PortfolioPosition=} opt_value
+ * @param {number=} opt_index
+ * @return {!proto.trading.PortfolioPosition}
+ */
+proto.trading.VaRResponse.prototype.addPositions = function(opt_value, opt_index) {
+  return jspb.Message.addToRepeatedWrapperField(this, 8, opt_value, proto.trading.PortfolioPosition, opt_index);
+};
+
+
+/**
+ * Clears the list making it empty but non-null.
+ * @return {!proto.trading.VaRResponse} returns this
+ */
+proto.trading.VaRResponse.prototype.clearPositionsList = function() {
+  return this.setPositionsList([]);
+};
+
+
+/**
+ * optional string risk_model_used = 9;
+ * @return {string}
+ */
+proto.trading.VaRResponse.prototype.getRiskModelUsed = function() {
+  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 9, ""));
+};
+
+
+/**
+ * @param {string} value
+ * @return {!proto.trading.VaRResponse} returns this
+ */
+proto.trading.VaRResponse.prototype.setRiskModelUsed = function(value) {
+  return jspb.Message.setProto3StringField(this, 9, value);
+};
+
+
+/**
+ * optional int32 num_simulations = 10;
+ * @return {number}
+ */
+proto.trading.VaRResponse.prototype.getNumSimulations = function() {
+  return /** @type {number} */ (jspb.Message.getFieldWithDefault(this, 10, 0));
+};
+
+
+/**
+ * @param {number} value
+ * @return {!proto.trading.VaRResponse} returns this
+ */
+proto.trading.VaRResponse.prototype.setNumSimulations = function(value) {
+  return jspb.Message.setProto3IntField(this, 10, value);
+};
+
+
+/**
+ * repeated string notes = 11;
+ * @return {!Array<string>}
+ */
+proto.trading.VaRResponse.prototype.getNotesList = function() {
+  return /** @type {!Array<string>} */ (jspb.Message.getRepeatedField(this, 11));
+};
+
+
+/**
+ * @param {!Array<string>} value
+ * @return {!proto.trading.VaRResponse} returns this
+ */
+proto.trading.VaRResponse.prototype.setNotesList = function(value) {
+  return jspb.Message.setField(this, 11, value || []);
+};
+
+
+/**
+ * @param {string} value
+ * @param {number=} opt_index
+ * @return {!proto.trading.VaRResponse} returns this
+ */
+proto.trading.VaRResponse.prototype.addNotes = function(value, opt_index) {
+  return jspb.Message.addToRepeatedField(this, 11, value, opt_index);
+};
+
+
+/**
+ * Clears the list making it empty but non-null.
+ * @return {!proto.trading.VaRResponse} returns this
+ */
+proto.trading.VaRResponse.prototype.clearNotesList = function() {
+  return this.setNotesList([]);
+};
+
+
+/**
+ * map<string, string> parameters = 12;
+ * @param {boolean=} opt_noLazyCreate Do not create the map if
+ * empty, instead returning `undefined`
+ * @return {!jspb.Map<string,string>}
+ */
+proto.trading.VaRResponse.prototype.getParametersMap = function(opt_noLazyCreate) {
+  return /** @type {!jspb.Map<string,string>} */ (
+      jspb.Message.getMapField(this, 12, opt_noLazyCreate,
+      null));
+};
+
+
+/**
+ * Clears values from the map. The map will be non-null.
+ * @return {!proto.trading.VaRResponse} returns this
+ */
+proto.trading.VaRResponse.prototype.clearParametersMap = function() {
+  this.getParametersMap().clear();
+  return this;
 };
 
 

@@ -366,6 +366,12 @@ message VaRResponse {
     repeated double volatility_per_asset = 4;
     string simulation_mode = 5;
     google.protobuf.Timestamp last_update = 6;
+    DecimalValue portfolio_value = 7;
+    repeated PortfolioPosition positions = 8;
+    string risk_model_used = 9;
+    int32 num_simulations = 10;
+    repeated string notes = 11;
+    map<string, string> parameters = 12;
 }
 
 // ==================================================================

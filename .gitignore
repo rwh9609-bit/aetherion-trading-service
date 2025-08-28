@@ -23,7 +23,6 @@ go/bin/
 
 # Rust
 target/
-Cargo.lock
 rust/risk_service/target/
 
 # Node.js

@@ -6,14 +6,12 @@ import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'rec
 function BotView({ bot }) {
   const [botState, setBotState] = useState(bot || null);
   const [history, setHistory] = useState(() => {
-    // Load all-time history from localStorage if available
     if (bot && bot.botId) {
       const saved = localStorage.getItem(`bot_history_${bot.botId}`);
       return saved ? JSON.parse(saved) : [];
     }
     return [];
   });
-  // Count signals in history
   const signalCounts = history.reduce((acc, entry) => {
     const signal = (entry.signal || '').toUpperCase();
     if (signal === "BUY") acc.buy += 1;
@@ -22,16 +20,13 @@ function BotView({ bot }) {
     return acc;
   }, { buy: 0, sell: 0, hold: 0 });
 
-
   useEffect(() => {
     if (!bot || !bot.botId) {
       setBotState(bot || null);
       return;
     }
-
     const handleStateUpdate = (newState) => {
       setBotState(prevBotState => ({ ...prevBotState, ...newState }));
-
       setHistory(prev => {
         const entry = {
           signal: newState.state?.last_signal || '',
@@ -41,19 +36,15 @@ function BotView({ bot }) {
           account_value: Number(newState.state?.account_value) || Number(newState.accountValue) || 0,
           timestamp: newState.state?.timestamp || Date.now()/1000,
         };
-        // Save all-time history to localStorage
-        const updated = [entry, ...prev].slice(0, 1000); // keep last 1000 for sanity
+        const updated = [entry, ...prev].slice(0, 1000);
         localStorage.setItem(`bot_history_${bot.botId}`, JSON.stringify(updated));
         return updated;
       });
     };
-        
     const handleError = (error) => {
       console.error('Error streaming bot state:', error);
     };
-
     const cleanup = streamBotState(bot.botId, handleStateUpdate, handleError);
-
     return () => {
       cleanup();
     };
@@ -63,28 +54,25 @@ function BotView({ bot }) {
 
   const state = botState.state && Object.keys(botState.state).length > 0 ? botState.state : botState;
   const hasLiveState = !!state.last_signal || !!state.zscore || !!state.price;
-
-  // Portfolio rendering (if available)
-  const portfolio = botState.portfolio || bot.portfolio;
-
-  // Filter out HOLD signals for the Recent Signals & Metrics table
   const filteredHistory = history.filter(entry => (entry.signal || '').toUpperCase() !== "HOLD").slice(0, 10);
-
 
   return (
     <Box sx={{ p: 2, maxWidth: '100%', boxSizing: 'border-box' }}>
-      <Typography variant="h6" fontWeight={600} sx={{ mb:1 }}>
-        Bot: {botState.name || botState.bot_name || "N/A"}
-      </Typography>
-      <Typography variant="body2"><strong>Strategy:</strong> {botState.strategy || "N/A"}</Typography>
-      <Typography variant="body2"><strong>Symbol:</strong> {botState.symbol || "N/A"}</Typography>
-      <Typography variant="body2"><strong>Status:</strong> {botState.isActive ? "running" : "stopped"}</Typography>
-      <Typography variant="body2"><strong>Initial Account Value:</strong> {state.initial_account_value || botState.initialAccountValue || "N/A"}</Typography>
-      <Typography variant="body2"><strong>Current Account Value:</strong> {state.current_account_value || botState.currentAccountValue || "N/A"}</Typography>
-      <Typography variant="body2"><strong>Account Value:</strong> {state.account_value || botState.accountValue || "N/A"}</Typography>
-
-      <Grid container spacing={2} sx={{ mt: 2 }}>
-        {/* Live Metrics Panel */}
+      <Grid container spacing={2}>
+        {/* Row 1: Bot Info & Live Metrics */}
+        <Grid item xs={12} md={6}>
+          <Box>
+            <Typography variant="h6" fontWeight={600} sx={{ mb:1 }}>
+              Bot: {botState.name || botState.bot_name || "N/A"}
+            </Typography>
+            <Typography variant="body2"><strong>Strategy:</strong> {botState.strategy || "N/A"}</Typography>
+            <Typography variant="body2"><strong>Symbol:</strong> {botState.symbol || "N/A"}</Typography>
+            <Typography variant="body2"><strong>Status:</strong> {botState.isActive ? "running" : "stopped"}</Typography>
+            <Typography variant="body2"><strong>Initial Account Value:</strong> {state.initial_account_value || botState.initialAccountValue || "N/A"}</Typography>
+            <Typography variant="body2"><strong>Current Account Value:</strong> {state.current_account_value || botState.currentAccountValue || "N/A"}</Typography>
+            <Typography variant="body2"><strong>Account Value:</strong> {state.account_value || botState.accountValue || "N/A"}</Typography>
+          </Box>
+        </Grid>
         <Grid item xs={12} md={6}>
           {hasLiveState && (
             <Box sx={{ p:2, bgcolor: "#212121", borderRadius: 2, color: "#fff", height: '100%' }}>
@@ -104,8 +92,8 @@ function BotView({ bot }) {
           )}
         </Grid>
 
-        {/* History Table */}
-        <Grid item xs={12} md={6}>
+        {/* Row 2: Recent Trades Table */}
+        <Grid item xs={12}>
           {hasLiveState ? (
             <Box sx={{ height: '100%' }}>
               <Typography variant="body2" sx={{ mb:1, fontWeight:600 }}>Recent Signals & Metrics</Typography>
@@ -138,29 +126,31 @@ function BotView({ bot }) {
             </Typography>
           )}
         </Grid>
-      </Grid>
 
-      {/* Graphs Section */}
-      {history.length > 1 && (
-        <Box sx={{ mt: 4, width: '100%' }}>
-          <Divider sx={{ my:2 }} />
-          <Typography variant="subtitle1" fontWeight={600}>Account Value Over Time</Typography>
-          <ResponsiveContainer width="100%" height={200}>
-            <AreaChart data={[...history].reverse()}>
-              <defs>
-                <linearGradient id="colorUv" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#43a047" stopOpacity={0.8}/>
-                  <stop offset="95%" stopColor="#43a047" stopOpacity={0}/>
-                </linearGradient>
-              </defs>
-              <XAxis dataKey="timestamp" tickFormatter={ts => new Date(ts * 1000).toLocaleTimeString()} />
-              <YAxis />
-              <Tooltip labelFormatter={ts => new Date(ts * 1000).toLocaleTimeString()} />
-              <Area type="monotone" dataKey="account_value" stroke="#43a047" fillOpacity={1} fill="url(#colorUv)" name="Account Value" />
-            </AreaChart>
-          </ResponsiveContainer>
-        </Box>
-      )}
+        {/* Row 3: Account Value Graph */}
+        {history.length > 1 && (
+          <Grid item xs={12}>
+            <Box sx={{ mt: 4, width: '100%' }}>
+              <Divider sx={{ my:2 }} />
+              <Typography variant="subtitle1" fontWeight={600}>Account Value Over Time</Typography>
+              <ResponsiveContainer width="100%" height={200}>
+                <AreaChart data={[...history].reverse()}>
+                  <defs>
+                    <linearGradient id="colorUv" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#43a047" stopOpacity={0.8}/>
+                      <stop offset="95%" stopColor="#43a047" stopOpacity={0}/>
+                    </linearGradient>
+                  </defs>
+                  <XAxis dataKey="timestamp" tickFormatter={ts => new Date(ts * 1000).toLocaleTimeString()} />
+                  <YAxis />
+                  <Tooltip labelFormatter={ts => new Date(ts * 1000).toLocaleTimeString()} />
+                  <Area type="monotone" dataKey="account_value" stroke="#43a047" fillOpacity={1} fill="url(#colorUv)" name="Account Value" />
+                </AreaChart>
+              </ResponsiveContainer>
+            </Box>
+          </Grid>
+        )}
+      </Grid>
     </Box>
   );
 }

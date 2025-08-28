@@ -17,50 +17,49 @@ const AboutPage = () => {
         <Box sx={{ backgroundColor: '#10101a', color: '#fff', py: { xs: 8, md: 12 } }}>
             <Container maxWidth="lg">
                 <StyledCard>
-
                     <CardContent>
                         <Typography variant="h3" component="h1" fontWeight={900} gutterBottom sx={{ textAlign: 'center' }}>
-                            About Aetherion
+                            Our Story
                         </Typography>
                         <Typography variant="h6" color="text.secondary" sx={{ mb: { xs: 4, md: 6 }, textAlign: 'center' }}>
-                            The definitive platform for institutional-grade algorithmic trading.
+                            From a weekend curiosity to a community-driven platform.
                         </Typography>
 
                         <Grid container spacing={6} sx={{ mt: 4 }}>
 
                             <Grid item xs={12} md={6}>
                                 <Typography variant="h5" component="h2" fontWeight={700} gutterBottom>
-                                    Performance-Driven Architecture
+                                    The Spark
                                 </Typography>
                                 <Typography variant="body1" color="text.secondary" sx={{ lineHeight: 1.8 }}>
-                                    Aetherion is engineered from the ground up to meet the rigorous demands of professional trading. Our **polyglot microservices** architecture strategically employs specialized languages—Go for concurrent execution, Rust for memory-safe and high-speed risk calculations, and Python for agile strategy development—to deliver superior latency and unparalleled reliability.
+                                    Hey there, I'm the creator of Aetherion. By day, I'm a software engineer working on large-scale systems, but my fascination with financial markets and algorithmic trading has been a long-burning fire. It all started as a curiosity, devouring books and blog posts, until I reached a point where I wasn't content just reading—I needed to build. Aetherion is the product of that desire, born out of late nights and long weekends, fueled by coffee and the thrill of watching a complex system come to life.
                                 </Typography>
                             </Grid>
 
                             <Grid item xs={12} md={6}>
                                 <Typography variant="h5" component="h2" fontWeight={700} gutterBottom>
-                                    Our Commitment to the Quant Community
+                                    Finding the Gap
                                 </Typography>
                                 <Typography variant="body1" color="text.secondary" sx={{ lineHeight: 1.8 }}>
-                                    Our mission is to empower quantitative developers and financial firms with a robust, customizable, and high-performance trading infrastructure. We provide the tools necessary to deploy sophisticated, proprietary strategies with confidence, ensuring absolute speed, security, and control over your operations.
+                                    As I ventured deeper, I found myself in a frustrating search for the right tools. On one end, there were institutional-grade platforms with staggering complexity and price tags to match. On the other, simpler tools that couldn't handle the nuanced strategies I wanted to experiment with. There was no 'just right' for a developer like me. I envisioned a platform that was robust enough for serious backtesting but remained accessible and intuitive for an individual. Since I couldn't find it, I decided to build it myself.
                                 </Typography>
                             </Grid>
 
                             <Grid item xs={12} md={6}>
                                 <Typography variant="h5" component="h2" fontWeight={700} gutterBottom>
-                                    Aetherion's Core Technologies
+                                    More Than Just Code
                                 </Typography>
                                 <Typography variant="body1" color="text.secondary" sx={{ lineHeight: 1.8 }}>
-                                    Our foundation is built upon a robust set of technologies, ensuring peak performance and stability for your critical trading operations.
+                                    Honestly, building this in a vacuum is only half the fun. The real vision for Aetherion is to cultivate a vibrant community of traders, developers, and enthusiasts who share a passion for this space. I'm not a faceless corporation; I'm one person who genuinely wants to hear about your ideas, the strategies you're developing, and yes, even the bugs you find. This platform is a foundation, but the community is the structure we can build upon it, together.
                                 </Typography>
                             </Grid>
 
                             <Grid item xs={12} md={6}>
                                 <Typography variant="h5" component="h2" fontWeight={700} gutterBottom>
-                                    Designed for Institutional Scale
+                                    The Path Forward (and a Note on Pricing)
                                 </Typography>
                                 <Typography variant="body1" color="text.secondary" sx={{ lineHeight: 1.8 }}>
-                                    From integrated risk management to seamless cloud deployment, our platform is built for scalability and security. We abstract away infrastructure complexities, allowing your team to focus exclusively on what drives alpha: strategy development.
+                                    Let's talk about the elephant in the room: the subscription. To keep the servers running and justify the time away from my day job, I've introduced a monthly fee for advanced features. But I'll be the first to admit, I'm wrestling with it. Is $50 the right price? Does it create a barrier to the very community I hope to build? My goal is to find a sustainable path that doesn't compromise accessibility. Your feedback on this is not just welcome; it's essential. Let's shape the future of Aetherion together.
                                 </Typography>
                             </Grid>
 
