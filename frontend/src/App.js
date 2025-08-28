@@ -159,15 +159,9 @@ function App() {
                       <Button color="inherit" onClick={()=>setView('dashboard')} sx={{ mr:1 }}>Dashboard</Button>
                       <Button color="inherit" onClick={()=>setView('risk_simulation')} sx={{ mr:1 }}>Articles</Button>
                       <Button color="inherit" onClick={()=> { setUser(null); setSelectedBot(null); localStorage.removeItem('authToken'); localStorage.removeItem('selectedBot'); setView('landing'); }}>Logout</Button>
-                      {user.role === 'superuser' && (
-                        <Button color="inherit" onClick={()=>setView('developBot')}>Develop Bot</Button>
-                      )}
-                      {/* if user.role === 'user' then display Text instead of a Button for "Develop Bot" */}
                       {user.role === 'user' && (
-                        <Button color="inherit" onClick={handleMenuClick}>
-                          Develop Bot
-                        </Button>
-                      )}
+                        <Button color="inherit" onClick={()=>setView('developBot')}>Develop Bot</Button>
+                      )} 
                     </>
                   ) : (
                     <Button color="inherit" onClick={()=>setView('login')}>Login</Button>
