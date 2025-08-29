@@ -26,9 +26,19 @@ protos_path = os.path.join(script_dir, "protos")
 
 def load_backfill_prices(csv_path, lookback_period):
     df = pd.read_csv(csv_path)
-    prices = df['price'].tolist()  # <-- fix: use 'price' instead of 'close'
-    return prices[-lookback_period:]
-
+    # Handle both lowercase and capitalized columns
+    if 'close' in df.columns:
+        prices = df['close'].tolist()
+        timestamps = df['timestamp'].tolist()
+    elif 'Close' in df.columns:
+        prices = df['Close'].tolist()
+        timestamps = df['Timestamp'].tolist()
+    elif 'price' in df.columns:
+        prices = df['price'].tolist()
+        timestamps = df['timestamp'].tolist()
+    else:
+        raise KeyError("CSV must contain 'close', 'Close', or 'price' column")
+    return prices[-lookback_period:], timestamps[-lookback_period:]
 def convert_numpy(obj):
     if isinstance(obj, np.generic):
         return obj.item()
@@ -43,6 +53,8 @@ def convert_numpy(obj):
     
 def calculate_returns(prices):
     prices = np.array(prices)
+    if prices.ndim > 1:
+        prices = prices.flatten()
     returns = np.diff(prices) / prices[:-1]
     return returns.tolist()
 
@@ -84,8 +96,7 @@ class TradingOrchestrator:
             masked_secret = self.auth_secret[:4] + '...' + self.auth_secret[-4:] if len(self.auth_secret) > 8 else '***'
             print(f"[DEBUG] AUTH_SECRET loaded: {masked_secret}")
         else:
-            print("[DEBUG] AUTH_SECRET not set.")
-        backfill_prices = load_backfill_prices("data/BTCUSD_1min.csv", 20)
+            print("[DEBUG] AUTH_SECRET not set.") 
         params = MeanReversionParams(
             lookback_period=20,
             entry_std_dev=1.0,
@@ -94,7 +105,8 @@ class TradingOrchestrator:
             stop_loss_pct=0.02,
             risk_per_trade_pct=0.01
         )
-        self.strategy = MeanReversionStrategy(params, backfill_prices=backfill_prices)
+        prices, timestamps = load_backfill_prices("data/btcusd_1-min_data.csv", 20)
+        self.strategy = MeanReversionStrategy(params, backfill_prices=prices)
         self.orchestrator_user_id = os.environ.get('ORCHESTRATOR_USER_ID')
         print(f"[DEBUG] Using orchestrator_user_id: {self.orchestrator_user_id}")
         if not self.orchestrator_user_id:
@@ -175,7 +187,7 @@ class TradingOrchestrator:
                         cash_balance=trading_api_pb2.DecimalValue(units=0, nanos=0)
                     )
                     # Load historical prices and calculate returns
-                    hist_prices = load_backfill_prices(f"data/BTCUSD_1min.csv", 30)
+                    hist_prices = load_backfill_prices(f"data/btcusd_1-min_data.csv", 30)
                     asset_returns = calculate_returns(hist_prices)
                     asset_history = trading_api_pb2.AssetHistory(returns=asset_returns)
                     asset_histories = {bot.symbol: asset_history}
