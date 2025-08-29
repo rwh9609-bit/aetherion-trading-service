@@ -78,6 +78,37 @@ To securely authenticate the orchestrator with the Go backend, generate a JWT to
 
 **Note:** Never commit your `.env` file with real secrets or tokens to version control. For production, use Docker secrets or environment variable injection.
 
+# README.md
+## Windows Quickstart
+
+1. **Install Docker Desktop for Windows**
+   - Download from [docker.com](https://www.docker.com/products/docker-desktop/)
+   - During installation, enable **WSL 2 integration**.
+
+2. **Clone the repository**
+   ```powershell
+   git clone https://github.com/rwh9609-bit/aetherion-trading-service.git
+   cd aetherion-trading-service
+   ```
+
+3. **Copy and fill out your `.env` file**
+   - Use `.env.example` as a template.
+
+4. **Open PowerShell (not WSL, not docker-desktop) in the project root**
+
+5. **Build and start all services**
+   ```powershell
+   docker compose up --build
+   ```
+
+6. **Access the app**
+   - Frontend: [http://localhost:3000](http://localhost:3000)
+   - API: [http://localhost:8000](http://localhost:8000)
+
+**Troubleshooting:**
+- If you see `exec format error`, ensure you are running on x86_64 hardware and that Docker Desktop is set to Linux containers.
+- All Dockerfiles and `docker-compose.yml` are compatible with Windows + WSL2.
+
 ## Prerequisites
 
 ### Required Software
@@ -152,6 +183,106 @@ make run-go      # Terminal 1
 make run-risk    # Terminal 2
 make run-python  # Terminal 3 (runs the orchestrator)
 ```
+
+## Windows Development Notes
+
+- **Docker Desktop must be running and set to Linux containers.**
+- **Do not run Docker commands from the `docker-desktop` WSL2 distribution.**
+- You may use a WSL2 distro (e.g., Ubuntu) if Docker Desktop WSL2 integration is enabled for it.
+- All Dockerfiles and `docker-compose.yml` are now compatible with Windows + WSL2.
+- If you see `exec format error`, ensure you are running on x86_64 hardware and that `platform: linux/amd64` is set for all build services in `docker-compose.yml`.
+- To clean and rebuild:
+  ```powershell
+  docker compose down
+  docker system prune -af
+  docker compose build --no-cache
+  docker compose up
+  ```
+- For troubleshooting, check Docker Desktop settings:
+  - **Settings > Resources > WSL Integration**: Enable your WSL2 distro.
+  - **Settings > General**: Confirm "Use the WSL 2 based engine" is checked.
+
+## Generating a JWT Token (Windows)
+
+If you can't use `make`, you can generate a JWT token using Python:
+
+1. **Install Python (if not already installed):**
+   - Download from [python.org](https://www.python.org/downloads/)
+
+2. **Install the PyJWT library:**
+   ```powershell
+   pip install pyjwt
+   ```
+
+3. **Create a script called `generate_jwt.py` with the following content:**
+   ```python
+   import jwt
+   import datetime
+
+   secret = "YOUR_AUTH_SECRET"  # Use the value from your .env file
+   payload = {
+       "user_id": "your-user-id",
+       "exp": datetime.datetime.utcnow() + datetime.timedelta(hours=1)
+   }
+   token = jwt.encode(payload, secret, algorithm="HS256")
+   print(token)
+   ```
+
+4. **Run the script:**
+   ```powershell
+   python generate_jwt.py
+   ```
+
+Replace `"YOUR_AUTH_SECRET"` and `"your-user-id"` with your actual values.
+
+---
+
+**Alternatively, you can use [jwt.io](https://jwt.io/) for manual token generation, but using a script is more secure for real secrets.**
+
+---
+
+**Add this section to your `DEVELOPER.md` so Windows users can generate JWT tokens without needing `make`.**  
+Let me know if you want a ready-to-commit script file!## Generating a JWT Token (Windows)
+
+If you can't use `make`, you can generate a JWT token using Python:
+
+1. **Install Python (if not already installed):**
+   - Download from [python.org](https://www.python.org/downloads/)
+
+2. **Install the PyJWT library:**
+   ```powershell
+   pip install pyjwt
+   ```
+
+3. **Create a script called `generate_jwt.py` with the following content:**
+   ```python
+   import jwt
+   import datetime
+
+   = "YOUR_AUTH_SECRET"  # Use the value from your .env file
+   payload = {
+       "user_id": "your-user-id",
+       "exp": datetime.datetime.utcnow() + datetime.timedelta(hours=1)
+   }
+   token = jwt.encode(payload, secret, algorithm="HS256")
+   print(token)
+   ```
+
+4. **Run the script:**
+   ```powershell
+   python generate_jwt.py
+   ```
+
+Replace `"YOUR_AUTH_SECRET"` and `"your-user-id"` with your actual values.
+
+---
+
+**Alternatively, you can use [jwt.io](https://jwt.io/) for manual token generation, but using a script is more secure for real secrets.**
+
+---
+
+**Add this section to your `DEVELOPER.md` so Windows users can generate JWT tokens without needing `make`.**  
+Let me know if you want a ready-to-commit script file!
 
 ## Architecture Overview
 
