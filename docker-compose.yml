@@ -1,5 +1,6 @@
 services:
   risk:
+    platform: linux/amd64
     build:
       context: .
       dockerfile: Dockerfile.risk
@@ -11,6 +12,7 @@ services:
     ports:
       - "50052:50052"
   trading:
+    platform: linux/amd64
     build:
       context: .
       dockerfile: Dockerfile.trading
@@ -54,6 +56,7 @@ services:
     ports:
       - "5432:5432"
   backend:
+    platform: linux/amd64
     build:
       context: ./python
       dockerfile: Dockerfile
@@ -69,6 +72,7 @@ services:
     volumes:
       - ./data/BTCUSD_1min.csv:/app/data/BTCUSD_1min.csv
   envoy:
+    platform: linux/amd64
     volumes:
       - /etc/letsencrypt:/etc/letsencrypt:ro
       - ./envoy.yaml:/etc/envoy/envoy.yaml:ro
@@ -87,6 +91,7 @@ services:
     environment:
       - ENVOY_UID=1337
   frontend:
+    platform: linux/amd64
     build:
       context: .
       dockerfile: Dockerfile.frontend
@@ -104,6 +109,7 @@ services:
     volumes:
       - ./nginx.conf:/etc/nginx/nginx.conf:ro
   orchestrator:
+    platform: linux/amd64
     env_file:
       - .env
     build:
