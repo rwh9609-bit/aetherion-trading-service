@@ -59,8 +59,11 @@ function BotView({ bot }) {
   return (
     <Box sx={{ p: 2, maxWidth: '100%', boxSizing: 'border-box' }}>
       <Grid container spacing={2}>
-        {/* Row 1: Bot Info & Live Metrics */}
+
+        {/* Row 1: Bot Info & Live Metrics*/}
         <Grid item xs={12} md={6}>
+
+          {/* Bot Info */}
           <Box>
             <Typography variant="h6" fontWeight={600} sx={{ mb:1 }}>
               Bot: {botState.name || botState.bot_name || "N/A"}
@@ -73,6 +76,8 @@ function BotView({ bot }) {
             <Typography variant="body2"><strong>Account Value:</strong> {state.account_value || botState.accountValue || "N/A"}</Typography>
           </Box>
         </Grid>
+
+        {/* Live Metrics */}
         <Grid item xs={12} md={6}>
           {hasLiveState && (
             <Box sx={{ p:2, bgcolor: "#212121", borderRadius: 2, color: "#fff", height: '100%' }}>
@@ -124,17 +129,22 @@ function BotView({ bot }) {
             <Typography variant="body2" sx={{ mt:2, color: 'text.secondary' }}>
               No live state available. Start the bot to see trading signals and metrics.
             </Typography>
-          )}
-        </Grid>
+          )} 
+      </Grid>
 
         {/* Row 3: Account Value Graph */}
-        {history.length > 1 && (
-          <Grid item xs={12}>
-            <Box sx={{ mt: 4, width: '100%' }}>
+        {history.length > 1 && ( 
+            <Box
+              sx={{
+                mt: 4,
+                width: '100%',
+                px: 0,
+              }}
+            >
               <Divider sx={{ my:2 }} />
               <Typography variant="subtitle1" fontWeight={600}>Account Value Over Time</Typography>
-              <ResponsiveContainer width="100%" height={200}>
-                <AreaChart data={[...history].reverse()}>
+              <ResponsiveContainer width="100%" height={400}>
+                <AreaChart data={[...history].reverse()} margin={{ left: 0, right: 0 }}>
                   <defs>
                     <linearGradient id="colorUv" x1="0" y1="0" x2="0" y2="1">
                       <stop offset="5%" stopColor="#43a047" stopOpacity={0.8}/>
@@ -148,7 +158,6 @@ function BotView({ bot }) {
                 </AreaChart>
               </ResponsiveContainer>
             </Box>
-          </Grid>
         )}
       </Grid>
     </Box>
