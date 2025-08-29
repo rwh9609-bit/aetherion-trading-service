@@ -12,7 +12,7 @@ const defaultConfig = {
   maxPos: 0.1,
   stopLossPct: 0.02,
   riskPerTradePct: 0.01,
-  accountValue: 1000012 // Default account value, can be overridden by backend
+  accountValue: 1000 // Default account value, can be overridden by backend
 };
 
 const strategies = [

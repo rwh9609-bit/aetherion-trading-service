@@ -72,7 +72,7 @@ const PricingPage = ({ setView }) => {
                   },
                 }}
               >
-                Current Plan
+                Open Beta
               </Button>
             </p>
           </div>
