@@ -93,7 +93,7 @@ async def fetch_binance_price_async(session, symbol="BTCUSDT"):
 import csv
 from datetime import datetime
 
-CSV_FILE = "data/BTCUSD_1min.csv"
+# CSV_FILE = "data/BTCUSD_1min.csv"
 
 def append_price_to_csv(price, timestamp):
     with open(CSV_FILE, mode="a", newline="", encoding="utf-8") as f:
