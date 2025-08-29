@@ -39,3 +39,4 @@ test_orderbook
 
 # Data
 /data/BTCUSD_1min.csv
+/data/btcusd_1-min.csv
