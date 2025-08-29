@@ -106,7 +106,7 @@ if __name__ == "__main__":
         try:
             price = fetch_binance_price()
             timestamp = datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")
-            append_price_to_csv(price, timestamp)
+            # append_price_to_csv(price, timestamp)
             print(f"{timestamp}, BTC/USDT: ${price:,.2f}")
         except Exception as e:
             print(f"Error: {str(e)}")

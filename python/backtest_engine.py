@@ -119,7 +119,7 @@ if __name__ == "__main__":
     # Example usage
     import os
     os.makedirs('test-results', exist_ok=True)
-    historical_data = load_historical_data('data/BTCUSD_1min.csv')
+    historical_data = load_historical_data('data/btcusd_1-min_data.csv')
     params = MeanReversionParams()  # Use default parameters
     strategy = MeanReversionStrategy(params)
     engine = BacktestEngine(strategy, historical_data)

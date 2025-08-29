@@ -18,8 +18,11 @@ pub mod trading_api {
 }
 
 
+mod portfolio_utils;
 mod risk_calculator;
-use risk_calculator::{RiskCalculator, load_log_returns_from_csv, get_csv_path};
+mod data_loader;
+use data_loader::{load_log_returns_from_csv, get_csv_path};
+use risk_calculator::RiskCalculator;
 
 pub struct MyRiskService {
     pub historical_returns: HashMap<String, Vec<f64>>,
@@ -28,7 +31,13 @@ pub struct MyRiskService {
 impl Default for MyRiskService {
     fn default() -> Self {
         // Load BTCUSD log returns from CSV at startup
-        let returns = load_log_returns_from_csv(&get_csv_path(), "BTCUSD");
+        let returns = match load_log_returns_from_csv(&get_csv_path(), "BTCUSD") {
+            Ok(returns) => returns,
+            Err(e) => {
+                warn!("Failed to load historical returns: {}", e);
+                HashMap::new()
+            }
+        };
         Self { historical_returns: returns }
     }
 }
@@ -49,20 +58,12 @@ impl trading_api::risk_service_server::RiskService for MyRiskService {
 
 
         // Convert positions to HashMap<String, f64>
-        let positions_map: HashMap<String, f64> = portfolio.positions
-            .iter()
-            .map(|pos| {
-                let qty = pos.quantity.as_ref().map(|v| v.units as f64 + v.nanos as f64 / 1_000_000_000.0).unwrap_or(0.0);
-                (pos.symbol.clone(), qty)
-            })
-            .collect();
+        let positions_map = portfolio_utils::positions_map_from_portfolio(&portfolio);
 
         debug!("Positions map: {:?}", positions_map);
 
         // Get total portfolio value as f64
-        let total_value = portfolio.total_portfolio_value.as_ref()
-            .map(|v| v.units as f64 + v.nanos as f64 / 1_000_000_000.0)
-            .unwrap_or(0.0);
+        let total_value = portfolio_utils::total_value_from_portfolio(&portfolio);
 
 
         debug!("Total portfolio value: {}", total_value);
@@ -105,13 +106,25 @@ impl trading_api::risk_service_server::RiskService for MyRiskService {
         }
 
         // Call the stateless calculate_var function
-        let var = RiskCalculator::calculate_var(
-            &mut rng,
-            &asset_returns,
-            &positions_map,
-            total_value,
-            confidence,
-        );
+        let var = match req.risk_model.as_str() {
+            "historical" => {
+                RiskCalculator::calculate_var_historical(
+                    &asset_returns,
+                    &positions_map,
+                    total_value,
+                    confidence,
+                )
+            }
+            _ => { // default to monte_carlo
+                RiskCalculator::calculate_var(
+                    &mut rng,
+                    &asset_returns,
+                    &positions_map,
+                    total_value,
+                    confidence,
+                )
+            }
+        };
 
         // --- Begin extended metrics logic (still needs asset_returns and rng) ---
         let assets: Vec<String> = positions_map.keys().cloned().collect();
@@ -207,11 +220,18 @@ impl trading_api::risk_service_server::RiskService for MyRiskService {
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     // Initialize tracing subscriber
+    use tracing_subscriber::EnvFilter;
+
+    let filter = EnvFilter::try_from_default_env()
+        .unwrap_or_else(|_| EnvFilter::new("info"));
+
     tracing_subscriber::fmt()
-        .with_max_level(tracing::Level::INFO)
+        .with_env_filter(filter)
         .init();
 
-    let addr = "0.0.0.0:50052".parse()?;
+    let addr = std::env::var("RISK_SERVICE_ADDR")
+        .unwrap_or_else(|_| "0.0.0.0:50052".to_string())
+        .parse()?;
     let risk_service = MyRiskService::default();
 
 
@@ -238,7 +258,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_var_respects_confidence_level() {
-        let service = MyRiskService::default();
+        let _service = MyRiskService::default();
         
         // Dummy asset returns for the test
         let mut asset_returns: HashMap<String, Vec<f64>> = HashMap::new();
@@ -275,12 +295,12 @@ mod tests {
         let mut rng_low = StdRng::seed_from_u64(123);
         let mut rng_high = StdRng::seed_from_u64(123);
 
-        let req_low = VaRRequest { current_portfolio: Some(portfolio.clone()), risk_model: "monte_carlo".to_string(), confidence_level: 0.90, horizon_days: 1.0 };
-        let req_high = VaRRequest { current_portfolio: Some(portfolio), risk_model: "monte_carlo".to_string(), confidence_level: 0.99, horizon_days: 1.0 };
+        let req_low = VaRRequest { current_portfolio: Some(portfolio.clone()), risk_model: "monte_carlo".to_string(), confidence_level: 0.90, horizon_days: 1.0, asset_histories: HashMap::new() };
+        let req_high = VaRRequest { current_portfolio: Some(portfolio.clone()), risk_model: "monte_carlo".to_string(), confidence_level: 0.99, horizon_days: 1.0, asset_histories: HashMap::new() };
         
         // Manually call calculate_var for the test
-        let var_low = RiskCalculator::calculate_var(&mut rng_low, &asset_returns, &positions_map_from_portfolio(&req_low.current_portfolio.as_ref().unwrap()), total_value_from_portfolio(&req_low.current_portfolio.as_ref().unwrap()), req_low.confidence_level);
-        let var_high = RiskCalculator::calculate_var(&mut rng_high, &asset_returns, &positions_map_from_portfolio(&req_high.current_portfolio.as_ref().unwrap()), total_value_from_portfolio(&req_high.current_portfolio.as_ref().unwrap()), req_high.confidence_level);
+        let var_low = RiskCalculator::calculate_var(&mut rng_low, &asset_returns, &portfolio_utils::positions_map_from_portfolio(&req_low.current_portfolio.as_ref().unwrap()), portfolio_utils::total_value_from_portfolio(&req_low.current_portfolio.as_ref().unwrap()), req_low.confidence_level);
+        let var_high = RiskCalculator::calculate_var(&mut rng_high, &asset_returns, &portfolio_utils::positions_map_from_portfolio(&req_high.current_portfolio.as_ref().unwrap()), portfolio_utils::total_value_from_portfolio(&req_high.current_portfolio.as_ref().unwrap()), req_high.confidence_level);
 
         // Convert f64 VaR to DecimalValue for comparison
         let var_decimal_low = trading_api::DecimalValue {
@@ -295,20 +315,45 @@ mod tests {
         assert!(var_decimal_high.units >= var_decimal_low.units, "higher confidence should not reduce VaR");
     }
 
-    // Helper functions to extract data from PortfolioResponse for the test
-    fn positions_map_from_portfolio(portfolio: &PortfolioResponse) -> HashMap<String, f64> {
-        portfolio.positions
-            .iter()
-            .map(|pos| {
-                let qty = pos.quantity.as_ref().map(|v| v.units as f64 + v.nanos as f64 / 1_000_000_000.0).unwrap_or(0.0);
-                (pos.symbol.clone(), qty)
-            })
-            .collect()
-    }
+    #[tokio::test]
+    async fn test_var_historical() {
+        let _service = MyRiskService::default();
+        
+        // Dummy asset returns for the test
+        let mut asset_returns: HashMap<String, Vec<f64>> = HashMap::new();
+        asset_returns.insert("BTC-USD".to_string(), vec![0.001, -0.002, 0.003, -0.001, 0.002, -0.003]);
+        asset_returns.insert("ETH-USD".to_string(), vec![0.002, -0.001, 0.001, -0.002, 0.003, -0.001]);
 
-    fn total_value_from_portfolio(portfolio: &PortfolioResponse) -> f64 {
-        portfolio.total_portfolio_value.as_ref()
-            .map(|v| v.units as f64 + v.nanos as f64 / 1_000_000_000.0)
-            .unwrap_or(0.0)
+        let positions = vec![
+            PortfolioPosition {
+                symbol: "BTC-USD".to_string(),
+                quantity: Some(DecimalValue { units: 1, nanos: 0 }),
+                average_price: None,
+                market_value: None,
+                unrealized_pnl: None,
+                exposure_pct: None,
+            },
+            PortfolioPosition {
+                symbol: "ETH-USD".to_string(),
+                quantity: Some(DecimalValue { units: 0, nanos: 500_000_000 }), // 0.5 ETH
+                average_price: None,
+                market_value: None,
+                unrealized_pnl: None,
+                exposure_pct: None,
+            }
+        ];
+        let portfolio = PortfolioResponse {
+            bot_id: "test-bot".to_string(),
+            positions,
+            total_portfolio_value: Some(DecimalValue { units: 10_000, nanos: 0 }),
+            cash_balance: None,
+            updated_at: None,
+        };
+
+        let req = VaRRequest { current_portfolio: Some(portfolio.clone()), risk_model: "historical".to_string(), confidence_level: 0.95, horizon_days: 1.0, asset_histories: HashMap::new() };
+        
+        let var = RiskCalculator::calculate_var_historical(&asset_returns, &portfolio_utils::positions_map_from_portfolio(&req.current_portfolio.as_ref().unwrap()), portfolio_utils::total_value_from_portfolio(&req.current_portfolio.as_ref().unwrap()), req.confidence_level);
+
+        assert!(var > 0.0);
     }
 }
