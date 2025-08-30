@@ -6,7 +6,7 @@ import { loginUser, registerUser } from '../services/grpcClient';
 const Login = ({ onAuth, onBack }) => {
   const [mode, setMode] = useState('login');
   const [username, setUsername] = useState('');
-  const [email, setEmail] = useState(''); // <-- Add email state
+  const [email, setEmail] = useState('');  
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);

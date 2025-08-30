@@ -444,6 +444,7 @@ service SubscriptionService {
     rpc CreateCheckoutSession(CreateCheckoutSessionRequest) returns (CreateCheckoutSessionResponse) {}
     rpc GetUserSubscription(Empty) returns (Subscription) {}
     rpc CancelUserSubscription(Empty) returns (StatusResponse) {}
+    rpc CreateCustomerPortalSession(CreateCustomerPortalSessionRequest) returns (CreateCustomerPortalSessionResponse) {} 
 }
 
 message Product {
@@ -470,9 +471,18 @@ message GetProductsResponse {
 }
 
 message CreateCheckoutSessionRequest {
-    string price_id = 1;
+  string price_id = 1;
+  string stripe_customer_id = 2; 
 }
 
 message CreateCheckoutSessionResponse {
     string session_id = 1;
+}
+
+message CreateCustomerPortalSessionRequest {
+    string stripe_customer_id = 1;
+}
+
+message CreateCustomerPortalSessionResponse {
+    string url = 1;
 }

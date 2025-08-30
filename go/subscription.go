@@ -2,8 +2,10 @@
 package main
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
+	"fmt"
 	"io"
 	"log"
 	"net/http"
@@ -27,6 +29,53 @@ func newSubscriptionServer(dbclient *DBService) *subscriptionServer {
 	// Initialize Stripe API key
 	stripe.Key = os.Getenv("STRIPE_API_KEY")
 	return &subscriptionServer{dbclient: dbclient}
+}
+
+func (s *subscriptionServer) CreateCustomerPortalSession(ctx context.Context, req *pb.CreateCustomerPortalSessionRequest) (*pb.CreateCustomerPortalSessionResponse, error) {
+	// Prepare request body
+	body := map[string]string{
+		"customer":   req.StripeCustomerId,
+		"return_url": "http://localhost:3000/account",
+	}
+	form := ""
+	for k, v := range body {
+		form += k + "=" + v + "&"
+	}
+	form = form[:len(form)-1] // remove trailing '&'
+
+	// Create HTTP request
+	httpReq, err := http.NewRequest("POST", "https://api.stripe.com/v1/billing_portal/sessions", bytes.NewBufferString(form))
+	if err != nil {
+		return nil, err
+	}
+	httpReq.Header.Set("Authorization", "Bearer "+os.Getenv("STRIPE_API_KEY"))
+	httpReq.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+
+	// Send request
+	client := &http.Client{}
+	resp, err := client.Do(httpReq)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	// Parse response
+	respBody, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, err
+	}
+	if resp.StatusCode != 200 {
+		return nil, fmt.Errorf("stripe API error: %s", respBody)
+	}
+
+	var stripeResp struct {
+		URL string `json:"url"`
+	}
+	if err := json.Unmarshal(respBody, &stripeResp); err != nil {
+		return nil, err
+	}
+
+	return &pb.CreateCustomerPortalSessionResponse{Url: stripeResp.URL}, nil
 }
 
 func (s *subscriptionServer) GetProducts(ctx context.Context, req *pb.Empty) (*pb.GetProductsResponse, error) {
@@ -56,6 +105,11 @@ func (s *subscriptionServer) CreateCheckoutSession(ctx context.Context, req *pb.
 				Price:    stripe.String(req.PriceId),
 				Quantity: stripe.Int64(1),
 			},
+		},
+		AutomaticTax: &stripe.CheckoutSessionAutomaticTaxParams{Enabled: stripe.Bool(true)},
+		Customer:     stripe.String(req.StripeCustomerId),
+		CustomerUpdate: &stripe.CheckoutSessionCustomerUpdateParams{
+			Address: stripe.String("auto"),
 		},
 		Mode:       stripe.String(string(stripe.CheckoutSessionModeSubscription)),
 		SuccessURL: stripe.String("http://localhost:3000/success?session_id={CHECKOUT_SESSION_ID}"),

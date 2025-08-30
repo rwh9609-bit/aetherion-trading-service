@@ -2620,5 +2620,66 @@ proto.trading.SubscriptionServicePromiseClient.prototype.cancelUserSubscription 
 };
 
 
+/**
+ * @const
+ * @type {!grpc.web.MethodDescriptor<
+ *   !proto.trading.CreateCustomerPortalSessionRequest,
+ *   !proto.trading.CreateCustomerPortalSessionResponse>}
+ */
+const methodDescriptor_SubscriptionService_CreateCustomerPortalSession = new grpc.web.MethodDescriptor(
+  '/trading.SubscriptionService/CreateCustomerPortalSession',
+  grpc.web.MethodType.UNARY,
+  proto.trading.CreateCustomerPortalSessionRequest,
+  proto.trading.CreateCustomerPortalSessionResponse,
+  /**
+   * @param {!proto.trading.CreateCustomerPortalSessionRequest} request
+   * @return {!Uint8Array}
+   */
+  function(request) {
+    return request.serializeBinary();
+  },
+  proto.trading.CreateCustomerPortalSessionResponse.deserializeBinary
+);
+
+
+/**
+ * @param {!proto.trading.CreateCustomerPortalSessionRequest} request The
+ *     request proto
+ * @param {?Object<string, string>} metadata User defined
+ *     call metadata
+ * @param {function(?grpc.web.RpcError, ?proto.trading.CreateCustomerPortalSessionResponse)}
+ *     callback The callback function(error, response)
+ * @return {!grpc.web.ClientReadableStream<!proto.trading.CreateCustomerPortalSessionResponse>|undefined}
+ *     The XHR Node Readable Stream
+ */
+proto.trading.SubscriptionServiceClient.prototype.createCustomerPortalSession =
+    function(request, metadata, callback) {
+  return this.client_.rpcCall(this.hostname_ +
+      '/trading.SubscriptionService/CreateCustomerPortalSession',
+      request,
+      metadata || {},
+      methodDescriptor_SubscriptionService_CreateCustomerPortalSession,
+      callback);
+};
+
+
+/**
+ * @param {!proto.trading.CreateCustomerPortalSessionRequest} request The
+ *     request proto
+ * @param {?Object<string, string>=} metadata User defined
+ *     call metadata
+ * @return {!Promise<!proto.trading.CreateCustomerPortalSessionResponse>}
+ *     Promise that resolves to the response
+ */
+proto.trading.SubscriptionServicePromiseClient.prototype.createCustomerPortalSession =
+    function(request, metadata) {
+  return this.client_.unaryCall(this.hostname_ +
+      '/trading.SubscriptionService/CreateCustomerPortalSession',
+      request,
+      metadata || {},
+      methodDescriptor_SubscriptionService_CreateCustomerPortalSession);
+};
+
+
 module.exports = proto.trading;
 

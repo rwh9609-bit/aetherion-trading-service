@@ -1,6 +1,7 @@
 import React from 'react';
 import { Card, CardContent, Typography, Button, Divider, Stack, Chip } from '@mui/material';
 import { setAuthToken } from '../services/grpcClient';
+import { getStripePortalUrl } from '../services/grpcClient';
 
 const AccountPage = ({ user, onLogout, onGoToPricing }) => {
   const logout = () => {
@@ -9,6 +10,16 @@ const AccountPage = ({ user, onLogout, onGoToPricing }) => {
     localStorage.removeItem('selectedBot');
     onLogout();
   };
+  const handleManageSubscription = async () => {
+    try {
+      // You need to pass the Stripe customer ID for the user
+      const portalUrl = await getStripePortalUrl(user.stripeCustomerId);
+      window.location.href = portalUrl;
+    } catch (err) {
+      alert('Failed to open Stripe portal: ' + (err.message || err));
+    }
+  };
+
 
   return (
     <Card sx={{ maxWidth: 600, margin: '32px auto' }}>
@@ -49,7 +60,7 @@ const AccountPage = ({ user, onLogout, onGoToPricing }) => {
           </Typography>
         )}
         <Stack direction="row" spacing={2}>
-          <Button variant="contained" color="primary" onClick={onGoToPricing}>
+          <Button variant="contained" color="primary" onClick={handleManageSubscription}>
             Manage Subscription
           </Button>
           <Button variant="outlined" color="secondary" onClick={logout}>

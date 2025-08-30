@@ -1,5 +1,5 @@
 import { grpc } from '@improbable-eng/grpc-web';
-import { TradingServiceClient, RiskServiceClient, AuthServiceClient, OrderServiceClient, BotServiceClient, PortfolioServiceClient } from '../proto/trading_api_grpc_web_pb.js';
+import { TradingServiceClient, RiskServiceClient, AuthServiceClient, OrderServiceClient, BotServiceClient, PortfolioServiceClient, SubscriptionServiceClient } from '../proto/trading_api_grpc_web_pb.js';
 import { 
   OrderBookRequest,
   StrategyRequest,
@@ -19,6 +19,8 @@ import {
   ListOrdersRequest,
   CreateBotRequest
 } from '../proto/trading_api_pb.js'; // explicit extension already present
+import { CreateCustomerPortalSessionRequest } from '../proto/trading_api_pb.js'; // adjust import if needed
+
 
 // Determine gRPC-web host.
 // Priority: explicit env var -> same-origin (production) -> localhost dev fallback.
@@ -61,6 +63,8 @@ const portfolioClient = new PortfolioServiceClient(host, null, {...options, form
 export { portfolioClient };
 const orderClient = new OrderServiceClient(host, null, {...options, format: 'text'});
 export { orderClient };
+const subscriptionClient = new SubscriptionServiceClient(host, null, {...options, format: 'text'});
+export { subscriptionClient };
 
 const MAX_RETRIES = 5;
 const RETRY_DELAY = 2000; // 2 seconds
@@ -191,6 +195,18 @@ const withRetry = async (operation, operationName = 'Operation', retries = MAX_R
     }
   }
 };
+
+export const getStripePortalUrl = async (stripeCustomerId) => {
+  return new Promise((resolve, reject) => {
+    const req = new CreateCustomerPortalSessionRequest();
+    req.setStripeCustomerId(stripeCustomerId);
+    subscriptionClient.createCustomerPortalSession(req, createMetadata(), (err, resp) => {
+      if (err) return reject(err);
+      resolve(resp.getUrl());
+    });
+  });
+};
+
 
 //////////////////////////////////
 //                              //

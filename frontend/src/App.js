@@ -163,35 +163,23 @@ function App() {
                       {user.role === 'user' && (
                         <Button color="inherit" onClick={()=>setView('developBot')}>Develop Bot</Button>
                       )}
-                      {user.role === 'superuser' && (
-                                              <Button
-                        color="inherit"
-                        onClick={()=>setView('strategyStudio')}
-                        sx={{
-                          background: 'linear-gradient(90deg, #2196f3, #9c27b0)',
-                          WebkitBackgroundClip: 'text',
-                          WebkitTextFillColor: 'transparent',
-                          fontWeight: 600
-                        }}
-                      >
-                        Strategy Studio
-                      </Button>
-                      )}
-                      {user.role === 'user' && (
-                                              <Button
-                        color="inherit"
-                        // onClick should prompt user to upgrade
-                        onClick={()=> alert('Upgrade to access Strategy Studio')}
-                        sx={{
-                          background: 'linear-gradient(90deg, #2196f3, #9c27b0)',
-                          WebkitBackgroundClip: 'text',
-                          WebkitTextFillColor: 'transparent',
-                          fontWeight: 600
-                        }}
-                      >
-                        Strategy Studio
-                      </Button>
-                      )}
+                    <Button
+                      color="inherit"
+                      onClick={() => user.role === 'superuser' ? setView('strategyStudio') : alert('Upgrade to access Strategy Studio')}
+                      sx={{
+                        background: 'linear-gradient(90deg, #2196f3, #9c27b0)',
+                        WebkitBackgroundClip: 'text',
+                        WebkitTextFillColor: 'transparent',
+                        fontWeight: 600,
+                        transition: 'transform 0.2s, text-shadow 0.2s',
+                        '&:hover': {
+                          transform: 'scale(1.08)',
+                          textShadow: '0 0 8px #9c27b0, 0 0 4px #2196f3'
+                        }
+                      }}
+                    >
+                      Strategy Studio
+                    </Button>
                     </>
                   ) : (
                     <Button color="inherit" onClick={()=>setView('login')}>Login</Button>
@@ -222,7 +210,8 @@ function App() {
               alignItems: 'center',
               justifyContent: 'center'
             }}>
-              <Login onAuth={(u)=> { setUser(u); setView('pricing'); }} onBack={() => setView('landing')} />
+              {/* <Login onAuth={(u)=> { setUser(u); setView('pricing'); }} onBack={() => setView('landing')} /> */}
+              <Login onAuth={(u) => { setUser(u); setView('dashboard'); }} onBack={() => setView('landing')} /> 
             </Box>
           )}
           {view === 'pricing' && <PricingPage setView={setView} />}

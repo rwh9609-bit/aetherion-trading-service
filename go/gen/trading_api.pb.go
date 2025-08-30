@@ -3534,10 +3534,11 @@ func (x *GetProductsResponse) GetProducts() []*Product {
 }
 
 type CreateCheckoutSessionRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	PriceId       string                 `protobuf:"bytes,1,opt,name=price_id,json=priceId,proto3" json:"price_id,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	state            protoimpl.MessageState `protogen:"open.v1"`
+	PriceId          string                 `protobuf:"bytes,1,opt,name=price_id,json=priceId,proto3" json:"price_id,omitempty"`
+	StripeCustomerId string                 `protobuf:"bytes,2,opt,name=stripe_customer_id,json=stripeCustomerId,proto3" json:"stripe_customer_id,omitempty"`
+	unknownFields    protoimpl.UnknownFields
+	sizeCache        protoimpl.SizeCache
 }
 
 func (x *CreateCheckoutSessionRequest) Reset() {
@@ -3573,6 +3574,13 @@ func (*CreateCheckoutSessionRequest) Descriptor() ([]byte, []int) {
 func (x *CreateCheckoutSessionRequest) GetPriceId() string {
 	if x != nil {
 		return x.PriceId
+	}
+	return ""
+}
+
+func (x *CreateCheckoutSessionRequest) GetStripeCustomerId() string {
+	if x != nil {
+		return x.StripeCustomerId
 	}
 	return ""
 }
@@ -3617,6 +3625,94 @@ func (*CreateCheckoutSessionResponse) Descriptor() ([]byte, []int) {
 func (x *CreateCheckoutSessionResponse) GetSessionId() string {
 	if x != nil {
 		return x.SessionId
+	}
+	return ""
+}
+
+type CreateCustomerPortalSessionRequest struct {
+	state            protoimpl.MessageState `protogen:"open.v1"`
+	StripeCustomerId string                 `protobuf:"bytes,1,opt,name=stripe_customer_id,json=stripeCustomerId,proto3" json:"stripe_customer_id,omitempty"`
+	unknownFields    protoimpl.UnknownFields
+	sizeCache        protoimpl.SizeCache
+}
+
+func (x *CreateCustomerPortalSessionRequest) Reset() {
+	*x = CreateCustomerPortalSessionRequest{}
+	mi := &file_trading_api_proto_msgTypes[53]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *CreateCustomerPortalSessionRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*CreateCustomerPortalSessionRequest) ProtoMessage() {}
+
+func (x *CreateCustomerPortalSessionRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_trading_api_proto_msgTypes[53]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use CreateCustomerPortalSessionRequest.ProtoReflect.Descriptor instead.
+func (*CreateCustomerPortalSessionRequest) Descriptor() ([]byte, []int) {
+	return file_trading_api_proto_rawDescGZIP(), []int{53}
+}
+
+func (x *CreateCustomerPortalSessionRequest) GetStripeCustomerId() string {
+	if x != nil {
+		return x.StripeCustomerId
+	}
+	return ""
+}
+
+type CreateCustomerPortalSessionResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Url           string                 `protobuf:"bytes,1,opt,name=url,proto3" json:"url,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *CreateCustomerPortalSessionResponse) Reset() {
+	*x = CreateCustomerPortalSessionResponse{}
+	mi := &file_trading_api_proto_msgTypes[54]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *CreateCustomerPortalSessionResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*CreateCustomerPortalSessionResponse) ProtoMessage() {}
+
+func (x *CreateCustomerPortalSessionResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_trading_api_proto_msgTypes[54]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use CreateCustomerPortalSessionResponse.ProtoReflect.Descriptor instead.
+func (*CreateCustomerPortalSessionResponse) Descriptor() ([]byte, []int) {
+	return file_trading_api_proto_rawDescGZIP(), []int{54}
+}
+
+func (x *CreateCustomerPortalSessionResponse) GetUrl() string {
+	if x != nil {
+		return x.Url
 	}
 	return ""
 }
@@ -3940,12 +4036,17 @@ const file_trading_api_proto_rawDesc = "" +
 	"\x06status\x18\x03 \x01(\tR\x06status\x12,\n" +
 	"\x12current_period_end\x18\x04 \x01(\x03R\x10currentPeriodEnd\"C\n" +
 	"\x13GetProductsResponse\x12,\n" +
-	"\bproducts\x18\x01 \x03(\v2\x10.trading.ProductR\bproducts\"9\n" +
+	"\bproducts\x18\x01 \x03(\v2\x10.trading.ProductR\bproducts\"g\n" +
 	"\x1cCreateCheckoutSessionRequest\x12\x19\n" +
-	"\bprice_id\x18\x01 \x01(\tR\apriceId\">\n" +
+	"\bprice_id\x18\x01 \x01(\tR\apriceId\x12,\n" +
+	"\x12stripe_customer_id\x18\x02 \x01(\tR\x10stripeCustomerId\">\n" +
 	"\x1dCreateCheckoutSessionResponse\x12\x1d\n" +
 	"\n" +
-	"session_id\x18\x01 \x01(\tR\tsessionId*:\n" +
+	"session_id\x18\x01 \x01(\tR\tsessionId\"R\n" +
+	"\"CreateCustomerPortalSessionRequest\x12,\n" +
+	"\x12stripe_customer_id\x18\x01 \x01(\tR\x10stripeCustomerId\"7\n" +
+	"#CreateCustomerPortalSessionResponse\x12\x10\n" +
+	"\x03url\x18\x01 \x01(\tR\x03url*:\n" +
 	"\tOrderSide\x12\x1a\n" +
 	"\x16ORDER_SIDE_UNSPECIFIED\x10\x00\x12\a\n" +
 	"\x03BUY\x10\x01\x12\b\n" +
@@ -4005,12 +4106,13 @@ const file_trading_api_proto_rawDesc = "" +
 	"\tAddSymbol\x12\x16.trading.SymbolRequest\x1a\x17.trading.StatusResponse\"\x00\x12A\n" +
 	"\fRemoveSymbol\x12\x16.trading.SymbolRequest\x1a\x17.trading.StatusResponse\"\x00\x124\n" +
 	"\vListSymbols\x12\x0e.trading.Empty\x1a\x13.trading.SymbolList\"\x00\x12D\n" +
-	"\vGetMomentum\x12\x18.trading.MomentumRequest\x1a\x19.trading.MomentumResponse\"\x002\xc3\x02\n" +
+	"\vGetMomentum\x12\x18.trading.MomentumRequest\x1a\x19.trading.MomentumResponse\"\x002\xbf\x03\n" +
 	"\x13SubscriptionService\x12=\n" +
 	"\vGetProducts\x12\x0e.trading.Empty\x1a\x1c.trading.GetProductsResponse\"\x00\x12h\n" +
 	"\x15CreateCheckoutSession\x12%.trading.CreateCheckoutSessionRequest\x1a&.trading.CreateCheckoutSessionResponse\"\x00\x12>\n" +
 	"\x13GetUserSubscription\x12\x0e.trading.Empty\x1a\x15.trading.Subscription\"\x00\x12C\n" +
-	"\x16CancelUserSubscription\x12\x0e.trading.Empty\x1a\x17.trading.StatusResponse\"\x00B\x0fZ\raetherion/genb\x06proto3"
+	"\x16CancelUserSubscription\x12\x0e.trading.Empty\x1a\x17.trading.StatusResponse\"\x00\x12z\n" +
+	"\x1bCreateCustomerPortalSession\x12+.trading.CreateCustomerPortalSessionRequest\x1a,.trading.CreateCustomerPortalSessionResponse\"\x00B\x0fZ\raetherion/genb\x06proto3"
 
 var (
 	file_trading_api_proto_rawDescOnce sync.Once
@@ -4025,72 +4127,74 @@ func file_trading_api_proto_rawDescGZIP() []byte {
 }
 
 var file_trading_api_proto_enumTypes = make([]protoimpl.EnumInfo, 3)
-var file_trading_api_proto_msgTypes = make([]protoimpl.MessageInfo, 60)
+var file_trading_api_proto_msgTypes = make([]protoimpl.MessageInfo, 62)
 var file_trading_api_proto_goTypes = []any{
-	(OrderSide)(0),                        // 0: trading.OrderSide
-	(OrderType)(0),                        // 1: trading.OrderType
-	(OrderStatus)(0),                      // 2: trading.OrderStatus
-	(*Empty)(nil),                         // 3: trading.Empty
-	(*DecimalValue)(nil),                  // 4: trading.DecimalValue
-	(*StatusResponse)(nil),                // 5: trading.StatusResponse
-	(*Pagination)(nil),                    // 6: trading.Pagination
-	(*PortfolioRequest)(nil),              // 7: trading.PortfolioRequest
-	(*PortfolioPosition)(nil),             // 8: trading.PortfolioPosition
-	(*PortfolioResponse)(nil),             // 9: trading.PortfolioResponse
-	(*PerformanceHistoryRequest)(nil),     // 10: trading.PerformanceHistoryRequest
-	(*BotPerformanceSnapshot)(nil),        // 11: trading.BotPerformanceSnapshot
-	(*PerformanceHistoryResponse)(nil),    // 12: trading.PerformanceHistoryResponse
-	(*ListOrdersRequest)(nil),             // 13: trading.ListOrdersRequest
-	(*ListOrdersResponse)(nil),            // 14: trading.ListOrdersResponse
-	(*Order)(nil),                         // 15: trading.Order
-	(*CreateOrderRequest)(nil),            // 16: trading.CreateOrderRequest
-	(*CancelOrderRequest)(nil),            // 17: trading.CancelOrderRequest
-	(*GetOrderRequest)(nil),               // 18: trading.GetOrderRequest
-	(*OrderBook)(nil),                     // 19: trading.OrderBook
-	(*OrderBookEntry)(nil),                // 20: trading.OrderBookEntry
-	(*OrderBookRequest)(nil),              // 21: trading.OrderBookRequest
-	(*Trade)(nil),                         // 22: trading.Trade
-	(*TradeRequest)(nil),                  // 23: trading.TradeRequest
-	(*TradeResponse)(nil),                 // 24: trading.TradeResponse
-	(*TradeHistoryRequest)(nil),           // 25: trading.TradeHistoryRequest
-	(*TradeHistoryResponse)(nil),          // 26: trading.TradeHistoryResponse
-	(*AuthRequest)(nil),                   // 27: trading.AuthRequest
-	(*AuthResponse)(nil),                  // 28: trading.AuthResponse
-	(*GetUserRequest)(nil),                // 29: trading.GetUserRequest
-	(*RegisterRequest)(nil),               // 30: trading.RegisterRequest
-	(*UserInfo)(nil),                      // 31: trading.UserInfo
-	(*RefreshTokenRequest)(nil),           // 32: trading.RefreshTokenRequest
-	(*Bot)(nil),                           // 33: trading.Bot
-	(*UpdateBotStateRequest)(nil),         // 34: trading.UpdateBotStateRequest
-	(*UpdateBotRequest)(nil),              // 35: trading.UpdateBotRequest
-	(*CreateBotRequest)(nil),              // 36: trading.CreateBotRequest
-	(*BotIdRequest)(nil),                  // 37: trading.BotIdRequest
-	(*ListBotsRequest)(nil),               // 38: trading.ListBotsRequest
-	(*BotList)(nil),                       // 39: trading.BotList
-	(*VaRRequest)(nil),                    // 40: trading.VaRRequest
-	(*AssetHistory)(nil),                  // 41: trading.AssetHistory
-	(*VaRResponse)(nil),                   // 42: trading.VaRResponse
-	(*MomentumRequest)(nil),               // 43: trading.MomentumRequest
-	(*MomentumMetric)(nil),                // 44: trading.MomentumMetric
-	(*MomentumResponse)(nil),              // 45: trading.MomentumResponse
-	(*Tick)(nil),                          // 46: trading.Tick
-	(*TickStreamRequest)(nil),             // 47: trading.TickStreamRequest
-	(*SymbolRequest)(nil),                 // 48: trading.SymbolRequest
-	(*SymbolList)(nil),                    // 49: trading.SymbolList
-	(*StrategyRequest)(nil),               // 50: trading.StrategyRequest
-	(*Product)(nil),                       // 51: trading.Product
-	(*Subscription)(nil),                  // 52: trading.Subscription
-	(*GetProductsResponse)(nil),           // 53: trading.GetProductsResponse
-	(*CreateCheckoutSessionRequest)(nil),  // 54: trading.CreateCheckoutSessionRequest
-	(*CreateCheckoutSessionResponse)(nil), // 55: trading.CreateCheckoutSessionResponse
-	nil,                                   // 56: trading.Bot.ParametersEntry
-	nil,                                   // 57: trading.Bot.StateEntry
-	nil,                                   // 58: trading.UpdateBotStateRequest.StateEntry
-	nil,                                   // 59: trading.CreateBotRequest.ParametersEntry
-	nil,                                   // 60: trading.VaRRequest.AssetHistoriesEntry
-	nil,                                   // 61: trading.VaRResponse.ParametersEntry
-	nil,                                   // 62: trading.StrategyRequest.ParametersEntry
-	(*timestamppb.Timestamp)(nil),         // 63: google.protobuf.Timestamp
+	(OrderSide)(0),                              // 0: trading.OrderSide
+	(OrderType)(0),                              // 1: trading.OrderType
+	(OrderStatus)(0),                            // 2: trading.OrderStatus
+	(*Empty)(nil),                               // 3: trading.Empty
+	(*DecimalValue)(nil),                        // 4: trading.DecimalValue
+	(*StatusResponse)(nil),                      // 5: trading.StatusResponse
+	(*Pagination)(nil),                          // 6: trading.Pagination
+	(*PortfolioRequest)(nil),                    // 7: trading.PortfolioRequest
+	(*PortfolioPosition)(nil),                   // 8: trading.PortfolioPosition
+	(*PortfolioResponse)(nil),                   // 9: trading.PortfolioResponse
+	(*PerformanceHistoryRequest)(nil),           // 10: trading.PerformanceHistoryRequest
+	(*BotPerformanceSnapshot)(nil),              // 11: trading.BotPerformanceSnapshot
+	(*PerformanceHistoryResponse)(nil),          // 12: trading.PerformanceHistoryResponse
+	(*ListOrdersRequest)(nil),                   // 13: trading.ListOrdersRequest
+	(*ListOrdersResponse)(nil),                  // 14: trading.ListOrdersResponse
+	(*Order)(nil),                               // 15: trading.Order
+	(*CreateOrderRequest)(nil),                  // 16: trading.CreateOrderRequest
+	(*CancelOrderRequest)(nil),                  // 17: trading.CancelOrderRequest
+	(*GetOrderRequest)(nil),                     // 18: trading.GetOrderRequest
+	(*OrderBook)(nil),                           // 19: trading.OrderBook
+	(*OrderBookEntry)(nil),                      // 20: trading.OrderBookEntry
+	(*OrderBookRequest)(nil),                    // 21: trading.OrderBookRequest
+	(*Trade)(nil),                               // 22: trading.Trade
+	(*TradeRequest)(nil),                        // 23: trading.TradeRequest
+	(*TradeResponse)(nil),                       // 24: trading.TradeResponse
+	(*TradeHistoryRequest)(nil),                 // 25: trading.TradeHistoryRequest
+	(*TradeHistoryResponse)(nil),                // 26: trading.TradeHistoryResponse
+	(*AuthRequest)(nil),                         // 27: trading.AuthRequest
+	(*AuthResponse)(nil),                        // 28: trading.AuthResponse
+	(*GetUserRequest)(nil),                      // 29: trading.GetUserRequest
+	(*RegisterRequest)(nil),                     // 30: trading.RegisterRequest
+	(*UserInfo)(nil),                            // 31: trading.UserInfo
+	(*RefreshTokenRequest)(nil),                 // 32: trading.RefreshTokenRequest
+	(*Bot)(nil),                                 // 33: trading.Bot
+	(*UpdateBotStateRequest)(nil),               // 34: trading.UpdateBotStateRequest
+	(*UpdateBotRequest)(nil),                    // 35: trading.UpdateBotRequest
+	(*CreateBotRequest)(nil),                    // 36: trading.CreateBotRequest
+	(*BotIdRequest)(nil),                        // 37: trading.BotIdRequest
+	(*ListBotsRequest)(nil),                     // 38: trading.ListBotsRequest
+	(*BotList)(nil),                             // 39: trading.BotList
+	(*VaRRequest)(nil),                          // 40: trading.VaRRequest
+	(*AssetHistory)(nil),                        // 41: trading.AssetHistory
+	(*VaRResponse)(nil),                         // 42: trading.VaRResponse
+	(*MomentumRequest)(nil),                     // 43: trading.MomentumRequest
+	(*MomentumMetric)(nil),                      // 44: trading.MomentumMetric
+	(*MomentumResponse)(nil),                    // 45: trading.MomentumResponse
+	(*Tick)(nil),                                // 46: trading.Tick
+	(*TickStreamRequest)(nil),                   // 47: trading.TickStreamRequest
+	(*SymbolRequest)(nil),                       // 48: trading.SymbolRequest
+	(*SymbolList)(nil),                          // 49: trading.SymbolList
+	(*StrategyRequest)(nil),                     // 50: trading.StrategyRequest
+	(*Product)(nil),                             // 51: trading.Product
+	(*Subscription)(nil),                        // 52: trading.Subscription
+	(*GetProductsResponse)(nil),                 // 53: trading.GetProductsResponse
+	(*CreateCheckoutSessionRequest)(nil),        // 54: trading.CreateCheckoutSessionRequest
+	(*CreateCheckoutSessionResponse)(nil),       // 55: trading.CreateCheckoutSessionResponse
+	(*CreateCustomerPortalSessionRequest)(nil),  // 56: trading.CreateCustomerPortalSessionRequest
+	(*CreateCustomerPortalSessionResponse)(nil), // 57: trading.CreateCustomerPortalSessionResponse
+	nil,                           // 58: trading.Bot.ParametersEntry
+	nil,                           // 59: trading.Bot.StateEntry
+	nil,                           // 60: trading.UpdateBotStateRequest.StateEntry
+	nil,                           // 61: trading.CreateBotRequest.ParametersEntry
+	nil,                           // 62: trading.VaRRequest.AssetHistoriesEntry
+	nil,                           // 63: trading.VaRResponse.ParametersEntry
+	nil,                           // 64: trading.StrategyRequest.ParametersEntry
+	(*timestamppb.Timestamp)(nil), // 65: google.protobuf.Timestamp
 }
 var file_trading_api_proto_depIdxs = []int32{
 	4,  // 0: trading.PortfolioPosition.quantity:type_name -> trading.DecimalValue
@@ -4101,10 +4205,10 @@ var file_trading_api_proto_depIdxs = []int32{
 	8,  // 5: trading.PortfolioResponse.positions:type_name -> trading.PortfolioPosition
 	4,  // 6: trading.PortfolioResponse.total_portfolio_value:type_name -> trading.DecimalValue
 	4,  // 7: trading.PortfolioResponse.cash_balance:type_name -> trading.DecimalValue
-	63, // 8: trading.PortfolioResponse.updated_at:type_name -> google.protobuf.Timestamp
-	63, // 9: trading.PerformanceHistoryRequest.start_time:type_name -> google.protobuf.Timestamp
-	63, // 10: trading.PerformanceHistoryRequest.end_time:type_name -> google.protobuf.Timestamp
-	63, // 11: trading.BotPerformanceSnapshot.snapshot_time:type_name -> google.protobuf.Timestamp
+	65, // 8: trading.PortfolioResponse.updated_at:type_name -> google.protobuf.Timestamp
+	65, // 9: trading.PerformanceHistoryRequest.start_time:type_name -> google.protobuf.Timestamp
+	65, // 10: trading.PerformanceHistoryRequest.end_time:type_name -> google.protobuf.Timestamp
+	65, // 11: trading.BotPerformanceSnapshot.snapshot_time:type_name -> google.protobuf.Timestamp
 	4,  // 12: trading.BotPerformanceSnapshot.equity_value:type_name -> trading.DecimalValue
 	4,  // 13: trading.BotPerformanceSnapshot.cash_balance:type_name -> trading.DecimalValue
 	4,  // 14: trading.BotPerformanceSnapshot.pnl:type_name -> trading.DecimalValue
@@ -4117,8 +4221,8 @@ var file_trading_api_proto_depIdxs = []int32{
 	4,  // 21: trading.Order.quantity_filled:type_name -> trading.DecimalValue
 	4,  // 22: trading.Order.limit_price:type_name -> trading.DecimalValue
 	4,  // 23: trading.Order.stop_price:type_name -> trading.DecimalValue
-	63, // 24: trading.Order.created_at:type_name -> google.protobuf.Timestamp
-	63, // 25: trading.Order.updated_at:type_name -> google.protobuf.Timestamp
+	65, // 24: trading.Order.created_at:type_name -> google.protobuf.Timestamp
+	65, // 25: trading.Order.updated_at:type_name -> google.protobuf.Timestamp
 	22, // 26: trading.Order.trades:type_name -> trading.Trade
 	0,  // 27: trading.CreateOrderRequest.side:type_name -> trading.OrderSide
 	1,  // 28: trading.CreateOrderRequest.type:type_name -> trading.OrderType
@@ -4128,28 +4232,28 @@ var file_trading_api_proto_depIdxs = []int32{
 	20, // 32: trading.OrderBook.bids:type_name -> trading.OrderBookEntry
 	20, // 33: trading.OrderBook.asks:type_name -> trading.OrderBookEntry
 	4,  // 34: trading.Trade.commission:type_name -> trading.DecimalValue
-	63, // 35: trading.Trade.executed_at_timestamp:type_name -> google.protobuf.Timestamp
+	65, // 35: trading.Trade.executed_at_timestamp:type_name -> google.protobuf.Timestamp
 	4,  // 36: trading.Trade.pnl_realized:type_name -> trading.DecimalValue
 	4,  // 37: trading.Trade.pnl_unrealized:type_name -> trading.DecimalValue
 	22, // 38: trading.TradeHistoryResponse.trades:type_name -> trading.Trade
-	56, // 39: trading.Bot.parameters:type_name -> trading.Bot.ParametersEntry
+	58, // 39: trading.Bot.parameters:type_name -> trading.Bot.ParametersEntry
 	4,  // 40: trading.Bot.initial_account_value:type_name -> trading.DecimalValue
 	4,  // 41: trading.Bot.current_account_value:type_name -> trading.DecimalValue
-	63, // 42: trading.Bot.created_at:type_name -> google.protobuf.Timestamp
-	63, // 43: trading.Bot.updated_at:type_name -> google.protobuf.Timestamp
-	57, // 44: trading.Bot.state:type_name -> trading.Bot.StateEntry
-	58, // 45: trading.UpdateBotStateRequest.state:type_name -> trading.UpdateBotStateRequest.StateEntry
-	59, // 46: trading.CreateBotRequest.parameters:type_name -> trading.CreateBotRequest.ParametersEntry
+	65, // 42: trading.Bot.created_at:type_name -> google.protobuf.Timestamp
+	65, // 43: trading.Bot.updated_at:type_name -> google.protobuf.Timestamp
+	59, // 44: trading.Bot.state:type_name -> trading.Bot.StateEntry
+	60, // 45: trading.UpdateBotStateRequest.state:type_name -> trading.UpdateBotStateRequest.StateEntry
+	61, // 46: trading.CreateBotRequest.parameters:type_name -> trading.CreateBotRequest.ParametersEntry
 	33, // 47: trading.BotList.bots:type_name -> trading.Bot
 	9,  // 48: trading.VaRRequest.current_portfolio:type_name -> trading.PortfolioResponse
-	60, // 49: trading.VaRRequest.asset_histories:type_name -> trading.VaRRequest.AssetHistoriesEntry
+	62, // 49: trading.VaRRequest.asset_histories:type_name -> trading.VaRRequest.AssetHistoriesEntry
 	4,  // 50: trading.VaRResponse.value_at_risk:type_name -> trading.DecimalValue
-	63, // 51: trading.VaRResponse.last_update:type_name -> google.protobuf.Timestamp
+	65, // 51: trading.VaRResponse.last_update:type_name -> google.protobuf.Timestamp
 	4,  // 52: trading.VaRResponse.portfolio_value:type_name -> trading.DecimalValue
 	8,  // 53: trading.VaRResponse.positions:type_name -> trading.PortfolioPosition
-	61, // 54: trading.VaRResponse.parameters:type_name -> trading.VaRResponse.ParametersEntry
+	63, // 54: trading.VaRResponse.parameters:type_name -> trading.VaRResponse.ParametersEntry
 	44, // 55: trading.MomentumResponse.metrics:type_name -> trading.MomentumMetric
-	62, // 56: trading.StrategyRequest.parameters:type_name -> trading.StrategyRequest.ParametersEntry
+	64, // 56: trading.StrategyRequest.parameters:type_name -> trading.StrategyRequest.ParametersEntry
 	51, // 57: trading.GetProductsResponse.products:type_name -> trading.Product
 	41, // 58: trading.VaRRequest.AssetHistoriesEntry.value:type_name -> trading.AssetHistory
 	7,  // 59: trading.PortfolioService.GetPortfolio:input_type -> trading.PortfolioRequest
@@ -4189,45 +4293,47 @@ var file_trading_api_proto_depIdxs = []int32{
 	54, // 93: trading.SubscriptionService.CreateCheckoutSession:input_type -> trading.CreateCheckoutSessionRequest
 	3,  // 94: trading.SubscriptionService.GetUserSubscription:input_type -> trading.Empty
 	3,  // 95: trading.SubscriptionService.CancelUserSubscription:input_type -> trading.Empty
-	9,  // 96: trading.PortfolioService.GetPortfolio:output_type -> trading.PortfolioResponse
-	9,  // 97: trading.PortfolioService.StreamPortfolio:output_type -> trading.PortfolioResponse
-	12, // 98: trading.PortfolioService.GetPerformanceHistory:output_type -> trading.PerformanceHistoryResponse
-	15, // 99: trading.OrderService.CreateOrder:output_type -> trading.Order
-	15, // 100: trading.OrderService.CancelOrder:output_type -> trading.Order
-	15, // 101: trading.OrderService.GetOrder:output_type -> trading.Order
-	26, // 102: trading.OrderService.GetTradeHistory:output_type -> trading.TradeHistoryResponse
-	14, // 103: trading.OrderService.ListOrders:output_type -> trading.ListOrdersResponse
-	28, // 104: trading.AuthService.Register:output_type -> trading.AuthResponse
-	28, // 105: trading.AuthService.Login:output_type -> trading.AuthResponse
-	31, // 106: trading.AuthService.GetUser:output_type -> trading.UserInfo
-	28, // 107: trading.AuthService.RefreshToken:output_type -> trading.AuthResponse
-	5,  // 108: trading.BotService.CreateBot:output_type -> trading.StatusResponse
-	33, // 109: trading.BotService.GetBot:output_type -> trading.Bot
-	33, // 110: trading.BotService.UpdateBot:output_type -> trading.Bot
-	5,  // 111: trading.BotService.DeleteBot:output_type -> trading.StatusResponse
-	39, // 112: trading.BotService.ListBots:output_type -> trading.BotList
-	5,  // 113: trading.BotService.StartBot:output_type -> trading.StatusResponse
-	5,  // 114: trading.BotService.StopBot:output_type -> trading.StatusResponse
-	33, // 115: trading.BotService.GetBotStatus:output_type -> trading.Bot
-	33, // 116: trading.BotService.StreamBotStatus:output_type -> trading.Bot
-	5,  // 117: trading.BotService.UpdateBotState:output_type -> trading.StatusResponse
-	42, // 118: trading.RiskService.CalculateVaR:output_type -> trading.VaRResponse
-	19, // 119: trading.TradingService.StreamOrderBook:output_type -> trading.OrderBook
-	46, // 120: trading.TradingService.GetPrice:output_type -> trading.Tick
-	5,  // 121: trading.TradingService.StartStrategy:output_type -> trading.StatusResponse
-	5,  // 122: trading.TradingService.StopStrategy:output_type -> trading.StatusResponse
-	46, // 123: trading.TradingService.SubscribeTicks:output_type -> trading.Tick
-	46, // 124: trading.TradingService.StreamPrice:output_type -> trading.Tick
-	5,  // 125: trading.TradingService.AddSymbol:output_type -> trading.StatusResponse
-	5,  // 126: trading.TradingService.RemoveSymbol:output_type -> trading.StatusResponse
-	49, // 127: trading.TradingService.ListSymbols:output_type -> trading.SymbolList
-	45, // 128: trading.TradingService.GetMomentum:output_type -> trading.MomentumResponse
-	53, // 129: trading.SubscriptionService.GetProducts:output_type -> trading.GetProductsResponse
-	55, // 130: trading.SubscriptionService.CreateCheckoutSession:output_type -> trading.CreateCheckoutSessionResponse
-	52, // 131: trading.SubscriptionService.GetUserSubscription:output_type -> trading.Subscription
-	5,  // 132: trading.SubscriptionService.CancelUserSubscription:output_type -> trading.StatusResponse
-	96, // [96:133] is the sub-list for method output_type
-	59, // [59:96] is the sub-list for method input_type
+	56, // 96: trading.SubscriptionService.CreateCustomerPortalSession:input_type -> trading.CreateCustomerPortalSessionRequest
+	9,  // 97: trading.PortfolioService.GetPortfolio:output_type -> trading.PortfolioResponse
+	9,  // 98: trading.PortfolioService.StreamPortfolio:output_type -> trading.PortfolioResponse
+	12, // 99: trading.PortfolioService.GetPerformanceHistory:output_type -> trading.PerformanceHistoryResponse
+	15, // 100: trading.OrderService.CreateOrder:output_type -> trading.Order
+	15, // 101: trading.OrderService.CancelOrder:output_type -> trading.Order
+	15, // 102: trading.OrderService.GetOrder:output_type -> trading.Order
+	26, // 103: trading.OrderService.GetTradeHistory:output_type -> trading.TradeHistoryResponse
+	14, // 104: trading.OrderService.ListOrders:output_type -> trading.ListOrdersResponse
+	28, // 105: trading.AuthService.Register:output_type -> trading.AuthResponse
+	28, // 106: trading.AuthService.Login:output_type -> trading.AuthResponse
+	31, // 107: trading.AuthService.GetUser:output_type -> trading.UserInfo
+	28, // 108: trading.AuthService.RefreshToken:output_type -> trading.AuthResponse
+	5,  // 109: trading.BotService.CreateBot:output_type -> trading.StatusResponse
+	33, // 110: trading.BotService.GetBot:output_type -> trading.Bot
+	33, // 111: trading.BotService.UpdateBot:output_type -> trading.Bot
+	5,  // 112: trading.BotService.DeleteBot:output_type -> trading.StatusResponse
+	39, // 113: trading.BotService.ListBots:output_type -> trading.BotList
+	5,  // 114: trading.BotService.StartBot:output_type -> trading.StatusResponse
+	5,  // 115: trading.BotService.StopBot:output_type -> trading.StatusResponse
+	33, // 116: trading.BotService.GetBotStatus:output_type -> trading.Bot
+	33, // 117: trading.BotService.StreamBotStatus:output_type -> trading.Bot
+	5,  // 118: trading.BotService.UpdateBotState:output_type -> trading.StatusResponse
+	42, // 119: trading.RiskService.CalculateVaR:output_type -> trading.VaRResponse
+	19, // 120: trading.TradingService.StreamOrderBook:output_type -> trading.OrderBook
+	46, // 121: trading.TradingService.GetPrice:output_type -> trading.Tick
+	5,  // 122: trading.TradingService.StartStrategy:output_type -> trading.StatusResponse
+	5,  // 123: trading.TradingService.StopStrategy:output_type -> trading.StatusResponse
+	46, // 124: trading.TradingService.SubscribeTicks:output_type -> trading.Tick
+	46, // 125: trading.TradingService.StreamPrice:output_type -> trading.Tick
+	5,  // 126: trading.TradingService.AddSymbol:output_type -> trading.StatusResponse
+	5,  // 127: trading.TradingService.RemoveSymbol:output_type -> trading.StatusResponse
+	49, // 128: trading.TradingService.ListSymbols:output_type -> trading.SymbolList
+	45, // 129: trading.TradingService.GetMomentum:output_type -> trading.MomentumResponse
+	53, // 130: trading.SubscriptionService.GetProducts:output_type -> trading.GetProductsResponse
+	55, // 131: trading.SubscriptionService.CreateCheckoutSession:output_type -> trading.CreateCheckoutSessionResponse
+	52, // 132: trading.SubscriptionService.GetUserSubscription:output_type -> trading.Subscription
+	5,  // 133: trading.SubscriptionService.CancelUserSubscription:output_type -> trading.StatusResponse
+	57, // 134: trading.SubscriptionService.CreateCustomerPortalSession:output_type -> trading.CreateCustomerPortalSessionResponse
+	97, // [97:135] is the sub-list for method output_type
+	59, // [59:97] is the sub-list for method input_type
 	59, // [59:59] is the sub-list for extension type_name
 	59, // [59:59] is the sub-list for extension extendee
 	0,  // [0:59] is the sub-list for field type_name
@@ -4249,7 +4355,7 @@ func file_trading_api_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_trading_api_proto_rawDesc), len(file_trading_api_proto_rawDesc)),
 			NumEnums:      3,
-			NumMessages:   60,
+			NumMessages:   62,
 			NumExtensions: 0,
 			NumServices:   7,
 		},

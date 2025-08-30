@@ -303,6 +303,29 @@ func (s *DBService) SetUserRoleByStripeCustomerID(ctx context.Context, stripeCus
 	return nil
 }
 
+// SetStripeCustomerIDForUser sets the Stripe customer ID for a user.
+func (s *DBService) SetStripeCustomerIDForUser(ctx context.Context, userID string, stripeCustomerID string) error {
+	query := `UPDATE users SET stripe_customer_id = $1 WHERE id = $2`
+	_, err := s.pool.Exec(ctx, query, stripeCustomerID, userID)
+	if err != nil {
+		log.Error().Err(err).Str("user_id", userID).Msg("Failed to set Stripe customer ID")
+		return fmt.Errorf("failed to set Stripe customer ID: %w", err)
+	}
+	return nil
+}
+
+// GetStripeCustomerIDByUserID retrieves the Stripe customer ID for a user.
+func (s *DBService) GetStripeCustomerIDByUserID(ctx context.Context, userID string) (string, error) {
+	var stripeCustomerID string
+	query := `SELECT stripe_customer_id FROM users WHERE id = $1`
+	err := s.pool.QueryRow(ctx, query, userID).Scan(&stripeCustomerID)
+	if err != nil {
+		log.Error().Err(err).Str("user_id", userID).Msg("Failed to get Stripe customer ID")
+		return "", fmt.Errorf("failed to get Stripe customer ID: %w", err)
+	}
+	return stripeCustomerID, nil
+}
+
 // GetPortfolioByBotID retrieves the portfolio for a given bot.
 func (s *DBService) GetPortfolioByBotID(ctx context.Context, botID string) (*pb.PortfolioResponse, error) {
 	portfolio := &pb.PortfolioResponse{

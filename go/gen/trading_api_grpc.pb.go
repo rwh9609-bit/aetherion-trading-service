@@ -1689,10 +1689,11 @@ var TradingService_ServiceDesc = grpc.ServiceDesc{
 }
 
 const (
-	SubscriptionService_GetProducts_FullMethodName            = "/trading.SubscriptionService/GetProducts"
-	SubscriptionService_CreateCheckoutSession_FullMethodName  = "/trading.SubscriptionService/CreateCheckoutSession"
-	SubscriptionService_GetUserSubscription_FullMethodName    = "/trading.SubscriptionService/GetUserSubscription"
-	SubscriptionService_CancelUserSubscription_FullMethodName = "/trading.SubscriptionService/CancelUserSubscription"
+	SubscriptionService_GetProducts_FullMethodName                 = "/trading.SubscriptionService/GetProducts"
+	SubscriptionService_CreateCheckoutSession_FullMethodName       = "/trading.SubscriptionService/CreateCheckoutSession"
+	SubscriptionService_GetUserSubscription_FullMethodName         = "/trading.SubscriptionService/GetUserSubscription"
+	SubscriptionService_CancelUserSubscription_FullMethodName      = "/trading.SubscriptionService/CancelUserSubscription"
+	SubscriptionService_CreateCustomerPortalSession_FullMethodName = "/trading.SubscriptionService/CreateCustomerPortalSession"
 )
 
 // SubscriptionServiceClient is the client API for SubscriptionService service.
@@ -1703,6 +1704,7 @@ type SubscriptionServiceClient interface {
 	CreateCheckoutSession(ctx context.Context, in *CreateCheckoutSessionRequest, opts ...grpc.CallOption) (*CreateCheckoutSessionResponse, error)
 	GetUserSubscription(ctx context.Context, in *Empty, opts ...grpc.CallOption) (*Subscription, error)
 	CancelUserSubscription(ctx context.Context, in *Empty, opts ...grpc.CallOption) (*StatusResponse, error)
+	CreateCustomerPortalSession(ctx context.Context, in *CreateCustomerPortalSessionRequest, opts ...grpc.CallOption) (*CreateCustomerPortalSessionResponse, error)
 }
 
 type subscriptionServiceClient struct {
@@ -1753,6 +1755,16 @@ func (c *subscriptionServiceClient) CancelUserSubscription(ctx context.Context, 
 	return out, nil
 }
 
+func (c *subscriptionServiceClient) CreateCustomerPortalSession(ctx context.Context, in *CreateCustomerPortalSessionRequest, opts ...grpc.CallOption) (*CreateCustomerPortalSessionResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(CreateCustomerPortalSessionResponse)
+	err := c.cc.Invoke(ctx, SubscriptionService_CreateCustomerPortalSession_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // SubscriptionServiceServer is the server API for SubscriptionService service.
 // All implementations must embed UnimplementedSubscriptionServiceServer
 // for forward compatibility.
@@ -1761,6 +1773,7 @@ type SubscriptionServiceServer interface {
 	CreateCheckoutSession(context.Context, *CreateCheckoutSessionRequest) (*CreateCheckoutSessionResponse, error)
 	GetUserSubscription(context.Context, *Empty) (*Subscription, error)
 	CancelUserSubscription(context.Context, *Empty) (*StatusResponse, error)
+	CreateCustomerPortalSession(context.Context, *CreateCustomerPortalSessionRequest) (*CreateCustomerPortalSessionResponse, error)
 	mustEmbedUnimplementedSubscriptionServiceServer()
 }
 
@@ -1782,6 +1795,9 @@ func (UnimplementedSubscriptionServiceServer) GetUserSubscription(context.Contex
 }
 func (UnimplementedSubscriptionServiceServer) CancelUserSubscription(context.Context, *Empty) (*StatusResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CancelUserSubscription not implemented")
+}
+func (UnimplementedSubscriptionServiceServer) CreateCustomerPortalSession(context.Context, *CreateCustomerPortalSessionRequest) (*CreateCustomerPortalSessionResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CreateCustomerPortalSession not implemented")
 }
 func (UnimplementedSubscriptionServiceServer) mustEmbedUnimplementedSubscriptionServiceServer() {}
 func (UnimplementedSubscriptionServiceServer) testEmbeddedByValue()                             {}
@@ -1876,6 +1892,24 @@ func _SubscriptionService_CancelUserSubscription_Handler(srv interface{}, ctx co
 	return interceptor(ctx, in, info, handler)
 }
 
+func _SubscriptionService_CreateCustomerPortalSession_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CreateCustomerPortalSessionRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(SubscriptionServiceServer).CreateCustomerPortalSession(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: SubscriptionService_CreateCustomerPortalSession_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(SubscriptionServiceServer).CreateCustomerPortalSession(ctx, req.(*CreateCustomerPortalSessionRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // SubscriptionService_ServiceDesc is the grpc.ServiceDesc for SubscriptionService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -1898,6 +1932,10 @@ var SubscriptionService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "CancelUserSubscription",
 			Handler:    _SubscriptionService_CancelUserSubscription_Handler,
+		},
+		{
+			MethodName: "CreateCustomerPortalSession",
+			Handler:    _SubscriptionService_CreateCustomerPortalSession_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
