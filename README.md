@@ -4,7 +4,7 @@
 
 [![Build Status](https://img.shields.io/badge/build-passing-brightgreen)](https://github.com/xeratooth/multilanguage)
 [![License](https://img.shields.io/badge/license-MIT-blue)](https://github.com/xeratooth/multilanguage)
-[![Join our Discord](https://img.shields.io/badge/Discord-Join-blue?logo=discord&logoColor=white)](https://discord.gg/YOUR_INVITE_CODE)
+[![Join our Discord](https://img.shields.io/badge/Discord-Join-blue?logo=discord&logoColor=white)](https://discord.gg/Kjd3c6h3My)
 
 Aetherion is a feature-rich trading platform designed for speed, flexibility, and reliability. It leverages a robust microservices architecture, with each service crafted in the optimal language for its domain—Rust for high-performance risk analytics, Go for core trading logic, and Python for backtesting and orchestration.
 
