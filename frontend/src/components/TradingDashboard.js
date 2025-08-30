@@ -111,11 +111,11 @@ const TradingDashboard = ({ user, selectedBot, setUser, setView }) => {
         </Box>
         <Box sx={{ display:'grid', gap:3, gridTemplateColumns:{ xs:'1fr' }, minWidth:0 }}>
           <Box>
-            {momentumMode === 'client' && <CryptoScanner symbols={symbols} onSelect={(sym)=> setSelected(sym)} />}
-            {momentumMode === 'server' && <ServerMomentum onSelect={(sym)=> setSelected(sym)} />}
+            <OhlcPriceChart symbol={selected} />
           </Box>
           <Box>
-            <OhlcPriceChart symbol={selected} />
+            {momentumMode === 'client' && <CryptoScanner symbols={symbols} onSelect={(sym)=> setSelected(sym)} />}
+            {momentumMode === 'server' && <ServerMomentum onSelect={(sym)=> setSelected(sym)} />}
           </Box>
         </Box>
       </Box>

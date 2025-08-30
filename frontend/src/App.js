@@ -164,7 +164,33 @@ function App() {
                         <Button color="inherit" onClick={()=>setView('developBot')}>Develop Bot</Button>
                       )}
                       {user.role === 'superuser' && (
-                        <Button color="inherit" onClick={()=>setView('strategyStudio')}>Strategy Studio</Button>
+                                              <Button
+                        color="inherit"
+                        onClick={()=>setView('strategyStudio')}
+                        sx={{
+                          background: 'linear-gradient(90deg, #2196f3, #9c27b0)',
+                          WebkitBackgroundClip: 'text',
+                          WebkitTextFillColor: 'transparent',
+                          fontWeight: 600
+                        }}
+                      >
+                        Strategy Studio
+                      </Button>
+                      )}
+                      {user.role === 'user' && (
+                                              <Button
+                        color="inherit"
+                        // onClick should prompt user to upgrade
+                        onClick={()=> alert('Upgrade to access Strategy Studio')}
+                        sx={{
+                          background: 'linear-gradient(90deg, #2196f3, #9c27b0)',
+                          WebkitBackgroundClip: 'text',
+                          WebkitTextFillColor: 'transparent',
+                          fontWeight: 600
+                        }}
+                      >
+                        Strategy Studio
+                      </Button>
                       )}
                     </>
                   ) : (
