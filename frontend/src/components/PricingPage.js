@@ -1,34 +1,36 @@
 import React from 'react';
 import Button from '@mui/material/Button';
- 
+
 const PricingPage = ({ setView }) => {
   const STRIPE_PRICE_ID_MONTHLY = process.env.REACT_APP_STRIPE_PRICE_ID_MONTHLY;
   const STRIPE_PRICE_ID_YEARLY = process.env.REACT_APP_STRIPE_PRICE_ID_YEARLY;
   const STRIPE_PUBLISHABLE_KEY = process.env.REACT_APP_STRIPE_PUBLISHABLE_KEY;
+  const API_BASE_URL = process.env.REACT_APP_BASE_URL || '';
+
   const handleSubscribe = async (priceId) => {
-  console.log('Sending priceId:', priceId);
-  try {
-    const response = await fetch('/create-checkout-session', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ priceId }),
-    });
-    const data = await response.json();
-    if (!response.ok) {
-      alert('Aetherion is not ready to be used: ' + (data.error || 'Unknown error'));
-      return;
+    console.log('Sending priceId:', priceId);
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/create-checkout-session`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ priceId }),
+      });
+      const data = await response.json();
+      if (!response.ok) {
+        alert('Aetherion is not ready to be used: ' + (data.error || 'Unknown error'));
+        return;
+      }
+      const { sessionId } = data;
+      if (!sessionId) {
+        alert('No sessionId returned from backend.');
+        return;
+      }
+      const stripe = window.Stripe(STRIPE_PUBLISHABLE_KEY);
+      await stripe.redirectToCheckout({ sessionId });
+    } catch (err) {
+      alert('Aetherion is not ready to be used: ' + err.message);
     }
-    const { sessionId } = data;
-    if (!sessionId) {
-      alert('No sessionId returned from backend.');
-      return;
-    }
-    const stripe = window.Stripe(STRIPE_PUBLISHABLE_KEY);
-    await stripe.redirectToCheckout({ sessionId });
-  } catch (err) {
-    alert('Aetherion is not ready to be used: ' + err.message);
-  }
-};
+  };
 
 
   return (
