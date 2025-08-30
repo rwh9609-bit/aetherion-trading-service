@@ -48,3 +48,29 @@ async def create_checkout_session(request: Request):
     except Exception as e:
         return JSONResponse(status_code=400, content={"error": str(e)})
 # You can run this app with: uvicorn python.app:app --reload
+
+
+@app.get("/cancel")
+async def cancel():
+    return JSONResponse(content={"message": "Subscription canceled or checkout aborted."})
+
+
+@app.post("/stripe-webhook")
+async def stripe_webhook(request: Request):
+    payload = await request.body()
+    sig_header = request.headers.get("stripe-signature")
+    event = None
+    try:
+        event = stripe.Webhook.construct_event(
+            payload, sig_header, os.getenv("STRIPE_WEBHOOK_SECRET")
+        )
+    except Exception as e:
+        return JSONResponse(status_code=400, content={"error": str(e)})
+
+    if event["type"] == "checkout.session.completed":
+        session = event["data"]["object"]
+        # Find user by Stripe customer/session ID
+        # Update user role in DB to 'superuser'
+        # Example:
+        # db.update_user_role(stripe_customer_id=session["customer"], role="superuser")
+    return {"status": "success"}

@@ -16,14 +16,17 @@ import (
 	"github.com/stripe/stripe-go/v72/webhook"
 )
 
+var dbclient *DBService
+
 type subscriptionServer struct {
 	pb.UnimplementedSubscriptionServiceServer
+	dbclient *DBService
 }
 
-func newSubscriptionServer() *subscriptionServer {
+func newSubscriptionServer(dbclient *DBService) *subscriptionServer {
 	// Initialize Stripe API key
 	stripe.Key = os.Getenv("STRIPE_API_KEY")
-	return &subscriptionServer{}
+	return &subscriptionServer{dbclient: dbclient}
 }
 
 func (s *subscriptionServer) GetProducts(ctx context.Context, req *pb.Empty) (*pb.GetProductsResponse, error) {
@@ -103,7 +106,15 @@ func handleStripeWebhook(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, "Bad payload", http.StatusBadRequest)
 			return
 		}
-		// Fulfill the purchase...
+		// Fulfill the purchase: set user role to superuser
+		if checkoutSession.Customer != nil {
+			ctx := context.Background()
+			stripeCustomerID := checkoutSession.Customer.ID
+
+			if err := dbclient.SetUserRoleByStripeCustomerID(ctx, stripeCustomerID, "superuser"); err != nil {
+				log.Printf("Failed to set user role: %v", err)
+			}
+		}
 	case "customer.subscription.updated":
 		var subscription stripe.Subscription
 		err := json.Unmarshal(event.Data.Raw, &subscription)

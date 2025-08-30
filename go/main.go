@@ -254,9 +254,9 @@ type tradingServer struct {
 	priceMu       sync.RWMutex
 	feed          *CoinbaseFeed // market data feed controller (injected)
 	// in-memory price history for momentum metrics: symbol -> slice of (ts, price)
-	histMu    sync.RWMutex
-	priceHist map[string][]histPoint
-	dbService *DBService
+	histMu     sync.RWMutex
+	priceHist  map[string][]histPoint
+	dbService  *DBService
 	botService *botServiceServer // Added botService
 }
 
@@ -451,22 +451,22 @@ func (s *tradingServer) SubscribeTicks(req *pb.StrategyRequest, stream pb.Tradin
 		coinbaseSymbol := req.Symbol
 
 		price, err := GetCoinbasePrice(coinbaseSymbol)
-			if err != nil {
-				log.Printf("Error fetching price for %s: %v", coinbaseSymbol, err)
-				time.Sleep(1 * time.Second) // Wait before retrying
-				continue
-			}
+		if err != nil {
+			log.Printf("Error fetching price for %s: %v", coinbaseSymbol, err)
+			time.Sleep(1 * time.Second) // Wait before retrying
+			continue
+		}
 
-			tick := &pb.Tick{
-				Symbol:      req.Symbol,
-				Price:       price, // Use the fetched real price
-				TimestampNs: time.Now().UnixNano(),
-			}
-			if err := stream.Send(tick); err != nil {
-				log.Printf("Error sending tick: %v", err)
-				return err
-			}
-			time.Sleep(100 * time.Millisecond) // Send ticks every 100ms
+		tick := &pb.Tick{
+			Symbol:      req.Symbol,
+			Price:       price, // Use the fetched real price
+			TimestampNs: time.Now().UnixNano(),
+		}
+		if err := stream.Send(tick); err != nil {
+			log.Printf("Error sending tick: %v", err)
+			return err
+		}
+		time.Sleep(100 * time.Millisecond) // Send ticks every 100ms
 	}
 }
 
@@ -681,16 +681,16 @@ func (s *portfolioServer) GetPortfolio(ctx context.Context, req *pb.PortfolioReq
 		log.Error().Err(err).Msg("Failed to get portfolio")
 		return nil, status.Error(codes.Internal, "failed to get portfolio")
 	}
-// type PortfolioResponse struct {
-// 	state               protoimpl.MessageState `protogen:"open.v1"`
-// 	BotId               string                 `protobuf:"bytes,1,opt,name=bot_id,json=botId,proto3" json:"bot_id,omitempty"`
-// 	Positions           []*PortfolioPosition   `protobuf:"bytes,2,rep,name=positions,proto3" json:"positions,omitempty"`
-// 	TotalPortfolioValue *DecimalValue          `protobuf:"bytes,3,opt,name=total_portfolio_value,json=totalPortfolioValue,proto3" json:"total_portfolio_value,omitempty"`
-// 	CashBalance         *DecimalValue          `protobuf:"bytes,4,opt,name=cash_balance,json=cashBalance,proto3" json:"cash_balance,omitempty"`
-// 	UpdatedAt           *timestamppb.Timestamp `protobuf:"bytes,5,opt,name=updated_at,json=updatedAt,proto3" json:"updated_at,omitempty"`
-// 	unknownFields       protoimpl.UnknownFields
-// 	sizeCache           protoimpl.SizeCache
-// }
+	// type PortfolioResponse struct {
+	// 	state               protoimpl.MessageState `protogen:"open.v1"`
+	// 	BotId               string                 `protobuf:"bytes,1,opt,name=bot_id,json=botId,proto3" json:"bot_id,omitempty"`
+	// 	Positions           []*PortfolioPosition   `protobuf:"bytes,2,rep,name=positions,proto3" json:"positions,omitempty"`
+	// 	TotalPortfolioValue *DecimalValue          `protobuf:"bytes,3,opt,name=total_portfolio_value,json=totalPortfolioValue,proto3" json:"total_portfolio_value,omitempty"`
+	// 	CashBalance         *DecimalValue          `protobuf:"bytes,4,opt,name=cash_balance,json=cashBalance,proto3" json:"cash_balance,omitempty"`
+	// 	UpdatedAt           *timestamppb.Timestamp `protobuf:"bytes,5,opt,name=updated_at,json=updatedAt,proto3" json:"updated_at,omitempty"`
+	// 	unknownFields       protoimpl.UnknownFields
+	// 	sizeCache           protoimpl.SizeCache
+	// }
 	return &pb.PortfolioResponse{
 		BotId:               botID,
 		Positions:           portfolio.Positions,
@@ -783,8 +783,7 @@ func (s *tradingServer) ExecuteTrade(ctx context.Context, req *pb.TradeRequest) 
 
 	// Implement portfolio update logic
 
-
-trade := &pb.Trade{
+	trade := &pb.Trade{
 		TradeId:    uuid.New().String(),
 		Symbol:     req.Symbol,
 		Side:       req.Side,
@@ -802,34 +801,34 @@ trade := &pb.Trade{
 
 	pnl := 0.0
 
-    // Get the current bot state to calculate new account value
-    bot, err := s.botService.GetBotStatus(ctx, &pb.BotIdRequest{BotId: req.BotId})
-    if err != nil {
-        log.Error().Err(err).Str("bot_id", req.BotId).Msg("Failed to get bot status for account value update")
-        return &pb.TradeResponse{Accepted: false, Message: "failed to get bot status"}, err
-    }
+	// Get the current bot state to calculate new account value
+	bot, err := s.botService.GetBotStatus(ctx, &pb.BotIdRequest{BotId: req.BotId})
+	if err != nil {
+		log.Error().Err(err).Str("bot_id", req.BotId).Msg("Failed to get bot status for account value update")
+		return &pb.TradeResponse{Accepted: false, Message: "failed to get bot status"}, err
+	}
 
-    currentAccountValue := bot.AccountValue
-    newAccountValue := currentAccountValue
+	currentAccountValue := bot.AccountValue
+	newAccountValue := currentAccountValue
 
-    // Calculate new account value based on trade
-    if req.Side == "BUY" {
-        newAccountValue -= req.Size * execPrice
-    } else if req.Side == "SELL" {
-        newAccountValue += req.Size * execPrice
-    }
+	// Calculate new account value based on trade
+	if req.Side == "BUY" {
+		newAccountValue -= req.Size * execPrice
+	} else if req.Side == "SELL" {
+		newAccountValue += req.Size * execPrice
+	}
 
-    // Update bot state with new account value
-    updateReq := &pb.UpdateBotStateRequest{
-        BotId: req.BotId,
-        State: bot.State, // Keep existing state
-        AccountValue: &newAccountValue,
-    }
-    _, err = s.botService.UpdateBotState(ctx, updateReq)
-    if err != nil {
-        log.Error().Err(err).Str("bot_id", req.BotId).Msg("Failed to update bot account value")
-        return &pb.TradeResponse{Accepted: false, Message: "failed to update bot account value"}, err
-    }
+	// Update bot state with new account value
+	updateReq := &pb.UpdateBotStateRequest{
+		BotId:        req.BotId,
+		State:        bot.State, // Keep existing state
+		AccountValue: &newAccountValue,
+	}
+	_, err = s.botService.UpdateBotState(ctx, updateReq)
+	if err != nil {
+		log.Error().Err(err).Str("bot_id", req.BotId).Msg("Failed to update bot account value")
+		return &pb.TradeResponse{Accepted: false, Message: "failed to update bot account value"}, err
+	}
 
 	return &pb.TradeResponse{Accepted: true, Message: "executed", ExecutedPrice: execPrice, Pnl: pnl}, nil
 }
@@ -890,7 +889,6 @@ func main() {
 	portfolioService := newPortfolioServer(dbService)
 	pb.RegisterPortfolioServiceServer(grpcServer, portfolioService)
 
-
 	tradingService := newTradingServer()
 	tradingService.dbService = dbService
 	pb.RegisterTradingServiceServer(grpcServer, tradingService)
@@ -898,7 +896,7 @@ func main() {
 	reg := newBotRegistry()
 	botSvc := newBotServiceServer(reg, tradingService, dbService)
 	pb.RegisterBotServiceServer(grpcServer, botSvc)
-	tradingService.botService = botSvc  
+	tradingService.botService = botSvc
 
 	authSvc := newAuthServer(secret)
 	pb.RegisterAuthServiceServer(grpcServer, authSvc)
@@ -906,7 +904,7 @@ func main() {
 	orderSvc := newOrderServiceServer(dbService)
 	pb.RegisterOrderServiceServer(grpcServer, orderSvc)
 
-	subscriptionSvc := newSubscriptionServer()
+	subscriptionSvc := newSubscriptionServer(dbService)
 	pb.RegisterSubscriptionServiceServer(grpcServer, subscriptionSvc)
 
 	// HTTP server for Stripe webhook and health endpoint with CORS

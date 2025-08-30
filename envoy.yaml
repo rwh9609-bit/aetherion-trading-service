@@ -148,6 +148,10 @@ static_resources:
                         route:
                           cluster: backend_http
                           timeout: 15s
+                      - match: { prefix: "/cancel" }
+                        route:
+                          cluster: backend_http
+                          timeout: 15s
                       - match: { prefix: "/trading.TradingService/" }
                         route:
                           cluster: trading_service

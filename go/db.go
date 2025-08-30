@@ -292,6 +292,17 @@ func (s *DBService) CreateUser(ctx context.Context, username, passwordHash strin
 	return id, nil
 }
 
+func (s *DBService) SetUserRoleByStripeCustomerID(ctx context.Context, stripeCustomerID string, role string) error {
+	query := `UPDATE users SET role = $1 WHERE stripe_customer_id = $2`
+	_, err := s.pool.Exec(ctx, query, role, stripeCustomerID)
+	if err != nil {
+		log.Error().Err(err).Str("stripe_customer_id", stripeCustomerID).Msg("Failed to update user role")
+		return fmt.Errorf("failed to update user role: %w", err)
+	}
+	log.Info().Str("stripe_customer_id", stripeCustomerID).Str("role", role).Msg("User role updated successfully")
+	return nil
+}
+
 // GetPortfolioByBotID retrieves the portfolio for a given bot.
 func (s *DBService) GetPortfolioByBotID(ctx context.Context, botID string) (*pb.PortfolioResponse, error) {
 	portfolio := &pb.PortfolioResponse{
