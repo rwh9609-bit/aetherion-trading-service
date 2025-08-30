@@ -38,5 +38,5 @@ test_load
 test_orderbook
 
 # Data
-/data/BTCUSD_1min.csv
-/data/btcusd_1-min.csv
+/data/btcusd_1min.csv
+/data/btcusd_1-min_data.csv
