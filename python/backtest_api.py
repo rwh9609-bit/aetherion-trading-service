@@ -108,3 +108,61 @@ async def run_backtest(request: Request):
     for e in equity_curve:
         e['timestamp'] = e['timestamp'].strftime('%Y-%m-%d %H:%M:%S')
     return {"trades": trades, "equity_curve": equity_curve}
+
+
+@router.post("/api/backtest")
+async def backtest_blocks(request: Request):
+    """
+    Accepts a list of strategy blocks from the frontend,
+    parses them, runs a generic backtest, and returns results.
+    """
+    body = await request.json()
+    blocks = body.get("blocks", [])
+    symbol = body.get("symbol", "BTCUSD")
+
+    # Example: Parse blocks into strategy rules
+    indicators = []
+    signals = []
+    actions = []
+
+    for block in blocks:
+        if block["type"] == "Indicator":
+            indicators.append(block["config"])
+        elif block["type"] == "Signal":
+            signals.append(block["config"])
+        elif block["type"] == "Action":
+            actions.append(block["config"])
+
+    # TODO: Use indicators, signals, actions to build a strategy
+    # For demonstration, just print them
+    print("Parsed Indicators:", indicators)
+    print("Parsed Signals:", signals)
+    print("Parsed Actions:", actions)
+
+    # Example: Run a dummy backtest (replace with your engine)
+    # historical_data = load_historical_data(f"data/{symbol}_1min.csv")
+    # strategy = GenericStrategy(indicators, signals, actions)
+    # engine = BacktestEngine(strategy, historical_data)
+    # trades, equity_curve = engine.run()
+    # For now, return a dummy result
+    result = {
+        "profit": 1234,
+        "trades": 42,
+        "winRate": "67%",
+        "indicators": indicators,
+        "signals": signals,
+        "actions": actions
+    }
+    return result
+
+@router.post("/api/deploy")
+async def deploy_blocks(request: Request):
+    """
+    Accepts a list of strategy blocks from the frontend,
+    deploys the strategy as a live bot.
+    """
+    body = await request.json()
+    blocks = body.get("blocks", [])
+    # TODO: Parse blocks and deploy logic
+    # For now, return a dummy success
+    return {"success": True, "message": "Strategy deployed"}

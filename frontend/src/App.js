@@ -6,6 +6,7 @@ import TradingOperations from './components/TradingOperations';
 import BotsFreePage from './components/BotsFreePage';
 import BotsPage from './components/BotsPage';
 import DevelopBotPage from './components/DevelopBotPage';
+import StrategyStudio from './components/StrategyStudio';
 import AboutPage from './components/AboutPage'; 
 import ContactPage from './components/ContactPage';
 import NewsPage from './components/NewsPage';
@@ -161,7 +162,10 @@ function App() {
                       <Button color="inherit" onClick={()=> { setUser(null); setSelectedBot(null); localStorage.removeItem('authToken'); localStorage.removeItem('selectedBot'); setView('landing'); }}>Logout</Button>
                       {user.role === 'user' && (
                         <Button color="inherit" onClick={()=>setView('developBot')}>Develop Bot</Button>
-                      )} 
+                      )}
+                      {user.role === 'superuser' && (
+                        <Button color="inherit" onClick={()=>setView('strategyStudio')}>Strategy Studio</Button>
+                      )}
                     </>
                   ) : (
                     <Button color="inherit" onClick={()=>setView('login')}>Login</Button>
@@ -233,6 +237,12 @@ function App() {
           {user && (user.role === 'user' || user.role === 'admin') && view === 'developBot' && (
             <div style={{ padding: '24px' }}>
               <DevelopBotPage onNavigate={setView} />
+            </div>
+          )}
+          
+          {user && user.role === 'superuser' && view === 'strategyStudio' && (
+            <div style={{ padding: '24px' }}>
+              <StrategyStudio onNavigate={setView} />
             </div>
           )}
           {user && view === 'account' && (
