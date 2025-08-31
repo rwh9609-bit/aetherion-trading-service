@@ -47,7 +47,6 @@ func corsMiddleware() *cors.Cors {
 			"X-Grpc-Web",
 			"X-User-Agent",
 			"user_id",
-			"*",
 		},
 		ExposedHeaders: []string{
 			"grpc-status",
