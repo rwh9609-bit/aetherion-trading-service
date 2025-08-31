@@ -1738,6 +1738,11 @@ class SubscriptionServiceStub(object):
                 request_serializer=trading__api__pb2.CreateCustomerPortalSessionRequest.SerializeToString,
                 response_deserializer=trading__api__pb2.CreateCustomerPortalSessionResponse.FromString,
                 _registered_method=True)
+        self.UpgradeUserRole = channel.unary_unary(
+                '/trading.SubscriptionService/UpgradeUserRole',
+                request_serializer=trading__api__pb2.UserId.SerializeToString,
+                response_deserializer=trading__api__pb2.StatusResponse.FromString,
+                _registered_method=True)
 
 
 class SubscriptionServiceServicer(object):
@@ -1777,6 +1782,12 @@ class SubscriptionServiceServicer(object):
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
+    def UpgradeUserRole(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
 
 def add_SubscriptionServiceServicer_to_server(servicer, server):
     rpc_method_handlers = {
@@ -1804,6 +1815,11 @@ def add_SubscriptionServiceServicer_to_server(servicer, server):
                     servicer.CreateCustomerPortalSession,
                     request_deserializer=trading__api__pb2.CreateCustomerPortalSessionRequest.FromString,
                     response_serializer=trading__api__pb2.CreateCustomerPortalSessionResponse.SerializeToString,
+            ),
+            'UpgradeUserRole': grpc.unary_unary_rpc_method_handler(
+                    servicer.UpgradeUserRole,
+                    request_deserializer=trading__api__pb2.UserId.FromString,
+                    response_serializer=trading__api__pb2.StatusResponse.SerializeToString,
             ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
@@ -1945,6 +1961,33 @@ class SubscriptionService(object):
             '/trading.SubscriptionService/CreateCustomerPortalSession',
             trading__api__pb2.CreateCustomerPortalSessionRequest.SerializeToString,
             trading__api__pb2.CreateCustomerPortalSessionResponse.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def UpgradeUserRole(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/trading.SubscriptionService/UpgradeUserRole',
+            trading__api__pb2.UserId.SerializeToString,
+            trading__api__pb2.StatusResponse.FromString,
             options,
             channel_credentials,
             insecure,

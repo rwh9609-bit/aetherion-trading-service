@@ -35,7 +35,7 @@ func (s *subscriptionServer) CreateCustomerPortalSession(ctx context.Context, re
 	// Prepare request body
 	body := map[string]string{
 		"customer":   req.StripeCustomerId,
-		"return_url": "http://localhost:3000/account",
+		"return_url": os.Getenv("STRIPE_RETURN_URL"),
 	}
 	form := ""
 	for k, v := range body {

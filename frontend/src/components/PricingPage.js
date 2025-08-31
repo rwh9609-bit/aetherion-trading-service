@@ -3,6 +3,7 @@ import Button from '@mui/material/Button';
 
 const PricingPage = ({ setView }) => {
   const STRIPE_PRICE_ID_MONTHLY = process.env.REACT_APP_STRIPE_PRICE_ID_MONTHLY;
+  const STRIPE_PRICE_ID_CHEAP_MONTHLY = process.env.REACT_APP_STRIPE_CHEAP_PRICE_ID_MONTHLY;
   const STRIPE_PRICE_ID_YEARLY = process.env.REACT_APP_STRIPE_PRICE_ID_YEARLY;
   const STRIPE_PUBLISHABLE_KEY = process.env.REACT_APP_STRIPE_PUBLISHABLE_KEY;
   const API_BASE_URL = process.env.REACT_APP_BASE_URL || '';
@@ -74,14 +75,14 @@ const PricingPage = ({ setView }) => {
                   },
                 }}
               >
-                Open Beta
+                Open Alpha
               </Button>
             </p>
           </div>
           {/* Pro Tier */}
           <div className="bg-gray-800 p-8 rounded-xl border border-emerald-500 glow-effect">
             <h3 className="text-3xl font-bold mb-4 text-emerald-400">Pro</h3>
-            <p className="text-5xl font-black mb-4">$50<span className="text-lg font-medium">/mo</span></p>
+            <p className="text-5xl font-black mb-4">$4.99<span className="text-lg font-medium">/mo</span></p>
             <p className="text-gray-400 mb-8">For advanced traders, developers, or supporters who want premium features.</p>
             <ul className="text-left space-y-2 text-gray-400">
               <li>✓ Multiple bots</li>
@@ -89,12 +90,9 @@ const PricingPage = ({ setView }) => {
               <li>✓ Real-time data feeds</li>
               <li>✓ Priority support</li>
             </ul>
-            <button onClick={() => handleSubscribe(STRIPE_PRICE_ID_MONTHLY)} className="mt-8 w-full bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-3 px-8 rounded-lg transition-transform transform hover:scale-105">
+            <button onClick={() => handleSubscribe(STRIPE_PRICE_ID_CHEAP_MONTHLY)} className="mt-8 w-full bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-3 px-8 rounded-lg transition-transform transform hover:scale-105">
               Subscribe Monthly
-            </button>
-            <button onClick={() => handleSubscribe(STRIPE_PRICE_ID_YEARLY)} className="mt-4 w-full bg-emerald-700 hover:bg-emerald-800 text-white font-bold py-3 px-8 rounded-lg transition-transform transform hover:scale-105">
-              Subscribe Yearly ($299/year)
-            </button>
+            </button> 
           </div>
           {/* Enterprise Tier */}
           <div className="bg-gray-800 p-8 rounded-xl border border-gray-700">

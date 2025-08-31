@@ -4,6 +4,7 @@ from fastapi.responses import JSONResponse
 from backtest_api import router as backtest_router
 import stripe
 import os
+from protos import trading_api_pb2, trading_api_pb2_grpc
 
 stripe.api_key = os.getenv("STRIPE_API_KEY")
 
@@ -55,6 +56,7 @@ async def cancel():
     return JSONResponse(content={"message": "Subscription canceled or checkout aborted."})
 
 
+
 @app.post("/stripe-webhook")
 async def stripe_webhook(request: Request):
     payload = await request.body()
@@ -69,8 +71,16 @@ async def stripe_webhook(request: Request):
 
     if event["type"] == "checkout.session.completed":
         session = event["data"]["object"]
-        # Find user by Stripe customer/session ID
-        # Update user role in DB to 'superuser'
-        # Example:
-        # db.update_user_role(stripe_customer_id=session["customer"], role="superuser")
+        stripe_customer_id = session.get("customer")
+        # Call     rpc UpgradeUserRole(UserId) returns (StatusResponse) {} here to upgrade user role in your system
+        subscription_stub = trading_api_pb2_grpc.SubscriptionServiceStub()
+        response = subscription_stub.UpgradeUserRole(
+            trading_api_pb2.UpgradeUserRoleRequest(user_id=stripe_customer_id)
+        )
+        if response.status == trading_api_pb2.StatusResponse.SUCCESS:
+            print(f"Upgraded user with Stripe customer ID {stripe_customer_id} to superuser.")
+        else:
+            print(f"Failed to upgrade user with Stripe customer ID {stripe_customer_id}: {response.error_message}")
+
     return {"status": "success"}
+

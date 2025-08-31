@@ -12,6 +12,9 @@ const ContactPage = () => {
             Send feedback, feature ideas, or integration questions. This demo form stores nothing—replace with your support integration.
           </Typography>
           <Typography variant="body2" color="text.secondary" paragraph>
+            For any questions, feel free to email <a href="mailto:randy@aetherion.cloud">randy@aetherion.cloud</a>.
+          </Typography>
+          <Typography variant="body2" color="text.secondary" paragraph>
             Join our Discord community for real-time discussions and support!
           </Typography>
           <Button

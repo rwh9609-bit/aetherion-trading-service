@@ -59,6 +59,10 @@ const LandingPage = ({ onGetStarted }) => {
               <p className="text-lg md:text-xl text-gray-400 max-w-3xl mx-auto mb-8">
                 Aetherion is a next-generation, cloud-native trading engine designed for ambitious quants and developers. Create, deploy, and scale your strategies seamlessly with our powerful, polyglot architecture.
               </p>
+              <div className="bg-yellow-900 bg-opacity-80 border-l-4 border-yellow-400 text-yellow-200 p-4 rounded-lg max-w-2xl mx-auto mb-8">
+                <strong>Note:</strong> The full Aetherion Trading Service experience, including advanced features and integrations, will be released in <span className="font-bold">2026</span>.
+                <br />
+              </div>
               <div className="flex justify-center space-x-4">
                 <a href="#architecture" className="inline-block bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-8 rounded-lg text-lg transition-transform transform hover:scale-105">View Architecture</a>
               </div>

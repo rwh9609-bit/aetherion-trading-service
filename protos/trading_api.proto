@@ -264,6 +264,10 @@ message UserInfo {
   int64 created_at_unix = 3;
 }
 
+message UserId {
+    string user_id = 1;
+}
+
 message RefreshTokenRequest {
     string refresh_token = 1;
 }
@@ -445,6 +449,7 @@ service SubscriptionService {
     rpc GetUserSubscription(Empty) returns (Subscription) {}
     rpc CancelUserSubscription(Empty) returns (StatusResponse) {}
     rpc CreateCustomerPortalSession(CreateCustomerPortalSessionRequest) returns (CreateCustomerPortalSessionResponse) {} 
+    rpc UpgradeUserRole(UserId) returns (StatusResponse) {}
 }
 
 message Product {
@@ -464,6 +469,7 @@ message Subscription {
     string product_id = 2;
     string status = 3;
     int64 current_period_end = 4;
+    string user_id = 5; 
 }
 
 message GetProductsResponse {

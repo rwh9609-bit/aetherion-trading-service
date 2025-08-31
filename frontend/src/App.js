@@ -16,6 +16,7 @@ import LandingPage from './components/LandingPage';
 import ErrorBoundary from './components/ErrorBoundary';
 import BacktestRunner from './components/BacktestRunner';
 import PricingPage from './components/PricingPage';
+import Cancel from './components/Cancel';
 import BotView from './components/BotView';
 import RiskServiceSimulation from './components/RiskServiceSimulation';
 import './App.css';
@@ -46,6 +47,8 @@ function App() {
   const [showLiveFetchSnackbar, setShowLiveFetchSnackbar] = useState(false);
   const [anchorEl, setAnchorEl] = useState(null);
   const [selectedBot, setSelectedBot] = useState(null); // New state for selected bot
+  const [showCancelSnackbar, setShowCancelSnackbar] = useState(false);
+
   
   // Restore user session from localStorage on app load
   useEffect(() => {
@@ -60,6 +63,16 @@ function App() {
       }
     }
   }, []);
+
+  // Handle Stripe cancel redirect
+  useEffect(() => {
+    if (view === 'cancel') {
+      setShowCancelSnackbar(true);
+      setTimeout(() => {
+        setView('pricing');
+      }, 100); // short delay to show snackbar before redirect
+    }
+  }, [view]);
 
   const handleMenuClick = (event) => {
     setAnchorEl(event.currentTarget);
@@ -136,7 +149,11 @@ function App() {
     setView('news');  
   }
   };
-  
+
+  const handleGoToPricing = () => {
+    setView('pricing');
+  };
+
   return (
     <ErrorBoundary>
       <ThemeProvider theme={darkTheme}>
@@ -272,13 +289,26 @@ function App() {
                   localStorage.removeItem('userRole');  
                   setView('landing');
                 }}
+                onGoToPricing={handleGoToPricing}
               />
             </div>
           )}
           {view === 'about' && <AboutPage />} 
           {view === 'contact' && <ContactPage />}
           {view === 'news' && <NewsPage />}
+
+          {view === 'cancel' && <Cancel />}
         </div>
+        <Snackbar
+          open={showCancelSnackbar}
+          autoHideDuration={3500}
+          onClose={() => setShowCancelSnackbar(false)}
+          anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+        >
+          <Alert severity="info" variant="filled" onClose={() => setShowCancelSnackbar(false)}>
+            Subscription canceled or checkout aborted.
+          </Alert>
+        </Snackbar>
         <Snackbar open={showHealthWarn} autoHideDuration={6000} onClose={()=>setShowHealthWarn(false)} anchorOrigin={{ vertical:'bottom', horizontal:'right' }}>
           <Alert severity="warning" variant="filled" onClose={()=>setShowHealthWarn(false)}>
             Backend health failing. Check server or network.

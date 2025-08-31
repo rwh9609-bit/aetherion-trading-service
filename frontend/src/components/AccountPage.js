@@ -11,13 +11,8 @@ const AccountPage = ({ user, onLogout, onGoToPricing }) => {
     onLogout();
   };
   const handleManageSubscription = async () => {
-    try {
-      // You need to pass the Stripe customer ID for the user
-      const portalUrl = await getStripePortalUrl(user.stripeCustomerId);
-      window.location.href = portalUrl;
-    } catch (err) {
-      alert('Failed to open Stripe portal: ' + (err.message || err));
-    }
+    // just have the view be set to 'pricing'
+    onGoToPricing();
   };
 
 

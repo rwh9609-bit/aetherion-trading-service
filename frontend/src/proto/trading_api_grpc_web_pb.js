@@ -2681,5 +2681,66 @@ proto.trading.SubscriptionServicePromiseClient.prototype.createCustomerPortalSes
 };
 
 
+/**
+ * @const
+ * @type {!grpc.web.MethodDescriptor<
+ *   !proto.trading.UserId,
+ *   !proto.trading.StatusResponse>}
+ */
+const methodDescriptor_SubscriptionService_UpgradeUserRole = new grpc.web.MethodDescriptor(
+  '/trading.SubscriptionService/UpgradeUserRole',
+  grpc.web.MethodType.UNARY,
+  proto.trading.UserId,
+  proto.trading.StatusResponse,
+  /**
+   * @param {!proto.trading.UserId} request
+   * @return {!Uint8Array}
+   */
+  function(request) {
+    return request.serializeBinary();
+  },
+  proto.trading.StatusResponse.deserializeBinary
+);
+
+
+/**
+ * @param {!proto.trading.UserId} request The
+ *     request proto
+ * @param {?Object<string, string>} metadata User defined
+ *     call metadata
+ * @param {function(?grpc.web.RpcError, ?proto.trading.StatusResponse)}
+ *     callback The callback function(error, response)
+ * @return {!grpc.web.ClientReadableStream<!proto.trading.StatusResponse>|undefined}
+ *     The XHR Node Readable Stream
+ */
+proto.trading.SubscriptionServiceClient.prototype.upgradeUserRole =
+    function(request, metadata, callback) {
+  return this.client_.rpcCall(this.hostname_ +
+      '/trading.SubscriptionService/UpgradeUserRole',
+      request,
+      metadata || {},
+      methodDescriptor_SubscriptionService_UpgradeUserRole,
+      callback);
+};
+
+
+/**
+ * @param {!proto.trading.UserId} request The
+ *     request proto
+ * @param {?Object<string, string>=} metadata User defined
+ *     call metadata
+ * @return {!Promise<!proto.trading.StatusResponse>}
+ *     Promise that resolves to the response
+ */
+proto.trading.SubscriptionServicePromiseClient.prototype.upgradeUserRole =
+    function(request, metadata) {
+  return this.client_.unaryCall(this.hostname_ +
+      '/trading.SubscriptionService/UpgradeUserRole',
+      request,
+      metadata || {},
+      methodDescriptor_SubscriptionService_UpgradeUserRole);
+};
+
+
 module.exports = proto.trading;
 
