@@ -64,16 +64,12 @@ def calculate_returns(prices):
     return returns.tolist()
 
 def _symbol_to_csv(symbol: str) -> str:
-    """Map a trading symbol to a backfill CSV path."""
+    """Map a trading symbol to a backfill CSV path (try uppercase first to match writer)."""
     sym = symbol.replace("-", "").upper()
-    fname_map = {
-        "BTCUSD": "btcusd_1-min_data.csv",
-        "ETHUSD": "ethusd_1-min_data.csv",
-        "SOLUSD": "solusd_1-min_data.csv",
-        "ILVUSD": "ilvusd_1-min_data.csv",
-    }
-    fname = fname_map.get(sym, "btcusd_1-min_data.csv")
-    return os.path.join("data", fname)
+    base = f"{sym}_1-min_data.csv"
+    path_upper = os.path.join("data", base)
+    path_lower = os.path.join("data", base.lower())
+    return path_upper if os.path.exists(path_upper) else path_lower
 
 async def update_bot_state(bot_stub, bot_id, state_dict, metadata, account_value=None):
     from protos import trading_api_pb2
@@ -82,8 +78,7 @@ async def update_bot_state(bot_stub, bot_id, state_dict, metadata, account_value
         bot_id=bot_id,
         state=state_dict,
         account_value=account_value
-    )
-    # ...existing metadata sanitization...
+    ) 
     if metadata is None:
         metadata = []
     elif isinstance(metadata, dict):
@@ -123,6 +118,10 @@ class TradingOrchestrator:
             print("Error: ORCHESTRATOR_USER_ID environment variable not set.")
             exit(1)
         self.positions = {}  # bot_id -> position size
+        self._last_abnormal_warn = {} # bot_id -> last abnormal warn timestamp
+        self.allow_shorts = os.environ.get('ALLOW_SHORTS', 'false').strip().lower() in ('1','true','yes','y')
+        # Rolling live price windows per symbol for z-score
+        self.price_windows = defaultdict(lambda: deque(maxlen=200))
 
     def _generate_jwt(self):
         if not self.auth_secret:
@@ -150,6 +149,8 @@ class TradingOrchestrator:
             # print(f"[Orchestrator] Processing bot: {bot.name} ({bot.bot_id})")
             price = await fetch_binance_price_async(http_session, bot.symbol.replace("-", ""))
             # print(f"Current price for {bot.symbol}: ${price:,.2f}")
+            if price is not None:
+                self.price_windows[bot.symbol].append(float(price))
 
             # Assuming bot.custom_strategy_definition exists and is a CustomStrategy protobuf message
             # In a real scenario, the bot service would provide this based on the bot's configuration.
@@ -186,7 +187,6 @@ class TradingOrchestrator:
                                 params_map = {k: bot.parameters[k] for k in bot.parameters.keys()}
                             except Exception:
                                 params_map = {}
-
                     if strategy_name in ("mean_reversion", "meanreversion"):
                         # Parse params (sent as strings from frontend)
                         lookback = int(float(_pget(params_map, ["lookback"], 20)))
@@ -196,40 +196,122 @@ class TradingOrchestrator:
                         stop_loss_pct = float(_pget(params_map, ["stopLossPct", "stop_loss_pct"], 0.02))
                         risk_per_trade_pct = float(_pget(params_map, ["riskPerTradePct", "risk_per_trade_pct"], 0.01))
 
-                        # Load history for z-score
+                        # Prefer live window over CSV to avoid scale mismatch
+                        live_window = list(self.price_windows[bot.symbol])[-lookback:]
+                        min_samples = max(5, min(lookback, 30))
+
                         csv_path = _symbol_to_csv(bot.symbol)
                         prices_list, _ts = load_backfill_prices(csv_path, max(lookback, 2))
-                        if prices_list and price is not None:
+ 
+                        if price is not None and len(live_window) >= min_samples:
                             import numpy as _np
-                            window = prices_list[-lookback:] if len(prices_list) >= lookback else prices_list
+                            window = live_window
+                            price_f = float(price)
                             mean_p = float(_np.mean(window))
                             std_p = float(_np.std(window)) or 0.0
-                            z = (float(price) - mean_p) / std_p if std_p > 0 else 0.0
+                            
+                            
+                            if std_p <= 1e-9:
+                                signal = {'action': 'hold', 'size': 0, 'zscore': 0.0}
+                            else:
+                                z_raw = (price_f - mean_p) / std_p
+                                z = float(_np.clip(z_raw, -10.0, 10.0))
 
-                            # Entry/exit logic
-                            action = 'hold'
-                            if z <= -entry_std:
-                                action = 'buy'
-                            elif z >= entry_std:
-                                action = 'sell'
-                            elif abs(z) <= exit_std:
-                                action = 'hold'
+                                # Equity, current position, and caps
+                                position = float(self.positions.get(bot.bot_id, 0.0))
+                                total_equity = float(bot.account_value) + position * price_f
+                                max_units = (max_pos_pct * total_equity) / price_f if price_f > 0 else 0.0
+                                per_trade_cap = (risk_per_trade_pct * total_equity) / price_f if price_f > 0 else 0.0
 
-                            # Position sizing
-                            max_units = (max_pos_pct * float(bot.account_value)) / float(price) if float(price) > 0 else 0.0
-                            risk_units = (risk_per_trade_pct * float(bot.account_value)) / float(price) if float(price) > 0 else 0.0
-                            qty = max(0.0, min(max_units, risk_units))
-                            if action == 'hold' or qty <= 0:
+                                # Deadband around exit_std; target scales with z/entry_std
+                                if abs(z) <= exit_std or max_units <= 0:
+                                    target_units = 0.0
+                                else:
+                                    scale = max(-1.0, min(1.0, -z / entry_std))
+                                    target_units = scale * max_units
+
+                                # Long-only clamp unless shorts are allowed
+                                if not self.allow_shorts:
+                                    target_units = max(0.0, target_units)
+
+                                delta = target_units - position
+                                # Raise min trade size to avoid tiny orders
+                                min_trade_units = max(1e-6, per_trade_cap * 1e-4)
+                                qty = min(abs(delta), per_trade_cap)
+                                if qty < min_trade_units:
+                                    signal = {'action': 'hold', 'size': 0, 'zscore': z, 'target_units': target_units}
+                                else:
+                                    action = 'buy' if delta > 0 else 'sell'
+                                    if action == 'sell' and not self.allow_shorts:
+                                        qty = min(qty, max(0.0, position))
+                                    if action == 'sell' and qty <= 0:
+                                        signal = {'action': 'hold', 'size': 0, 'zscore': z, 'target_units': target_units}
+                                    else:
+                                        signal = {'action': action, 'size': qty, 'stop_loss': stop_loss_pct, 'zscore': z, 'target_units': target_units}
+
+                        elif prices_list and price is not None:
+                            import numpy as _np
+                            window = prices_list[-lookback:] if len(prices_list) >= lookback else prices_list
+                            price_f = float(price)
+                            mean_p = float(_np.mean(window))
+                            std_p = float(_np.std(window)) or 0.0
+
+                            safe_for_trade = True
+
+                            # Rescale window if CSV mean doesn't match live price level
+                            if mean_p > 0:
+                                ratio = price_f / mean_p
+                                if ratio < 0.67 or ratio > 1.5:
+                                    window = [p * ratio for p in window]
+                                    mean_p = float(_np.mean(window))
+                                    std_p = float(_np.std(window)) or 0.0
+
+                            if std_p <= 1e-9:
+                                z = 0.0
+                                safe_for_trade = False
+                            else:
+                                z_raw = (price_f - mean_p) / std_p
+                                if abs(z_raw) > 10:
+                                    key = f"{bot.symbol}:abnz"
+                                    now_ts = time.time()
+                                    last = self._last_abnormal_warn.get(key, 0)
+                                    if now_ts - last > 30:
+                                        print(f"[WARN] Abnormal z-score {z_raw:.2f} for {bot.symbol}. mean={mean_p:.4f}, std={std_p:.6f}, n={len(window)}, csv={csv_path}")
+                                        self._last_abnormal_warn[key] = now_ts
+                                    safe_for_trade = False
+                                z = float(_np.clip(z_raw, -10.0, 10.0))
+
+                            if not safe_for_trade:
                                 signal = {'action': 'hold', 'size': 0, 'zscore': z}
                             else:
-                                signal = {
-                                    'action': action,
-                                    'size': qty,
-                                    'stop_loss': stop_loss_pct,
-                                    'zscore': z
-                                }
+                                position = float(self.positions.get(bot.bot_id, 0.0))
+                                total_equity = float(bot.account_value) + position * price_f
+                                max_units = (max_pos_pct * total_equity) / price_f if price_f > 0 else 0.0
+                                per_trade_cap = (risk_per_trade_pct * total_equity) / price_f if price_f > 0 else 0.0
+
+                                if abs(z) <= exit_std or max_units <= 0:
+                                    target_units = 0.0
+                                else:
+                                    scale = max(-1.0, min(1.0, -z / entry_std))
+                                    target_units = scale * max_units
+
+                                if not self.allow_shorts:
+                                    target_units = max(0.0, target_units)
+
+                                delta = target_units - position
+                                min_trade_units = max(1e-6, per_trade_cap * 1e-4)
+                                qty = min(abs(delta), per_trade_cap)
+                                if qty < min_trade_units:
+                                    signal = {'action': 'hold', 'size': 0, 'zscore': z, 'target_units': target_units}
+                                else:
+                                    action = 'buy' if delta > 0 else 'sell'
+                                    if action == 'sell' and not self.allow_shorts:
+                                        qty = min(qty, max(0.0, position))
+                                    if action == 'sell' and qty <= 0:
+                                        signal = {'action': 'hold', 'size': 0, 'zscore': z, 'target_units': target_units}
+                                    else:
+                                        signal = {'action': action, 'size': qty, 'stop_loss': stop_loss_pct, 'zscore': z, 'target_units': target_units}
                         else:
-                            # No history -> hold
                             signal = {'action': 'hold', 'size': 0}
 
                     elif hasattr(bot, "state") and isinstance(bot.state, dict):
@@ -319,6 +401,7 @@ class TradingOrchestrator:
                         if signal['action'].lower() == 'buy' and bot.account_value <= 0:
                             print(f"[WARN] Bot {bot.name} tried to buy with no funds. Buy blocked.")
                             return
+                        position = self.positions.get(bot.bot_id, 0.0)
                         if signal['action'].lower() == 'sell' and position <= 0:
                             print(f"[WARN] Bot {bot.name} tried to sell with no position. Sell blocked.")
                             return
