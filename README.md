@@ -1,91 +1,123 @@
-# Aetherion Trading Platform
+# Aetherion Platform
 
-**A high-performance, polyglot microservices platform for algorithmic cryptocurrency trading.**
+Modular trading platform with:
+- Trading service (Go, gRPC on 50051, HTTP on 8081)
+- Risk service (Rust, gRPC on 50052)
+- Backend API (Python/FastAPI on 8000) for Stripe + backtests
+- Orchestrator (Python) for bot signals and risk‑gated orders
+- Envoy (edge proxy: 80/443/8080, admin 9901) for gRPC‑Web and routing
+- Frontend (React + Nginx)
+- Postgres
 
-[![Build Status](https://img.shields.io/badge/build-passing-brightgreen)](https://github.com/xeratooth/multilanguage)
-[![License](https://img.shields.io/badge/license-MIT-blue)](https://github.com/xeratooth/multilanguage)
-[![Join our Discord](https://img.shields.io/badge/Discord-Join-blue?logo=discord&logoColor=white)](https://discord.gg/Kjd3c6h3My)
+## Architecture
 
-Aetherion is a feature-rich trading platform designed for speed, flexibility, and reliability. It leverages a robust microservices architecture, with each service crafted in the optimal language for its domain—Rust for high-performance risk analytics, Go for core trading logic, and Python for backtesting and orchestration.
+- Browser (React) ↔ Envoy (gRPC‑Web/HTTP)
+- Envoy → trading (gRPC) and risk (gRPC), backend (HTTP)
+- Orchestrator → trading + risk (gRPC) and Binance HTTP
+- Backend → trading (gRPC) for subscription upgrades
+- Postgres for trading service state
 
-## Gallery
+Ports:
+- Envoy: 80, 443, 8080 (grpc‑web), 9901 (admin)
+- Trading (Go): 50051 (gRPC), 8081 (HTTP)
+- Risk (Rust): 50052 (gRPC)
+- Backend (FastAPI): 8000
+- Frontend (Nginx): 80
 
-**Aetherion Dashboard:**
-![Aetherion Dashboard](running_success.png)
+## Prerequisites
 
-**System Architecture:**
-![Aetherion Architecture](frontend/public/arch.png)
+- Docker Desktop (Mac)
+- Stripe account (API key + webhook secret)
+- .env file with required variables (see below)
 
-## Key Features
+## Environment
 
-*   **Real-Time Market Data:** Live cryptocurrency price feeds for rapid, informed trading decisions.
-*   **Algorithmic Trading:** Develop and deploy custom trading bots and strategies.
-*   **Advanced Risk Management:** Integrated Value at Risk (VaR) calculations to monitor and manage portfolio risk.
-*   **Comprehensive Backtesting:** A Python-based engine to test strategies against historical data.
-*   **Polyglot Microservices:** A blend of Rust, Go, and Python for optimal performance and functionality.
-*   **Modern User Experience:** A sophisticated React-based web interface provides an intuitive command center for traders.
-*   **Secure & Resilient:** Employs Envoy proxy for a secure service mesh, JWT for authentication, and provides detailed security guidelines.
+Create `.env` in repo root based on this template:
 
-## Architecture Overview
+```dotenv
+# Stripe
+STRIPE_API_KEY=sk_live_...
+STRIPE_WEBHOOK_SECRET=whsec_...
 
-Aetherion's architecture is composed of containerized microservices that communicate via gRPC.
+# App URLs
+FRONTEND_BASE_URL=http://localhost:3000
+REACT_APP_GRPC_HOST=http://localhost:8080
 
-*   **`frontend`**: (React) The user interface for traders.
-*   **`envoy`**: (Envoy Proxy) The service mesh proxy, handling gRPC-Web translation and routing.
-*   **`trading`**: (Go) Core trading logic, order book management, price feeds, and user authentication.
-*   **`risk`**: (Rust) High-performance risk management and analytics.
-*   **`orchestrator`**: (Python) Manages and executes complex trading strategies.
-*   **`backend`**: (Python/FastAPI) Provides the backtesting API for strategies.
-*   **`postgres`**: (PostgreSQL) Data persistence for trading activities and analytical data.
+# Trading service
+AUTH_SECRET=change_me
+POSTGRES_PASSWORD=postgres
+POSTGRES_DSN=postgres://postgres:${POSTGRES_PASSWORD}@postgres:5432/aetherion?sslmode=disable
 
-For more details, see the [architecture diagram](#gallery).
+# Stripe pricing (frontend)
+REACT_APP_STRIPE_PRICE_ID_MONTHLY=price_...
+REACT_APP_STRIPE_CHEAP_PRICE_ID_MONTHLY=price_...
+REACT_APP_STRIPE_PRICE_ID_YEARLY=price_...
+REACT_APP_STRIPE_PUBLISHABLE_KEY=pk_live_...
 
-## Technology Stack
-
-| Category          | Technologies                                       |
-| ----------------- | -------------------------------------------------- |
-| **Backend**       | Go, Rust, Python (FastAPI)                         |
-| **Frontend**      | JavaScript, React                                  |
-| **API**           | gRPC, Protobuf, gRPC-Web                           |
-| **Database**      | PostgreSQL                                         |
-| **Proxy**         | Envoy                                              |
-| **Containerization**| Docker, Docker Compose                             |
-
-## Roadmap
-
-Our vision is to make Aetherion the most powerful and user-friendly open-source trading platform. Here's what we're planning for the future:
-
-- [ ] **Enhanced Strategy Marketplace:** A place for users to share and discover trading strategies.
-- [ ] **Mutual TLS (mTLS):** For even more secure inter-service communication.
-- [ ] **Advanced Charting:** More powerful charting tools and technical indicators.
-- [ ] **Expanded Exchange Support:** Integration with more cryptocurrency exchanges.
-- [ ] **AI-Powered Insights:** Leveraging machine learning for market predictions and sentiment analysis.
-
-## Getting Started
-
-To launch the Aetherion platform, ensure you have Docker and Docker Compose installed, then run the following command from the project root:
-
-```bash
-docker-compose up --build
+# Orchestrator
+ORCHESTRATOR_USER_ID=your-user-id
+GO_SERVICE_ADDR=trading:50051
+RUST_SERVICE_ADDR=risk:50052
 ```
 
-Once the services are running, you can access the frontend at [http://localhost:3000](http://localhost:3000).
+## Quickstart
 
-For more detailed setup instructions, see the [Developer Documentation](DEVELOPER.md).
+1) Build and run:
+- docker compose up -d --build
 
-## Contributing
+2) Access:
+- Frontend: http://localhost:3000
+- Backend API: http://localhost:8000
+- Envoy gRPC‑Web: http://localhost:8080
+- Envoy admin: http://localhost:9901
+- Trading HTTP: http://localhost:8081
 
-We welcome contributors! Aetherion is an open-source project, and we'd love your help building the future of trading technology.
+3) Stripe webhook (local):
+- Expose backend: stripe listens to https endpoint
+  - stripe listen --forward-to localhost:8000/stripe-webhook
 
-*   **Read the Docs:** Check out the [Developer Documentation](DEVELOPER.md) and the [Strategy Contributor Guide](STRATEGIES.md).
-*   **Find an Issue:** Look for open issues on our GitHub repository.
-*   **Submit a Pull Request:** We're excited to see your contributions!
+## Key endpoints
 
-## Community & Support
+Backend (FastAPI):
+- POST /api/create-checkout-session
+- POST /stripe-webhook (returns 200; processes in background)
+- GET /healthz
+- Backtest routes (TBD in python/backtest_api.py)
 
-*   **Discord:** Join our [Discord server](https://discord.gg/Kjd3c6h3My) to chat with other users and developers.
-*   **GitHub Issues:** If you encounter a bug or have a feature request, please [file an issue](https://github.com/xeratooth/multilanguage/issues).
+Trading (Go):
+- /healthz on 8081
+- gRPC services: TradingService, AuthService, BotService, OrderService, RiskService proxy to Rust
 
-## License
+Envoy:
+- /trading.* via grpc‑web on 8080 and 443
+- /api/* and /stripe-webhook to backend
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+## Development
+
+- Python backend:
+  - cd python && uvicorn app:app --host 0.0.0.0 --port 8000 --reload
+- Frontend:
+  - cd frontend && npm install && npm start
+- Linting:
+  - Python: ruff + mypy; Go: golangci-lint; Rust: clippy
+- Tests: pytest, go test, cargo test
+
+## Deployment notes
+
+- Expose Envoy 80/443 behind a cloud LB
+- Use real TLS certs (Let’s Encrypt or ACM)
+- Configure Docker/GitHub Actions for CI/CD (build, scan, push, deploy)
+- Store secrets in a vault or Docker/K8s secrets
+
+## Troubleshooting
+
+- 404 /healthz from Envoy backend cluster → ensure backend implements GET /healthz (it does)
+- 404 /success on backend → now 307 redirect to FRONTEND_BASE_URL/success
+- gRPC failures → ensure trading exposes 50051 in compose and Envoy cluster points to trading:50051
+- CSV not found for orchestrator → volume mount and filename must match
+
+## Security
+
+- CORS allowed origins restricted; CSP set in Nginx and Envoy
+- Set allow_credentials only when required
+- Rotate AUTH_SECRET and Stripe keys; avoid logging secrets

@@ -191,7 +191,7 @@ static_resources:
                           cluster: frontend
                       - match: { prefix: "/stripe-webhook" }
                         route:
-                          cluster: trading_http
+                          cluster: backend_http
                           timeout: 15s
 
                   - name: root_domain_passthrough
