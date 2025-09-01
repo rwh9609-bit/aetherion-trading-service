@@ -79,7 +79,7 @@ services:
       - "8000:8000"
     restart: unless-stopped
     volumes:
-      - ./data/BTCUSD_1min.csv:/app/data/BTCUSD_1min.csv
+      - ./data/btcusd_1-min_data.csv:/app/data/btcusd_1-min_data.csv
     networks:
       - default
   envoy:
@@ -141,7 +141,7 @@ services:
       # - INITIAL_ACCOUNT_VALUE=1000011.0
     restart: unless-stopped
     volumes:
-      - ./data/BTCUSD_1min.csv:/app/data/BTCUSD_1min.csv:ro
+      - ./data/btcusd_1-min_data.csv:/app/data/btcusd_1-min_data.csv:ro
     deploy:
       replicas: 1
       restart_policy:
