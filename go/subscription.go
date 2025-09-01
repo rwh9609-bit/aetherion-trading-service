@@ -193,3 +193,10 @@ func handleStripeWebhook(w http.ResponseWriter, r *http.Request) {
 
 	w.WriteHeader(http.StatusOK)
 }
+
+func (s *subscriptionServer) UpdateUserStripeInfo(ctx context.Context, req *pb.UpdateUserStripeInfoRequest) (*pb.StatusResponse, error) {
+	if err := s.dbclient.UpdateUserStripeInfo(ctx, req.UserId, req.StripeCustomerId, req.SubscriptionId); err != nil {
+		return &pb.StatusResponse{Success: false, Message: err.Error()}, nil
+	}
+	return &pb.StatusResponse{Success: true}, nil
+}

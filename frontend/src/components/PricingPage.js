@@ -8,30 +8,34 @@ const PricingPage = ({ setView }) => {
   const STRIPE_PUBLISHABLE_KEY = process.env.REACT_APP_STRIPE_PUBLISHABLE_KEY;
   const API_BASE_URL = process.env.REACT_APP_BASE_URL || '';
 
-  const handleSubscribe = async (priceId) => {
-    console.log('Sending priceId:', priceId);
-    try {
-      const response = await fetch(`${API_BASE_URL}/api/create-checkout-session`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ priceId }),
-      });
-      const data = await response.json();
-      if (!response.ok) {
-        alert('Aetherion is not ready to be used: ' + (data.error || 'Unknown error'));
-        return;
-      }
-      const { sessionId } = data;
-      if (!sessionId) {
-        alert('No sessionId returned from backend.');
-        return;
-      }
-      const stripe = window.Stripe(STRIPE_PUBLISHABLE_KEY);
-      await stripe.redirectToCheckout({ sessionId });
-    } catch (err) {
-      alert('Aetherion is not ready to be used: ' + err.message);
+const handleSubscribe = async (priceId) => {
+  try {
+    const token = localStorage.getItem('authToken');
+    const res = await fetch(`${API_BASE_URL}/api/create-checkout-session`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+      body: JSON.stringify({ priceId }),
+      credentials: 'include',
+    });
+    if (!res.ok) {
+      console.error('Checkout failed', res.status, await res.text());
+      alert('Please log in to subscribe.');
+      return;
     }
-  };
+    const { sessionId } = await res.json();
+    if (!sessionId) {
+      alert('No sessionId returned from backend.');
+      return;
+    }
+    const stripe = window.Stripe(STRIPE_PUBLISHABLE_KEY);
+    await stripe.redirectToCheckout({ sessionId });
+  } catch (err) {
+    alert('Error: ' + err.message);
+  }
+};
 
 
   return (

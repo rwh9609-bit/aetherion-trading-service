@@ -326,6 +326,20 @@ func (s *DBService) GetStripeCustomerIDByUserID(ctx context.Context, userID stri
 	return stripeCustomerID, nil
 }
 
+func (d *DBService) UpdateUserStripeInfo(ctx context.Context, userID, customerID, subID string) error {
+	// _, err := d.db.ExecContext(ctx,
+	// 	`UPDATE users SET stripe_customer_id=$1, subscription_id=$2 WHERE id=$3`,
+	// 	customerID, subID, userID,
+	// )
+	query := `UPDATE users SET stripe_customer_id = $1, subscription_id = $2, updated_at = CURRENT_TIMESTAMP WHERE id = $3`
+	_, err := d.pool.Exec(ctx, query, customerID, subID, userID)
+	if err != nil {
+		log.Error().Err(err).Str("user_id", userID).Msg("Failed to update user Stripe info")
+		return fmt.Errorf("failed to update user Stripe info: %w", err)
+	}
+	return nil
+}
+
 // GetPortfolioByBotID retrieves the portfolio for a given bot.
 func (s *DBService) GetPortfolioByBotID(ctx context.Context, botID string) (*pb.PortfolioResponse, error) {
 	portfolio := &pb.PortfolioResponse{

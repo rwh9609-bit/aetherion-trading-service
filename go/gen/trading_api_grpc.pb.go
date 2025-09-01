@@ -2025,6 +2025,7 @@ const (
 	SubscriptionService_CancelUserSubscription_FullMethodName      = "/trading.SubscriptionService/CancelUserSubscription"
 	SubscriptionService_CreateCustomerPortalSession_FullMethodName = "/trading.SubscriptionService/CreateCustomerPortalSession"
 	SubscriptionService_UpgradeUserRole_FullMethodName             = "/trading.SubscriptionService/UpgradeUserRole"
+	SubscriptionService_UpdateUserStripeInfo_FullMethodName        = "/trading.SubscriptionService/UpdateUserStripeInfo"
 )
 
 // SubscriptionServiceClient is the client API for SubscriptionService service.
@@ -2037,6 +2038,7 @@ type SubscriptionServiceClient interface {
 	CancelUserSubscription(ctx context.Context, in *Empty, opts ...grpc.CallOption) (*StatusResponse, error)
 	CreateCustomerPortalSession(ctx context.Context, in *CreateCustomerPortalSessionRequest, opts ...grpc.CallOption) (*CreateCustomerPortalSessionResponse, error)
 	UpgradeUserRole(ctx context.Context, in *UserId, opts ...grpc.CallOption) (*StatusResponse, error)
+	UpdateUserStripeInfo(ctx context.Context, in *UpdateUserStripeInfoRequest, opts ...grpc.CallOption) (*StatusResponse, error)
 }
 
 type subscriptionServiceClient struct {
@@ -2107,6 +2109,16 @@ func (c *subscriptionServiceClient) UpgradeUserRole(ctx context.Context, in *Use
 	return out, nil
 }
 
+func (c *subscriptionServiceClient) UpdateUserStripeInfo(ctx context.Context, in *UpdateUserStripeInfoRequest, opts ...grpc.CallOption) (*StatusResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(StatusResponse)
+	err := c.cc.Invoke(ctx, SubscriptionService_UpdateUserStripeInfo_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // SubscriptionServiceServer is the server API for SubscriptionService service.
 // All implementations must embed UnimplementedSubscriptionServiceServer
 // for forward compatibility.
@@ -2117,6 +2129,7 @@ type SubscriptionServiceServer interface {
 	CancelUserSubscription(context.Context, *Empty) (*StatusResponse, error)
 	CreateCustomerPortalSession(context.Context, *CreateCustomerPortalSessionRequest) (*CreateCustomerPortalSessionResponse, error)
 	UpgradeUserRole(context.Context, *UserId) (*StatusResponse, error)
+	UpdateUserStripeInfo(context.Context, *UpdateUserStripeInfoRequest) (*StatusResponse, error)
 	mustEmbedUnimplementedSubscriptionServiceServer()
 }
 
@@ -2144,6 +2157,9 @@ func (UnimplementedSubscriptionServiceServer) CreateCustomerPortalSession(contex
 }
 func (UnimplementedSubscriptionServiceServer) UpgradeUserRole(context.Context, *UserId) (*StatusResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method UpgradeUserRole not implemented")
+}
+func (UnimplementedSubscriptionServiceServer) UpdateUserStripeInfo(context.Context, *UpdateUserStripeInfoRequest) (*StatusResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method UpdateUserStripeInfo not implemented")
 }
 func (UnimplementedSubscriptionServiceServer) mustEmbedUnimplementedSubscriptionServiceServer() {}
 func (UnimplementedSubscriptionServiceServer) testEmbeddedByValue()                             {}
@@ -2274,6 +2290,24 @@ func _SubscriptionService_UpgradeUserRole_Handler(srv interface{}, ctx context.C
 	return interceptor(ctx, in, info, handler)
 }
 
+func _SubscriptionService_UpdateUserStripeInfo_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UpdateUserStripeInfoRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(SubscriptionServiceServer).UpdateUserStripeInfo(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: SubscriptionService_UpdateUserStripeInfo_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(SubscriptionServiceServer).UpdateUserStripeInfo(ctx, req.(*UpdateUserStripeInfoRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // SubscriptionService_ServiceDesc is the grpc.ServiceDesc for SubscriptionService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -2304,6 +2338,10 @@ var SubscriptionService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "UpgradeUserRole",
 			Handler:    _SubscriptionService_UpgradeUserRole_Handler,
+		},
+		{
+			MethodName: "UpdateUserStripeInfo",
+			Handler:    _SubscriptionService_UpdateUserStripeInfo_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

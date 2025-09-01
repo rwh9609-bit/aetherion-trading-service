@@ -69,6 +69,7 @@ services:
       dockerfile: Dockerfile
     environment:
       - AUTH_SECRET=${AUTH_SECRET}
+      - AUTH_PREVIOUS_SECRET=${AUTH_PREVIOUS_SECRET:-}
       - STRIPE_API_KEY=${STRIPE_API_KEY}
       - STRIPE_WEBHOOK_SECRET=${STRIPE_WEBHOOK_SECRET}
       - GRPC_HOST=trading:50051

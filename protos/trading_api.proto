@@ -573,6 +573,13 @@ service SubscriptionService {
     rpc CancelUserSubscription(Empty) returns (StatusResponse) {}
     rpc CreateCustomerPortalSession(CreateCustomerPortalSessionRequest) returns (CreateCustomerPortalSessionResponse) {} 
     rpc UpgradeUserRole(UserId) returns (StatusResponse) {}
+    rpc UpdateUserStripeInfo(UpdateUserStripeInfoRequest) returns (StatusResponse) {}
+}
+
+message UpdateUserStripeInfoRequest {
+    string user_id = 1;
+    string stripe_customer_id = 2;
+    string subscription_id = 3;
 }
 
 message Product {

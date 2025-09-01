@@ -3221,5 +3221,66 @@ proto.trading.SubscriptionServicePromiseClient.prototype.upgradeUserRole =
 };
 
 
+/**
+ * @const
+ * @type {!grpc.web.MethodDescriptor<
+ *   !proto.trading.UpdateUserStripeInfoRequest,
+ *   !proto.trading.StatusResponse>}
+ */
+const methodDescriptor_SubscriptionService_UpdateUserStripeInfo = new grpc.web.MethodDescriptor(
+  '/trading.SubscriptionService/UpdateUserStripeInfo',
+  grpc.web.MethodType.UNARY,
+  proto.trading.UpdateUserStripeInfoRequest,
+  proto.trading.StatusResponse,
+  /**
+   * @param {!proto.trading.UpdateUserStripeInfoRequest} request
+   * @return {!Uint8Array}
+   */
+  function(request) {
+    return request.serializeBinary();
+  },
+  proto.trading.StatusResponse.deserializeBinary
+);
+
+
+/**
+ * @param {!proto.trading.UpdateUserStripeInfoRequest} request The
+ *     request proto
+ * @param {?Object<string, string>} metadata User defined
+ *     call metadata
+ * @param {function(?grpc.web.RpcError, ?proto.trading.StatusResponse)}
+ *     callback The callback function(error, response)
+ * @return {!grpc.web.ClientReadableStream<!proto.trading.StatusResponse>|undefined}
+ *     The XHR Node Readable Stream
+ */
+proto.trading.SubscriptionServiceClient.prototype.updateUserStripeInfo =
+    function(request, metadata, callback) {
+  return this.client_.rpcCall(this.hostname_ +
+      '/trading.SubscriptionService/UpdateUserStripeInfo',
+      request,
+      metadata || {},
+      methodDescriptor_SubscriptionService_UpdateUserStripeInfo,
+      callback);
+};
+
+
+/**
+ * @param {!proto.trading.UpdateUserStripeInfoRequest} request The
+ *     request proto
+ * @param {?Object<string, string>=} metadata User defined
+ *     call metadata
+ * @return {!Promise<!proto.trading.StatusResponse>}
+ *     Promise that resolves to the response
+ */
+proto.trading.SubscriptionServicePromiseClient.prototype.updateUserStripeInfo =
+    function(request, metadata) {
+  return this.client_.unaryCall(this.hostname_ +
+      '/trading.SubscriptionService/UpdateUserStripeInfo',
+      request,
+      metadata || {},
+      methodDescriptor_SubscriptionService_UpdateUserStripeInfo);
+};
+
+
 module.exports = proto.trading;
 
