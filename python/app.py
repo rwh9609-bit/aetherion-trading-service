@@ -1,6 +1,10 @@
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, RedirectResponse, Response
+from fastapi.openapi.docs import get_swagger_ui_html, get_redoc_html
+from fastapi.openapi.utils import get_openapi
+from monitoring import setup_monitoring
+
 import os
 import jwt
 import grpc
@@ -50,7 +54,32 @@ def _decode_user(request: Request):
 
 stripe.api_key = os.getenv("STRIPE_API_KEY")
 
-app = FastAPI()
+app = FastAPI(
+    title="Aetherion API",
+    description="Trading platform API with subscription management",
+    version="1.0.0",
+    docs_url=None,
+    redoc_url=None,
+)
+setup_monitoring(app)
+
+# Custom OpenAPI endpoint
+@app.get("/api/openapi.json", include_in_schema=False)
+async def get_open_api_endpoint():
+    return get_openapi(
+        title=app.title,
+        version=app.version,
+        description=app.description,
+        routes=app.routes,
+    )
+
+@app.get("/api/docs", include_in_schema=False)
+async def get_documentation():
+    return get_swagger_ui_html(openapi_url="/api/openapi.json", title="API Docs")
+
+@app.get("/api/redoc", include_in_schema=False)
+async def get_redoc_documentation():
+    return get_redoc_html(openapi_url="/api/openapi.json", title="API Redoc")
 
 FRONTEND_BASE_URL = os.getenv("FRONTEND_BASE_URL", "http://localhost:3000")
 SUCCESS_URL = f"{FRONTEND_BASE_URL}/success?session_id={{CHECKOUT_SESSION_ID}}"

@@ -43,6 +43,7 @@ def load_backfill_prices(csv_path, lookback_period):
     else:
         raise KeyError("CSV must contain 'close', 'Close', or 'price' column")
     return prices[-lookback_period:], timestamps[-lookback_period:]
+
 def convert_numpy(obj):
     if isinstance(obj, np.generic):
         return obj.item()
@@ -61,6 +62,18 @@ def calculate_returns(prices):
         prices = prices.flatten()
     returns = np.diff(prices) / prices[:-1]
     return returns.tolist()
+
+def _symbol_to_csv(symbol: str) -> str:
+    """Map a trading symbol to a backfill CSV path."""
+    sym = symbol.replace("-", "").upper()
+    fname_map = {
+        "BTCUSD": "btcusd_1-min_data.csv",
+        "ETHUSD": "ethusd_1-min_data.csv",
+        "SOLUSD": "solusd_1-min_data.csv",
+        "ILVUSD": "ilvusd_1-min_data.csv",
+    }
+    fname = fname_map.get(sym, "btcusd_1-min_data.csv")
+    return os.path.join("data", fname)
 
 async def update_bot_state(bot_stub, bot_id, state_dict, metadata, account_value=None):
     from protos import trading_api_pb2
@@ -92,6 +105,8 @@ async def update_bot_state(bot_stub, bot_id, state_dict, metadata, account_value
 
 class TradingOrchestrator:
     def __init__(self):
+        self.positions = {}  # bot_id -> position size
+        self._last_noncustom_warn = {}  # bot_id -> last warn timestamp
         self.go_service_addr = os.environ.get('GO_SERVICE_ADDR', 'localhost:50051')
         self.rust_service_addr = os.environ.get('RUST_SERVICE_ADDR', 'localhost:50052')
         # self.account_value = float(os.environ.get('INITIAL_ACCOUNT_VALUE', '1000000.0'))
@@ -112,10 +127,12 @@ class TradingOrchestrator:
     def _generate_jwt(self):
         if not self.auth_secret:
             return None
+        now = int(time.time())
         claims = {
             'sub': 'orchestrator',
-            'iat': int(time.time()),
-            'exp': int(time.time()) + 3600  # 1 hour expiry
+            'iat': now - 5,
+            'exp': now + 6 * 3600,
+            'user_id': self.orchestrator_user_id,
         }
         return jwt.encode(claims, self.auth_secret, algorithm='HS256')
 
@@ -136,30 +153,112 @@ class TradingOrchestrator:
 
             # Assuming bot.custom_strategy_definition exists and is a CustomStrategy protobuf message
             # In a real scenario, the bot service would provide this based on the bot's configuration.
-            if bot.strategy == "CustomStrategy" and hasattr(bot, 'custom_strategy_definition'):
-                from backtest_engine import CustomStrategy as BacktestCustomStrategy
-                custom_strategy_instance = BacktestCustomStrategy(bot.custom_strategy_definition)
-                signal = custom_strategy_instance.generate_signal(price, bot.account_value)
-            else:
-                # Fallback to MeanReversionStrategy if not a custom strategy or definition is missing
-                # This part assumes MeanReversionStrategy is still available or handled elsewhere
-                # For now, we'll just use a placeholder signal if no custom strategy is found.
-                print(f"[WARN] Bot {bot.name} is not a CustomStrategy or missing definition. Using hold signal.")
+            # if bot.strategy == "CustomStrategy" and hasattr(bot, 'custom_strategy_definition'):
+            #     from backtest_engine import CustomStrategy as BacktestCustomStrategy
+            #     custom_strategy_instance = BacktestCustomStrategy(bot.custom_strategy_definition)
+            #     signal = custom_strategy_instance.generate_signal(price, bot.account_value)
+            # else:
+            signal = {'action': 'hold', 'size': 0}
+            strategy_name = (getattr(bot, "strategy", "") or "").lower()
+
+            # Helper to read params from bot.parameters map with fallback keys
+            def _pget(pmap, keys, default=None):
+                for k in keys:
+                    v = pmap.get(k)
+                    if v is not None and str(v) != "":
+                        return v
+                return default
+
+            try:
+                # Try CustomStrategy (including "developbot" alias or state-provided JSON)
+                if strategy_name in ("customstrategy", "custom_strategy", "developbot", "develop_bot"):
+                    from backtest_engine import CustomStrategy as BacktestCustomStrategy
+                    custom_strategy_instance = BacktestCustomStrategy(bot.custom_strategy_definition)
+                    signal = custom_strategy_instance.generate_signal(price, bot.account_value)
+                else:
+                    # Support built-in strategies (e.g., MEAN_REVERSION)
+                    params_map = {}
+                    if hasattr(bot, "parameters"):
+                        try:
+                            params_map = dict(bot.parameters)
+                        except Exception:
+                            try:
+                                params_map = {k: bot.parameters[k] for k in bot.parameters.keys()}
+                            except Exception:
+                                params_map = {}
+
+                    if strategy_name in ("mean_reversion", "meanreversion"):
+                        # Parse params (sent as strings from frontend)
+                        lookback = int(float(_pget(params_map, ["lookback"], 20)))
+                        entry_std = float(_pget(params_map, ["entryStd", "entry_std"], 2.0))
+                        exit_std = float(_pget(params_map, ["exitStd", "exit_std"], 0.5))
+                        max_pos_pct = float(_pget(params_map, ["maxPos", "max_position", "max_pos"], 0.10))
+                        stop_loss_pct = float(_pget(params_map, ["stopLossPct", "stop_loss_pct"], 0.02))
+                        risk_per_trade_pct = float(_pget(params_map, ["riskPerTradePct", "risk_per_trade_pct"], 0.01))
+
+                        # Load history for z-score
+                        csv_path = _symbol_to_csv(bot.symbol)
+                        prices_list, _ts = load_backfill_prices(csv_path, max(lookback, 2))
+                        if prices_list and price is not None:
+                            import numpy as _np
+                            window = prices_list[-lookback:] if len(prices_list) >= lookback else prices_list
+                            mean_p = float(_np.mean(window))
+                            std_p = float(_np.std(window)) or 0.0
+                            z = (float(price) - mean_p) / std_p if std_p > 0 else 0.0
+
+                            # Entry/exit logic
+                            action = 'hold'
+                            if z <= -entry_std:
+                                action = 'buy'
+                            elif z >= entry_std:
+                                action = 'sell'
+                            elif abs(z) <= exit_std:
+                                action = 'hold'
+
+                            # Position sizing
+                            max_units = (max_pos_pct * float(bot.account_value)) / float(price) if float(price) > 0 else 0.0
+                            risk_units = (risk_per_trade_pct * float(bot.account_value)) / float(price) if float(price) > 0 else 0.0
+                            qty = max(0.0, min(max_units, risk_units))
+                            if action == 'hold' or qty <= 0:
+                                signal = {'action': 'hold', 'size': 0, 'zscore': z}
+                            else:
+                                signal = {
+                                    'action': action,
+                                    'size': qty,
+                                    'stop_loss': stop_loss_pct,
+                                    'zscore': z
+                                }
+                        else:
+                            # No history -> hold
+                            signal = {'action': 'hold', 'size': 0}
+
+                    elif hasattr(bot, "state") and isinstance(bot.state, dict):
+                        # Optional: allow custom strategy JSON saved in state
+                        cfg_raw = bot.state.get("custom_strategy") or bot.state.get("customStrategy")
+                        if cfg_raw:
+                            from backtest_engine import CustomStrategy as BacktestCustomStrategy
+                            cfg = json.loads(cfg_raw) if isinstance(cfg_raw, str) else cfg_raw
+                            custom_strategy_instance = BacktestCustomStrategy(cfg)
+                            signal = custom_strategy_instance.generate_signal(price, bot.account_value)
+
+            except Exception as _e:
+                # Fallback to hold; warn only occasionally
+                now_ts = time.time()
+                last = self._last_noncustom_warn.get(bot.bot_id, 0)
+                if now_ts - last > 30:
+                    print(f"[WARN] Failed to generate signal for {bot.name}: {_e}. Using hold.")
+                    self._last_noncustom_warn[bot.bot_id] = now_ts
                 signal = {'action': 'hold', 'size': 0}
-            # print(f"[DEBUG] Signal details: {signal}")
 
             if signal['action'] == 'hold' or signal['size'] == 0:
-                # print(f"[INFO] No trade signal for bot {bot.name}: reason=Hold or Zero size")
                 pass
             else:
                 print(f"[INFO] Trade signal for bot {bot.name}: action={signal['action']}, size={signal['size']}, stop_loss={signal.get('stop_loss')}")
-
                 bot_id = bot.bot_id
                 position = self.positions.get(bot_id, 0.0)
                 if signal['action'] != 'hold' and signal['size'] > 0:
                     print(f"Generated signal for bot {bot.name}: {json.dumps(signal)}")
 
-                    
                     portfolio = trading_api_pb2.PortfolioResponse(
                         bot_id=bot.bot_id,
                         total_portfolio_value=trading_api_pb2.DecimalValue(units=int(bot.account_value), nanos=int((bot.account_value % 1) * 1e9)),
@@ -176,85 +275,83 @@ class TradingOrchestrator:
                         cash_balance=trading_api_pb2.DecimalValue(units=0, nanos=0)
                     )
 
-                    
                     # Load historical prices and calculate returns
-                    hist_prices = load_backfill_prices(f"data/btcusd_1-min_data.csv", 30)
-                    asset_returns = calculate_returns(hist_prices)
-                    asset_history = trading_api_pb2.AssetHistory(returns=asset_returns)
-                    asset_histories = {bot.symbol: asset_history}
+                    csv_path = _symbol_to_csv(bot.symbol)
+                    prices_list, _ts = load_backfill_prices(csv_path, 30)
+                    asset_returns = calculate_returns(prices_list) if prices_list else []
 
-                    var_request = trading_api_pb2.VaRRequest(
-                        current_portfolio=portfolio,
-                        risk_model="monte_carlo",
-                        confidence_level=0.95,
-                        horizon_days=1,
-                        asset_histories=asset_histories
-                    )
-                    # print(f"Calculating VaR for bot {bot.name} with portfolio: {portfolio}")
-                    try:
-                        var_response = await risk_stub.CalculateVaR(var_request, metadata=metadata)
-                        # print(f"[DEBUG] VaR response: {var_response.value_at_risk}")
-                        
-                        def decimal_value_to_float(decimal_value):
-                            return float(decimal_value.units) + float(decimal_value.nanos) / 1e9
+                    # Default: allow order if no history; track risk_value if computed
+                    risk_ok = True
+                    risk_value = None
 
-                        risk_value = decimal_value_to_float(var_response.value_at_risk)
-                        risk_ok = risk_value <= (bot.account_value * 0.10)
-                        
-                        print(f"Risk check for bot {bot.name}: VaR {risk_value:.2f}, OK: {risk_ok}")
-                        
-                        if risk_ok:
-                            order_request = trading_api_pb2.CreateOrderRequest(
-                                bot_id=bot.bot_id,
-                                symbol=bot.symbol,
-                                side=trading_api_pb2.BUY if signal['action'].lower() == 'buy' else trading_api_pb2.SELL,
-                                type=trading_api_pb2.MARKET,
-                                quantity=trading_api_pb2.DecimalValue(
-                                    units=int(signal['size']),
-                                    nanos=int((signal['size'] % 1) * 1e9)
-                                ),
-                            )
-                            if signal['action'].lower() == 'buy' and bot.account_value <= 0:
-                                print(f"[WARN] Bot {bot.name} tried to buy with no funds. Buy blocked.")
-                                return
-                            if signal['action'].lower() == 'sell' and position <= 0:
-                                print(f"[WARN] Bot {bot.name} tried to sell with no position. Sell blocked.")
-                                return
+                    if asset_returns:
+                        asset_history = trading_api_pb2.AssetHistory(returns=asset_returns)
+                        asset_histories = {bot.symbol: asset_history}
+                        var_request = trading_api_pb2.VaRRequest(
+                            current_portfolio=portfolio,
+                            risk_model="monte_carlo",
+                            confidence_level=0.95,
+                            horizon_days=1,
+                            asset_histories=asset_histories
+                        )
+                        try:
+                            var_response = await risk_stub.CalculateVaR(var_request, metadata=metadata)
+                            def decimal_value_to_float(decimal_value):
+                                return float(decimal_value.units) + float(decimal_value.nanos) / 1e9
+                            risk_value = decimal_value_to_float(var_response.value_at_risk)
+                            risk_ok = risk_value <= (bot.account_value * 0.10)
+                            print(f"Risk check for bot {bot.name}: VaR {risk_value:.2f}, OK: {risk_ok}")
+                        except grpc.aio.AioRpcError as e:
+                            print(f"gRPC error for bot {bot.name}: code={e.code()} details={e.details()}")
+                            risk_ok = False
 
-                            order_response = await order_stub.CreateOrder(order_request, metadata=metadata)
-                            print(f"Order submitted for bot {bot.name}: {order_response.status}")
+                    if risk_ok:
+                        order_request = trading_api_pb2.CreateOrderRequest(
+                            bot_id=bot.bot_id,
+                            symbol=bot.symbol,
+                            side=trading_api_pb2.BUY if signal['action'].lower() == 'buy' else trading_api_pb2.SELL,
+                            type=trading_api_pb2.MARKET,
+                            quantity=trading_api_pb2.DecimalValue(
+                                units=int(signal['size']),
+                                nanos=int((signal['size'] % 1) * 1e9)
+                            ),
+                        )
+                        if signal['action'].lower() == 'buy' and bot.account_value <= 0:
+                            print(f"[WARN] Bot {bot.name} tried to buy with no funds. Buy blocked.")
+                            return
+                        if signal['action'].lower() == 'sell' and position <= 0:
+                            print(f"[WARN] Bot {bot.name} tried to sell with no position. Sell blocked.")
+                            return
 
-                                # --- PATCH: update account_value after trade ---
-                                # Example: subtract cost for buy, add for sell (simplified)
-                            trade_value = float(price) * float(signal['size'])
-                            if signal['action'].lower() == 'buy':
-                                position += signal['size']
-                                bot.account_value -= float(price) * float(signal['size'])
-                            elif signal['action'].lower() == 'sell':
-                                position -= signal['size']
-                                bot.account_value += float(price) * float(signal['size'])
+                        order_response = await order_stub.CreateOrder(order_request, metadata=metadata)
+                        print(f"Order submitted for bot {bot.name}: {order_response.status}")
 
-                            self.positions[bot_id] = position
-                            # You may want to use actual PnL/cash from order_response if available
-                            # ----------------------------------------------
-                        else:
-                            print(f"Order blocked for bot {bot.name}: VaR {risk_value:.2f} over limit")
-                    except grpc.aio.AioRpcError as e:
-                        print(f"gRPC error for bot {bot.name}: code={e.code()} details={e.details()}")
+                        trade_value = float(price) * float(signal['size'])
+                        if signal['action'].lower() == 'buy':
+                            position += signal['size']
+                            bot.account_value -= trade_value
+                        elif signal['action'].lower() == 'sell':
+                            position -= signal['size']
+                            bot.account_value += trade_value
+
+                        self.positions[bot_id] = position
+                    else:
+                        rv_txt = f"{risk_value:.2f}" if isinstance(risk_value, (int, float)) else "n/a"
+                        print(f"Order blocked for bot {bot.name}: VaR {rv_txt} over limit")
+
 
             state = {
                 "last_signal": signal.get('action'),
                 "zscore": float(signal.get('zscore')) if signal.get('zscore') is not None else None,
                 "size": float(signal.get('size')) if signal.get('size') is not None else None,
                 "timestamp": int(time.time()),
-                "price": float(price),
+                "price": float(price) if price is not None else None,
                 "bot_name": bot.name,
                 "strategy": bot.strategy,
                 "account_value": float(bot.account_value),
                 "position": float(self.positions.get(bot.bot_id, 0.0)),  # <-- persist position
             }
             await update_bot_state(bot_stub, bot.bot_id, state, metadata, account_value=float(bot.account_value))
-
         except Exception as e:
             print(f"Error processing bot {bot.name} ({bot.bot_id}): {e}")
             traceback.print_exc()

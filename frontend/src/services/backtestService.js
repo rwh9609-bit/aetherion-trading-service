@@ -1,9 +1,12 @@
-// Simple service to call the backtest API
 export async function runBacktest(params) {
-  const response = await fetch('/backtest', {
+  // params should be: { symbol, strategy_definition }
+  const response = await fetch('/backtest/custom', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(params)
+    body: JSON.stringify({
+      symbol: params.symbol || 'BTCUSD',
+      strategy_definition: params.strategy_definition || {}
+    })
   });
   if (!response.ok) throw new Error('Backtest failed');
   return await response.json();
