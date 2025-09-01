@@ -6,5 +6,5 @@ COPY envoy.yaml /etc/envoy/envoy.yaml
 COPY deprecated_features.yaml /etc/envoy/deprecated_features.yaml
 COPY certs/ /etc/envoy/certs/
 
-EXPOSE 8080 9901
+EXPOSE 80 443 8080 9901
 ENTRYPOINT ["envoy","-c","/etc/envoy/envoy.yaml","--log-level","info"]

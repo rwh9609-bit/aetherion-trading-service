@@ -35,10 +35,19 @@ static_resources:
 
                   expose_headers: grpc-status,grpc-message
                   max_age: "86400"
-                  allow_credentials: false
+                  allow_credentials: true
                   allow_private_network_access: true
                 routes:
                   - match: { prefix: "/trading.TradingService/" }
+                    route:
+                      cluster: trading_service
+                      timeout: 0s
+                      max_stream_duration: { grpc_timeout_header_max: 0s }
+                  - match: { prefix: "/stripe-webhook" }
+                    route:
+                      cluster: trading_http
+                      timeout: 15s
+                  - match: { prefix: "/trading.StrategyStudioService/" }
                     route:
                       cluster: trading_service
                       timeout: 0s
@@ -131,7 +140,7 @@ static_resources:
                         keep-alive,user-agent,cache-control,content-type,content-transfer-encoding,x-grpc-web,grpc-accept-encoding,x-user-agent,custom-header-1,x-grpc-timeout,authorization,user_id
                       expose_headers: grpc-status,grpc-message
                       max_age: "86400"
-                      allow_credentials: false
+                      allow_credentials: true
                     response_headers_to_add:
                       - header: { key: Strict-Transport-Security, value: "max-age=63072000; includeSubDomains; preload" }
                         append_action: OVERWRITE_IF_EXISTS_OR_ADD
@@ -246,6 +255,13 @@ static_resources:
                     socket_address:
                       address: backend
                       port_value: 8000
+      health_checks:
+        - timeout: 1s
+          interval: 10s
+          unhealthy_threshold: 2
+          healthy_threshold: 2
+          http_health_check:
+            path: /healthz
     - name: trading_service
       connect_timeout: 0.5s
       type: STRICT_DNS

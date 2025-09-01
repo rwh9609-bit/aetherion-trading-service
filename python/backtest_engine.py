@@ -2,6 +2,7 @@ import matplotlib.pyplot as plt
 import csv
 from datetime import datetime
 from strategies.mean_reversion import MeanReversionStrategy, MeanReversionParams
+from protos.trading_api_pb2 import CustomStrategy
 
 class BacktestEngine:
     def __init__(self, strategy, historical_data):
@@ -39,6 +40,63 @@ class BacktestEngine:
                 self.execute_trade(action, tick)
             self.update_equity(tick)
         return self.trades, self.equity_curve
+
+class CustomStrategy:
+    def __init__(self, strategy_definition: CustomStrategy):
+        self.strategy_definition = strategy_definition
+        self.nodes = {node.id: node for node in strategy_definition.nodes}
+        self.edges = strategy_definition.edges
+        print(f"CustomStrategy initialized with definition: {strategy_definition.name}")
+
+    def generate_signal(self, current_price, account_value):
+        # This is a simplified implementation for demonstration.
+        # A real implementation would involve a more robust graph traversal and evaluation.
+
+        # Example: Find a simple "Buy if SMA(50) > current_price" rule
+        sma_node = None
+        greater_than_node = None
+        buy_action_node = None
+
+        for node_id, node in self.nodes.items():
+            if node.type == self.strategy_definition.NodeType.INDICATOR and \
+               node.parameters.get("indicator_type") == "SMA" and \
+               node.parameters.get("period") == "50":
+                sma_node = node
+            elif node.type == self.strategy_definition.NodeType.OPERATOR and \
+                 node.parameters.get("operator_type") == "GREATER_THAN":
+                greater_than_node = node
+            elif node.type == self.strategy_definition.NodeType.ACTION and \
+                 node.parameters.get("action_type") == "ACTION_BUY":
+                buy_action_node = node
+
+        if sma_node and greater_than_node and buy_action_node:
+            # Mock SMA value for demonstration
+            # In a real scenario, you'd calculate SMA from historical data
+            mock_sma_50 = current_price * 0.99 # Assume SMA is slightly below current price
+
+            # Check if the "SMA" node is connected to the "GREATER_THAN" node
+            # and "GREATER_THAN" to "ACTION_BUY"
+            sma_to_gt = False
+            gt_to_buy = False
+
+            for edge in self.edges:
+                if edge.from_node_id == sma_node.id and edge.to_node_id == greater_than_node.id:
+                    sma_to_gt = True
+                if edge.from_node_id == greater_than_node.id and edge.to_node_id == buy_action_node.id:
+                    gt_to_buy = True
+
+            if sma_to_gt and gt_to_buy:
+                if current_price > mock_sma_50: # Simplified condition
+                    print(f"DEBUG: Generating BUY signal. Current Price: {current_price}, Mock SMA(50): {mock_sma_50}")
+                    return {'action': 'buy', 'size': 0.01} # Buy 0.01 of asset
+
+        return {'action': 'hold', 'size': 0}
+
+def run_custom_strategy_backtest(strategy: CustomStrategy, historical_data):
+    custom_strategy_instance = CustomStrategy(strategy)
+    engine = BacktestEngine(custom_strategy_instance, historical_data)
+    trades, equity_curve = engine.run()
+    return trades, equity_curve
 
 def load_historical_data(csv_path):
     data = []

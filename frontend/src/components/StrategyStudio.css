@@ -1,0 +1,103 @@
+.strategy-studio-container {
+  display: flex;
+  height: 80vh;
+  gap: 20px;
+  padding: 20px;
+  background-color: #1a1a2e; /* Darker background */
+  color: #e0e0e0; /* Light text color */
+}
+
+.nodes-palette, .strategy-canvas {
+  background-color: #2a2a4a; /* Slightly lighter dark background */
+  border-radius: 12px; /* More rounded corners */
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3); /* More pronounced shadow */
+  padding: 20px;
+  overflow-y: auto;
+  border: 1px solid #4a4a7a; /* Subtle border */
+}
+
+.nodes-palette {
+  flex: 0 0 280px; /* Slightly wider palette */
+}
+
+.strategy-canvas {
+  flex: 1;
+  border: 2px dashed #5a5a8a; /* More visible dashed border */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start; /* Align items to start for better flow */
+  color: #b0b0b0;
+  font-style: italic;
+  padding-top: 20px; /* Add some top padding */
+}
+
+.nodes-list {
+  min-height: 100px;
+}
+
+.node-item {
+  background-color: #4a4a7a; /* Darker node item background */
+  border: 1px solid #6a6ab0;
+  padding: 12px; /* Slightly more padding */
+  margin-bottom: 10px; /* More margin */
+  border-radius: 8px;
+  cursor: grab;
+  text-align: center;
+  transition: all 0.2s ease-in-out; /* Smooth transition for hover effects */
+  color: #e0e0e0;
+}
+
+.node-item:hover {
+  background-color: #5a5aa0; /* Lighter on hover */
+  box-shadow: 0 0 15px rgba(100, 100, 255, 0.5); /* Glow effect */
+  transform: translateY(-2px); /* Slight lift effect */
+}
+
+.canvas-area {
+  min-height: 100%;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 10px;
+}
+
+.canvas-node {
+  background-color: #6a6a9a; /* Default node color */
+  border: 1px solid #8a8ac0;
+  padding: 18px 25px; /* More padding */
+  margin-bottom: 15px; /* More margin */
+  border-radius: 10px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  width: 180px; /* Slightly wider nodes */
+  text-align: center;
+  cursor: grab;
+  transition: all 0.2s ease-in-out;
+  color: #ffffff; /* White text for better contrast */
+}
+
+.canvas-node:hover {
+  transform: scale(1.03); /* Slightly enlarge on hover */
+  box-shadow: 0 0 20px rgba(120, 120, 255, 0.7); /* Stronger glow */
+}
+
+/* Specific node type styling with more distinct colors */
+.indicator { background-color: #4CAF50; border-color: #388E3C; } /* Green */
+.indicator:hover { background-color: #66BB6A; box-shadow: 0 0 20px rgba(76, 175, 80, 0.7); } /* Lighter green on hover */
+
+.operator { background-color: #FFC107; border-color: #FFA000; } /* Amber */
+.operator:hover { background-color: #FFD54F; box-shadow: 0 0 20px rgba(255, 193, 7, 0.7); } /* Lighter amber on hover */
+
+.action { background-color: #F44336; border-color: #D32F2F; } /* Red */
+.action:hover { background-color: #E57373; box-shadow: 0 0 20px rgba(244, 67, 54, 0.7); } /* Lighter red on hover */
+
+h3 {
+  margin-top: 0;
+  color: #90caf9; /* Light blue for headings */
+  text-shadow: 0 0 5px rgba(144, 202, 249, 0.5); /* Subtle text shadow */
+}
+
+p {
+  color: #b0b0b0;
+}

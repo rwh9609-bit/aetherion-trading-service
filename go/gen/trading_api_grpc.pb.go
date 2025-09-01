@@ -1123,6 +1123,336 @@ var BotService_ServiceDesc = grpc.ServiceDesc{
 }
 
 const (
+	StrategyStudioService_CreateCustomStrategy_FullMethodName   = "/trading.StrategyStudioService/CreateCustomStrategy"
+	StrategyStudioService_GetCustomStrategy_FullMethodName      = "/trading.StrategyStudioService/GetCustomStrategy"
+	StrategyStudioService_UpdateCustomStrategy_FullMethodName   = "/trading.StrategyStudioService/UpdateCustomStrategy"
+	StrategyStudioService_DeleteCustomStrategy_FullMethodName   = "/trading.StrategyStudioService/DeleteCustomStrategy"
+	StrategyStudioService_ListCustomStrategies_FullMethodName   = "/trading.StrategyStudioService/ListCustomStrategies"
+	StrategyStudioService_BacktestCustomStrategy_FullMethodName = "/trading.StrategyStudioService/BacktestCustomStrategy"
+	StrategyStudioService_DeployCustomStrategy_FullMethodName   = "/trading.StrategyStudioService/DeployCustomStrategy"
+)
+
+// StrategyStudioServiceClient is the client API for StrategyStudioService service.
+//
+// For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
+type StrategyStudioServiceClient interface {
+	CreateCustomStrategy(ctx context.Context, in *CreateCustomStrategyRequest, opts ...grpc.CallOption) (*CustomStrategy, error)
+	GetCustomStrategy(ctx context.Context, in *GetCustomStrategyRequest, opts ...grpc.CallOption) (*CustomStrategy, error)
+	UpdateCustomStrategy(ctx context.Context, in *UpdateCustomStrategyRequest, opts ...grpc.CallOption) (*CustomStrategy, error)
+	DeleteCustomStrategy(ctx context.Context, in *DeleteCustomStrategyRequest, opts ...grpc.CallOption) (*StatusResponse, error)
+	ListCustomStrategies(ctx context.Context, in *ListCustomStrategiesRequest, opts ...grpc.CallOption) (*ListCustomStrategiesResponse, error)
+	BacktestCustomStrategy(ctx context.Context, in *BacktestCustomStrategyRequest, opts ...grpc.CallOption) (*BacktestCustomStrategyResponse, error)
+	DeployCustomStrategy(ctx context.Context, in *DeployCustomStrategyRequest, opts ...grpc.CallOption) (*StatusResponse, error)
+}
+
+type strategyStudioServiceClient struct {
+	cc grpc.ClientConnInterface
+}
+
+func NewStrategyStudioServiceClient(cc grpc.ClientConnInterface) StrategyStudioServiceClient {
+	return &strategyStudioServiceClient{cc}
+}
+
+func (c *strategyStudioServiceClient) CreateCustomStrategy(ctx context.Context, in *CreateCustomStrategyRequest, opts ...grpc.CallOption) (*CustomStrategy, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(CustomStrategy)
+	err := c.cc.Invoke(ctx, StrategyStudioService_CreateCustomStrategy_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *strategyStudioServiceClient) GetCustomStrategy(ctx context.Context, in *GetCustomStrategyRequest, opts ...grpc.CallOption) (*CustomStrategy, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(CustomStrategy)
+	err := c.cc.Invoke(ctx, StrategyStudioService_GetCustomStrategy_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *strategyStudioServiceClient) UpdateCustomStrategy(ctx context.Context, in *UpdateCustomStrategyRequest, opts ...grpc.CallOption) (*CustomStrategy, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(CustomStrategy)
+	err := c.cc.Invoke(ctx, StrategyStudioService_UpdateCustomStrategy_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *strategyStudioServiceClient) DeleteCustomStrategy(ctx context.Context, in *DeleteCustomStrategyRequest, opts ...grpc.CallOption) (*StatusResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(StatusResponse)
+	err := c.cc.Invoke(ctx, StrategyStudioService_DeleteCustomStrategy_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *strategyStudioServiceClient) ListCustomStrategies(ctx context.Context, in *ListCustomStrategiesRequest, opts ...grpc.CallOption) (*ListCustomStrategiesResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ListCustomStrategiesResponse)
+	err := c.cc.Invoke(ctx, StrategyStudioService_ListCustomStrategies_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *strategyStudioServiceClient) BacktestCustomStrategy(ctx context.Context, in *BacktestCustomStrategyRequest, opts ...grpc.CallOption) (*BacktestCustomStrategyResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(BacktestCustomStrategyResponse)
+	err := c.cc.Invoke(ctx, StrategyStudioService_BacktestCustomStrategy_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *strategyStudioServiceClient) DeployCustomStrategy(ctx context.Context, in *DeployCustomStrategyRequest, opts ...grpc.CallOption) (*StatusResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(StatusResponse)
+	err := c.cc.Invoke(ctx, StrategyStudioService_DeployCustomStrategy_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+// StrategyStudioServiceServer is the server API for StrategyStudioService service.
+// All implementations must embed UnimplementedStrategyStudioServiceServer
+// for forward compatibility.
+type StrategyStudioServiceServer interface {
+	CreateCustomStrategy(context.Context, *CreateCustomStrategyRequest) (*CustomStrategy, error)
+	GetCustomStrategy(context.Context, *GetCustomStrategyRequest) (*CustomStrategy, error)
+	UpdateCustomStrategy(context.Context, *UpdateCustomStrategyRequest) (*CustomStrategy, error)
+	DeleteCustomStrategy(context.Context, *DeleteCustomStrategyRequest) (*StatusResponse, error)
+	ListCustomStrategies(context.Context, *ListCustomStrategiesRequest) (*ListCustomStrategiesResponse, error)
+	BacktestCustomStrategy(context.Context, *BacktestCustomStrategyRequest) (*BacktestCustomStrategyResponse, error)
+	DeployCustomStrategy(context.Context, *DeployCustomStrategyRequest) (*StatusResponse, error)
+	mustEmbedUnimplementedStrategyStudioServiceServer()
+}
+
+// UnimplementedStrategyStudioServiceServer must be embedded to have
+// forward compatible implementations.
+//
+// NOTE: this should be embedded by value instead of pointer to avoid a nil
+// pointer dereference when methods are called.
+type UnimplementedStrategyStudioServiceServer struct{}
+
+func (UnimplementedStrategyStudioServiceServer) CreateCustomStrategy(context.Context, *CreateCustomStrategyRequest) (*CustomStrategy, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CreateCustomStrategy not implemented")
+}
+func (UnimplementedStrategyStudioServiceServer) GetCustomStrategy(context.Context, *GetCustomStrategyRequest) (*CustomStrategy, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetCustomStrategy not implemented")
+}
+func (UnimplementedStrategyStudioServiceServer) UpdateCustomStrategy(context.Context, *UpdateCustomStrategyRequest) (*CustomStrategy, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method UpdateCustomStrategy not implemented")
+}
+func (UnimplementedStrategyStudioServiceServer) DeleteCustomStrategy(context.Context, *DeleteCustomStrategyRequest) (*StatusResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method DeleteCustomStrategy not implemented")
+}
+func (UnimplementedStrategyStudioServiceServer) ListCustomStrategies(context.Context, *ListCustomStrategiesRequest) (*ListCustomStrategiesResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ListCustomStrategies not implemented")
+}
+func (UnimplementedStrategyStudioServiceServer) BacktestCustomStrategy(context.Context, *BacktestCustomStrategyRequest) (*BacktestCustomStrategyResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method BacktestCustomStrategy not implemented")
+}
+func (UnimplementedStrategyStudioServiceServer) DeployCustomStrategy(context.Context, *DeployCustomStrategyRequest) (*StatusResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method DeployCustomStrategy not implemented")
+}
+func (UnimplementedStrategyStudioServiceServer) mustEmbedUnimplementedStrategyStudioServiceServer() {}
+func (UnimplementedStrategyStudioServiceServer) testEmbeddedByValue()                               {}
+
+// UnsafeStrategyStudioServiceServer may be embedded to opt out of forward compatibility for this service.
+// Use of this interface is not recommended, as added methods to StrategyStudioServiceServer will
+// result in compilation errors.
+type UnsafeStrategyStudioServiceServer interface {
+	mustEmbedUnimplementedStrategyStudioServiceServer()
+}
+
+func RegisterStrategyStudioServiceServer(s grpc.ServiceRegistrar, srv StrategyStudioServiceServer) {
+	// If the following call pancis, it indicates UnimplementedStrategyStudioServiceServer was
+	// embedded by pointer and is nil.  This will cause panics if an
+	// unimplemented method is ever invoked, so we test this at initialization
+	// time to prevent it from happening at runtime later due to I/O.
+	if t, ok := srv.(interface{ testEmbeddedByValue() }); ok {
+		t.testEmbeddedByValue()
+	}
+	s.RegisterService(&StrategyStudioService_ServiceDesc, srv)
+}
+
+func _StrategyStudioService_CreateCustomStrategy_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CreateCustomStrategyRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(StrategyStudioServiceServer).CreateCustomStrategy(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: StrategyStudioService_CreateCustomStrategy_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(StrategyStudioServiceServer).CreateCustomStrategy(ctx, req.(*CreateCustomStrategyRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _StrategyStudioService_GetCustomStrategy_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetCustomStrategyRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(StrategyStudioServiceServer).GetCustomStrategy(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: StrategyStudioService_GetCustomStrategy_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(StrategyStudioServiceServer).GetCustomStrategy(ctx, req.(*GetCustomStrategyRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _StrategyStudioService_UpdateCustomStrategy_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UpdateCustomStrategyRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(StrategyStudioServiceServer).UpdateCustomStrategy(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: StrategyStudioService_UpdateCustomStrategy_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(StrategyStudioServiceServer).UpdateCustomStrategy(ctx, req.(*UpdateCustomStrategyRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _StrategyStudioService_DeleteCustomStrategy_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DeleteCustomStrategyRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(StrategyStudioServiceServer).DeleteCustomStrategy(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: StrategyStudioService_DeleteCustomStrategy_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(StrategyStudioServiceServer).DeleteCustomStrategy(ctx, req.(*DeleteCustomStrategyRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _StrategyStudioService_ListCustomStrategies_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListCustomStrategiesRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(StrategyStudioServiceServer).ListCustomStrategies(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: StrategyStudioService_ListCustomStrategies_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(StrategyStudioServiceServer).ListCustomStrategies(ctx, req.(*ListCustomStrategiesRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _StrategyStudioService_BacktestCustomStrategy_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(BacktestCustomStrategyRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(StrategyStudioServiceServer).BacktestCustomStrategy(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: StrategyStudioService_BacktestCustomStrategy_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(StrategyStudioServiceServer).BacktestCustomStrategy(ctx, req.(*BacktestCustomStrategyRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _StrategyStudioService_DeployCustomStrategy_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DeployCustomStrategyRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(StrategyStudioServiceServer).DeployCustomStrategy(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: StrategyStudioService_DeployCustomStrategy_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(StrategyStudioServiceServer).DeployCustomStrategy(ctx, req.(*DeployCustomStrategyRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+// StrategyStudioService_ServiceDesc is the grpc.ServiceDesc for StrategyStudioService service.
+// It's only intended for direct use with grpc.RegisterService,
+// and not to be introspected or modified (even as a copy)
+var StrategyStudioService_ServiceDesc = grpc.ServiceDesc{
+	ServiceName: "trading.StrategyStudioService",
+	HandlerType: (*StrategyStudioServiceServer)(nil),
+	Methods: []grpc.MethodDesc{
+		{
+			MethodName: "CreateCustomStrategy",
+			Handler:    _StrategyStudioService_CreateCustomStrategy_Handler,
+		},
+		{
+			MethodName: "GetCustomStrategy",
+			Handler:    _StrategyStudioService_GetCustomStrategy_Handler,
+		},
+		{
+			MethodName: "UpdateCustomStrategy",
+			Handler:    _StrategyStudioService_UpdateCustomStrategy_Handler,
+		},
+		{
+			MethodName: "DeleteCustomStrategy",
+			Handler:    _StrategyStudioService_DeleteCustomStrategy_Handler,
+		},
+		{
+			MethodName: "ListCustomStrategies",
+			Handler:    _StrategyStudioService_ListCustomStrategies_Handler,
+		},
+		{
+			MethodName: "BacktestCustomStrategy",
+			Handler:    _StrategyStudioService_BacktestCustomStrategy_Handler,
+		},
+		{
+			MethodName: "DeployCustomStrategy",
+			Handler:    _StrategyStudioService_DeployCustomStrategy_Handler,
+		},
+	},
+	Streams:  []grpc.StreamDesc{},
+	Metadata: "trading_api.proto",
+}
+
+const (
 	RiskService_CalculateVaR_FullMethodName = "/trading.RiskService/CalculateVaR"
 )
 

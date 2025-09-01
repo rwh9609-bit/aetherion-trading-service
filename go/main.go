@@ -907,6 +907,9 @@ func main() {
 	subscriptionSvc := newSubscriptionServer(dbService)
 	pb.RegisterSubscriptionServiceServer(grpcServer, subscriptionSvc)
 
+	strategyStudioService := newStrategyStudioServer(dbService)
+	pb.RegisterStrategyStudioServiceServer(grpcServer, strategyStudioService)
+
 	// HTTP server for Stripe webhook and health endpoint with CORS
 	go func(addr string) {
 		mux := http.NewServeMux()
@@ -914,7 +917,7 @@ func main() {
 			w.WriteHeader(http.StatusOK)
 			_, _ = w.Write([]byte("ok"))
 		})
-		mux.HandleFunc("/stripe/webhook", handleStripeWebhook)
+		mux.HandleFunc("/stripe-webhook", handleStripeWebhook)
 		handler := corsMiddleware().Handler(mux)
 		log.Info().Msgf("HTTP server with CORS listening on %s", addr)
 		srv := &http.Server{Addr: addr, Handler: handler}

@@ -1,6 +1,7 @@
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+import grpc
 from backtest_api import router as backtest_router
 import stripe
 import os
@@ -18,6 +19,7 @@ CANCEL_URL = os.getenv("STRIPE_CANCEL_URL", "http://localhost:8000/cancel")
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
+        "http://localhost:3000",
         "http://localhost:8000",
         "https://www.aetherion.cloud",
         "https://app.aetherion.cloud",
@@ -55,8 +57,6 @@ async def create_checkout_session(request: Request):
 async def cancel():
     return JSONResponse(content={"message": "Subscription canceled or checkout aborted."})
 
-
-
 @app.post("/stripe-webhook")
 async def stripe_webhook(request: Request):
     payload = await request.body()
@@ -72,15 +72,20 @@ async def stripe_webhook(request: Request):
     if event["type"] == "checkout.session.completed":
         session = event["data"]["object"]
         stripe_customer_id = session.get("customer")
-        # Call     rpc UpgradeUserRole(UserId) returns (StatusResponse) {} here to upgrade user role in your system
-        subscription_stub = trading_api_pb2_grpc.SubscriptionServiceStub()
-        response = subscription_stub.UpgradeUserRole(
-            trading_api_pb2.UpgradeUserRoleRequest(user_id=stripe_customer_id)
-        )
-        if response.status == trading_api_pb2.StatusResponse.SUCCESS:
-            print(f"Upgraded user with Stripe customer ID {stripe_customer_id} to superuser.")
-        else:
-            print(f"Failed to upgrade user with Stripe customer ID {stripe_customer_id}: {response.error_message}")
+        # Connect to gRPC backend
+        grpc_host = os.getenv("GRPC_HOST", "localhost:50051")
+        with grpc.insecure_channel(grpc_host) as channel:
+            subscription_stub = trading_api_pb2_grpc.SubscriptionServiceStub(channel)
+            response = subscription_stub.UpgradeUserRole(
+                trading_api_pb2.UpgradeUserRoleRequest(user_id=stripe_customer_id)
+            )
+            if response.status == trading_api_pb2.StatusResponse.SUCCESS:
+                print(f"Upgraded user with Stripe customer ID {stripe_customer_id} to superuser.")
+            else:
+                print(f"Failed to upgrade user with Stripe customer ID {stripe_customer_id}: {response.error_message}")
 
     return {"status": "success"}
 
+@app.get("/success")
+async def success(session_id: str = None):
+    return {"message": "Subscription successful!", "session_id": session_id}

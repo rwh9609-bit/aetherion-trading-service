@@ -25,7 +25,11 @@ script_dir = os.path.dirname(__file__)
 protos_path = os.path.join(script_dir, "protos")
 
 def load_backfill_prices(csv_path, lookback_period):
-    df = pd.read_csv(csv_path)
+    try:
+        df = pd.read_csv(csv_path)
+    except FileNotFoundError:
+        print(f"[WARN] Price CSV not found: {csv_path}")
+        return [], []
     # Handle both lowercase and capitalized columns
     if 'close' in df.columns:
         prices = df['close'].tolist()
@@ -97,16 +101,7 @@ class TradingOrchestrator:
             print(f"[DEBUG] AUTH_SECRET loaded: {masked_secret}")
         else:
             print("[DEBUG] AUTH_SECRET not set.") 
-        params = MeanReversionParams(
-            lookback_period=20,
-            entry_std_dev=1.0,
-            exit_std_dev=0.5,
-            max_position_size=0.1,
-            stop_loss_pct=0.02,
-            risk_per_trade_pct=0.01
-        )
-        prices, timestamps = load_backfill_prices("data/btcusd_1-min_data.csv", 20)
-        self.strategy = MeanReversionStrategy(params, backfill_prices=prices)
+        
         self.orchestrator_user_id = os.environ.get('ORCHESTRATOR_USER_ID')
         print(f"[DEBUG] Using orchestrator_user_id: {self.orchestrator_user_id}")
         if not self.orchestrator_user_id:
@@ -139,7 +134,18 @@ class TradingOrchestrator:
             price = await fetch_binance_price_async(http_session, bot.symbol.replace("-", ""))
             # print(f"Current price for {bot.symbol}: ${price:,.2f}")
 
-            signal = self.strategy.generate_signal(price, bot.account_value)
+            # Assuming bot.custom_strategy_definition exists and is a CustomStrategy protobuf message
+            # In a real scenario, the bot service would provide this based on the bot's configuration.
+            if bot.strategy == "CustomStrategy" and hasattr(bot, 'custom_strategy_definition'):
+                from backtest_engine import CustomStrategy as BacktestCustomStrategy
+                custom_strategy_instance = BacktestCustomStrategy(bot.custom_strategy_definition)
+                signal = custom_strategy_instance.generate_signal(price, bot.account_value)
+            else:
+                # Fallback to MeanReversionStrategy if not a custom strategy or definition is missing
+                # This part assumes MeanReversionStrategy is still available or handled elsewhere
+                # For now, we'll just use a placeholder signal if no custom strategy is found.
+                print(f"[WARN] Bot {bot.name} is not a CustomStrategy or missing definition. Using hold signal.")
+                signal = {'action': 'hold', 'size': 0}
             # print(f"[DEBUG] Signal details: {signal}")
 
             if signal['action'] == 'hold' or signal['size'] == 0:
@@ -170,22 +176,7 @@ class TradingOrchestrator:
                         cash_balance=trading_api_pb2.DecimalValue(units=0, nanos=0)
                     )
 
-                    # ...existing code...
-                    portfolio = trading_api_pb2.PortfolioResponse(
-                        bot_id=bot.bot_id,
-                        total_portfolio_value=trading_api_pb2.DecimalValue(units=int(bot.account_value), nanos=int((bot.account_value % 1) * 1e9)),
-                        positions=[
-                            trading_api_pb2.PortfolioPosition(
-                                symbol=bot.symbol,
-                                quantity=trading_api_pb2.DecimalValue(units=int(signal['size']), nanos=int((signal['size'] % 1) * 1e9)),
-                                average_price=trading_api_pb2.DecimalValue(units=int(price), nanos=int((price % 1) * 1e9)),
-                                market_value=trading_api_pb2.DecimalValue(units=int(price * signal['size']), nanos=int(((price * signal['size']) % 1) * 1e9)),
-                                unrealized_pnl=trading_api_pb2.DecimalValue(units=0, nanos=0),
-                                exposure_pct=trading_api_pb2.DecimalValue(units=0, nanos=0)
-                            )
-                        ],
-                        cash_balance=trading_api_pb2.DecimalValue(units=0, nanos=0)
-                    )
+                    
                     # Load historical prices and calculate returns
                     hist_prices = load_backfill_prices(f"data/btcusd_1-min_data.csv", 30)
                     asset_returns = calculate_returns(hist_prices)
@@ -249,7 +240,7 @@ class TradingOrchestrator:
                         else:
                             print(f"Order blocked for bot {bot.name}: VaR {risk_value:.2f} over limit")
                     except grpc.aio.AioRpcError as e:
-                        print(f"Error calculating VaR for bot {bot.name}: {e.details()}")
+                        print(f"gRPC error for bot {bot.name}: code={e.code()} details={e.details()}")
 
             state = {
                 "last_signal": signal.get('action'),

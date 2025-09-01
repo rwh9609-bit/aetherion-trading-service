@@ -1138,6 +1138,348 @@ class BotService(object):
             _registered_method=True)
 
 
+class StrategyStudioServiceStub(object):
+    """=================================================================
+    STRATEGY STUDIO SERVICE
+    =================================================================
+
+    """
+
+    def __init__(self, channel):
+        """Constructor.
+
+        Args:
+            channel: A grpc.Channel.
+        """
+        self.CreateCustomStrategy = channel.unary_unary(
+                '/trading.StrategyStudioService/CreateCustomStrategy',
+                request_serializer=trading__api__pb2.CreateCustomStrategyRequest.SerializeToString,
+                response_deserializer=trading__api__pb2.CustomStrategy.FromString,
+                _registered_method=True)
+        self.GetCustomStrategy = channel.unary_unary(
+                '/trading.StrategyStudioService/GetCustomStrategy',
+                request_serializer=trading__api__pb2.GetCustomStrategyRequest.SerializeToString,
+                response_deserializer=trading__api__pb2.CustomStrategy.FromString,
+                _registered_method=True)
+        self.UpdateCustomStrategy = channel.unary_unary(
+                '/trading.StrategyStudioService/UpdateCustomStrategy',
+                request_serializer=trading__api__pb2.UpdateCustomStrategyRequest.SerializeToString,
+                response_deserializer=trading__api__pb2.CustomStrategy.FromString,
+                _registered_method=True)
+        self.DeleteCustomStrategy = channel.unary_unary(
+                '/trading.StrategyStudioService/DeleteCustomStrategy',
+                request_serializer=trading__api__pb2.DeleteCustomStrategyRequest.SerializeToString,
+                response_deserializer=trading__api__pb2.StatusResponse.FromString,
+                _registered_method=True)
+        self.ListCustomStrategies = channel.unary_unary(
+                '/trading.StrategyStudioService/ListCustomStrategies',
+                request_serializer=trading__api__pb2.ListCustomStrategiesRequest.SerializeToString,
+                response_deserializer=trading__api__pb2.ListCustomStrategiesResponse.FromString,
+                _registered_method=True)
+        self.BacktestCustomStrategy = channel.unary_unary(
+                '/trading.StrategyStudioService/BacktestCustomStrategy',
+                request_serializer=trading__api__pb2.BacktestCustomStrategyRequest.SerializeToString,
+                response_deserializer=trading__api__pb2.BacktestCustomStrategyResponse.FromString,
+                _registered_method=True)
+        self.DeployCustomStrategy = channel.unary_unary(
+                '/trading.StrategyStudioService/DeployCustomStrategy',
+                request_serializer=trading__api__pb2.DeployCustomStrategyRequest.SerializeToString,
+                response_deserializer=trading__api__pb2.StatusResponse.FromString,
+                _registered_method=True)
+
+
+class StrategyStudioServiceServicer(object):
+    """=================================================================
+    STRATEGY STUDIO SERVICE
+    =================================================================
+
+    """
+
+    def CreateCustomStrategy(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def GetCustomStrategy(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def UpdateCustomStrategy(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def DeleteCustomStrategy(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def ListCustomStrategies(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def BacktestCustomStrategy(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def DeployCustomStrategy(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+
+def add_StrategyStudioServiceServicer_to_server(servicer, server):
+    rpc_method_handlers = {
+            'CreateCustomStrategy': grpc.unary_unary_rpc_method_handler(
+                    servicer.CreateCustomStrategy,
+                    request_deserializer=trading__api__pb2.CreateCustomStrategyRequest.FromString,
+                    response_serializer=trading__api__pb2.CustomStrategy.SerializeToString,
+            ),
+            'GetCustomStrategy': grpc.unary_unary_rpc_method_handler(
+                    servicer.GetCustomStrategy,
+                    request_deserializer=trading__api__pb2.GetCustomStrategyRequest.FromString,
+                    response_serializer=trading__api__pb2.CustomStrategy.SerializeToString,
+            ),
+            'UpdateCustomStrategy': grpc.unary_unary_rpc_method_handler(
+                    servicer.UpdateCustomStrategy,
+                    request_deserializer=trading__api__pb2.UpdateCustomStrategyRequest.FromString,
+                    response_serializer=trading__api__pb2.CustomStrategy.SerializeToString,
+            ),
+            'DeleteCustomStrategy': grpc.unary_unary_rpc_method_handler(
+                    servicer.DeleteCustomStrategy,
+                    request_deserializer=trading__api__pb2.DeleteCustomStrategyRequest.FromString,
+                    response_serializer=trading__api__pb2.StatusResponse.SerializeToString,
+            ),
+            'ListCustomStrategies': grpc.unary_unary_rpc_method_handler(
+                    servicer.ListCustomStrategies,
+                    request_deserializer=trading__api__pb2.ListCustomStrategiesRequest.FromString,
+                    response_serializer=trading__api__pb2.ListCustomStrategiesResponse.SerializeToString,
+            ),
+            'BacktestCustomStrategy': grpc.unary_unary_rpc_method_handler(
+                    servicer.BacktestCustomStrategy,
+                    request_deserializer=trading__api__pb2.BacktestCustomStrategyRequest.FromString,
+                    response_serializer=trading__api__pb2.BacktestCustomStrategyResponse.SerializeToString,
+            ),
+            'DeployCustomStrategy': grpc.unary_unary_rpc_method_handler(
+                    servicer.DeployCustomStrategy,
+                    request_deserializer=trading__api__pb2.DeployCustomStrategyRequest.FromString,
+                    response_serializer=trading__api__pb2.StatusResponse.SerializeToString,
+            ),
+    }
+    generic_handler = grpc.method_handlers_generic_handler(
+            'trading.StrategyStudioService', rpc_method_handlers)
+    server.add_generic_rpc_handlers((generic_handler,))
+    server.add_registered_method_handlers('trading.StrategyStudioService', rpc_method_handlers)
+
+
+ # This class is part of an EXPERIMENTAL API.
+class StrategyStudioService(object):
+    """=================================================================
+    STRATEGY STUDIO SERVICE
+    =================================================================
+
+    """
+
+    @staticmethod
+    def CreateCustomStrategy(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/trading.StrategyStudioService/CreateCustomStrategy',
+            trading__api__pb2.CreateCustomStrategyRequest.SerializeToString,
+            trading__api__pb2.CustomStrategy.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def GetCustomStrategy(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/trading.StrategyStudioService/GetCustomStrategy',
+            trading__api__pb2.GetCustomStrategyRequest.SerializeToString,
+            trading__api__pb2.CustomStrategy.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def UpdateCustomStrategy(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/trading.StrategyStudioService/UpdateCustomStrategy',
+            trading__api__pb2.UpdateCustomStrategyRequest.SerializeToString,
+            trading__api__pb2.CustomStrategy.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def DeleteCustomStrategy(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/trading.StrategyStudioService/DeleteCustomStrategy',
+            trading__api__pb2.DeleteCustomStrategyRequest.SerializeToString,
+            trading__api__pb2.StatusResponse.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def ListCustomStrategies(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/trading.StrategyStudioService/ListCustomStrategies',
+            trading__api__pb2.ListCustomStrategiesRequest.SerializeToString,
+            trading__api__pb2.ListCustomStrategiesResponse.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def BacktestCustomStrategy(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/trading.StrategyStudioService/BacktestCustomStrategy',
+            trading__api__pb2.BacktestCustomStrategyRequest.SerializeToString,
+            trading__api__pb2.BacktestCustomStrategyResponse.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def DeployCustomStrategy(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/trading.StrategyStudioService/DeployCustomStrategy',
+            trading__api__pb2.DeployCustomStrategyRequest.SerializeToString,
+            trading__api__pb2.StatusResponse.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+
 class RiskServiceStub(object):
     """=================================================================
     RISK SERVICE

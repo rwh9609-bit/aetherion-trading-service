@@ -1572,6 +1572,485 @@ proto.trading.BotServicePromiseClient.prototype.updateBotState =
  * @struct
  * @final
  */
+proto.trading.StrategyStudioServiceClient =
+    function(hostname, credentials, options) {
+  if (!options) options = {};
+  options.format = 'text';
+
+  /**
+   * @private @const {!grpc.web.GrpcWebClientBase} The client
+   */
+  this.client_ = new grpc.web.GrpcWebClientBase(options);
+
+  /**
+   * @private @const {string} The hostname
+   */
+  this.hostname_ = hostname.replace(/\/+$/, '');
+
+};
+
+
+/**
+ * @param {string} hostname
+ * @param {?Object} credentials
+ * @param {?grpc.web.ClientOptions} options
+ * @constructor
+ * @struct
+ * @final
+ */
+proto.trading.StrategyStudioServicePromiseClient =
+    function(hostname, credentials, options) {
+  if (!options) options = {};
+  options.format = 'text';
+
+  /**
+   * @private @const {!grpc.web.GrpcWebClientBase} The client
+   */
+  this.client_ = new grpc.web.GrpcWebClientBase(options);
+
+  /**
+   * @private @const {string} The hostname
+   */
+  this.hostname_ = hostname.replace(/\/+$/, '');
+
+};
+
+
+/**
+ * @const
+ * @type {!grpc.web.MethodDescriptor<
+ *   !proto.trading.CreateCustomStrategyRequest,
+ *   !proto.trading.CustomStrategy>}
+ */
+const methodDescriptor_StrategyStudioService_CreateCustomStrategy = new grpc.web.MethodDescriptor(
+  '/trading.StrategyStudioService/CreateCustomStrategy',
+  grpc.web.MethodType.UNARY,
+  proto.trading.CreateCustomStrategyRequest,
+  proto.trading.CustomStrategy,
+  /**
+   * @param {!proto.trading.CreateCustomStrategyRequest} request
+   * @return {!Uint8Array}
+   */
+  function(request) {
+    return request.serializeBinary();
+  },
+  proto.trading.CustomStrategy.deserializeBinary
+);
+
+
+/**
+ * @param {!proto.trading.CreateCustomStrategyRequest} request The
+ *     request proto
+ * @param {?Object<string, string>} metadata User defined
+ *     call metadata
+ * @param {function(?grpc.web.RpcError, ?proto.trading.CustomStrategy)}
+ *     callback The callback function(error, response)
+ * @return {!grpc.web.ClientReadableStream<!proto.trading.CustomStrategy>|undefined}
+ *     The XHR Node Readable Stream
+ */
+proto.trading.StrategyStudioServiceClient.prototype.createCustomStrategy =
+    function(request, metadata, callback) {
+  return this.client_.rpcCall(this.hostname_ +
+      '/trading.StrategyStudioService/CreateCustomStrategy',
+      request,
+      metadata || {},
+      methodDescriptor_StrategyStudioService_CreateCustomStrategy,
+      callback);
+};
+
+
+/**
+ * @param {!proto.trading.CreateCustomStrategyRequest} request The
+ *     request proto
+ * @param {?Object<string, string>=} metadata User defined
+ *     call metadata
+ * @return {!Promise<!proto.trading.CustomStrategy>}
+ *     Promise that resolves to the response
+ */
+proto.trading.StrategyStudioServicePromiseClient.prototype.createCustomStrategy =
+    function(request, metadata) {
+  return this.client_.unaryCall(this.hostname_ +
+      '/trading.StrategyStudioService/CreateCustomStrategy',
+      request,
+      metadata || {},
+      methodDescriptor_StrategyStudioService_CreateCustomStrategy);
+};
+
+
+/**
+ * @const
+ * @type {!grpc.web.MethodDescriptor<
+ *   !proto.trading.GetCustomStrategyRequest,
+ *   !proto.trading.CustomStrategy>}
+ */
+const methodDescriptor_StrategyStudioService_GetCustomStrategy = new grpc.web.MethodDescriptor(
+  '/trading.StrategyStudioService/GetCustomStrategy',
+  grpc.web.MethodType.UNARY,
+  proto.trading.GetCustomStrategyRequest,
+  proto.trading.CustomStrategy,
+  /**
+   * @param {!proto.trading.GetCustomStrategyRequest} request
+   * @return {!Uint8Array}
+   */
+  function(request) {
+    return request.serializeBinary();
+  },
+  proto.trading.CustomStrategy.deserializeBinary
+);
+
+
+/**
+ * @param {!proto.trading.GetCustomStrategyRequest} request The
+ *     request proto
+ * @param {?Object<string, string>} metadata User defined
+ *     call metadata
+ * @param {function(?grpc.web.RpcError, ?proto.trading.CustomStrategy)}
+ *     callback The callback function(error, response)
+ * @return {!grpc.web.ClientReadableStream<!proto.trading.CustomStrategy>|undefined}
+ *     The XHR Node Readable Stream
+ */
+proto.trading.StrategyStudioServiceClient.prototype.getCustomStrategy =
+    function(request, metadata, callback) {
+  return this.client_.rpcCall(this.hostname_ +
+      '/trading.StrategyStudioService/GetCustomStrategy',
+      request,
+      metadata || {},
+      methodDescriptor_StrategyStudioService_GetCustomStrategy,
+      callback);
+};
+
+
+/**
+ * @param {!proto.trading.GetCustomStrategyRequest} request The
+ *     request proto
+ * @param {?Object<string, string>=} metadata User defined
+ *     call metadata
+ * @return {!Promise<!proto.trading.CustomStrategy>}
+ *     Promise that resolves to the response
+ */
+proto.trading.StrategyStudioServicePromiseClient.prototype.getCustomStrategy =
+    function(request, metadata) {
+  return this.client_.unaryCall(this.hostname_ +
+      '/trading.StrategyStudioService/GetCustomStrategy',
+      request,
+      metadata || {},
+      methodDescriptor_StrategyStudioService_GetCustomStrategy);
+};
+
+
+/**
+ * @const
+ * @type {!grpc.web.MethodDescriptor<
+ *   !proto.trading.UpdateCustomStrategyRequest,
+ *   !proto.trading.CustomStrategy>}
+ */
+const methodDescriptor_StrategyStudioService_UpdateCustomStrategy = new grpc.web.MethodDescriptor(
+  '/trading.StrategyStudioService/UpdateCustomStrategy',
+  grpc.web.MethodType.UNARY,
+  proto.trading.UpdateCustomStrategyRequest,
+  proto.trading.CustomStrategy,
+  /**
+   * @param {!proto.trading.UpdateCustomStrategyRequest} request
+   * @return {!Uint8Array}
+   */
+  function(request) {
+    return request.serializeBinary();
+  },
+  proto.trading.CustomStrategy.deserializeBinary
+);
+
+
+/**
+ * @param {!proto.trading.UpdateCustomStrategyRequest} request The
+ *     request proto
+ * @param {?Object<string, string>} metadata User defined
+ *     call metadata
+ * @param {function(?grpc.web.RpcError, ?proto.trading.CustomStrategy)}
+ *     callback The callback function(error, response)
+ * @return {!grpc.web.ClientReadableStream<!proto.trading.CustomStrategy>|undefined}
+ *     The XHR Node Readable Stream
+ */
+proto.trading.StrategyStudioServiceClient.prototype.updateCustomStrategy =
+    function(request, metadata, callback) {
+  return this.client_.rpcCall(this.hostname_ +
+      '/trading.StrategyStudioService/UpdateCustomStrategy',
+      request,
+      metadata || {},
+      methodDescriptor_StrategyStudioService_UpdateCustomStrategy,
+      callback);
+};
+
+
+/**
+ * @param {!proto.trading.UpdateCustomStrategyRequest} request The
+ *     request proto
+ * @param {?Object<string, string>=} metadata User defined
+ *     call metadata
+ * @return {!Promise<!proto.trading.CustomStrategy>}
+ *     Promise that resolves to the response
+ */
+proto.trading.StrategyStudioServicePromiseClient.prototype.updateCustomStrategy =
+    function(request, metadata) {
+  return this.client_.unaryCall(this.hostname_ +
+      '/trading.StrategyStudioService/UpdateCustomStrategy',
+      request,
+      metadata || {},
+      methodDescriptor_StrategyStudioService_UpdateCustomStrategy);
+};
+
+
+/**
+ * @const
+ * @type {!grpc.web.MethodDescriptor<
+ *   !proto.trading.DeleteCustomStrategyRequest,
+ *   !proto.trading.StatusResponse>}
+ */
+const methodDescriptor_StrategyStudioService_DeleteCustomStrategy = new grpc.web.MethodDescriptor(
+  '/trading.StrategyStudioService/DeleteCustomStrategy',
+  grpc.web.MethodType.UNARY,
+  proto.trading.DeleteCustomStrategyRequest,
+  proto.trading.StatusResponse,
+  /**
+   * @param {!proto.trading.DeleteCustomStrategyRequest} request
+   * @return {!Uint8Array}
+   */
+  function(request) {
+    return request.serializeBinary();
+  },
+  proto.trading.StatusResponse.deserializeBinary
+);
+
+
+/**
+ * @param {!proto.trading.DeleteCustomStrategyRequest} request The
+ *     request proto
+ * @param {?Object<string, string>} metadata User defined
+ *     call metadata
+ * @param {function(?grpc.web.RpcError, ?proto.trading.StatusResponse)}
+ *     callback The callback function(error, response)
+ * @return {!grpc.web.ClientReadableStream<!proto.trading.StatusResponse>|undefined}
+ *     The XHR Node Readable Stream
+ */
+proto.trading.StrategyStudioServiceClient.prototype.deleteCustomStrategy =
+    function(request, metadata, callback) {
+  return this.client_.rpcCall(this.hostname_ +
+      '/trading.StrategyStudioService/DeleteCustomStrategy',
+      request,
+      metadata || {},
+      methodDescriptor_StrategyStudioService_DeleteCustomStrategy,
+      callback);
+};
+
+
+/**
+ * @param {!proto.trading.DeleteCustomStrategyRequest} request The
+ *     request proto
+ * @param {?Object<string, string>=} metadata User defined
+ *     call metadata
+ * @return {!Promise<!proto.trading.StatusResponse>}
+ *     Promise that resolves to the response
+ */
+proto.trading.StrategyStudioServicePromiseClient.prototype.deleteCustomStrategy =
+    function(request, metadata) {
+  return this.client_.unaryCall(this.hostname_ +
+      '/trading.StrategyStudioService/DeleteCustomStrategy',
+      request,
+      metadata || {},
+      methodDescriptor_StrategyStudioService_DeleteCustomStrategy);
+};
+
+
+/**
+ * @const
+ * @type {!grpc.web.MethodDescriptor<
+ *   !proto.trading.ListCustomStrategiesRequest,
+ *   !proto.trading.ListCustomStrategiesResponse>}
+ */
+const methodDescriptor_StrategyStudioService_ListCustomStrategies = new grpc.web.MethodDescriptor(
+  '/trading.StrategyStudioService/ListCustomStrategies',
+  grpc.web.MethodType.UNARY,
+  proto.trading.ListCustomStrategiesRequest,
+  proto.trading.ListCustomStrategiesResponse,
+  /**
+   * @param {!proto.trading.ListCustomStrategiesRequest} request
+   * @return {!Uint8Array}
+   */
+  function(request) {
+    return request.serializeBinary();
+  },
+  proto.trading.ListCustomStrategiesResponse.deserializeBinary
+);
+
+
+/**
+ * @param {!proto.trading.ListCustomStrategiesRequest} request The
+ *     request proto
+ * @param {?Object<string, string>} metadata User defined
+ *     call metadata
+ * @param {function(?grpc.web.RpcError, ?proto.trading.ListCustomStrategiesResponse)}
+ *     callback The callback function(error, response)
+ * @return {!grpc.web.ClientReadableStream<!proto.trading.ListCustomStrategiesResponse>|undefined}
+ *     The XHR Node Readable Stream
+ */
+proto.trading.StrategyStudioServiceClient.prototype.listCustomStrategies =
+    function(request, metadata, callback) {
+  return this.client_.rpcCall(this.hostname_ +
+      '/trading.StrategyStudioService/ListCustomStrategies',
+      request,
+      metadata || {},
+      methodDescriptor_StrategyStudioService_ListCustomStrategies,
+      callback);
+};
+
+
+/**
+ * @param {!proto.trading.ListCustomStrategiesRequest} request The
+ *     request proto
+ * @param {?Object<string, string>=} metadata User defined
+ *     call metadata
+ * @return {!Promise<!proto.trading.ListCustomStrategiesResponse>}
+ *     Promise that resolves to the response
+ */
+proto.trading.StrategyStudioServicePromiseClient.prototype.listCustomStrategies =
+    function(request, metadata) {
+  return this.client_.unaryCall(this.hostname_ +
+      '/trading.StrategyStudioService/ListCustomStrategies',
+      request,
+      metadata || {},
+      methodDescriptor_StrategyStudioService_ListCustomStrategies);
+};
+
+
+/**
+ * @const
+ * @type {!grpc.web.MethodDescriptor<
+ *   !proto.trading.BacktestCustomStrategyRequest,
+ *   !proto.trading.BacktestCustomStrategyResponse>}
+ */
+const methodDescriptor_StrategyStudioService_BacktestCustomStrategy = new grpc.web.MethodDescriptor(
+  '/trading.StrategyStudioService/BacktestCustomStrategy',
+  grpc.web.MethodType.UNARY,
+  proto.trading.BacktestCustomStrategyRequest,
+  proto.trading.BacktestCustomStrategyResponse,
+  /**
+   * @param {!proto.trading.BacktestCustomStrategyRequest} request
+   * @return {!Uint8Array}
+   */
+  function(request) {
+    return request.serializeBinary();
+  },
+  proto.trading.BacktestCustomStrategyResponse.deserializeBinary
+);
+
+
+/**
+ * @param {!proto.trading.BacktestCustomStrategyRequest} request The
+ *     request proto
+ * @param {?Object<string, string>} metadata User defined
+ *     call metadata
+ * @param {function(?grpc.web.RpcError, ?proto.trading.BacktestCustomStrategyResponse)}
+ *     callback The callback function(error, response)
+ * @return {!grpc.web.ClientReadableStream<!proto.trading.BacktestCustomStrategyResponse>|undefined}
+ *     The XHR Node Readable Stream
+ */
+proto.trading.StrategyStudioServiceClient.prototype.backtestCustomStrategy =
+    function(request, metadata, callback) {
+  return this.client_.rpcCall(this.hostname_ +
+      '/trading.StrategyStudioService/BacktestCustomStrategy',
+      request,
+      metadata || {},
+      methodDescriptor_StrategyStudioService_BacktestCustomStrategy,
+      callback);
+};
+
+
+/**
+ * @param {!proto.trading.BacktestCustomStrategyRequest} request The
+ *     request proto
+ * @param {?Object<string, string>=} metadata User defined
+ *     call metadata
+ * @return {!Promise<!proto.trading.BacktestCustomStrategyResponse>}
+ *     Promise that resolves to the response
+ */
+proto.trading.StrategyStudioServicePromiseClient.prototype.backtestCustomStrategy =
+    function(request, metadata) {
+  return this.client_.unaryCall(this.hostname_ +
+      '/trading.StrategyStudioService/BacktestCustomStrategy',
+      request,
+      metadata || {},
+      methodDescriptor_StrategyStudioService_BacktestCustomStrategy);
+};
+
+
+/**
+ * @const
+ * @type {!grpc.web.MethodDescriptor<
+ *   !proto.trading.DeployCustomStrategyRequest,
+ *   !proto.trading.StatusResponse>}
+ */
+const methodDescriptor_StrategyStudioService_DeployCustomStrategy = new grpc.web.MethodDescriptor(
+  '/trading.StrategyStudioService/DeployCustomStrategy',
+  grpc.web.MethodType.UNARY,
+  proto.trading.DeployCustomStrategyRequest,
+  proto.trading.StatusResponse,
+  /**
+   * @param {!proto.trading.DeployCustomStrategyRequest} request
+   * @return {!Uint8Array}
+   */
+  function(request) {
+    return request.serializeBinary();
+  },
+  proto.trading.StatusResponse.deserializeBinary
+);
+
+
+/**
+ * @param {!proto.trading.DeployCustomStrategyRequest} request The
+ *     request proto
+ * @param {?Object<string, string>} metadata User defined
+ *     call metadata
+ * @param {function(?grpc.web.RpcError, ?proto.trading.StatusResponse)}
+ *     callback The callback function(error, response)
+ * @return {!grpc.web.ClientReadableStream<!proto.trading.StatusResponse>|undefined}
+ *     The XHR Node Readable Stream
+ */
+proto.trading.StrategyStudioServiceClient.prototype.deployCustomStrategy =
+    function(request, metadata, callback) {
+  return this.client_.rpcCall(this.hostname_ +
+      '/trading.StrategyStudioService/DeployCustomStrategy',
+      request,
+      metadata || {},
+      methodDescriptor_StrategyStudioService_DeployCustomStrategy,
+      callback);
+};
+
+
+/**
+ * @param {!proto.trading.DeployCustomStrategyRequest} request The
+ *     request proto
+ * @param {?Object<string, string>=} metadata User defined
+ *     call metadata
+ * @return {!Promise<!proto.trading.StatusResponse>}
+ *     Promise that resolves to the response
+ */
+proto.trading.StrategyStudioServicePromiseClient.prototype.deployCustomStrategy =
+    function(request, metadata) {
+  return this.client_.unaryCall(this.hostname_ +
+      '/trading.StrategyStudioService/DeployCustomStrategy',
+      request,
+      metadata || {},
+      methodDescriptor_StrategyStudioService_DeployCustomStrategy);
+};
+
+
+/**
+ * @param {string} hostname
+ * @param {?Object} credentials
+ * @param {?grpc.web.ClientOptions} options
+ * @constructor
+ * @struct
+ * @final
+ */
 proto.trading.RiskServiceClient =
     function(hostname, credentials, options) {
   if (!options) options = {};

@@ -290,6 +290,129 @@ service BotService {
   rpc UpdateBotState(UpdateBotStateRequest) returns (StatusResponse) {}
 }
 
+// =================================================================
+// STRATEGY STUDIO SERVICE
+// =================================================================
+
+service StrategyStudioService {
+    rpc CreateCustomStrategy(CreateCustomStrategyRequest) returns (CustomStrategy) {}
+    rpc GetCustomStrategy(GetCustomStrategyRequest) returns (CustomStrategy) {}
+    rpc UpdateCustomStrategy(UpdateCustomStrategyRequest) returns (CustomStrategy) {}
+    rpc DeleteCustomStrategy(DeleteCustomStrategyRequest) returns (StatusResponse) {}
+    rpc ListCustomStrategies(ListCustomStrategiesRequest) returns (ListCustomStrategiesResponse) {}
+    rpc BacktestCustomStrategy(BacktestCustomStrategyRequest) returns (BacktestCustomStrategyResponse) {}
+    rpc DeployCustomStrategy(DeployCustomStrategyRequest) returns (StatusResponse) {}
+}
+
+enum NodeType {
+    NODE_TYPE_UNSPECIFIED = 0;
+    INDICATOR = 1;
+    OPERATOR = 2;
+    ACTION = 3;
+}
+
+enum IndicatorType {
+    INDICATOR_TYPE_UNSPECIFIED = 0;
+    SMA = 1;
+    EMA = 2;
+    RSI = 3;
+    MACD = 4;
+}
+
+enum OperatorType {
+    OPERATOR_TYPE_UNSPECIFIED = 0;
+    AND = 1;
+    OR = 2;
+    GREATER_THAN = 3;
+    LESS_THAN = 4;
+    EQUALS = 5;
+}
+
+enum ActionType {
+    ACTION_TYPE_UNSPECIFIED = 0;
+    ACTION_BUY = 1;
+    ACTION_SELL = 2;
+    ACTION_HOLD = 3;
+}
+
+message StrategyNode {
+    string id = 1;
+    NodeType type = 2;
+    map<string, string> parameters = 3;
+    // Example parameters for an INDICATOR node:
+    // "indicator_type": "SMA"
+    // "period": "50"
+    // Example parameters for an OPERATOR node:
+    // "operator_type": "GREATER_THAN"
+    // Example parameters for an ACTION node:
+    // "action_type": "BUY"
+    // "amount": "1"
+    // "unit": "PERCENT" // or "ABSOLUTE"
+}
+
+message StrategyEdge {
+    string from_node_id = 1;
+    string to_node_id = 2;
+}
+
+message CustomStrategy {
+    string id = 1;
+    string name = 2;
+    string description = 3;
+    string user_id = 4;
+    repeated StrategyNode nodes = 5;
+    repeated StrategyEdge edges = 6;
+    google.protobuf.Timestamp created_at = 7;
+    google.protobuf.Timestamp updated_at = 8;
+}
+
+message CreateCustomStrategyRequest {
+    string name = 1;
+    string description = 2;
+    repeated StrategyNode nodes = 3;
+    repeated StrategyEdge edges = 4;
+}
+
+message GetCustomStrategyRequest {
+    string strategy_id = 1;
+}
+
+message UpdateCustomStrategyRequest {
+    string strategy_id = 1;
+    string name = 2;
+    string description = 3;
+    repeated StrategyNode nodes = 4;
+    repeated StrategyEdge edges = 5;
+}
+
+message DeleteCustomStrategyRequest {
+    string strategy_id = 1;
+}
+
+message ListCustomStrategiesRequest {
+    string user_id = 1;
+}
+
+message ListCustomStrategiesResponse {
+    repeated CustomStrategy strategies = 1;
+}
+
+message BacktestCustomStrategyRequest {
+    CustomStrategy strategy = 1;
+    string symbol = 2;
+    google.protobuf.Timestamp start_time = 3;
+    google.protobuf.Timestamp end_time = 4;
+}
+
+message BacktestCustomStrategyResponse {
+    // Will be defined later, for now, it can be empty
+}
+
+message DeployCustomStrategyRequest {
+    string strategy_id = 1;
+}
+
+
 message Bot {
     string bot_id = 1;
     string symbol = 2;

@@ -482,6 +482,144 @@ func (s *DBService) GetStrategiesByUserID(ctx context.Context, userID string) ([
 	return strategies, nil
 }
 
+// --------------------------------- //
+// --- Custom Strategy Management --- //
+// --------------------------------- //
+
+// CustomStrategyDB is a struct that represents the custom_strategies table in the database.
+type CustomStrategyDB struct {
+	ID          string    `db:"id"`
+	Name        string    `db:"name"`
+	Description string    `db:"description"`
+	UserID      string    `db:"user_id"`
+	Nodes       []byte    `db:"nodes"`
+	Edges       []byte    `db:"edges"`
+	CreatedAt   time.Time `db:"created_at"`
+	UpdatedAt   time.Time `db:"updated_at"`
+}
+
+func (s *DBService) CreateCustomStrategy(ctx context.Context, strategy *pb.CustomStrategy) (string, error) {
+	var id string
+
+	nodesJSON, err := json.Marshal(strategy.Nodes)
+	if err != nil {
+		return "", fmt.Errorf("failed to marshal nodes: %w", err)
+	}
+
+	edgesJSON, err := json.Marshal(strategy.Edges)
+	if err != nil {
+		return "", fmt.Errorf("failed to marshal edges: %w", err)
+	}
+
+	query := `INSERT INTO custom_strategies (id, name, description, user_id, nodes, edges, created_at, updated_at)
+			  VALUES ($1, $2, $3, $4, $5, $6, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP) RETURNING id`
+	err = s.pool.QueryRow(ctx, query, uuid.New().String(), strategy.Name, strategy.Description, strategy.UserId, nodesJSON, edgesJSON).Scan(&id)
+	if err != nil {
+		log.Error().Err(err).Msg("Failed to create custom strategy")
+		return "", fmt.Errorf("failed to create custom strategy: %w", err)
+	}
+	log.Info().Str("strategy_id", id).Msg("Custom strategy created successfully")
+	return id, nil
+}
+
+func (s *DBService) GetCustomStrategy(ctx context.Context, strategyID string) (*pb.CustomStrategy, error) {
+	var strategy pb.CustomStrategy
+	var nodesJSON, edgesJSON []byte
+	var createdAt, updatedAt time.Time
+
+	query := `SELECT id, name, description, user_id, nodes, edges, created_at, updated_at
+			  FROM custom_strategies WHERE id = $1`
+	err := s.pool.QueryRow(ctx, query, strategyID).Scan(&strategy.Id, &strategy.Name, &strategy.Description, &strategy.UserId, &nodesJSON, &edgesJSON, &createdAt, &updatedAt)
+	if err != nil {
+		log.Error().Err(err).Str("strategy_id", strategyID).Msg("Failed to get custom strategy")
+		return nil, fmt.Errorf("failed to get custom strategy: %w", err)
+	}
+
+	if err := json.Unmarshal(nodesJSON, &strategy.Nodes); err != nil {
+		return nil, fmt.Errorf("failed to unmarshal nodes: %w", err)
+	}
+
+	if err := json.Unmarshal(edgesJSON, &strategy.Edges); err != nil {
+		return nil, fmt.Errorf("failed to unmarshal edges: %w", err)
+	}
+
+	strategy.CreatedAt = timestamppb.New(createdAt)
+	strategy.UpdatedAt = timestamppb.New(updatedAt)
+
+	return &strategy, nil
+}
+
+func (s *DBService) UpdateCustomStrategy(ctx context.Context, strategy *pb.CustomStrategy) error {
+	nodesJSON, err := json.Marshal(strategy.Nodes)
+	if err != nil {
+		return fmt.Errorf("failed to marshal nodes: %w", err)
+	}
+
+	edgesJSON, err := json.Marshal(strategy.Edges)
+	if err != nil {
+		return fmt.Errorf("failed to marshal edges: %w", err)
+	}
+
+	query := `UPDATE custom_strategies
+			  SET name = $1, description = $2, nodes = $3, edges = $4, updated_at = CURRENT_TIMESTAMP
+			  WHERE id = $5`
+	_, err = s.pool.Exec(ctx, query, strategy.Name, strategy.Description, nodesJSON, edgesJSON, strategy.Id)
+	if err != nil {
+		log.Error().Err(err).Str("strategy_id", strategy.Id).Msg("Failed to update custom strategy")
+		return fmt.Errorf("failed to update custom strategy: %w", err)
+	}
+	log.Info().Str("strategy_id", strategy.Id).Msg("Custom strategy updated successfully")
+	return nil
+}
+
+func (s *DBService) DeleteCustomStrategy(ctx context.Context, strategyID string) error {
+	query := `DELETE FROM custom_strategies WHERE id = $1`
+	_, err := s.pool.Exec(ctx, query, strategyID)
+	if err != nil {
+		log.Error().Err(err).Str("strategy_id", strategyID).Msg("Failed to delete custom strategy")
+		return fmt.Errorf("failed to delete custom strategy: %w", err)
+	}
+	log.Info().Str("strategy_id", strategyID).Msg("Custom strategy deleted successfully")
+	return nil
+}
+
+func (s *DBService) ListCustomStrategies(ctx context.Context, userID string) ([]*pb.CustomStrategy, error) {
+	var strategies []*pb.CustomStrategy
+	query := `SELECT id, name, description, user_id, nodes, edges, created_at, updated_at
+			  FROM custom_strategies WHERE user_id = $1`
+	rows, err := s.pool.Query(ctx, query, userID)
+	if err != nil {
+		log.Error().Err(err).Str("user_id", userID).Msg("Failed to list custom strategies")
+		return nil, fmt.Errorf("failed to list custom strategies: %w", err)
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var strategy pb.CustomStrategy
+		var nodesJSON, edgesJSON []byte
+		var createdAt, updatedAt time.Time
+
+		if err := rows.Scan(&strategy.Id, &strategy.Name, &strategy.Description, &strategy.UserId, &nodesJSON, &edgesJSON, &createdAt, &updatedAt); err != nil {
+			log.Error().Err(err).Msg("Failed to scan custom strategy row")
+			return nil, fmt.Errorf("failed to scan custom strategy row: %w", err)
+		}
+
+		if err := json.Unmarshal(nodesJSON, &strategy.Nodes); err != nil {
+			return nil, fmt.Errorf("failed to unmarshal nodes: %w", err)
+		}
+
+		if err := json.Unmarshal(edgesJSON, &strategy.Edges); err != nil {
+			return nil, fmt.Errorf("failed to unmarshal edges: %w", err)
+		}
+
+		strategy.CreatedAt = timestamppb.New(createdAt)
+		strategy.UpdatedAt = timestamppb.New(updatedAt)
+
+		strategies = append(strategies, &strategy)
+	}
+	return strategies, nil
+}
+
 // --------------------- //
 // --- Trade History --- //
 // --------------------- //
